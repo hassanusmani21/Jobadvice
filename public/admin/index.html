@@ -1,0 +1,1138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JobAdvice Admin</title>
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/admin/theme.css" />
+  </head>
+  <body>
+    <div class="admin-loading" id="admin-loading">
+      <p class="admin-loading-badge">JobAdvice CMS</p>
+      <h1>Admin Dashboard</h1>
+      <p>Preparing your editor workspace...</p>
+    </div>
+
+    <script>
+      var isLocalHost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+
+      if (!isLocalHost) {
+        var identityScript = document.createElement("script");
+        identityScript.src =
+          "https://identity.netlify.com/v1/netlify-identity-widget.js";
+        document.head.appendChild(identityScript);
+      }
+
+      (function loadCms() {
+        var primary = document.createElement("script");
+        primary.src = "https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js";
+        primary.onerror = function () {
+          var fallback = document.createElement("script");
+          fallback.src =
+            "https://cdn.jsdelivr.net/npm/decap-cms@^3.0.0/dist/decap-cms.js";
+          document.body.appendChild(fallback);
+        };
+        document.body.appendChild(primary);
+      })();
+    </script>
+    <script>
+      (function applyCmsEnhancements() {
+        var attempts = 0;
+
+        function hideLoadingWhenReady() {
+          var loadingScreen = document.getElementById("admin-loading");
+          var cmsRoot = document.getElementById("nc-root");
+
+          if (loadingScreen && cmsRoot && cmsRoot.children.length > 0) {
+            loadingScreen.classList.add("is-hidden");
+            return;
+          }
+
+          if (attempts < 180) {
+            attempts += 1;
+            window.setTimeout(hideLoadingWhenReady, 120);
+          }
+        }
+
+        function registerPreviewStyles() {
+          if (window.CMS && typeof window.CMS.registerPreviewStyle === "function") {
+            window.CMS.registerPreviewStyle("/admin/preview.css");
+            return;
+          }
+
+          if (attempts < 180) {
+            attempts += 1;
+            window.setTimeout(registerPreviewStyles, 120);
+          }
+        }
+
+        hideLoadingWhenReady();
+        registerPreviewStyles();
+      })();
+    </script>
+    <script>
+      var isLocalAdminHost =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+
+      if (window.netlifyIdentity && !isLocalAdminHost) {
+        window.netlifyIdentity.on("init", function (user) {
+          if (!user) {
+            window.netlifyIdentity.on("login", function () {
+              document.location.href = "/admin/";
+            });
+          }
+        });
+      }
+    </script>
+    <script>
+      (function injectAdminAccountPanel() {
+        var panelId = "next-auth-admin-menu";
+        var triggerId = "next-auth-admin-trigger";
+        var pollAttempts = 0;
+
+        async function readJsonResponse(response) {
+          var contentType = String(response.headers.get("content-type") || "").toLowerCase();
+          var rawText = await response.text();
+
+          if (!rawText) {
+            return null;
+          }
+
+          if (contentType.indexOf("application/json") === -1) {
+            return null;
+          }
+
+          try {
+            return JSON.parse(rawText);
+          } catch {
+            return null;
+          }
+        }
+
+        async function getSessionUser() {
+          var response = await fetch("/api/auth/session", {
+            credentials: "same-origin",
+          });
+
+          if (!response.ok) {
+            return null;
+          }
+
+          var result = await readJsonResponse(response);
+          if (!result || !result.user) {
+            return null;
+          }
+
+          return result.user;
+        }
+
+        function getInitials(value) {
+          var safeValue = (value || "Admin").trim();
+          return (
+            safeValue
+              .split(/\s+/)
+              .slice(0, 2)
+              .map(function (part) {
+                return part.charAt(0).toUpperCase();
+              })
+              .join("") || "A"
+          );
+        }
+
+        async function signOutAdmin() {
+          var csrfResponse = await fetch("/api/auth/csrf", {
+            credentials: "same-origin",
+          });
+          var csrfResult = await readJsonResponse(csrfResponse);
+
+          if (!csrfResult || !csrfResult.csrfToken) {
+            throw new Error("Unable to fetch CSRF token");
+          }
+
+          var form = document.createElement("form");
+          form.method = "POST";
+          form.action = "/api/auth/signout";
+          form.style.display = "none";
+
+          var csrfInput = document.createElement("input");
+          csrfInput.type = "hidden";
+          csrfInput.name = "csrfToken";
+          csrfInput.value = csrfResult.csrfToken;
+          form.appendChild(csrfInput);
+
+          var callbackInput = document.createElement("input");
+          callbackInput.type = "hidden";
+          callbackInput.name = "callbackUrl";
+          callbackInput.value = "/admin";
+          form.appendChild(callbackInput);
+
+          document.body.appendChild(form);
+          form.submit();
+        }
+
+        function buildAccountMenu(user) {
+          if (
+            document.getElementById(panelId) ||
+            document.getElementById(triggerId)
+          ) {
+            return;
+          }
+
+          var wrapper = document.createElement("div");
+          wrapper.id = "next-auth-admin-account";
+          wrapper.style.position = "fixed";
+          wrapper.style.top = "14px";
+          wrapper.style.right = "14px";
+          wrapper.style.zIndex = "9999";
+          wrapper.style.fontFamily = "Manrope, sans-serif";
+
+          var trigger = document.createElement("button");
+          trigger.id = triggerId;
+          trigger.type = "button";
+          trigger.setAttribute("aria-label", "Open admin account menu");
+          trigger.setAttribute("aria-expanded", "false");
+          trigger.style.display = "inline-flex";
+          trigger.style.alignItems = "center";
+          trigger.style.justifyContent = "center";
+          trigger.style.width = "44px";
+          trigger.style.height = "44px";
+          trigger.style.borderRadius = "9999px";
+          trigger.style.border = "1px solid rgba(15, 23, 42, 0.16)";
+          trigger.style.background = "linear-gradient(135deg, #0f766e, #115e59)";
+          trigger.style.color = "#ffffff";
+          trigger.style.fontSize = "14px";
+          trigger.style.fontWeight = "800";
+          trigger.style.cursor = "pointer";
+          trigger.style.boxShadow = "0 8px 20px rgba(15, 23, 42, 0.2)";
+          trigger.textContent = getInitials(user.name || user.email || "Admin");
+
+          var panel = document.createElement("aside");
+          panel.id = panelId;
+          panel.setAttribute("aria-label", "Admin account details");
+          panel.style.position = "absolute";
+          panel.style.top = "52px";
+          panel.style.right = "0";
+          panel.style.width = "min(320px, calc(100vw - 24px))";
+          panel.style.borderRadius = "14px";
+          panel.style.border = "1px solid rgba(15, 23, 42, 0.12)";
+          panel.style.background = "rgba(255, 255, 255, 0.96)";
+          panel.style.boxShadow = "0 16px 32px rgba(15, 23, 42, 0.18)";
+          panel.style.backdropFilter = "blur(8px)";
+          panel.style.padding = "12px";
+          panel.style.display = "none";
+
+          var topRow = document.createElement("div");
+          topRow.style.display = "flex";
+          topRow.style.alignItems = "center";
+          topRow.style.gap = "10px";
+
+          var badge = document.createElement("span");
+          badge.textContent = trigger.textContent;
+          badge.style.display = "inline-flex";
+          badge.style.alignItems = "center";
+          badge.style.justifyContent = "center";
+          badge.style.width = "34px";
+          badge.style.height = "34px";
+          badge.style.borderRadius = "50%";
+          badge.style.background = "#0f766e";
+          badge.style.color = "#ffffff";
+          badge.style.fontSize = "13px";
+          badge.style.fontWeight = "800";
+
+          var identity = document.createElement("div");
+          identity.style.minWidth = "0";
+
+          var nameNode = document.createElement("p");
+          nameNode.textContent = (user.name || user.email || "Admin").trim();
+          nameNode.style.margin = "0";
+          nameNode.style.color = "#0f172a";
+          nameNode.style.fontSize = "14px";
+          nameNode.style.fontWeight = "700";
+          nameNode.style.lineHeight = "1.2";
+          nameNode.style.whiteSpace = "nowrap";
+          nameNode.style.overflow = "hidden";
+          nameNode.style.textOverflow = "ellipsis";
+
+          var emailNode = document.createElement("p");
+          emailNode.textContent = user.email || "";
+          emailNode.style.margin = "4px 0 0";
+          emailNode.style.color = "#475569";
+          emailNode.style.fontSize = "12px";
+          emailNode.style.lineHeight = "1.3";
+          emailNode.style.whiteSpace = "nowrap";
+          emailNode.style.overflow = "hidden";
+          emailNode.style.textOverflow = "ellipsis";
+
+          var roleNode = document.createElement("p");
+          roleNode.textContent = "Administrator";
+          roleNode.style.margin = "8px 0 0";
+          roleNode.style.color = "#0f766e";
+          roleNode.style.fontSize = "11px";
+          roleNode.style.fontWeight = "700";
+          roleNode.style.textTransform = "uppercase";
+          roleNode.style.letterSpacing = "0.04em";
+
+          identity.appendChild(nameNode);
+          identity.appendChild(emailNode);
+          identity.appendChild(roleNode);
+          topRow.appendChild(badge);
+          topRow.appendChild(identity);
+
+          var logoutButton = document.createElement("button");
+          logoutButton.type = "button";
+          logoutButton.textContent = "Logout";
+          logoutButton.setAttribute("aria-label", "Sign out of admin session");
+          logoutButton.style.marginTop = "10px";
+          logoutButton.style.width = "100%";
+          logoutButton.style.padding = "9px 12px";
+          logoutButton.style.borderRadius = "10px";
+          logoutButton.style.border = "none";
+          logoutButton.style.background = "#0f172a";
+          logoutButton.style.color = "#ffffff";
+          logoutButton.style.fontSize = "13px";
+          logoutButton.style.fontWeight = "700";
+          logoutButton.style.cursor = "pointer";
+
+          logoutButton.addEventListener("click", function () {
+            logoutButton.disabled = true;
+            logoutButton.textContent = "Logging out...";
+            signOutAdmin().catch(function () {
+              logoutButton.disabled = false;
+              logoutButton.textContent = "Logout";
+              alert("Logout failed. Please refresh and try again.");
+            });
+          });
+
+          function closeMenu() {
+            panel.style.display = "none";
+            trigger.setAttribute("aria-expanded", "false");
+          }
+
+          function openMenu() {
+            panel.style.display = "block";
+            trigger.setAttribute("aria-expanded", "true");
+          }
+
+          trigger.addEventListener("click", function () {
+            if (panel.style.display === "none") {
+              openMenu();
+            } else {
+              closeMenu();
+            }
+          });
+
+          document.addEventListener("click", function (event) {
+            if (!wrapper.contains(event.target)) {
+              closeMenu();
+            }
+          });
+
+          document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+              closeMenu();
+            }
+          });
+
+          panel.appendChild(topRow);
+          panel.appendChild(logoutButton);
+          wrapper.appendChild(trigger);
+          wrapper.appendChild(panel);
+          document.body.appendChild(wrapper);
+        }
+
+        var pollTimer = window.setInterval(function () {
+          pollAttempts += 1;
+
+          if (
+            document.getElementById(panelId) &&
+            document.getElementById(triggerId)
+          ) {
+            clearInterval(pollTimer);
+            return;
+          }
+
+          getSessionUser()
+            .then(function (user) {
+              if (!user) {
+                if (pollAttempts > 20) {
+                  clearInterval(pollTimer);
+                }
+                return;
+              }
+
+              buildAccountMenu(user);
+              clearInterval(pollTimer);
+            })
+            .catch(function () {
+              if (pollAttempts > 20) {
+                clearInterval(pollTimer);
+              }
+            });
+        }, 1000);
+      })();
+    </script>
+    <script>
+      (function injectAdminAutoExtract() {
+        var panelId = "jobadvice-auto-extract-panel";
+        var buttonId = "jobadvice-auto-extract-btn";
+        var sourceTextareaId = "jobadvice-auto-extract-source";
+
+        function getCollectionFromHash() {
+          var routeValue = (window.location.pathname || "") + (window.location.hash || "");
+          var match = routeValue.match(/collections\/([^/]+)/i);
+          return match && match[1] ? match[1].toLowerCase() : "";
+        }
+
+        function isSupportedCollection(collection) {
+          return collection === "jobs" || collection === "blogs";
+        }
+
+        function getEditorRoot() {
+          return (
+            document.querySelector(".nc-entryEditor") ||
+            document.querySelector(".nc-entryEditor-container") ||
+            document.getElementById("nc-root") ||
+            document.body
+          );
+        }
+
+        function removePanel() {
+          var existingPanel = document.getElementById(panelId);
+          if (existingPanel) {
+            existingPanel.remove();
+          }
+        }
+
+        function getAdminLoginUrl() {
+          return "/admin/login?callbackUrl=" + encodeURIComponent("/admin");
+        }
+
+        function redirectToAdminLogin() {
+          window.location.href = getAdminLoginUrl();
+        }
+
+        async function ensureAdminSession() {
+          var sessionResponse = await fetch("/api/auth/session", {
+            credentials: "same-origin",
+          });
+
+          if (!sessionResponse.ok) {
+            redirectToAdminLogin();
+            throw new Error("Session expired. Redirecting to login...");
+          }
+
+          var sessionData = null;
+          try {
+            sessionData = await sessionResponse.json();
+          } catch {
+            sessionData = null;
+          }
+
+          if (!sessionData || !sessionData.user || !sessionData.user.email) {
+            redirectToAdminLogin();
+            throw new Error("Session expired. Redirecting to login...");
+          }
+        }
+
+        async function readJsonOrThrow(response) {
+          var contentType = String(response.headers.get("content-type") || "").toLowerCase();
+          var responseText = await response.text();
+
+          if (!responseText) {
+            return {};
+          }
+
+          if (contentType.indexOf("application/json") === -1) {
+            var normalizedText = responseText.trim();
+            if (
+              response.status === 401 ||
+              normalizedText.slice(0, 20).toLowerCase().indexOf("<!doctype html") === 0 ||
+              normalizedText.slice(0, 5).toLowerCase() === "<html"
+            ) {
+              throw new Error("SessionRequired");
+            }
+
+            throw new Error("Server returned a non-JSON response. Please retry.");
+          }
+
+          try {
+            return JSON.parse(responseText);
+          } catch {
+            throw new Error("Invalid JSON response from server.");
+          }
+        }
+
+        function dispatchFieldEvents(field) {
+          field.dispatchEvent(new Event("input", { bubbles: true }));
+          field.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+
+        function setNativeValue(field, value) {
+          var prototype = Object.getPrototypeOf(field);
+          var valueDescriptor = Object.getOwnPropertyDescriptor(prototype, "value");
+
+          if (valueDescriptor && typeof valueDescriptor.set === "function") {
+            valueDescriptor.set.call(field, value);
+            return;
+          }
+
+          field.value = value;
+        }
+
+        function setNativeCheckedValue(field, checkedValue) {
+          var prototype = Object.getPrototypeOf(field);
+          var checkedDescriptor = Object.getOwnPropertyDescriptor(prototype, "checked");
+
+          if (checkedDescriptor && typeof checkedDescriptor.set === "function") {
+            checkedDescriptor.set.call(field, checkedValue);
+            return;
+          }
+
+          field.checked = checkedValue;
+        }
+
+        function normalizeText(value) {
+          return String(value || "").trim();
+        }
+
+        function normalizeLabel(value) {
+          return normalizeText(value)
+            .toLowerCase()
+            .replace(/\s+/g, " ");
+        }
+
+        function normalizeArrayValue(value) {
+          if (Array.isArray(value)) {
+            return value
+              .map(function (item) {
+                return normalizeText(item);
+              })
+              .filter(Boolean);
+          }
+
+          if (typeof value === "string") {
+            return value
+              .split(",")
+              .map(function (item) {
+                return item.trim();
+              })
+              .filter(Boolean);
+          }
+
+          return [];
+        }
+
+        function isEditableField(field) {
+          if (!field) {
+            return false;
+          }
+
+          var isInputLike =
+            field instanceof HTMLInputElement ||
+            field instanceof HTMLTextAreaElement ||
+            field instanceof HTMLSelectElement;
+
+          if (!isInputLike || field.disabled) {
+            return false;
+          }
+
+          return !(field instanceof HTMLInputElement && field.type === "hidden");
+        }
+
+        function getFirstEditableField(fields) {
+          for (var index = 0; index < fields.length; index += 1) {
+            if (isEditableField(fields[index])) {
+              return fields[index];
+            }
+          }
+
+          return null;
+        }
+
+        function findFieldByLabel(editorRoot, labels) {
+          if (!labels || labels.length === 0) {
+            return null;
+          }
+
+          var normalizedLabels = labels
+            .map(function (label) {
+              return normalizeLabel(label);
+            })
+            .filter(Boolean);
+          if (normalizedLabels.length === 0) {
+            return null;
+          }
+
+          var labelNodes = editorRoot.querySelectorAll("label");
+          for (var index = 0; index < labelNodes.length; index += 1) {
+            var labelNode = labelNodes[index];
+            var labelText = normalizeLabel(labelNode.textContent);
+            var matches = normalizedLabels.some(function (labelValue) {
+              return labelText === labelValue || labelText.indexOf(labelValue) >= 0;
+            });
+
+            if (!matches) {
+              continue;
+            }
+
+            if (labelNode.htmlFor) {
+              var linkedField = document.getElementById(labelNode.htmlFor);
+              if (isEditableField(linkedField)) {
+                return linkedField;
+              }
+            }
+
+            var labelContainer = labelNode.parentElement;
+            if (labelContainer) {
+              var nestedField = getFirstEditableField(
+                labelContainer.querySelectorAll("input, textarea, select"),
+              );
+              if (nestedField) {
+                return nestedField;
+              }
+            }
+
+            var nearestBlock = labelNode.closest("div");
+            if (nearestBlock) {
+              var blockField = getFirstEditableField(
+                nearestBlock.querySelectorAll("input, textarea, select"),
+              );
+              if (blockField) {
+                return blockField;
+              }
+            }
+          }
+
+          return null;
+        }
+
+        function findField(editorRoot, name, labels) {
+          var directSelectors = [
+            '[name="' + name + '"]',
+            '[name$=".' + name + '"]',
+            '[name*="' + name + '"]',
+            '[id="' + name + '"]',
+            '[id$="-' + name + '"]',
+            '[id*="' + name + '"]',
+          ];
+
+          for (var index = 0; index < directSelectors.length; index += 1) {
+            var directField = getFirstEditableField(
+              editorRoot.querySelectorAll(directSelectors[index]),
+            );
+            if (directField) {
+              return directField;
+            }
+          }
+
+          return findFieldByLabel(editorRoot, labels);
+        }
+
+        function getListFields(editorRoot, name, labels) {
+          var byName = editorRoot.querySelectorAll('[name^="' + name + '."]');
+          if (byName.length > 0) {
+            return byName;
+          }
+
+          var byLabel = findFieldByLabel(editorRoot, labels);
+          if (!byLabel) {
+            return byName;
+          }
+
+          var listContainer = byLabel.closest("div");
+          if (!listContainer) {
+            return byName;
+          }
+
+          return listContainer.querySelectorAll('input[type="text"], input:not([type]), textarea');
+        }
+
+        function ensureListFields(editorRoot, name, labels, requiredLength) {
+          var listFields = getListFields(editorRoot, name, labels);
+          if (listFields.length >= requiredLength) {
+            return listFields;
+          }
+
+          var searchTerms = [name, name.replace(/ies$/i, "y").replace(/s$/i, "")]
+            .concat(labels || [])
+            .map(function (value) {
+              return normalizeLabel(value);
+            })
+            .filter(Boolean);
+
+          var buttons = editorRoot.querySelectorAll("button");
+          for (var index = 0; index < buttons.length; index += 1) {
+            var button = buttons[index];
+            var buttonText = normalizeLabel(button.textContent);
+
+            var isAddButton = buttonText.indexOf("add ") === 0;
+            var matchesField = searchTerms.some(function (term) {
+              return buttonText.indexOf(term) >= 0;
+            });
+
+            if (!isAddButton || !matchesField) {
+              continue;
+            }
+
+            while (listFields.length < requiredLength) {
+              var previousLength = listFields.length;
+              button.click();
+              listFields = getListFields(editorRoot, name, labels);
+              if (listFields.length <= previousLength) {
+                break;
+              }
+            }
+
+            if (listFields.length >= requiredLength) {
+              break;
+            }
+          }
+
+          return listFields;
+        }
+
+        function setSelectValue(field, rawValue) {
+          var normalizedTarget = normalizeLabel(rawValue);
+          var optionMatch = null;
+
+          for (var optionIndex = 0; optionIndex < field.options.length; optionIndex += 1) {
+            var option = field.options[optionIndex];
+            if (
+              normalizeLabel(option.value) === normalizedTarget ||
+              normalizeLabel(option.textContent) === normalizedTarget
+            ) {
+              optionMatch = option;
+              break;
+            }
+          }
+
+          setNativeValue(field, optionMatch ? optionMatch.value : rawValue);
+        }
+
+        function setFieldValue(editorRoot, config) {
+          var name = config.name;
+          var labels = config.labels || [];
+          var value = config.value;
+          var isList = Boolean(config.isList);
+          var isCheckbox = Boolean(config.isCheckbox);
+
+          if (isCheckbox) {
+            if (value !== true) {
+              return "skipped";
+            }
+
+            var checkboxField = findField(editorRoot, name, labels);
+            if (!(checkboxField instanceof HTMLInputElement) || checkboxField.type !== "checkbox") {
+              return "missing";
+            }
+
+            setNativeCheckedValue(checkboxField, true);
+            dispatchFieldEvents(checkboxField);
+            return "updated";
+          }
+
+          if (isList) {
+            var listValues = normalizeArrayValue(value);
+            if (listValues.length === 0) {
+              return "skipped";
+            }
+
+            var listFields = ensureListFields(
+              editorRoot,
+              name,
+              labels,
+              Math.max(listValues.length, 1),
+            );
+
+            if (listFields.length === 0) {
+              return "missing";
+            }
+
+            if (listFields.length === 1) {
+              var singleListField = listFields[0];
+              if (isEditableField(singleListField)) {
+                setNativeValue(singleListField, listValues.join(", "));
+                dispatchFieldEvents(singleListField);
+                return "updated";
+              }
+            }
+
+            for (var listIndex = 0; listIndex < listFields.length; listIndex += 1) {
+              var listField = listFields[listIndex];
+              if (!isEditableField(listField)) {
+                continue;
+              }
+
+              var listValue = "";
+              if (listValues.length > listFields.length && listIndex === listFields.length - 1) {
+                listValue = listValues.slice(listIndex).join(", ");
+              } else {
+                listValue =
+                  typeof listValues[listIndex] === "undefined"
+                    ? ""
+                    : String(listValues[listIndex]);
+              }
+              setNativeValue(listField, listValue);
+              dispatchFieldEvents(listField);
+            }
+
+            return "updated";
+          }
+
+          var normalizedValue = normalizeText(value);
+          if (!normalizedValue) {
+            return "skipped";
+          }
+
+          var field = findField(editorRoot, name, labels);
+          if (!field) {
+            return "missing";
+          }
+
+          if (field instanceof HTMLSelectElement) {
+            setSelectValue(field, normalizedValue);
+          } else {
+            setNativeValue(field, normalizedValue);
+          }
+
+          dispatchFieldEvents(field);
+          return "updated";
+        }
+
+        function createApplySummary() {
+          return {
+            updated: 0,
+            skipped: 0,
+            missing: 0,
+          };
+        }
+
+        function recordApplyStatus(summary, status) {
+          if (status === "updated") {
+            summary.updated += 1;
+            return;
+          }
+
+          if (status === "missing") {
+            summary.missing += 1;
+            return;
+          }
+
+          summary.skipped += 1;
+        }
+
+        function applyJobData(editorRoot, data) {
+          var summary = createApplySummary();
+          var fields = [
+            { name: "title", labels: ["job title", "title"], value: data.title },
+            { name: "company", labels: ["company name", "company"], value: data.company },
+            { name: "location", labels: ["location"], value: data.location },
+            { name: "workMode", labels: ["work mode"], value: data.workMode },
+            { name: "employmentType", labels: ["employment type"], value: data.employmentType },
+            { name: "salary", labels: ["salary"], value: data.salary },
+            {
+              name: "experience",
+              labels: ["experience required", "experience"],
+              value: data.experience,
+            },
+            {
+              name: "eligibilityCriteria",
+              labels: ["eligibility criteria", "eligibility", "candidate profile"],
+              value: data.eligibilityCriteria,
+            },
+            { name: "education", labels: ["education"], value: data.education, isList: true },
+            {
+              name: "skills",
+              labels: ["skills required", "skills"],
+              value: data.skills,
+              isList: true,
+            },
+            {
+              name: "responsibilities",
+              labels: ["roles & responsibilities", "responsibilities", "role and responsibilities"],
+              value: data.responsibilities,
+              isList: true,
+            },
+            { name: "workingDays", labels: ["working days"], value: data.workingDays },
+            { name: "jobTiming", labels: ["job timing"], value: data.jobTiming },
+            { name: "applyLink", labels: ["apply link"], value: data.applyLink },
+            {
+              name: "applicationStartDate",
+              labels: ["application start date"],
+              value: data.applicationStartDate,
+            },
+            {
+              name: "applicationEndDate",
+              labels: ["application end date"],
+              value: data.applicationEndDate,
+            },
+          ];
+
+          for (var index = 0; index < fields.length; index += 1) {
+            recordApplyStatus(summary, setFieldValue(editorRoot, fields[index]));
+          }
+
+          return summary;
+        }
+
+        function applyBlogData(editorRoot, data) {
+          var summary = createApplySummary();
+          var fields = [
+            { name: "title", labels: ["title"], value: data.title },
+            { name: "slug", labels: ["slug"], value: data.slug },
+            { name: "summary", labels: ["summary"], value: data.summary },
+            { name: "topic", labels: ["topic"], value: data.topic },
+            { name: "tags", labels: ["tags"], value: data.tags, isList: true },
+            { name: "isTrending", labels: ["mark as trending", "trending"], value: data.isTrending, isCheckbox: true },
+            { name: "author", labels: ["author"], value: data.author },
+            { name: "date", labels: ["publish date", "date"], value: data.date },
+          ];
+
+          for (var index = 0; index < fields.length; index += 1) {
+            recordApplyStatus(summary, setFieldValue(editorRoot, fields[index]));
+          }
+
+          return summary;
+        }
+
+        async function runAutoExtract(button) {
+          var editorRoot = getEditorRoot() || document;
+          var collection = getCollectionFromHash();
+
+          if (!isSupportedCollection(collection)) {
+            alert("Auto extraction is available only for Jobs and Blogs entry forms.");
+            return;
+          }
+
+          await ensureAdminSession();
+
+          var sourceTextarea = document.getElementById(sourceTextareaId);
+          var manualSourceText =
+            sourceTextarea instanceof HTMLTextAreaElement
+              ? String(sourceTextarea.value || "").trim()
+              : "";
+
+          var sourceText = manualSourceText;
+          if (!sourceText && collection === "blogs") {
+            var sourceField =
+              editorRoot.querySelector('[name="body"]') ||
+              document.querySelector('textarea[name="body"]') ||
+              document.querySelector('input[name="body"]');
+            if (sourceField) {
+              sourceText = String(sourceField.value || "").trim();
+            }
+          }
+
+          if (!sourceText) {
+            alert("Paste full source content into the Auto Extract panel textarea first.");
+            return;
+          }
+
+          button.disabled = true;
+          button.textContent = "Extracting...";
+          var requestTimeoutId = null;
+
+          try {
+            var requestController = new AbortController();
+            requestTimeoutId = window.setTimeout(function () {
+              requestController.abort();
+            }, 25_000);
+
+            var response = await fetch("/api/admin/auto-extract", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "same-origin",
+              signal: requestController.signal,
+              body: JSON.stringify({
+                collection: collection,
+                sourceText: sourceText,
+              }),
+            });
+            window.clearTimeout(requestTimeoutId);
+
+            var result = await readJsonOrThrow(response);
+
+            if (!response.ok || !result || !result.success) {
+              if (result && result.error === "SessionRequired") {
+                redirectToAdminLogin();
+                throw new Error("Session expired. Redirecting to login...");
+              }
+
+              if (result && result.error === "EmailNotAllowed") {
+                throw new Error("This Google account is not allowed for admin auto extract.");
+              }
+
+              throw new Error(
+                (result && result.error) || "Auto extraction failed",
+              );
+            }
+
+            if (!result.data || typeof result.data !== "object") {
+              throw new Error("Invalid extraction payload");
+            }
+
+            var fillSummary =
+              collection === "jobs"
+                ? applyJobData(editorRoot, result.data)
+                : applyBlogData(editorRoot, result.data);
+
+            var completionMessage =
+              "Auto extraction completed (" +
+              (result.mode || "fallback") +
+              "). Updated " +
+              fillSummary.updated +
+              " field(s)";
+
+            if (fillSummary.skipped > 0) {
+              completionMessage += ", skipped " + fillSummary.skipped + " empty field(s)";
+            }
+
+            if (fillSummary.missing > 0) {
+              completionMessage += ", " + fillSummary.missing + " field(s) were not found";
+            }
+
+            completionMessage += ".";
+
+            if (result.mode === "fallback") {
+              var fallbackReason =
+                typeof result.reason === "string" ? result.reason.trim() : "";
+              completionMessage += fallbackReason
+                ? " Fallback reason: " + fallbackReason + "."
+                : " Fallback parser was used.";
+            }
+
+            if (fillSummary.updated === 0) {
+              completionMessage += " No fields were filled. Try richer structured text.";
+            }
+
+            completionMessage += " Please review before publishing.";
+            alert(completionMessage);
+          } catch (error) {
+            var message =
+              error && error.message ? error.message : "Auto extraction failed";
+            if (String(message).toLowerCase().indexOf("abort") >= 0) {
+              message = "Extraction timed out. Please shorten content or try again.";
+            }
+            if (
+              String(message).indexOf("SessionRequired") >= 0 ||
+              String(message).toLowerCase().indexOf("session expired") >= 0 ||
+              String(message).toLowerCase().indexOf("unauthorized") >= 0
+            ) {
+              redirectToAdminLogin();
+              return;
+            }
+            alert(message);
+          } finally {
+            if (requestTimeoutId) {
+              window.clearTimeout(requestTimeoutId);
+            }
+            button.disabled = false;
+            button.textContent = "Auto Extract with AI";
+          }
+        }
+
+        function injectPanel() {
+          var collection = getCollectionFromHash();
+
+          if (!isSupportedCollection(collection)) {
+            removePanel();
+            return;
+          }
+
+          if (document.getElementById(buttonId)) {
+            return;
+          }
+
+          var panel = document.createElement("div");
+          panel.id = panelId;
+          panel.style.position = "fixed";
+          panel.style.right = "14px";
+          panel.style.bottom = "14px";
+          panel.style.zIndex = "9999";
+          panel.style.maxWidth = "420px";
+          panel.style.padding = "12px";
+          panel.style.borderRadius = "10px";
+          panel.style.border = "1px solid rgba(15, 23, 42, 0.12)";
+          panel.style.background = "rgba(255, 255, 255, 0.92)";
+          panel.style.boxShadow = "0 10px 24px rgba(15, 23, 42, 0.18)";
+
+          var helper = document.createElement("p");
+          helper.textContent =
+            collection === "jobs"
+              ? "Paste full source text here (long text supported), then auto-fill job fields."
+              : "Paste full source content here (long text supported), then auto-fill fields.";
+          helper.style.margin = "0 0 8px";
+          helper.style.fontSize = "12px";
+          helper.style.color = "#334155";
+
+          var sourceInput = document.createElement("textarea");
+          sourceInput.id = sourceTextareaId;
+          sourceInput.rows = 7;
+          sourceInput.placeholder =
+            collection === "jobs"
+              ? "Paste complete job details text here for accurate extraction."
+              : "Paste complete blog content/details here for accurate extraction.";
+          sourceInput.style.width = "100%";
+          sourceInput.style.minHeight = "120px";
+          sourceInput.style.maxHeight = "220px";
+          sourceInput.style.resize = "vertical";
+          sourceInput.style.margin = "0 0 10px";
+          sourceInput.style.padding = "8px 10px";
+          sourceInput.style.borderRadius = "8px";
+          sourceInput.style.border = "1px solid rgba(148, 163, 184, 0.8)";
+          sourceInput.style.fontSize = "12px";
+          sourceInput.style.lineHeight = "1.5";
+          sourceInput.style.color = "#0f172a";
+          sourceInput.style.background = "#ffffff";
+
+          if (collection === "blogs") {
+            var existingBodyField =
+              document.querySelector('textarea[name="body"]') ||
+              document.querySelector('input[name="body"]');
+            if (existingBodyField && existingBodyField.value) {
+              sourceInput.value = String(existingBodyField.value || "").trim();
+            }
+          }
+
+          var button = document.createElement("button");
+          button.id = buttonId;
+          button.type = "button";
+          button.textContent = "Auto Extract with AI";
+          button.style.padding = "9px 14px";
+          button.style.borderRadius = "8px";
+          button.style.border = "none";
+          button.style.background = "#0f766e";
+          button.style.color = "#ffffff";
+          button.style.fontSize = "13px";
+          button.style.fontWeight = "700";
+          button.style.cursor = "pointer";
+
+          button.addEventListener("click", function () {
+            runAutoExtract(button);
+          });
+
+          panel.appendChild(helper);
+          panel.appendChild(sourceInput);
+          panel.appendChild(button);
+          document.body.appendChild(panel);
+        }
+
+        window.setInterval(injectPanel, 1200);
+        window.addEventListener("hashchange", injectPanel);
+        injectPanel();
+      })();
+    </script>
+  </body>
+</html>

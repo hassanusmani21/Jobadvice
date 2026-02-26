@@ -1,0 +1,17 @@
+[build]
+  command = "rm -rf .next out && npm run build"
+
+[build.environment]
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/admin/"
+  to = "/admin/index.html"
+  status = 301
+  force = true

@@ -1,0 +1,29 @@
+{
+  "name": "jobadvice",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "clean": "rm -rf .next out",
+    "dev": "next dev",
+    "cms:proxy": "npx --yes netlify-cms-proxy-server",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "next": "14.2.35",
+    "next-auth": "4.24.13",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^18.2.79",
+    "@types/react-dom": "^18.2.25",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.35",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

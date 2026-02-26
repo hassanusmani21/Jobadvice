@@ -1,0 +1,31 @@
+<svg width="640" height="220" viewBox="0 0 640 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">JobAdvice Logo</title>
+  <desc id="desc">JobAdvice wordmark with a teal glow.</desc>
+  <defs>
+    <radialGradient id="glowGradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(320 110) rotate(90) scale(90 220)">
+      <stop offset="0" stop-color="#34D399" stop-opacity="0.72"/>
+      <stop offset="0.6" stop-color="#0F766E" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#0F766E" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softBlur" x="60" y="-10" width="520" height="240" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="320" cy="110" rx="220" ry="90" fill="url(#glowGradient)" filter="url(#softBlur)"/>
+
+  <text
+    x="320"
+    y="132"
+    text-anchor="middle"
+    font-family="Georgia, 'Times New Roman', serif"
+    font-size="118"
+    font-weight="700"
+    letter-spacing="-1.5"
+    fill="#063633"
+    stroke="#032322"
+    stroke-width="1.2"
+  >
+    JobAdvice
+  </text>
+</svg>
