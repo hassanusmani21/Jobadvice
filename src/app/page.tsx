@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import ApplicationStatusBadge from "@/components/ApplicationStatusBadge";
+import IdentityHashRedirect from "@/components/IdentityHashRedirect";
 import { formatBlogDate, getLatestBlogs } from "@/lib/blogs";
 import { formatApplicationWindow, formatPostedDate, getLatestJobs } from "@/lib/jobs";
 
@@ -20,6 +21,7 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-10">
+      <IdentityHashRedirect />
       <section className="fade-up card-surface rounded-3xl px-6 py-10 sm:px-10">
         <p className="inline-flex rounded-full bg-teal-100 px-4 py-1 text-sm font-semibold tracking-wide text-teal-900">
           Daily career opportunities
