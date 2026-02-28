@@ -171,7 +171,7 @@ export default function RootLayout({
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 lg:px-8">{children}</main>
 
           <footer className="mt-8 border-t border-[#E5E7EB] bg-[#F7F8FA]">
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-6 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-24 sm:px-6 sm:pb-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
               <p className="text-center text-[13px] font-medium leading-6 text-slate-500 lg:text-left">
                 © 2026 JobAdvice. All rights reserved.
               </p>
@@ -191,7 +191,7 @@ export default function RootLayout({
                 ))}
               </nav>
 
-              <div className="flex items-center justify-center gap-2 pr-24 sm:pr-28 lg:justify-end lg:pr-28">
+              <div className="flex items-center justify-center gap-2 lg:justify-end">
                 {socialLinks.map((item) => (
                   <a
                     key={item.label}
