@@ -84,15 +84,47 @@
         window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1";
 
-      if (window.netlifyIdentity && !isLocalAdminHost) {
-        window.netlifyIdentity.on("init", function (user) {
-          if (!user) {
-            window.netlifyIdentity.on("login", function () {
-              document.location.href = "/admin/";
-            });
+      (function bindNetlifyIdentity() {
+        var identityHash = window.location.hash || "";
+        var isRecoveryFlow = /(?:^#|&)recovery_token=/i.test(identityHash);
+        var isConfirmationFlow = /(?:^#|&)confirmation_token=/i.test(identityHash);
+        var pollAttempts = 0;
+
+        function attachIdentityHandlers() {
+          if (!window.netlifyIdentity || isLocalAdminHost) {
+            if (pollAttempts >= 50 || isLocalAdminHost) {
+              return;
+            }
+
+            pollAttempts += 1;
+            window.setTimeout(attachIdentityHandlers, 120);
+            return;
           }
-        });
-      }
+
+          window.netlifyIdentity.on("login", function () {
+            document.location.href = "/admin/";
+          });
+
+          window.netlifyIdentity.on("recovery", function () {
+            window.netlifyIdentity.open("recovery");
+          });
+
+          window.netlifyIdentity.on("init", function (user) {
+            if (isRecoveryFlow) {
+              window.netlifyIdentity.open("recovery");
+              return;
+            }
+
+            if (isConfirmationFlow && !user) {
+              window.netlifyIdentity.open("login");
+            }
+          });
+
+          window.netlifyIdentity.init();
+        }
+
+        attachIdentityHandlers();
+      })();
     </script>
     <script>
       (function injectAdminAccountPanel() {
