@@ -2,8 +2,23 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { isAllowedAdminEmail } from "./lib/adminAccess";
 
+const isCmsAdminAsset = (pathname: string) => {
+  if (pathname === "/admin" || pathname === "/admin/") {
+    return true;
+  }
+
+  if (pathname.startsWith("/admin/index.html")) {
+    return true;
+  }
+
+  return /^\/admin\/[^/]+\.[a-z0-9]+$/i.test(pathname);
+};
+
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith("/admin/login")) {
+  if (
+    request.nextUrl.pathname.startsWith("/admin/login") ||
+    isCmsAdminAsset(request.nextUrl.pathname)
+  ) {
     return NextResponse.next();
   }
 

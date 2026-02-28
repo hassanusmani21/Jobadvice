@@ -16,9 +16,8 @@ export default function IdentityHashRedirect() {
       return;
     }
 
-    window.location.replace(`/admin/${hash}`);
+    window.location.replace(`/admin/index.html${hash}`);
   }, []);
 
   return null;
 }
-
