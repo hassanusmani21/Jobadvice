@@ -9,7 +9,7 @@ import {
   type BlogPost,
 } from "@/lib/blogs";
 import { markdownToBlocks } from "@/lib/markdown";
-import { siteUrl } from "@/lib/site";
+import { organizationId, siteLogoUrl, siteName, siteUrl } from "@/lib/site";
 
 type BlogDetailPageProps = {
   params: {
@@ -60,9 +60,14 @@ const toBlogJsonLd = (blog: BlogPost) => ({
     name: blog.author || "JobAdvice",
   },
   publisher: {
+    "@id": organizationId,
     "@type": "Organization",
-    name: "JobAdvice",
+    name: siteName,
     url: siteUrl,
+    logo: {
+      "@type": "ImageObject",
+      url: siteLogoUrl,
+    },
   },
   mainEntityOfPage: `${siteUrl}/blog/${blog.slug}`,
 });

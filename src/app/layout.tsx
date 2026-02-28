@@ -2,7 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import WhatsAppCta from "@/components/WhatsAppCta";
-import { siteUrl } from "@/lib/site";
+import {
+  organizationId,
+  siteDescription,
+  siteEmail,
+  siteKeywords,
+  siteLogoUrl,
+  siteName,
+  siteSocialProfiles,
+  siteUrl,
+  websiteId,
+} from "@/lib/site";
 import "./globals.css";
 
 const identityHashRedirectScript = `
@@ -37,31 +47,48 @@ const resolvedMetadataBase = (() => {
 export const metadata: Metadata = {
   metadataBase: resolvedMetadataBase,
   title: {
-    default: "JobAdvice | Latest Job Updates and Career Opportunities",
-    template: "%s | JobAdvice",
+    default: `${siteName} | Verified Tech and Fresher Jobs`,
+    template: `%s | ${siteName}`,
   },
-  description: "Verified job updates, fresh openings, and direct apply links.",
-  keywords: [
-    "job updates",
-    "latest jobs",
-    "job listings",
-    "career opportunities",
-    "apply jobs",
-  ],
+  description: siteDescription,
+  applicationName: siteName,
+  keywords: siteKeywords,
+  authors: [{ name: siteName, url: siteUrl }],
+  creator: siteName,
+  publisher: siteName,
+  category: "jobs",
   alternates: {
     canonical: "/",
   },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   openGraph: {
-    title: "JobAdvice",
-    description: "Verified job updates, fresh openings, and direct apply links.",
+    title: siteName,
+    description: siteDescription,
     url: "/",
-    siteName: "JobAdvice",
+    siteName,
     type: "website",
+    images: [
+      {
+        url: siteLogoUrl,
+        alt: `${siteName} logo`,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "JobAdvice",
-    description: "Verified job updates, fresh openings, and direct apply links.",
+    title: siteName,
+    description: siteDescription,
+    images: [siteLogoUrl],
   },
 };
 
@@ -151,6 +178,29 @@ const socialLinks = [
   },
 ];
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": organizationId,
+  name: siteName,
+  url: siteUrl,
+  logo: siteLogoUrl,
+  email: siteEmail,
+  sameAs: siteSocialProfiles,
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": websiteId,
+  url: siteUrl,
+  name: siteName,
+  description: siteDescription,
+  publisher: {
+    "@id": organizationId,
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -162,6 +212,12 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: identityHashRedirectScript }} />
       </head>
       <body className="antialiased">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([organizationJsonLd, websiteJsonLd]),
+          }}
+        />
         <div className="site-grid">
           <div aria-hidden className="site-glow site-glow-left" />
           <div aria-hidden className="site-glow site-glow-right" />

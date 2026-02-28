@@ -5,7 +5,13 @@
   "scripts": {
     "clean": "rm -rf .next out",
     "dev": "next dev",
+    "dev:local": "next dev -H 127.0.0.1 -p 3000",
     "cms:proxy": "npx --yes netlify-cms-proxy-server",
+    "local:reset": "bash ./scripts/reset-local-dev.sh",
+    "local:admin": "bash ./scripts/local-admin.sh",
+    "local:admin:auto": "bash ./scripts/local-admin-auto.sh",
+    "auto:publish": "bash ./scripts/auto-publish-content.sh",
+    "publish:content": "bash ./scripts/publish-content.sh",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
