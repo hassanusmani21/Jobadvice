@@ -153,18 +153,18 @@ export default async function JobDetailPage({ params }: JobPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
       />
       <article className="space-y-6 lg:col-span-7">
-        <header className="fade-up card-surface rounded-3xl px-6 py-8 sm:px-8">
+        <header className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
           <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
             Posted {formatPostedDate(job.date)}
           </p>
-          <h1 className="mt-2 font-serif text-4xl leading-tight text-slate-900">{job.title}</h1>
-          <p className="mt-3 text-lg font-semibold text-slate-700">{job.company}</p>
-          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+          <h1 className="mt-2 font-serif text-[1.5rem] leading-[1.2] text-slate-900 sm:text-[1.875rem]">{job.title}</h1>
+          <p className="mt-3 text-base font-semibold text-slate-700 sm:text-lg">{job.company}</p>
+          <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:text-xs">
             Last updated {formatPostedDate(job.updatedAt)}
             {sourceHost ? ` • Source: ${sourceHost}` : ""}
           </p>
 
-          <div className="mt-5 flex flex-wrap gap-2 text-sm text-slate-700">
+          <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-700 sm:text-sm">
             {job.location ? (
               <span className="rounded-full bg-slate-100 px-3 py-1">Location: {job.location}</span>
             ) : null}
@@ -187,19 +187,19 @@ export default async function JobDetailPage({ params }: JobPageProps) {
             </span>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-6 flex flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <ApplicationStatusBadge status={job.applicationStatus} className="text-[11px]" />
 
             {isJobExpired ? (
-              <span className="inline-flex rounded-full border border-rose-200 bg-rose-100 px-5 py-2.5 text-sm font-semibold text-rose-900">
+              <span className="inline-flex justify-center rounded-full border border-rose-200 bg-rose-100 px-5 py-2.5 text-sm font-semibold text-rose-900">
                 Job Expired
               </span>
             ) : isApplicationUpcoming ? (
-              <span className="inline-flex rounded-full border border-sky-200 bg-sky-100 px-5 py-2.5 text-sm font-semibold text-sky-900">
+              <span className="inline-flex justify-center rounded-full border border-sky-200 bg-sky-100 px-5 py-2.5 text-sm font-semibold text-sky-900">
                 Applications Open Soon
               </span>
             ) : !hasApplyLink ? (
-              <span className="inline-flex rounded-full border border-slate-200 bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-700">
+              <span className="inline-flex justify-center rounded-full border border-slate-200 bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-700">
                 Apply Link Not Available
               </span>
             ) : (
@@ -207,7 +207,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                 href={`/api/apply/${job.slug}`}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
-                className="inline-flex rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+                className="inline-flex justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 sm:w-auto"
               >
                 Apply Now
               </Link>
@@ -280,7 +280,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
         <div className="fade-up" style={{ animationDelay: "230ms" }}>
           <Link
             href="/jobs"
-            className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
+            className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
           >
             Back to all jobs
           </Link>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import BlogCard from "@/components/BlogCard";
+import EmptyStateCard from "@/components/EmptyStateCard";
 import {
   getAllBlogs,
   getTopBlogTopics,
@@ -59,13 +60,13 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     <div className="grid gap-6 lg:grid-cols-10">
       <section className="space-y-6 lg:col-span-7">
         <div className="fade-up space-y-4">
-          <h1 className="font-serif text-4xl text-slate-900">Blog</h1>
-          <p className="max-w-2xl text-slate-600">
+          <h1 className="font-serif text-[1.5rem] leading-[1.2] text-slate-900">Blog</h1>
+          <p className="max-w-2xl text-sm text-slate-600 sm:text-base">
             Daily articles on hiring trends, career growth, interview strategy, and
             practical tech updates.
           </p>
 
-          <form action="/blog" method="get" className="flex flex-wrap items-center gap-3">
+          <form action="/blog" method="get" className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <label htmlFor="blog-search" className="sr-only">
               Search blog posts
             </label>
@@ -75,18 +76,18 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
               type="search"
               defaultValue={query}
               placeholder="Search by title, topic, keyword, or tag"
-              className="w-full max-w-lg rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-teal-200 transition focus:border-teal-300 focus:ring-2"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-teal-200 transition focus:border-teal-300 focus:ring-2 sm:col-span-2 xl:col-span-3"
             />
             <button
               type="submit"
-              className="rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+              className="inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
             >
               Search
             </button>
             {query ? (
               <Link
                 href="/blog"
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
               >
                 Clear
               </Link>
@@ -117,9 +118,10 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         ) : null}
 
         {allBlogs.length === 0 ? (
-          <p className="rounded-2xl bg-white/80 p-4 text-slate-600">
-            No blog posts published yet. Create one from <code>/admin</code>.
-          </p>
+          <EmptyStateCard
+            title="No blogs yet"
+            description="This space will fill with articles once blog posts are published."
+          />
         ) : null}
       </section>
 

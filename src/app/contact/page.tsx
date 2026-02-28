@@ -11,9 +11,9 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <section className="fade-up card-surface rounded-3xl px-6 py-8 sm:px-8">
-      <h1 className="font-serif text-4xl text-slate-900">Contact</h1>
-      <p className="mt-4 max-w-2xl text-slate-700">
+    <section className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
+      <h1 className="font-serif text-[1.5rem] leading-[1.2] text-slate-900">Contact</h1>
+      <p className="mt-4 max-w-2xl text-sm text-slate-700 sm:text-base">
         Questions, corrections, or partnership requests can be sent to the email addresses below.
       </p>
 

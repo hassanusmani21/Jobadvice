@@ -9,7 +9,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
   return (
     <Link
       href={`/blog/${blog.slug}`}
-      className="group fade-up card-surface flex h-full flex-col rounded-2xl p-5 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+      className="group fade-up card-surface flex h-full flex-col p-5 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_44px_-32px_rgba(15,23,42,0.2)]"
       aria-label={`Read ${blog.title}`}
     >
       <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide">
@@ -20,7 +20,7 @@ export default function BlogCard({ blog }: BlogCardProps) {
           </span>
         ) : null}
       </div>
-      <h2 className="mt-3 text-xl font-bold text-slate-900 transition-colors group-hover:text-teal-900">
+      <h2 className="mt-3 text-[1.125rem] font-bold leading-[1.35] text-slate-900 transition-colors group-hover:text-teal-900">
         {blog.title}
       </h2>
       {blog.excerpt ? <p className="mt-2 text-sm leading-6 text-slate-600">{blog.excerpt}</p> : null}
@@ -37,14 +37,14 @@ export default function BlogCard({ blog }: BlogCardProps) {
           {blog.tags.slice(0, 3).map((tag, index) => (
             <span
               key={`${tag}-${index}`}
-              className="rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-700"
+              className="rounded-xl border border-slate-200 px-2.5 py-1 text-xs text-slate-700"
             >
               #{tag}
             </span>
           ))}
         </div>
       ) : null}
-      <span className="mt-5 inline-flex w-fit rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-900 transition-colors group-hover:border-teal-300 group-hover:bg-teal-100">
+      <span className="mt-5 inline-flex w-fit rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-900 transition-colors group-hover:border-teal-300 group-hover:bg-teal-100">
         Read Article
       </span>
     </Link>

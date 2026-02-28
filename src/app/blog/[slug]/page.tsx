@@ -134,15 +134,15 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
       />
 
       <article className="space-y-6 lg:col-span-7">
-        <header className="fade-up card-surface rounded-3xl px-6 py-8 sm:px-8">
+        <header className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
           {blog.topic ? (
             <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
               {blog.topic}
             </p>
           ) : null}
-          <h1 className="mt-2 font-serif text-4xl leading-tight text-slate-900">{blog.title}</h1>
-          {blog.summary ? <p className="mt-4 text-slate-700">{blog.summary}</p> : null}
-          <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-600">
+          <h1 className="mt-2 font-serif text-[1.5rem] leading-[1.2] text-slate-900 sm:text-[1.875rem]">{blog.title}</h1>
+          {blog.summary ? <p className="mt-4 text-sm text-slate-700 sm:text-base">{blog.summary}</p> : null}
+          <div className="mt-5 flex flex-wrap gap-2 text-[11px] text-slate-600 sm:text-xs">
             <span className="rounded-full bg-slate-100 px-3 py-1">
               Published: {formatBlogDate(blog.date)}
             </span>
@@ -177,10 +177,10 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         </header>
 
         <section
-          className="fade-up card-surface rounded-3xl px-6 py-7 sm:px-8"
+          className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
           style={{ animationDelay: "90ms" }}
         >
-          <div className="space-y-5 text-slate-700">
+          <div className="space-y-5 text-sm text-slate-700 sm:text-base">
             {markdownBlocks.map((block, index) => {
               if (block.type === "heading") {
                 if (block.level <= 2) {
@@ -220,7 +220,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         <div className="fade-up" style={{ animationDelay: "150ms" }}>
           <Link
             href="/blog"
-            className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
+            className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
           >
             Back to all blogs
           </Link>

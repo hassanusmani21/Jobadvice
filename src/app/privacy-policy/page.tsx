@@ -11,8 +11,8 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <section className="fade-up card-surface rounded-3xl px-6 py-8 sm:px-8">
-      <h1 className="font-serif text-4xl text-slate-900">Privacy Policy</h1>
+    <section className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
+      <h1 className="font-serif text-[1.5rem] leading-[1.2] text-slate-900">Privacy Policy</h1>
       <p className="mt-4 text-sm text-slate-500">Last updated: February 23, 2026</p>
 
       <div className="mt-6 space-y-6 text-slate-700">
