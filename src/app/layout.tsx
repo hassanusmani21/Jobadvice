@@ -15,7 +15,7 @@ const identityHashRedirectScript = `
       return;
     }
 
-    window.location.replace("/admin/index.html" + hash);
+    window.location.replace("/admin/" + hash);
   })();
 `;
 
