@@ -231,9 +231,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       ) : null}
 
       {jobs.length === 0 && !hasActiveFilters ? (
-        <p className="rounded-2xl bg-white/80 p-4 text-slate-600">
-          No job posts found. Create one from <code>/admin</code>.
-        </p>
+        <p className="rounded-2xl bg-white/80 p-4 text-slate-600">No jobs available right now.</p>
       ) : null}
     </section>
   );

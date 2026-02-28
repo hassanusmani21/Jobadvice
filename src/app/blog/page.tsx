@@ -118,38 +118,30 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         ) : null}
 
         {allBlogs.length === 0 ? (
-          <EmptyStateCard
-            title="No blogs yet"
-            description="This space will fill with articles once blog posts are published."
-          />
+          <EmptyStateCard title="No blogs yet" />
         ) : null}
       </section>
 
       <aside className="space-y-5 lg:col-span-3">
         <section className="fade-up card-surface rounded-3xl p-5">
-          <h2 className="text-lg font-bold text-slate-900">Top Trending Topics</h2>
+          <h2 className="text-lg font-bold text-slate-900">Topics</h2>
           {topTopics.length > 0 ? (
             <ul className="mt-4 space-y-2">
               {topTopics.map((item) => (
-                <li key={item.topic} className="flex items-center justify-between gap-3">
+                <li key={item.topic}>
                   <span className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700">
                     {item.topic}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-500">
-                    Score {item.score}
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-slate-600">
-              Trending topics will appear after posts are published.
-            </p>
+            <p className="mt-3 text-sm text-slate-600">No topics yet.</p>
           )}
         </section>
 
         <section className="fade-up card-surface rounded-3xl p-5" style={{ animationDelay: "90ms" }}>
-          <h2 className="text-lg font-bold text-slate-900">Top Trending Blogs</h2>
+          <h2 className="text-lg font-bold text-slate-900">Latest Reads</h2>
           {trendingBlogs.length > 0 ? (
             <ul className="mt-4 space-y-3">
               {trendingBlogs.map((blog) => (
@@ -168,9 +160,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-slate-600">
-              Trending posts will appear after publishing.
-            </p>
+            <p className="mt-3 text-sm text-slate-600">No blogs yet.</p>
           )}
         </section>
       </aside>

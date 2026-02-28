@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description:
-    "Read the JobAdvice privacy policy for data usage, analytics, cookies, and external links.",
+  description: "Read how JobAdvice handles basic website usage and external apply links.",
   alternates: {
     canonical: "/privacy-policy",
   },
@@ -13,53 +13,41 @@ export default function PrivacyPolicyPage() {
   return (
     <section className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
       <h1 className="font-serif text-[1.5rem] leading-[1.2] text-slate-900">Privacy Policy</h1>
-      <p className="mt-4 text-sm text-slate-500">Last updated: February 23, 2026</p>
+      <p className="mt-4 text-sm text-slate-500">Last updated: February 28, 2026</p>
 
       <div className="mt-6 space-y-6 text-slate-700">
         <section>
-          <h2 className="text-xl font-bold text-slate-900">1. Information We Collect</h2>
+          <h2 className="text-xl font-bold text-slate-900">1. Information</h2>
           <p className="mt-2 leading-7">
-            JobAdvice may collect contact details when you email us and limited usage analytics to
-            improve website performance and content quality.
+            JobAdvice may receive limited technical data from hosting providers and any information
+            you share through public contact channels.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-bold text-slate-900">2. How We Use Information</h2>
+          <h2 className="text-xl font-bold text-slate-900">2. Use of Information</h2>
           <p className="mt-2 leading-7">
-            Information is used to respond to inquiries, maintain job listing quality, and improve
-            site usability. We do not sell personal information.
+            This information is used to maintain the website, review content quality, and respond
+            to genuine questions or requests.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-bold text-slate-900">3. Cookies and Advertising</h2>
+          <h2 className="text-xl font-bold text-slate-900">3. External Links</h2>
           <p className="mt-2 leading-7">
-            JobAdvice may use cookies and third-party services, including ad providers, to improve
-            content relevance and measure traffic trends.
+            Job listings may link to third-party company pages. Once you leave JobAdvice, those
+            websites follow their own policies.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-bold text-slate-900">4. External Links</h2>
+          <h2 className="text-xl font-bold text-slate-900">4. Contact</h2>
           <p className="mt-2 leading-7">
-            Job postings include external application links. Once you leave JobAdvice, the privacy
-            practices of those third-party sites apply.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-bold text-slate-900">5. Data Retention</h2>
-          <p className="mt-2 leading-7">
-            We retain communications only as long as needed to support requests, comply with legal
-            obligations, or improve service operations.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-bold text-slate-900">6. Contact</h2>
-          <p className="mt-2 leading-7">
-            For privacy-related questions, contact: privacy@jobadvice.site
+            For privacy-related questions, use the channels listed on the{" "}
+            <Link href="/contact" className="font-semibold text-teal-800 hover:text-teal-900">
+              Contact
+            </Link>{" "}
+            page.
           </p>
         </section>
       </div>

@@ -40,8 +40,7 @@ export const metadata: Metadata = {
     default: "JobAdvice | Latest Job Updates and Career Opportunities",
     template: "%s | JobAdvice",
   },
-  description:
-    "JobAdvice publishes verified job updates with full details, skills, and direct application links.",
+  description: "Verified job updates, fresh openings, and direct apply links.",
   keywords: [
     "job updates",
     "latest jobs",
@@ -54,8 +53,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "JobAdvice",
-    description:
-      "Explore daily job updates with company, salary, skills, and direct apply links.",
+    description: "Verified job updates, fresh openings, and direct apply links.",
     url: "/",
     siteName: "JobAdvice",
     type: "website",
@@ -63,8 +61,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "JobAdvice",
-    description:
-      "Explore daily job updates with company, salary, skills, and direct apply links.",
+    description: "Verified job updates, fresh openings, and direct apply links.",
   },
 };
 
@@ -76,10 +73,10 @@ const footerLinks = [
 
 const socialLinks = [
   {
-    href: "#",
+    href: "https://www.instagram.com/hassanusmanix/",
     label: "Instagram",
     icon: (
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
         <rect
           x="3.75"
           y="3.75"
@@ -96,10 +93,10 @@ const socialLinks = [
     ),
   },
   {
-    href: "#",
+    href: "https://www.linkedin.com/in/hassan-usmani21",
     label: "LinkedIn",
     icon: (
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
         <path
           d="M7.25 8.25v8.5M7.25 6.1a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7ZM11.5 16.75v-4.6a2.15 2.15 0 0 1 4.3 0v4.6M11.5 10.6v6.15"
           fill="none"
@@ -122,10 +119,10 @@ const socialLinks = [
     ),
   },
   {
-    href: "#",
+    href: "https://www.youtube.com/@JobAdvice4u",
     label: "YouTube",
     icon: (
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
         <path
           d="M20 8.9c-.16-1.2-.96-2.08-2.03-2.24C16.7 6.45 14.9 6.3 12 6.3s-4.7.15-5.97.36C4.96 6.82 4.16 7.7 4 8.9c-.17 1.26-.17 2.94 0 4.2.16 1.2.96 2.08 2.03 2.24 1.27.21 3.07.36 5.97.36s4.7-.15 5.97-.36c1.07-.16 1.87-1.04 2.03-2.24.17-1.26.17-2.94 0-4.2Z"
           fill="none"
@@ -138,10 +135,10 @@ const socialLinks = [
     ),
   },
   {
-    href: "#",
+    href: "https://t.me/jobadvice4u",
     label: "Telegram",
     icon: (
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
         <path
           d="m20.2 5.1-2.5 13.2c-.16.82-.62 1.02-1.26.64l-4.26-3.15-2.06 1.99c-.23.23-.43.43-.87.43l.3-4.35 7.92-7.15c.34-.3-.08-.47-.53-.17l-9.8 6.17-4.22-1.32c-.92-.28-.94-.92.2-1.36l16.5-6.36c.76-.28 1.42.18 1.18 1.26Z"
           fill="none"
@@ -194,16 +191,18 @@ export default function RootLayout({
                 ))}
               </nav>
 
-              <div className="flex items-center justify-center gap-2 lg:justify-end">
+              <div className="flex items-center justify-center gap-2 pr-24 sm:pr-28 lg:justify-end lg:pr-28">
                 {socialLinks.map((item) => (
-                  <Link
+                  <a
                     key={item.label}
                     href={item.href}
                     aria-label={item.label}
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
                   >
                     {item.icon}
-                  </Link>
+                  </a>
                 ))}
               </div>
             </div>

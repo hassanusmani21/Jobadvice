@@ -1,6 +1,6 @@
 type EmptyStateCardProps = {
   title: string;
-  description: string;
+  description?: string;
 };
 
 export default function EmptyStateCard({
@@ -30,9 +30,11 @@ export default function EmptyStateCard({
         </svg>
       </div>
       <h3 className="mt-5 font-serif text-[1.5rem] leading-[1.2] text-slate-900">{title}</h3>
-      <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
-        {description}
-      </p>
+      {description ? (
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
+          {description}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -248,9 +248,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               ))}
             </div>
           ) : (
-            <p className="mt-3 text-sm text-slate-600">
-              Related posts will appear as more blogs are published.
-            </p>
+            <p className="mt-3 text-sm text-slate-600">No related articles yet.</p>
           )}
         </section>
 

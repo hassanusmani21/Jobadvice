@@ -95,9 +95,9 @@ export default function SiteHeader() {
             })}
             <Link
               href="/admin"
-              className="rounded-xl bg-slate-900 px-3 py-1.5 text-white transition-colors hover:bg-slate-700"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-slate-700 transition-colors hover:border-teal-200 hover:text-teal-900"
             >
-              Admin Login
+              Admin
             </Link>
           </nav>
 
@@ -215,19 +215,15 @@ export default function SiteHeader() {
                   })}
                 </div>
 
-                <div className="mt-4 flex items-center justify-between rounded-xl bg-slate-900 px-4 py-4 text-white shadow-[0_18px_34px_-26px_rgba(15,23,42,0.34)]">
-                  <p className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-200">
+                <div className="mt-4">
+                  <Link
+                    href="/admin"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-teal-200 hover:text-teal-900"
+                  >
                     Admin
-                  </p>
-                  <div>
-                    <Link
-                      href="/admin"
-                      className="inline-flex shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-teal-50"
-                    >
-                      Open
-                    </Link>
-                  </div>
+                  </Link>
                 </div>
+
               </div>
             </div>
           </>

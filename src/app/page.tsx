@@ -24,18 +24,11 @@ export default async function HomePage() {
     <div className="space-y-10">
       <IdentityHashRedirect />
       <section className="fade-up hero-surface px-5 py-8 sm:px-10 sm:py-10">
-        <p className="inline-flex rounded-full bg-teal-100 px-4 py-1 text-sm font-semibold tracking-wide text-teal-900">
-          Daily career opportunities
-        </p>
-        <h1 className="mt-4 font-serif text-[2rem] leading-[1.15] text-slate-900 sm:text-[2.5rem]">
+        <h1 className="font-serif text-[2rem] leading-[1.15] text-slate-900 sm:text-[2.5rem]">
           JobAdvice
         </h1>
         <p className="mt-3 text-sm font-medium text-slate-500 sm:text-base">
           Daily verified openings • Direct apply links • Fresh updates
-        </p>
-        <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
-          Track updated openings, review requirements quickly, and apply directly to company
-          hiring pages.
         </p>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Link
@@ -73,9 +66,7 @@ export default async function HomePage() {
         </ul>
 
         {latestJobs.length === 0 ? (
-          <p className="rounded-2xl bg-white/80 p-4 text-slate-600">
-            No job posts are published yet. Admin can add jobs from <code>/admin</code>.
-          </p>
+          <EmptyStateCard title="No jobs yet" />
         ) : null}
       </section>
 
@@ -118,10 +109,7 @@ export default async function HomePage() {
         </ul>
 
         {latestBlogs.length === 0 ? (
-          <EmptyStateCard
-            title="No blogs yet"
-            description="Fresh career insights and hiring updates will appear here once the first article is published."
-          />
+          <EmptyStateCard title="No blogs yet" />
         ) : null}
       </section>
     </div>
