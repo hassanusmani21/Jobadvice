@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { toContentSlug } from "./slug";
 
 const jobsDirectory = path.join(process.cwd(), "content", "jobs");
 const frontMatterPattern = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/;
@@ -379,11 +380,11 @@ const resolveApplicationStatus = (
 
 const resolveJobSlug = (frontMatterSlug: unknown, fileName: string) => {
   const candidate = normalizeTextValue(frontMatterSlug);
-  if (!candidate || placeholderSlugPattern.test(candidate)) {
-    return fileName.replace(/\.md$/i, "");
-  }
+  const fallbackSlug = fileName.replace(/\.md$/i, "");
+  const slugSource =
+    !candidate || placeholderSlugPattern.test(candidate) ? fallbackSlug : candidate;
 
-  return candidate;
+  return toContentSlug(slugSource) || fallbackSlug;
 };
 
 const mergeContinuationListItems = (items: string[]) => {
