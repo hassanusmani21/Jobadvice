@@ -765,10 +765,12 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
   const jobTiming = normalizeTextValue(data.jobTiming || data.shiftTiming || data.timing);
   const employmentType = normalizeTextValue(data.employmentType || data.jobType);
   const jobType = employmentType;
+  const fileModifiedDate =
+    toDateString(fileStats.mtime.toISOString()) || getTodayDateString();
   const date =
     toDateString(
-      data.date || data.postedDate || data.applicationStartDate || data.startDate,
-    ) || getTodayDateString();
+      data.date || data.postedDate,
+    ) || fileModifiedDate;
   const applicationStartDate =
     toDateString(data.applicationStartDate || data.startDate) || date;
   const applicationEndDateRaw = toDateString(
@@ -827,8 +829,7 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
     responsibilities.join(" ") ||
     skills.join(", ") ||
     education.join(", ");
-  const updatedAt =
-    toDateString(fileStats.mtime.toISOString()) || getTodayDateString();
+  const updatedAt = fileModifiedDate;
 
   return {
     slug,

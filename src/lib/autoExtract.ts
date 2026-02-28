@@ -2,6 +2,7 @@ export type ExtractMode = "ollama" | "fallback";
 
 type JobExtractedData = {
   title: string;
+  date: string;
   company: string;
   location: string;
   workMode: string;
@@ -714,6 +715,7 @@ const extractJobFallback = (text: string): JobExtractedData => {
 
   return {
     title,
+    date: todayDateString(),
     company,
     location,
     workMode,
@@ -1065,9 +1067,12 @@ const normalizeJobData = (value: Record<string, unknown>): JobExtractedData => {
   const applicationEndDate = toIsoDate(
     normalizeString(value.applicationEndDate || value.endDate || value.expiryDate),
   );
+  const date =
+    toIsoDate(normalizeString(value.date || value.postedDate)) || todayDateString();
 
   return {
     title,
+    date,
     company,
     location,
     workMode,
@@ -1119,6 +1124,7 @@ const mergeJobData = (
   fallbackData: JobExtractedData,
 ): JobExtractedData => ({
   title: mergeField(primaryData.title, fallbackData.title),
+  date: mergeField(primaryData.date, fallbackData.date) || todayDateString(),
   company: mergeField(primaryData.company, fallbackData.company),
   location: mergeField(primaryData.location, fallbackData.location),
   workMode: mergeField(primaryData.workMode, fallbackData.workMode),
