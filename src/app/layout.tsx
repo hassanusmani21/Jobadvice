@@ -4,6 +4,21 @@ import Link from "next/link";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
+const identityHashRedirectScript = `
+  (function () {
+    if (typeof window === "undefined") return;
+    var hash = window.location.hash || "";
+    var pathname = window.location.pathname || "/";
+    var identityHashPattern = /(recovery_token|confirmation_token|invite_token|email_change_token|type=recovery|type=invite|type=signup)/i;
+
+    if (pathname !== "/" || !hash || !identityHashPattern.test(hash)) {
+      return;
+    }
+
+    window.location.replace("/admin/" + hash);
+  })();
+`;
+
 const resolvedMetadataBase = (() => {
   try {
     return new URL(siteUrl);
@@ -62,6 +77,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: identityHashRedirectScript }} />
+      </head>
       <body className="antialiased">
         <div className="site-grid">
           <div aria-hidden className="site-glow site-glow-left" />
