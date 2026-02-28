@@ -89,6 +89,7 @@
         var isRecoveryFlow = /(?:^#|&)recovery_token=/i.test(identityHash);
         var isConfirmationFlow = /(?:^#|&)confirmation_token=/i.test(identityHash);
         var pollAttempts = 0;
+        var hasOpenedTokenFlow = false;
 
         function attachIdentityHandlers() {
           if (!window.netlifyIdentity || isLocalAdminHost) {
@@ -110,8 +111,16 @@
           });
 
           window.netlifyIdentity.on("init", function (user) {
-            if (isRecoveryFlow) {
-              window.netlifyIdentity.open("recovery");
+            if ((isRecoveryFlow || isConfirmationFlow) && !hasOpenedTokenFlow) {
+              hasOpenedTokenFlow = true;
+
+              if (user) {
+                window.netlifyIdentity.logout();
+              }
+
+              window.setTimeout(function () {
+                window.netlifyIdentity.open(isRecoveryFlow ? "recovery" : "login");
+              }, 150);
               return;
             }
 
