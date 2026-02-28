@@ -1,5 +1,5 @@
 ---
-title: AI Developer Intern
+title: "AI Developer Intern "
 company: Quest Global
 location: India (Various Locations / As per Business Need)
 workMode: Hybrid
