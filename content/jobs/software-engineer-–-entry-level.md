@@ -1,5 +1,5 @@
 ---
-title: "Software Engineer – Entry Level "
+title: "Software Engineer – Entry Level  "
 company: Equifax
 location: Pune, India
 workMode: Hybrid
