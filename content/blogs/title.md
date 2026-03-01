@@ -13,6 +13,7 @@ tags:
   - career
 isTrending: false
 author: JobAdvice Team
+coverImage: https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80
 date: 2026-03-01
 ---
 Dreaming of starting your IT career with Tata Consultancy Services (TCS)?  
