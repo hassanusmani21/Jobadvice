@@ -1,5 +1,5 @@
 ---
-title: "Intern – Storage Software (System Integration)  "
+title: Intern – Storage Software (System Integration)
 date: 2026-03-01
 company: "Confidential (Storage Software Product Company) "
 location: Pune, Maharashtra, India
