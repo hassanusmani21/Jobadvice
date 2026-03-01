@@ -69,6 +69,7 @@ const toBlogJsonLd = (blog: BlogPost) => ({
       url: siteLogoUrl,
     },
   },
+  ...(blog.coverImage ? { image: [blog.coverImage] } : {}),
   mainEntityOfPage: `${siteUrl}/blog/${blog.slug}`,
 });
 
@@ -109,11 +110,13 @@ export async function generateMetadata({
       description,
       url: blogUrl,
       type: "article",
+      ...(blog.coverImage ? { images: [{ url: blog.coverImage, alt: blog.title }] } : {}),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      ...(blog.coverImage ? { images: [blog.coverImage] } : {}),
     },
   };
 }
@@ -140,6 +143,16 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
       <article className="space-y-6 lg:col-span-7">
         <header className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
+          {blog.coverImage ? (
+            <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+              <img
+                src={blog.coverImage}
+                alt={blog.title}
+                className="h-56 w-full object-cover sm:h-72"
+                loading="eager"
+              />
+            </div>
+          ) : null}
           {blog.topic ? (
             <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
               {blog.topic}
@@ -187,6 +200,10 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         >
           <div className="space-y-5 text-sm text-slate-700 sm:text-base">
             {markdownBlocks.map((block, index) => {
+              if (block.type === "rule") {
+                return <hr key={`rule-${index}`} className="border-slate-200" />;
+              }
+
               if (block.type === "heading") {
                 if (block.level <= 2) {
                   return (
@@ -204,12 +221,55 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               }
 
               if (block.type === "list") {
+                const ListTag = block.ordered ? "ol" : "ul";
+
                 return (
-                  <ul key={`list-${index}`} className="list-disc space-y-2 pl-5">
+                  <ListTag
+                    key={`list-${index}`}
+                    className={block.ordered ? "list-decimal space-y-2 pl-5" : "list-disc space-y-2 pl-5"}
+                  >
                     {block.items.map((item) => (
                       <li key={item}>{item}</li>
                     ))}
-                  </ul>
+                  </ListTag>
+                );
+              }
+
+              if (block.type === "table") {
+                return (
+                  <div
+                    key={`table-${index}`}
+                    className="overflow-x-auto rounded-2xl border border-slate-200"
+                  >
+                    <table className="min-w-full border-collapse text-left text-sm">
+                      <thead className="bg-slate-50 text-slate-900">
+                        <tr>
+                          {block.headers.map((header) => (
+                            <th
+                              key={header}
+                              className="border-b border-slate-200 px-4 py-3 font-semibold"
+                            >
+                              {header}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {block.rows.map((row, rowIndex) => (
+                          <tr key={`${row.join("-")}-${rowIndex}`} className="bg-white">
+                            {row.map((cell, cellIndex) => (
+                              <td
+                                key={`${cell}-${cellIndex}`}
+                                className="border-b border-slate-100 px-4 py-3 align-top text-slate-700"
+                              >
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 );
               }
 

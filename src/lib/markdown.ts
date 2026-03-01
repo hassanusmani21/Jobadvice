@@ -10,17 +10,59 @@ export type MarkdownBlock =
     }
   | {
       type: "list";
+      ordered: boolean;
       items: string[];
+    }
+  | {
+      type: "rule";
+    }
+  | {
+      type: "table";
+      headers: string[];
+      rows: string[][];
     };
 
 const headingPattern = /^(#{1,6})\s+(.*)$/;
-const listItemPattern = /^-\s+(.*)$/;
+const unorderedListItemPattern = /^[-*]\s+(.*)$/;
+const orderedListItemPattern = /^\d+\.\s+(.*)$/;
+const horizontalRulePattern = /^([-*_])\1{2,}$/;
+const tableRowPattern = /^\|(.+)\|$/;
+const tableDividerPattern = /^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|$/;
+
+const normalizeMarkdownLine = (line: string) =>
+  line
+    .replace(/^\\(?=#{1,6}\s)/, "")
+    .replace(/^\\(?=[-*]\s)/, "")
+    .replace(/^\\(?=\d+\.\s)/, "")
+    .replace(/^\\(?=\|)/, "")
+    .replace(/^\\(?=(-{3,}|\*{3,}|_{3,}))/, "");
+
+const splitTableRow = (line: string) =>
+  line
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+
+export const normalizeMarkdownSource = (markdown: string) =>
+  markdown
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => normalizeMarkdownLine(line).replace(/\s+$/g, ""))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
 export const markdownToBlocks = (markdown: string): MarkdownBlock[] => {
-  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const lines = normalizeMarkdownSource(markdown).split("\n");
   const blocks: MarkdownBlock[] = [];
   const paragraphBuffer: string[] = [];
-  const listBuffer: string[] = [];
+  let listBuffer:
+    | {
+        ordered: boolean;
+        items: string[];
+      }
+    | null = null;
 
   const flushParagraph = () => {
     if (paragraphBuffer.length === 0) {
@@ -35,19 +77,20 @@ export const markdownToBlocks = (markdown: string): MarkdownBlock[] => {
   };
 
   const flushList = () => {
-    if (listBuffer.length === 0) {
+    if (!listBuffer || listBuffer.items.length === 0) {
       return;
     }
 
     blocks.push({
       type: "list",
-      items: [...listBuffer],
+      ordered: listBuffer.ordered,
+      items: [...listBuffer.items],
     });
-    listBuffer.length = 0;
+    listBuffer = null;
   };
 
-  for (const line of lines) {
-    const trimmedLine = line.trim();
+  for (let index = 0; index < lines.length; index += 1) {
+    const trimmedLine = lines[index].trim();
 
     if (trimmedLine.length === 0) {
       flushParagraph();
@@ -67,10 +110,66 @@ export const markdownToBlocks = (markdown: string): MarkdownBlock[] => {
       continue;
     }
 
-    const listItemMatch = trimmedLine.match(listItemPattern);
+    if (horizontalRulePattern.test(trimmedLine)) {
+      flushParagraph();
+      flushList();
+      blocks.push({ type: "rule" });
+      continue;
+    }
+
+    if (
+      tableRowPattern.test(trimmedLine) &&
+      index + 1 < lines.length &&
+      tableDividerPattern.test(lines[index + 1].trim())
+    ) {
+      flushParagraph();
+      flushList();
+
+      const headers = splitTableRow(trimmedLine);
+      const rows: string[][] = [];
+      index += 2;
+
+      while (index < lines.length) {
+        const rowLine = lines[index].trim();
+
+        if (!rowLine) {
+          index -= 1;
+          break;
+        }
+
+        if (!tableRowPattern.test(rowLine) || tableDividerPattern.test(rowLine)) {
+          index -= 1;
+          break;
+        }
+
+        rows.push(splitTableRow(rowLine));
+        index += 1;
+      }
+
+      blocks.push({
+        type: "table",
+        headers,
+        rows,
+      });
+      continue;
+    }
+
+    const orderedListItemMatch = trimmedLine.match(orderedListItemPattern);
+    const unorderedListItemMatch = trimmedLine.match(unorderedListItemPattern);
+    const listItemMatch = orderedListItemMatch || unorderedListItemMatch;
     if (listItemMatch) {
       flushParagraph();
-      listBuffer.push(listItemMatch[1].trim());
+
+      const ordered = Boolean(orderedListItemMatch);
+      if (!listBuffer || listBuffer.ordered !== ordered) {
+        flushList();
+        listBuffer = {
+          ordered,
+          items: [],
+        };
+      }
+
+      listBuffer.items.push(listItemMatch[1].trim());
       continue;
     }
 

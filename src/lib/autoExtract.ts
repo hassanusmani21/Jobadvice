@@ -1,4 +1,5 @@
 export type ExtractMode = "ollama" | "fallback";
+import { normalizeMarkdownSource } from "./markdown";
 
 type JobExtractedData = {
   title: string;
@@ -801,13 +802,14 @@ const extractJobFallback = (text: string): JobExtractedData => {
 };
 
 const extractBlogFallback = (text: string): BlogExtractedData => {
-  const lines = text
+  const normalizedText = normalizeMarkdownSource(text);
+  const lines = normalizedText
     .split(/\n/)
     .map((line) => line.trim())
     .filter(Boolean);
   const title = (lines[0] || "Untitled Blog Post").replace(/^#+\s*/, "").slice(0, 140);
-  const summary = extractParagraphSummary(text);
-  const lowerText = text.toLowerCase();
+  const summary = extractParagraphSummary(normalizedText);
+  const lowerText = normalizedText.toLowerCase();
 
   let topic = "Career";
   if (lowerText.includes("interview")) topic = "Interview Prep";
@@ -840,7 +842,7 @@ const extractBlogFallback = (text: string): BlogExtractedData => {
     isTrending: false,
     author: "JobAdvice Team",
     date: todayDateString(),
-    body: "",
+    body: normalizedText.slice(0, 5000),
   };
 };
 
@@ -1157,19 +1159,61 @@ const mergeJobData = (
 
 const normalizeBlogData = (value: Record<string, unknown>): BlogExtractedData => {
   const title = normalizeString(value.title);
+  const body = normalizeMarkdownSource(normalizeString(value.body)).slice(0, 5000);
 
   return {
     title,
     slug: normalizeString(value.slug) || toSlug(title),
-    summary: normalizeString(value.summary),
+    summary: normalizeString(value.summary).replace(/\s+/g, " ").trim(),
     topic: normalizeString(value.topic),
     tags: normalizeStringArray(value.tags).slice(0, 8),
     isTrending: Boolean(value.isTrending),
     author: normalizeString(value.author),
     date: normalizeString(value.date) || todayDateString(),
-    body: normalizeString(value.body).slice(0, 2000),
+    body,
   };
 };
+
+const weakBlogTitlePattern = /^(title|untitled|untitled blog post|blog post)$/i;
+const promptLeakPattern =
+  /\b(slug|summary|alternate options?|topic|tags?)\b/i;
+
+const cleanBlogTitle = (value: string, fallbackValue: string) => {
+  const normalizedValue = normalizeString(value).replace(/^title[:\s-]*/i, "").trim();
+  if (!normalizedValue || weakBlogTitlePattern.test(normalizedValue)) {
+    return fallbackValue;
+  }
+
+  return normalizedValue.slice(0, 140);
+};
+
+const cleanBlogSummary = (value: string, fallbackValue: string) => {
+  const normalizedValue = normalizeString(value).replace(/\s+/g, " ").trim();
+  if (
+    !normalizedValue ||
+    normalizedValue.length < 24 ||
+    (promptLeakPattern.test(normalizedValue) && normalizedValue.length > 90)
+  ) {
+    return fallbackValue;
+  }
+
+  return normalizedValue.slice(0, 320);
+};
+
+const mergeBlogData = (
+  primaryData: BlogExtractedData,
+  fallbackData: BlogExtractedData,
+): BlogExtractedData => ({
+  title: cleanBlogTitle(primaryData.title, fallbackData.title),
+  slug: normalizeString(primaryData.slug) || fallbackData.slug,
+  summary: cleanBlogSummary(primaryData.summary, fallbackData.summary),
+  topic: normalizeString(primaryData.topic) || fallbackData.topic,
+  tags: dedupeItems([...primaryData.tags, ...fallbackData.tags]).slice(0, 8),
+  isTrending: primaryData.isTrending || fallbackData.isTrending,
+  author: normalizeString(primaryData.author) || fallbackData.author,
+  date: normalizeString(primaryData.date) || fallbackData.date,
+  body: primaryData.body || fallbackData.body,
+});
 
 export const extractJobFromText = async (
   text: string,
@@ -1254,6 +1298,7 @@ export const extractBlogFromText = async (
   if (!trimmedText) {
     throw new Error("Source text is required for blog extraction");
   }
+  const fallbackData = extractBlogFallback(trimmedText);
   const sourceForModel = compactSourceForPrompt(trimmedText);
   const softTimeoutMs = getOllamaSoftTimeoutMs();
 
@@ -1288,14 +1333,14 @@ ${sourceForModel}
     const aiData = await withSoftTimeout(ollamaGenerate(prompt), softTimeoutMs);
     return {
       mode: "ollama",
-      data: normalizeBlogData(aiData),
+      data: mergeBlogData(normalizeBlogData(aiData), fallbackData),
     };
   } catch (error) {
     const reason = toErrorMessage(error);
     console.warn(`[autoExtract][blogs] Falling back: ${reason}`);
     return {
       mode: "fallback",
-      data: extractBlogFallback(trimmedText),
+      data: fallbackData,
       reason,
     };
   }

@@ -1,5 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { normalizeMarkdownSource } from "./markdown";
+import { toContentSlug } from "./slug";
 
 const blogsDirectory = path.join(process.cwd(), "content", "blogs");
 const frontMatterPattern = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/;
@@ -75,10 +77,11 @@ const normalizeList = (value: unknown) => {
 };
 
 const createExcerpt = (value: string) => {
-  const plainText = value
+  const plainText = normalizeMarkdownSource(value)
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
+    .replace(/\|/g, " ")
     .replace(/[#>*_[\]-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -91,9 +94,10 @@ const createExcerpt = (value: string) => {
 };
 
 const estimateReadingTime = (value: string) => {
-  const wordCount = value
+  const wordCount = normalizeMarkdownSource(value)
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/`([^`]+)`/g, "$1")
+    .replace(/\|/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .split(" ")
@@ -104,11 +108,11 @@ const estimateReadingTime = (value: string) => {
 
 const resolveBlogSlug = (frontMatterSlug: unknown, fileName: string) => {
   const candidate = normalizeTextValue(frontMatterSlug);
-  if (!candidate || placeholderSlugPattern.test(candidate)) {
-    return fileName.replace(/\.md$/i, "");
-  }
+  const fallbackSlug = fileName.replace(/\.md$/i, "");
+  const slugSource =
+    !candidate || placeholderSlugPattern.test(candidate) ? fallbackSlug : candidate;
 
-  return candidate;
+  return toContentSlug(slugSource) || fallbackSlug;
 };
 
 const parseFrontMatter = (rawFile: string) => {
@@ -173,14 +177,14 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
 
   const topic = normalizeTextValue(data.topic);
   const tags = normalizeList(data.tags);
-  const summary = normalizeTextValue(data.summary || data.excerpt);
+  const summary = normalizeTextValue(data.summary || data.excerpt).replace(/\s+/g, " ").trim();
   const author = normalizeTextValue(data.author);
   const coverImage = normalizeTextValue(data.coverImage || data.image || data.thumbnail);
   const date = toDateString(data.date || data.publishedAt) || getTodayDateString();
   const updatedAt =
     toDateString(fileStats.mtime.toISOString()) || getTodayDateString();
   const isTrending = toBoolean(data.isTrending || data.trending);
-  const postContent = content || summary;
+  const postContent = normalizeMarkdownSource(content || summary);
   if (!postContent) {
     return null;
   }
