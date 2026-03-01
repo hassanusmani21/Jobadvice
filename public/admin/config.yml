@@ -142,7 +142,7 @@ collections:
       - label: Summary
         name: summary
         widget: text
-        required: true
+        required: false
       - label: Topic
         name: topic
         widget: string

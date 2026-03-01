@@ -1,5 +1,5 @@
-export type ExtractMode = "ollama" | "fallback";
 import { normalizeMarkdownSource } from "./markdown";
+export type ExtractMode = "ollama" | "fallback";
 
 type JobExtractedData = {
   title: string;
@@ -29,6 +29,7 @@ type BlogExtractedData = {
   tags: string[];
   isTrending: boolean;
   author: string;
+  coverImage: string;
   date: string;
   body: string;
 };
@@ -58,6 +59,7 @@ const genericEducationItemPattern =
   /^(education|educational requirements?|qualification|qualifications|academic qualifications?|academic)$/i;
 const fieldLabelPattern = /^[A-Za-z][A-Za-z0-9 /&()'"-]{1,50}\s*:/;
 const bulletLinePattern = /^[-*•]|\d+[.)]/;
+const emptyBlogPlaceholderPattern = /^(title|topic|summary|slug|author|category)$/i;
 
 const toJsonFromModelResponse = (value: string) => {
   const cleanedValue = value
@@ -84,6 +86,24 @@ const toJsonFromModelResponse = (value: string) => {
 
 const normalizeString = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
+
+const normalizeHttpUrl = (value: unknown) => {
+  const normalizedValue = normalizeString(value);
+  if (!normalizedValue) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(normalizedValue);
+    if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+      return parsedUrl.toString();
+    }
+  } catch {
+    return "";
+  }
+
+  return "";
+};
 
 const dedupeItems = (items: string[]) => {
   const seen = new Set<string>();
@@ -353,18 +373,73 @@ const toIsoDate = (value: string) => {
   return normalizedDate.toISOString().split("T")[0];
 };
 
-const extractParagraphSummary = (text: string) => {
-  const plainText = text.replace(/\s+/g, " ").trim();
-  if (!plainText) {
-    return "";
+const findHeadingTitle = (text: string) => {
+  const headingMatch = normalizeMarkdownSource(text).match(/^#{1,6}\s+(.+)$/m);
+  return headingMatch?.[1]?.trim() || "";
+};
+
+const createBlogBodyFromStructuredSource = (text: string) => {
+  const normalizedText = normalizeMarkdownSource(text);
+  const lines = normalizedText.split("\n");
+  const metadataLabelPattern =
+    /^(title|blog title|headline|slug|summary|excerpt|description|topic|category|tags?|author|written by|publish date|date|cover image|image|thumbnail)\s*[:\-]?$/i;
+  const bodyFieldPattern =
+    /^(content|body|article|article content|post content)\s*[:\-]?$/i;
+  const filteredLines: string[] = [];
+  let skipNextMetadataValue = false;
+  let isCapturingBody = false;
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const rawLine = lines[index];
+    const trimmedLine = rawLine.trim();
+
+    if (!trimmedLine) {
+      if (isCapturingBody || filteredLines.length > 0) {
+        filteredLines.push("");
+      }
+      continue;
+    }
+
+    if (isCapturingBody) {
+      filteredLines.push(rawLine);
+      continue;
+    }
+
+    if (skipNextMetadataValue) {
+      skipNextMetadataValue = false;
+      continue;
+    }
+
+    if (bodyFieldPattern.test(trimmedLine)) {
+      isCapturingBody = true;
+      continue;
+    }
+
+    if (/^(content|body|article|article content|post content)\s*[:\-]\s*/i.test(trimmedLine)) {
+      filteredLines.push(
+        trimmedLine.replace(/^(content|body|article|article content|post content)\s*[:\-]\s*/i, ""),
+      );
+      isCapturingBody = true;
+      continue;
+    }
+
+    if (metadataLabelPattern.test(trimmedLine)) {
+      skipNextMetadataValue = true;
+      continue;
+    }
+
+    if (
+      /^(title|blog title|headline|slug|summary|excerpt|description|topic|category|tags?|author|written by|publish date|date|cover image|image|thumbnail)\s*[:\-]\s*/i.test(
+        trimmedLine,
+      )
+    ) {
+      continue;
+    }
+
+    filteredLines.push(rawLine);
   }
 
-  const sentences = plainText
-    .split(/(?<=[.?!])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter(Boolean);
-
-  return sentences.slice(0, 2).join(" ").slice(0, 320);
+  return normalizeMarkdownSource(filteredLines.join("\n"));
 };
 
 const normalizeExperienceBand = (text: string) => {
@@ -803,46 +878,49 @@ const extractJobFallback = (text: string): JobExtractedData => {
 
 const extractBlogFallback = (text: string): BlogExtractedData => {
   const normalizedText = normalizeMarkdownSource(text);
-  const lines = normalizedText
+  const titleFromField = extractFieldValue(text, ["blog title", "title", "headline"]);
+  const explicitSlug = toSlug(extractFieldValue(text, ["slug"]));
+  const body = createBlogBodyFromStructuredSource(text) || normalizedText;
+  const lines = body
     .split(/\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  const title = (lines[0] || "Untitled Blog Post").replace(/^#+\s*/, "").slice(0, 140);
-  const summary = extractParagraphSummary(normalizedText);
-  const lowerText = normalizedText.toLowerCase();
-
-  let topic = "Career";
-  if (lowerText.includes("interview")) topic = "Interview Prep";
-  else if (lowerText.includes("resume") || lowerText.includes("cv")) topic = "Resume";
-  else if (lowerText.includes("ai") || lowerText.includes("machine learning"))
-    topic = "AI";
-  else if (lowerText.includes("hiring") || lowerText.includes("recruitment"))
-    topic = "Hiring News";
-  else if (lowerText.includes("technology") || lowerText.includes("software"))
-    topic = "Tech";
+  const title =
+    titleFromField ||
+    findHeadingTitle(body) ||
+    (lines[0] || "Untitled Blog Post").replace(/^#+\s*/, "").slice(0, 140);
+  const summary = extractFieldValue(text, ["summary", "excerpt", "description"]);
+  const topic = extractFieldValue(text, ["topic", "category"]);
 
   const tags = Array.from(
     new Set(
-      [
-        lowerText.includes("interview") ? "interview" : "",
-        lowerText.includes("resume") ? "resume" : "",
-        lowerText.includes("ai") ? "ai" : "",
-        lowerText.includes("hiring") ? "hiring" : "",
-        lowerText.includes("career") ? "career" : "",
-      ].filter(Boolean),
+      splitInlineList(extractFieldValue(text, ["tags", "keywords"])).concat(
+        [
+          body.toLowerCase().includes("interview") ? "interview" : "",
+          body.toLowerCase().includes("resume") ? "resume" : "",
+          body.toLowerCase().includes("ai") ? "ai" : "",
+          body.toLowerCase().includes("hiring") ? "hiring" : "",
+          body.toLowerCase().includes("career") ? "career" : "",
+        ].filter(Boolean),
+      ),
     ),
   );
 
   return {
     title,
-    slug: toSlug(title),
+    slug: explicitSlug,
     summary,
     topic,
     tags,
     isTrending: false,
-    author: "JobAdvice Team",
-    date: todayDateString(),
-    body: normalizedText.slice(0, 5000),
+    author: extractFieldValue(text, ["author", "written by"]),
+    coverImage: normalizeHttpUrl(
+      extractFieldValue(text, ["cover image", "image", "thumbnail"]),
+    ),
+    date:
+      toIsoDate(extractFieldValue(text, ["publish date", "date", "published on"])) ||
+      todayDateString(),
+    body: body.slice(0, 12000),
   };
 };
 
@@ -1158,18 +1236,21 @@ const mergeJobData = (
 });
 
 const normalizeBlogData = (value: Record<string, unknown>): BlogExtractedData => {
-  const title = normalizeString(value.title);
-  const body = normalizeMarkdownSource(normalizeString(value.body)).slice(0, 5000);
+  const title = normalizeString(value.title || value.headline);
+  const body = normalizeMarkdownSource(normalizeString(value.body)).slice(0, 12000);
+  const date =
+    toIsoDate(normalizeString(value.date || value.publishedAt)) || todayDateString();
 
   return {
     title,
     slug: normalizeString(value.slug) || toSlug(title),
     summary: normalizeString(value.summary).replace(/\s+/g, " ").trim(),
-    topic: normalizeString(value.topic),
+    topic: normalizeString(value.topic || value.category),
     tags: normalizeStringArray(value.tags).slice(0, 8),
     isTrending: Boolean(value.isTrending),
     author: normalizeString(value.author),
-    date: normalizeString(value.date) || todayDateString(),
+    coverImage: normalizeHttpUrl(value.coverImage || value.image || value.thumbnail),
+    date,
     body,
   };
 };
@@ -1200,20 +1281,82 @@ const cleanBlogSummary = (value: string, fallbackValue: string) => {
   return normalizedValue.slice(0, 320);
 };
 
+const cleanBlogTopic = (value: string) => {
+  const normalizedValue = normalizeString(value)
+    .replace(/^topic[:\s-]*/i, "")
+    .replace(/^category[:\s-]*/i, "")
+    .trim();
+
+  if (!normalizedValue || emptyBlogPlaceholderPattern.test(normalizedValue)) {
+    return "";
+  }
+
+  return normalizedValue.slice(0, 80);
+};
+
+const cleanBlogAuthor = (value: string) => {
+  const normalizedValue = normalizeString(value)
+    .replace(/^author[:\s-]*/i, "")
+    .replace(/^written by[:\s-]*/i, "")
+    .trim();
+
+  if (!normalizedValue || emptyBlogPlaceholderPattern.test(normalizedValue)) {
+    return "";
+  }
+
+  return normalizedValue.slice(0, 80);
+};
+
+const cleanBlogSlug = (value: string, fallbackValue: string, title: string) => {
+  const normalizedValue = toSlug(normalizeString(value));
+  if (normalizedValue) {
+    return normalizedValue;
+  }
+
+  const normalizedFallbackValue = toSlug(normalizeString(fallbackValue));
+  if (normalizedFallbackValue) {
+    return normalizedFallbackValue;
+  }
+
+  return toSlug(title);
+};
+
+const cleanBlogBody = (value: string) => {
+  const normalizedValue = normalizeMarkdownSource(normalizeString(value)).trim();
+
+  if (!normalizedValue || emptyBlogPlaceholderPattern.test(normalizedValue)) {
+    return "";
+  }
+
+  return normalizedValue.slice(0, 12000);
+};
+
 const mergeBlogData = (
   primaryData: BlogExtractedData,
   fallbackData: BlogExtractedData,
-): BlogExtractedData => ({
-  title: cleanBlogTitle(primaryData.title, fallbackData.title),
-  slug: normalizeString(primaryData.slug) || fallbackData.slug,
-  summary: cleanBlogSummary(primaryData.summary, fallbackData.summary),
-  topic: normalizeString(primaryData.topic) || fallbackData.topic,
-  tags: dedupeItems([...primaryData.tags, ...fallbackData.tags]).slice(0, 8),
-  isTrending: primaryData.isTrending || fallbackData.isTrending,
-  author: normalizeString(primaryData.author) || fallbackData.author,
-  date: normalizeString(primaryData.date) || fallbackData.date,
-  body: primaryData.body || fallbackData.body,
-});
+): BlogExtractedData => {
+  const title = cleanBlogTitle(
+    fallbackData.title,
+    cleanBlogTitle(primaryData.title, "Untitled Blog Post"),
+  );
+
+  return {
+    title,
+    slug: cleanBlogSlug(fallbackData.slug, primaryData.slug, title),
+    summary: fallbackData.summary
+      ? cleanBlogSummary(fallbackData.summary, "")
+      : "",
+    topic: cleanBlogTopic(fallbackData.topic) || cleanBlogTopic(primaryData.topic),
+    tags: dedupeItems([...fallbackData.tags, ...primaryData.tags]).slice(0, 8),
+    isTrending: primaryData.isTrending || fallbackData.isTrending,
+    author: cleanBlogAuthor(fallbackData.author) || cleanBlogAuthor(primaryData.author),
+    coverImage: normalizeHttpUrl(fallbackData.coverImage || primaryData.coverImage),
+    date:
+      toIsoDate(normalizeString(fallbackData.date || primaryData.date)) ||
+      todayDateString(),
+    body: cleanBlogBody(fallbackData.body) || cleanBlogBody(primaryData.body),
+  };
+};
 
 export const extractJobFromText = async (
   text: string,
@@ -1314,15 +1457,21 @@ Return only valid JSON with this exact schema:
   "tags": [],
   "isTrending": false,
   "author": "",
+  "coverImage": "",
   "date": "",
   "body": ""
 }
 Rules:
 - Keep unknown values as empty string, false, or empty array.
+- If the source uses labels like "Title", "Slug", "Summary", "Topic", "Category",
+  "Tags", "Author", "Written By", "Cover Image", "Image", "Thumbnail",
+  "Publish Date", "Date", "Content", or "Body", map those fields directly.
+- Preserve the exact topic wording from the source. Do not shorten "Career Growth" to "Career".
+- Do not invent summary, author, topic, or coverImage when they are not present in the source.
 - slug should be URL-safe lowercase with hyphens.
-- summary should be 1-2 short sentences.
 - Use YYYY-MM-DD for date when possible.
-- Keep "body" short. Return empty string "" unless absolutely required.
+- body should contain only the article content in clean markdown.
+- Exclude metadata labels from body.
 NOTE:
 - Source text may be condensed for token limits. Infer conservatively.
 SOURCE:

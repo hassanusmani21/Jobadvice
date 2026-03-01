@@ -24,25 +24,97 @@
       var isLocalHost =
         window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1";
+      var loadingBadge = document.getElementById("admin-loading");
+
+      function updateLoadingCopy(title, message, badgeText) {
+        var loadingScreen = document.getElementById("admin-loading");
+        if (!loadingScreen) {
+          return;
+        }
+
+        var badgeNode = loadingScreen.querySelector(".admin-loading-badge");
+        var titleNode = loadingScreen.querySelector("h1");
+        var messageNode = loadingScreen.querySelector("p:last-of-type");
+
+        if (badgeNode && badgeText) {
+          badgeNode.textContent = badgeText;
+        }
+
+        if (titleNode && title) {
+          titleNode.textContent = title;
+        }
+
+        if (messageNode && message) {
+          messageNode.textContent = message;
+        }
+      }
+
+      function loadCmsScripts() {
+        var primary = document.createElement("script");
+        primary.src = "https://unpkg.com/decap-cms@3.8.3/dist/decap-cms.js";
+        primary.onerror = function () {
+          var fallback = document.createElement("script");
+          fallback.src = "https://cdn.jsdelivr.net/npm/decap-cms@3.8.3/dist/decap-cms.js";
+          document.body.appendChild(fallback);
+        };
+        document.body.appendChild(primary);
+      }
+
+      function waitForLocalProxy() {
+        var attempts = 0;
+        var maxAttempts = 40;
+
+        updateLoadingCopy(
+          "Local Admin",
+          "Waiting for the local CMS proxy on port 8081...",
+          "JobAdvice Local",
+        );
+
+        function checkProxy() {
+          attempts += 1;
+
+          fetch("http://localhost:8081/api/v1", {
+            method: "GET",
+            mode: "no-cors",
+            cache: "no-store",
+          })
+            .then(function () {
+              updateLoadingCopy(
+                "Local Admin",
+                "Local CMS proxy connected. Opening the editor...",
+                "JobAdvice Local",
+              );
+              loadCmsScripts();
+            })
+            .catch(function () {
+              if (attempts >= maxAttempts) {
+                updateLoadingCopy(
+                  "Local Admin",
+                  "Run npm run local:admin or npm run cms:proxy. Localhost does not use your Netlify email/password login.",
+                  "JobAdvice Local",
+                );
+                return;
+              }
+
+              window.setTimeout(checkProxy, 500);
+            });
+        }
+
+        checkProxy();
+      }
 
       if (!isLocalHost) {
         var identityScript = document.createElement("script");
         identityScript.src =
           "https://identity.netlify.com/v1/netlify-identity-widget.js";
         document.head.appendChild(identityScript);
+      } else {
+        waitForLocalProxy();
       }
 
-      (function loadCms() {
-        var primary = document.createElement("script");
-        primary.src = "https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js";
-        primary.onerror = function () {
-          var fallback = document.createElement("script");
-          fallback.src =
-            "https://cdn.jsdelivr.net/npm/decap-cms@^3.0.0/dist/decap-cms.js";
-          document.body.appendChild(fallback);
-        };
-        document.body.appendChild(primary);
-      })();
+      if (!isLocalHost) {
+        loadCmsScripts();
+      }
     </script>
     <script>
       (function applyCmsEnhancements() {
@@ -937,7 +1009,9 @@
             { name: "tags", labels: ["tags"], value: data.tags, isList: true },
             { name: "isTrending", labels: ["mark as trending", "trending"], value: data.isTrending, isCheckbox: true },
             { name: "author", labels: ["author"], value: data.author },
+            { name: "coverImage", labels: ["cover image", "image", "thumbnail"], value: data.coverImage },
             { name: "date", labels: ["publish date", "date"], value: data.date },
+            { name: "body", labels: ["content", "body"], value: data.body },
           ];
 
           for (var index = 0; index < fields.length; index += 1) {
