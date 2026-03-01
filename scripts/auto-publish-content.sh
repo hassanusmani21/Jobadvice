@@ -10,12 +10,16 @@ QUIET_PERIOD_SECONDS="${AUTO_PUBLISH_QUIET_PERIOD_SECONDS:-12}"
 last_signature=""
 last_detected_at=0
 
+get_content_status() {
+  git status --porcelain -- "${CONTENT_PATHS[@]}"
+}
+
 has_content_changes() {
-  ! git diff --quiet -- "${CONTENT_PATHS[@]}" || ! git diff --cached --quiet -- "${CONTENT_PATHS[@]}"
+  [[ -n "$(get_content_status)" ]]
 }
 
 get_content_signature() {
-  git status --porcelain -- "${CONTENT_PATHS[@]}" | sha1sum | cut -d' ' -f1
+  get_content_status | sha1sum | cut -d' ' -f1
 }
 
 has_staged_non_content_files() {

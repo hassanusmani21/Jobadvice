@@ -11,6 +11,10 @@ COMMIT_MESSAGE="$1"
 CONTENT_PATHS=("content" "public/uploads")
 ALLOWED_STAGED_PATTERN='^(content/|public/uploads/)'
 
+get_content_status() {
+  git status --porcelain -- "${CONTENT_PATHS[@]}"
+}
+
 notify_google_indexing_api() {
   local previous_commit="$1"
   local current_commit="$2"
@@ -20,7 +24,7 @@ notify_google_indexing_api() {
   fi
 }
 
-if git diff --quiet -- "${CONTENT_PATHS[@]}" && git diff --cached --quiet -- "${CONTENT_PATHS[@]}"; then
+if [[ -z "$(get_content_status)" ]]; then
   echo "No content changes found in content/ or public/uploads/."
   exit 1
 fi
