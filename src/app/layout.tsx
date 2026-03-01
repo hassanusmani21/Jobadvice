@@ -100,7 +100,7 @@ const footerLinks = [
 
 const socialLinks = [
   {
-    href: "https://www.instagram.com/hassanusmanix/",
+    href: "https://www.instagram.com/jobsadvice.in?utm_source=qr&igsh=MTM0eGhud3VtNGNvcw==",
     label: "Instagram",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">

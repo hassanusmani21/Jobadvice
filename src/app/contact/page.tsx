@@ -29,7 +29,7 @@ const contactLinks: ContactLink[] = [
   },
   {
     label: "Instagram",
-    href: "https://www.instagram.com/hassanusmanix/",
+    href: "https://www.instagram.com/jobsadvice.in?utm_source=qr&igsh=MTM0eGhud3VtNGNvcw==",
     cta: "Visit Instagram",
     handle: "@hassanusmanix",
     icon: (

@@ -11,7 +11,7 @@ export const siteLogoUrl = `${siteUrl}${siteLogoPath}`;
 export const organizationId = `${siteUrl}#organization`;
 export const websiteId = `${siteUrl}#website`;
 export const siteSocialProfiles = [
-  "https://www.instagram.com/hassanusmanix/",
+  "https://www.instagram.com/jobsadvice.in?utm_source=qr&igsh=MTM0eGhud3VtNGNvcw==",
   "https://www.linkedin.com/in/hassan-usmani21",
   "https://www.youtube.com/@JobAdvice4u",
   "https://t.me/jobadvice4u",
