@@ -28,6 +28,8 @@ const orderedListItemPattern = /^\d+\.\s+(.*)$/;
 const horizontalRulePattern = /^([-*_])\1{2,}$/;
 const tableRowPattern = /^\|(.+)\|$/;
 const tableDividerPattern = /^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|$/;
+const isTableLikeLine = (line: string) =>
+  tableRowPattern.test(line.trim()) || tableDividerPattern.test(line.trim());
 
 const normalizeMarkdownLine = (line: string) =>
   line
@@ -49,6 +51,28 @@ export const normalizeMarkdownSource = (markdown: string) =>
     .replace(/\r\n/g, "\n")
     .split("\n")
     .map((line) => normalizeMarkdownLine(line).replace(/\s+$/g, ""))
+    .reduce((normalizedLines: string[], line, index, sourceLines) => {
+      const trimmedLine = line.trim();
+      const previousNonEmptyLine = [...normalizedLines]
+        .reverse()
+        .find((candidate) => candidate.trim().length > 0);
+      const nextNonEmptyLine = sourceLines
+        .slice(index + 1)
+        .find((candidate) => candidate.trim().length > 0);
+
+      if (
+        trimmedLine.length === 0 &&
+        previousNonEmptyLine &&
+        nextNonEmptyLine &&
+        isTableLikeLine(previousNonEmptyLine) &&
+        isTableLikeLine(nextNonEmptyLine)
+      ) {
+        return normalizedLines;
+      }
+
+      normalizedLines.push(line);
+      return normalizedLines;
+    }, [])
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
