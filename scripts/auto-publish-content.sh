@@ -8,8 +8,6 @@ POLL_INTERVAL_SECONDS="${AUTO_PUBLISH_POLL_INTERVAL_SECONDS:-5}"
 QUIET_PERIOD_SECONDS="${AUTO_PUBLISH_QUIET_PERIOD_SECONDS:-12}"
 DEPLOY_REMOTE="${CONTENT_DEPLOY_REMOTE:-public}"
 DEPLOY_BRANCH="${CONTENT_DEPLOY_BRANCH:-main}"
-BACKUP_REMOTE="${CONTENT_BACKUP_REMOTE:-origin}"
-BACKUP_BRANCH="${CONTENT_BACKUP_BRANCH:-main}"
 
 last_signature=""
 last_detected_at=0
@@ -30,10 +28,6 @@ has_staged_non_content_files() {
   git diff --cached --name-only | grep -vE "${ALLOWED_STAGED_PATTERN}" >/dev/null 2>&1
 }
 
-has_unpushed_commits() {
-  [[ "$(git rev-list --count "${BACKUP_REMOTE}/${BACKUP_BRANCH}..HEAD")" -gt 0 ]]
-}
-
 notify_google_indexing_api() {
   local previous_commit="$1"
   local current_commit="$2"
@@ -46,12 +40,6 @@ notify_google_indexing_api() {
 publish_content() {
   if has_staged_non_content_files; then
     echo "Skipping auto publish: non-content files are already staged."
-    return 1
-  fi
-
-  if has_unpushed_commits; then
-    echo "Skipping auto publish: local branch is ahead of ${BACKUP_REMOTE}/${BACKUP_BRANCH}."
-    echo "Push or clean up existing local commits before using auto publish."
     return 1
   fi
 
@@ -70,11 +58,10 @@ publish_content() {
   local previous_commit
   current_commit="$(git rev-parse HEAD)"
   previous_commit="$(git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
+  echo "Pushing deploy content to ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}..."
   bash ./scripts/sync-publishable-commit.sh "${DEPLOY_REMOTE}" "${DEPLOY_BRANCH}" "${current_commit}"
-  git push "${BACKUP_REMOTE}" HEAD:"${BACKUP_BRANCH}"
   notify_google_indexing_api "${previous_commit}" "${current_commit}"
   echo "Auto publish complete. Netlify will deploy from ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}."
-  echo "Backup sync complete on ${BACKUP_REMOTE}/${BACKUP_BRANCH}."
   return 0
 }
 
