@@ -1,9 +1,9 @@
 ---
-title: "Top 7 Work From Home Jobs for Students in India 2026 Without Investment "
+title: Top 7 Work From Home Jobs for Students in India 2026 Without Investment
 slug: work-from-home-jobs-for-students-in-india-2026-without-investment
-summary: Discover the best work from home jobs for students in India in 2026
+summary: "Discover the best work from home jobs for students in India in 2026
   without investment including salary details skills required and how to apply
-  safely.
+  safely. "
 topic: Career Growth
 tags:
   - work from home jobs
