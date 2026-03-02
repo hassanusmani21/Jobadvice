@@ -1,32 +1,50 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { siteName } from "@/lib/site";
 
-const focusAreas = [
-  "Private company job openings",
-  "Government job notifications",
-  "Internship opportunities for students",
-  "Fresher hiring updates",
-  "Career guidance and preparation tips",
-];
-
-const whyChooseUs = [
-  "Clear and structured job summaries",
-  "Direct apply links to official sources",
-  "Focus on fresher and entry-level roles",
-  "No registration required to view job details",
-  "No hidden charges",
-];
-
-const commitmentPoints = [
-  "We aim to keep job information accurate and updated.",
-  "Users should always verify details on the official company website before applying.",
-  "JobAdvice never charges any fee for job information or applications.",
+const aboutSections = [
+  {
+    title: "What JobAdvice Is",
+    paragraphs: [
+      `${siteName} is an independent job information website for students, fresh graduates, and early-career professionals in India.`,
+      "We publish private job openings, internship opportunities, government job updates, and career guidance in a clear and readable format.",
+    ],
+  },
+  {
+    title: "What We Publish",
+    paragraphs: [
+      "Job posts on this website are based on official company websites, verified career portals, and publicly available recruitment announcements.",
+      "Where relevant, we include eligibility details, location, salary information, selection process, and direct application links.",
+    ],
+    bullets: [
+      "Private company job openings",
+      "Government job notifications",
+      "Internship opportunities",
+      "Fresher hiring updates",
+      "Career guidance and preparation tips",
+    ],
+  },
+  {
+    title: "Our Role",
+    paragraphs: [
+      `${siteName} does not conduct recruitment, collect resumes, or guarantee job placement.`,
+      "We are not affiliated with hiring companies unless that relationship is clearly stated.",
+      "When you click an Apply link, you are redirected to the official company website or career portal where the application process takes place.",
+    ],
+  },
+  {
+    title: "Important Note",
+    paragraphs: [
+      "We aim to keep information accurate and updated, but users should always verify the final details on the official company website before applying.",
+      `${siteName} never asks for payment for job information or job applications.`,
+    ],
+  },
 ];
 
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Learn how JobAdvice shares fresher jobs, internships, and career updates in a clear and practical format.",
+    "Learn what JobAdvice publishes, how job information is sourced, and what role the platform plays.",
   alternates: {
     canonical: "/about",
   },
@@ -34,138 +52,64 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="space-y-6">
-      <section className="fade-up hero-surface px-5 py-7 sm:px-8 sm:py-9">
-        <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-teal-800">
-          <span className="rounded-full border border-teal-200 bg-white/70 px-3 py-1">
+    <div className="space-y-5">
+      <section className="fade-up rounded-2xl border border-slate-200/80 bg-white/92 px-5 py-8 sm:px-8 sm:py-10">
+        <div className="max-w-3xl">
+          <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-slate-500">
             About {siteName}
           </span>
-          <span className="rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-slate-600">
-            Independent Job Information Platform
-          </span>
+
+          <h1 className="mt-4 text-[1.65rem] font-semibold tracking-[-0.03em] text-slate-950 sm:text-[2rem]">
+            Simple job information for freshers and early-career professionals.
+          </h1>
+
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+            {siteName} shares job updates and career information in a clean format that is easier
+            to read and verify.
+          </p>
         </div>
-
-        <h1 className="mt-4 max-w-3xl font-serif text-[1.8rem] leading-[1.15] text-slate-900 sm:text-[2.2rem]">
-          Helping students, fresh graduates, and early-career professionals discover genuine job
-          opportunities without unnecessary clutter.
-        </h1>
-
-        <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
-          {siteName} is an independent job information website that shares the latest job openings,
-          fresher jobs, internship opportunities, and career updates across India.
-        </p>
-
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
-          Our mission is to simplify the job search process by providing structured, easy-to-read,
-          and regularly updated job information.
-        </p>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="space-y-4">
-          <section className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7">
-            <h2 className="font-serif text-[1.4rem] leading-[1.2] text-slate-900">
-              What We Focus On
-            </h2>
-            <p className="mt-4 text-sm leading-7 text-slate-700 sm:text-base">
-              All job listings published on {siteName} are sourced from official company websites,
-              verified career portals, or publicly available recruitment announcements.
-            </p>
-
-            <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-              {focusAreas.map((item) => (
-                <li
-                  key={item}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold leading-6 text-slate-800"
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <p className="mt-5 text-sm leading-7 text-slate-700 sm:text-base">
-              We present job details in a clean format, including eligibility criteria, salary
-              information when available, selection process, and direct application links.
-            </p>
-          </section>
-
+      <article className="fade-up rounded-2xl border border-slate-200/80 bg-white/92">
+        {aboutSections.map((section, index) => (
           <section
-            className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
-            style={{ animationDelay: "90ms" }}
+            key={section.title}
+            className={`px-5 py-6 sm:px-8 sm:py-7 ${
+              index === 0 ? "" : "border-t border-slate-200/80"
+            }`}
           >
-            <h2 className="font-serif text-[1.4rem] leading-[1.2] text-slate-900">Our Role</h2>
-            <div className="mt-4 space-y-4 text-sm leading-7 text-slate-700 sm:text-base">
-              <p>
-                {siteName} does not conduct recruitment, collect resumes, or guarantee job
-                placement.
-              </p>
-              <p>
-                We are not affiliated with hiring companies unless explicitly mentioned.
-              </p>
-              <p>
-                When users click an Apply link, they are redirected to the official company career
-                portal where the actual application process takes place.
-              </p>
-              <p>
-                We act solely as an informational intermediary to help users discover genuine
-                career opportunities.
-              </p>
+            <h2 className="text-base font-semibold tracking-[-0.01em] text-slate-900 sm:text-lg">
+              {section.title}
+            </h2>
+
+            <div className="mt-3 space-y-3 text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
+              {section.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
             </div>
+
+            {section.bullets ? (
+              <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                {section.bullets.map((bullet) => (
+                  <li key={bullet} className="flex items-start gap-3 text-sm leading-6 text-slate-600">
+                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-slate-400" aria-hidden="true" />
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </section>
+        ))}
+      </article>
 
-          <section
-            className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
-            style={{ animationDelay: "150ms" }}
-          >
-            <h2 className="font-serif text-[1.4rem] leading-[1.2] text-slate-900">
-              Why Choose {siteName}
-            </h2>
-
-            <ul className="mt-5 space-y-3">
-              {whyChooseUs.map((item) => (
-                <li
-                  key={item}
-                  className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm font-semibold leading-6 text-slate-800"
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-
-            <p className="mt-5 text-sm leading-7 text-slate-700 sm:text-base">
-              We believe job information should be accessible, transparent, and easy to navigate
-              without unnecessary clutter.
-            </p>
-          </section>
-        </div>
-
-        <aside className="space-y-4">
-          <section className="fade-up card-surface rounded-3xl p-5" style={{ animationDelay: "120ms" }}>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700">
-              Our Commitment
-            </p>
-            <h2 className="mt-3 text-lg font-bold text-slate-900">What You Can Expect</h2>
-
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-700">
-              {commitmentPoints.map((item) => (
-                <li key={item} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          <section
-            className="fade-up rounded-3xl border border-amber-200 bg-amber-50 px-5 py-5 text-sm leading-6 text-amber-950"
-            style={{ animationDelay: "180ms" }}
-          >
-            <p className="font-semibold">Important note</p>
-            <p className="mt-2">
-              If any third party asks for payment while claiming association with {siteName},
-              ignore the request and verify the opportunity from the official company source.
-            </p>
-          </section>
-        </aside>
+      <section className="fade-up rounded-2xl border border-slate-200/80 bg-slate-50/70 px-5 py-5 sm:px-8">
+        <p className="text-sm leading-6 text-slate-600">
+          For corrections, partnerships, or general questions, visit the{" "}
+          <Link href="/contact" className="font-medium text-slate-900 underline underline-offset-4">
+            contact page
+          </Link>
+          .
+        </p>
       </section>
     </div>
   );
