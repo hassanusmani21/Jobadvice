@@ -45,8 +45,6 @@ export async function GET(request: NextRequest, context: ApplyRouteContext) {
 
   try {
     const destinationUrl = withTrackingParams(job.applyLink, slug);
-    const ipAddress = request.headers.get("x-forwarded-for") || "unknown";
-    const userAgent = request.headers.get("user-agent") || "unknown";
 
     console.info(
       JSON.stringify({
@@ -54,8 +52,6 @@ export async function GET(request: NextRequest, context: ApplyRouteContext) {
         slug,
         destination: destinationUrl.toString(),
         timestamp: new Date().toISOString(),
-        ipAddress,
-        userAgent,
       }),
     );
 

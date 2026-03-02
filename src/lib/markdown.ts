@@ -28,16 +28,15 @@ const orderedListItemPattern = /^\d+\.\s+(.*)$/;
 const horizontalRulePattern = /^([-*_])\1{2,}$/;
 const tableRowPattern = /^\|(.+)\|$/;
 const tableDividerPattern = /^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|$/;
+const markdownEscapePattern = /\\([\\`*_{}[\]()#+.!|>\-])/g;
 const isTableLikeLine = (line: string) =>
   tableRowPattern.test(line.trim()) || tableDividerPattern.test(line.trim());
 
+export const decodeMarkdownEscapes = (value: string) =>
+  value.replace(markdownEscapePattern, "$1");
+
 const normalizeMarkdownLine = (line: string) =>
-  line
-    .replace(/^\\(?=#{1,6}\s)/, "")
-    .replace(/^\\(?=[-*]\s)/, "")
-    .replace(/^\\(?=\d+\.\s)/, "")
-    .replace(/^\\(?=\|)/, "")
-    .replace(/^\\(?=(-{3,}|\*{3,}|_{3,}))/, "");
+  decodeMarkdownEscapes(line);
 
 const splitTableRow = (line: string) =>
   line

@@ -1,14 +1,20 @@
 const DEFAULT_ADMIN_EMAIL = "hassan.usmani.career@gmail.com";
+const isProduction = process.env.NODE_ENV === "production";
 
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
 const parseAllowedAdminEmails = () => {
   const envValue =
     process.env.ALLOWED_ADMIN_EMAILS ||
-    process.env.ALLOWED_ADMIN_EMAIL ||
-    DEFAULT_ADMIN_EMAIL;
+    process.env.ALLOWED_ADMIN_EMAIL;
 
-  const emails = envValue
+  if ((!envValue || !envValue.trim()) && isProduction) {
+    throw new Error(
+      "Missing ALLOWED_ADMIN_EMAILS (or ALLOWED_ADMIN_EMAIL) in production.",
+    );
+  }
+
+  const emails = (envValue || DEFAULT_ADMIN_EMAIL)
     .split(",")
     .map((email) => normalizeEmail(email))
     .filter(Boolean);

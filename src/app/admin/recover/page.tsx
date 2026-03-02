@@ -9,6 +9,8 @@ type VerifyResponse = {
   refresh_token?: string;
 };
 
+const minimumPasswordLength = 12;
+
 const readErrorMessage = async (response: Response) => {
   const fallbackMessage = "Password reset failed. Request a new reset email and try again.";
 
@@ -60,6 +62,11 @@ export default function AdminRecoverPage() {
 
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < minimumPasswordLength) {
+      setErrorMessage(`Use at least ${minimumPasswordLength} characters for the new password.`);
       return;
     }
 
@@ -157,10 +164,14 @@ export default function AdminRecoverPage() {
                 id="password"
                 type="password"
                 autoComplete="new-password"
+                minLength={minimumPasswordLength}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-400"
               />
+              <p className="mt-2 text-xs text-slate-500">
+                Use at least {minimumPasswordLength} characters.
+              </p>
             </div>
 
             <div>
@@ -171,6 +182,7 @@ export default function AdminRecoverPage() {
                 id="confirmPassword"
                 type="password"
                 autoComplete="new-password"
+                minLength={minimumPasswordLength}
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-400"

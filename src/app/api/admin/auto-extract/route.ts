@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { extractBlogFromText, extractJobFromText } from "@/lib/autoExtract";
 import { isAllowedAdminEmail } from "@/lib/adminAccess";
+import { hasTrustedSameOrigin, noStoreJson } from "@/lib/requestSecurity";
 
 const maxSourceTextLength = 120_000;
 
@@ -38,11 +39,21 @@ const toSourceText = (body: Record<string, unknown>) => {
 };
 
 export async function POST(request: Request) {
+  if (!hasTrustedSameOrigin(request)) {
+    return noStoreJson(
+      {
+        success: false,
+        error: "InvalidOrigin",
+      },
+      { status: 403 },
+    );
+  }
+
   const session = await getServerSession(authOptions);
   const sessionEmail = session?.user?.email || "";
 
   if (!sessionEmail) {
-    return Response.json(
+    return noStoreJson(
       {
         success: false,
         error: "SessionRequired",
@@ -52,7 +63,7 @@ export async function POST(request: Request) {
   }
 
   if (!isAllowedAdminEmail(sessionEmail)) {
-    return Response.json(
+    return noStoreJson(
       {
         success: false,
         error: "EmailNotAllowed",
@@ -65,7 +76,7 @@ export async function POST(request: Request) {
   try {
     body = (await request.json()) as Record<string, unknown>;
   } catch {
-    return Response.json(
+    return noStoreJson(
       {
         success: false,
         error: "Invalid JSON payload",
@@ -78,7 +89,7 @@ export async function POST(request: Request) {
   const sourceText = toSourceText(body);
 
   if (!collection) {
-    return Response.json(
+    return noStoreJson(
       {
         success: false,
         error: "Invalid collection. Use 'jobs' or 'blogs'.",
@@ -88,7 +99,7 @@ export async function POST(request: Request) {
   }
 
   if (!sourceText) {
-    return Response.json(
+    return noStoreJson(
       {
         success: false,
         error: "Source text is required",
@@ -98,7 +109,7 @@ export async function POST(request: Request) {
   }
 
   if (sourceText.length > maxSourceTextLength) {
-    return Response.json(
+    return noStoreJson(
       {
         success: false,
         error: `Source text is too large. Limit is ${maxSourceTextLength} characters.`,
@@ -110,7 +121,7 @@ export async function POST(request: Request) {
   try {
     if (collection === "jobs") {
       const result = await extractJobFromText(sourceText);
-      return Response.json({
+      return noStoreJson({
         success: true,
         collection,
         mode: result.mode,
@@ -120,7 +131,7 @@ export async function POST(request: Request) {
     }
 
     const result = await extractBlogFromText(sourceText);
-    return Response.json({
+    return noStoreJson({
       success: true,
       collection,
       mode: result.mode,
@@ -128,7 +139,7 @@ export async function POST(request: Request) {
       data: result.data,
     });
   } catch (error) {
-    return Response.json(
+    return noStoreJson(
       {
         success: false,
         error: toSafeErrorMessage(error),
