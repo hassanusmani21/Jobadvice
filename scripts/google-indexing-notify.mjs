@@ -5,7 +5,7 @@ import { createSign } from "node:crypto";
 
 const projectRoot = process.cwd();
 const jobContentRoot = "content/jobs";
-const defaultSiteUrl = "https://jobadvice.netlify.app";
+const defaultSiteUrl = "https://jobadvice.in";
 const noExpiryRetentionDays = 30;
 const indexingScope = "https://www.googleapis.com/auth/indexing";
 

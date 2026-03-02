@@ -40,7 +40,7 @@ const resolvedMetadataBase = (() => {
   try {
     return new URL(siteUrl);
   } catch {
-    return new URL("https://jobadvice.netlify.app");
+    return new URL("https://jobadvice.in");
   }
 })();
 

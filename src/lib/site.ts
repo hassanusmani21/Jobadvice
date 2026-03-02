@@ -1,4 +1,4 @@
-const fallbackSiteUrl = "https://jobadvice.netlify.app";
+const fallbackSiteUrl = "https://jobadvice.in";
 
 export const siteName = "JobAdvice";
 export const siteDescription =
