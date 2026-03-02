@@ -1,5 +1,6 @@
 [build]
   command = "rm -rf .next out && npm run build"
+  publish = ".next"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
