@@ -10,6 +10,10 @@ fi
 COMMIT_MESSAGE="$1"
 CONTENT_PATHS=("content" "public/uploads")
 ALLOWED_STAGED_PATTERN='^(content/|public/uploads/)'
+DEPLOY_REMOTE="${CONTENT_DEPLOY_REMOTE:-public}"
+DEPLOY_BRANCH="${CONTENT_DEPLOY_BRANCH:-main}"
+BACKUP_REMOTE="${CONTENT_BACKUP_REMOTE:-origin}"
+BACKUP_BRANCH="${CONTENT_BACKUP_BRANCH:-main}"
 
 get_content_status() {
   git status --porcelain -- "${CONTENT_PATHS[@]}"
@@ -66,10 +70,14 @@ git commit -m "$COMMIT_MESSAGE"
 CURRENT_COMMIT="$(git rev-parse HEAD)"
 PREVIOUS_COMMIT="$(git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
 
-echo "Pushing to GitHub..."
-git push origin main
+echo "Pushing content to deploy repo..."
+bash ./scripts/sync-publishable-commit.sh "${DEPLOY_REMOTE}" "${DEPLOY_BRANCH}" "${CURRENT_COMMIT}"
+
+echo "Syncing backup repo..."
+git push "${BACKUP_REMOTE}" HEAD:"${BACKUP_BRANCH}"
 
 echo "Sending Google job indexing notifications..."
 notify_google_indexing_api "${PREVIOUS_COMMIT}" "${CURRENT_COMMIT}"
 
-echo "Content pushed. Netlify will deploy from main."
+echo "Content pushed. Netlify will deploy from ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}."
+echo "Backup sync complete on ${BACKUP_REMOTE}/${BACKUP_BRANCH}."
