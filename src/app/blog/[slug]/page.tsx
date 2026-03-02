@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BlogCard from "@/components/BlogCard";
@@ -8,7 +9,7 @@ import {
   getBlogBySlug,
   type BlogPost,
 } from "@/lib/blogs";
-import { markdownToBlocks } from "@/lib/markdown";
+import { decodeMarkdownEscapes, markdownToBlocks } from "@/lib/markdown";
 import { organizationId, siteLogoUrl, siteName, siteUrl } from "@/lib/site";
 
 type BlogDetailPageProps = {
@@ -72,6 +73,65 @@ const toBlogJsonLd = (blog: BlogPost) => ({
   ...(blog.coverImage ? { image: [blog.coverImage] } : {}),
   mainEntityOfPage: `${siteUrl}/blog/${blog.slug}`,
 });
+
+const inlineMarkdownPattern =
+  /(\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|__([^_]+)__|`([^`]+)`|\*([^*]+)\*|_([^_]+)_)/g;
+
+const renderInlineMarkdown = (text: string): ReactNode => {
+  const normalizedText = decodeMarkdownEscapes(text);
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+
+  for (const match of normalizedText.matchAll(inlineMarkdownPattern)) {
+    const startIndex = match.index ?? 0;
+
+    if (startIndex > lastIndex) {
+      nodes.push(normalizedText.slice(lastIndex, startIndex));
+    }
+
+    if (match[2] && match[3]) {
+      const href = match[3];
+      const externalLink = /^https?:\/\//i.test(href);
+
+      nodes.push(
+        <a
+          key={`${href}-${startIndex}`}
+          href={href}
+          {...(externalLink
+            ? {
+                target: "_blank",
+                rel: "noopener noreferrer",
+              }
+            : {})}
+          className="font-medium text-teal-800 underline underline-offset-4 transition hover:text-teal-900"
+        >
+          {match[2]}
+        </a>,
+      );
+    } else if (match[4] || match[5]) {
+      nodes.push(<strong key={`strong-${startIndex}`}>{match[4] || match[5]}</strong>);
+    } else if (match[6]) {
+      nodes.push(
+        <code
+          key={`code-${startIndex}`}
+          className="rounded bg-slate-100 px-1.5 py-0.5 text-[0.95em] text-slate-900"
+        >
+          {match[6]}
+        </code>,
+      );
+    } else if (match[7] || match[8]) {
+      nodes.push(<em key={`em-${startIndex}`}>{match[7] || match[8]}</em>);
+    }
+
+    lastIndex = startIndex + match[0].length;
+  }
+
+  if (lastIndex < normalizedText.length) {
+    nodes.push(normalizedText.slice(lastIndex));
+  }
+
+  return nodes.length > 0 ? nodes : normalizedText;
+};
 
 export async function generateStaticParams() {
   const blogs = await getAllBlogs();
@@ -208,14 +268,14 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 if (block.level <= 2) {
                   return (
                     <h2 key={`${block.text}-${index}`} className="font-serif text-2xl text-slate-900">
-                      {block.text}
+                      {renderInlineMarkdown(block.text)}
                     </h2>
                   );
                 }
 
                 return (
                   <h3 key={`${block.text}-${index}`} className="font-serif text-xl text-slate-900">
-                    {block.text}
+                    {renderInlineMarkdown(block.text)}
                   </h3>
                 );
               }
@@ -229,7 +289,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                     className={block.ordered ? "list-decimal space-y-2 pl-5" : "list-disc space-y-2 pl-5"}
                   >
                     {block.items.map((item) => (
-                      <li key={item}>{item}</li>
+                      <li key={item}>{renderInlineMarkdown(item)}</li>
                     ))}
                   </ListTag>
                 );
@@ -249,7 +309,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                               key={header}
                               className="border-b border-slate-200 px-4 py-3 font-semibold"
                             >
-                              {header}
+                              {renderInlineMarkdown(header)}
                             </th>
                           ))}
                         </tr>
@@ -262,7 +322,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                                 key={`${cell}-${cellIndex}`}
                                 className="border-b border-slate-100 px-4 py-3 align-top text-slate-700"
                               >
-                                {cell}
+                                {renderInlineMarkdown(cell)}
                               </td>
                             ))}
                           </tr>
@@ -275,7 +335,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
               return (
                 <p key={`${block.text}-${index}`} className="leading-8">
-                  {block.text}
+                  {renderInlineMarkdown(block.text)}
                 </p>
               );
             })}
