@@ -95,36 +95,38 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <div className="space-y-6">
-      <section className="fade-up hero-surface px-5 py-7 sm:px-8 sm:py-9">
-        <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-teal-800">
-          <span className="rounded-full border border-teal-200 bg-white/70 px-3 py-1">
-            Privacy Policy & Disclaimer
-          </span>
-          <span className="rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-slate-600">
-            Effective Date: March 1, 2026
-          </span>
-        </div>
+      <section className="fade-up rounded-2xl border border-slate-200/80 bg-[#FBFCFD] px-5 py-7 sm:px-8 sm:py-10">
+        <div className="max-w-4xl">
+          <div className="flex flex-wrap items-center gap-2.5 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-600">
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
+              Privacy Policy & Disclaimer
+            </span>
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1">
+              Effective Date: March 1, 2026
+            </span>
+          </div>
 
-        <h1 className="mt-4 max-w-3xl font-serif text-[1.8rem] leading-[1.15] text-slate-900 sm:text-[2.2rem]">
-          Clear terms for how {siteName} shares job information and redirects users to official
-          apply pages.
-        </h1>
+          <h1 className="mt-5 max-w-3xl font-serif text-[1.9rem] leading-[1.08] text-slate-950 sm:text-[2.45rem]">
+            Clear terms for how {siteName} shares job information and redirects users to official
+            apply pages.
+          </h1>
 
-        <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-700 sm:text-base">
-          Welcome to {siteName}. This website is operated as an independent job information
-          platform. By using this website, you agree to the terms outlined below.
-        </p>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-[1rem]">
+            Welcome to {siteName}. This website is operated as an independent job information
+            platform. By using this website, you agree to the terms outlined below.
+          </p>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {quickNotes.map((item, index) => (
-            <div
-              key={item}
-              className="rounded-2xl border border-white/70 bg-white/85 px-4 py-4 shadow-[0_18px_40px_-34px_rgba(15,23,42,0.18)]"
-              style={{ animationDelay: `${80 + index * 70}ms` }}
-            >
-              <p className="text-sm font-semibold leading-6 text-slate-800">{item}</p>
-            </div>
-          ))}
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            {quickNotes.map((item, index) => (
+              <div
+                key={item}
+                className="flex min-h-[88px] items-start rounded-2xl border border-slate-200 bg-white px-4 py-4"
+                style={{ animationDelay: `${80 + index * 70}ms` }}
+              >
+                <p className="text-sm font-medium leading-6 text-slate-800">{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
