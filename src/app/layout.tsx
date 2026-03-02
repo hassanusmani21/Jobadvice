@@ -50,6 +50,10 @@ export const metadata: Metadata = {
     default: `${siteName} | Verified Tech and Fresher Jobs`,
     template: `%s | ${siteName}`,
   },
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+  },
   description: siteDescription,
   applicationName: siteName,
   keywords: siteKeywords,
