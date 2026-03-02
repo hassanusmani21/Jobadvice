@@ -14,7 +14,7 @@ tags:
   - ai
 isTrending: false
 author: Hassan Usmani
-coverImage: https://images.unsplash.com/photo-1587614382346-4ecf75b2d57f?auto=format&fit=crop&w=1200&q=80
+coverImage: https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80
 date: 2026-03-02
 ---
 \# Top 7 Work From Home Jobs for Students in India 2026 Without Investment
