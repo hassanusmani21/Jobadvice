@@ -36,80 +36,6 @@ const identityHashRedirectScript = `
   })();
 `;
 
-const assetLoadRecoveryScript = `
-  (function () {
-    if (typeof window === "undefined") return;
-
-    var reloadKey = "jobadvice:asset-reload:" + window.location.pathname;
-    var reloadParam = "__chunk_reload";
-
-    var cleanupReloadParam = function () {
-      try {
-        var url = new URL(window.location.href);
-
-        if (!url.searchParams.has(reloadParam)) {
-          return;
-        }
-
-        url.searchParams.delete(reloadParam);
-        window.history.replaceState(window.history.state, "", url.toString());
-      } catch {}
-    };
-
-    window.addEventListener("load", function () {
-      try {
-        window.sessionStorage.removeItem(reloadKey);
-      } catch {}
-
-      cleanupReloadParam();
-    });
-
-    window.addEventListener(
-      "error",
-      function (event) {
-        var target = event.target;
-
-        if (
-          !target ||
-          !("tagName" in target) ||
-          !("src" in target || "href" in target)
-        ) {
-          return;
-        }
-
-        var element = target;
-        var url = "";
-
-        if (element.tagName === "SCRIPT" && typeof element.src === "string") {
-          url = element.src;
-        } else if (element.tagName === "LINK" && typeof element.href === "string") {
-          url = element.href;
-        }
-
-        if (!url || url.indexOf("/_next/static/") === -1) {
-          return;
-        }
-
-        try {
-          if (window.sessionStorage.getItem(reloadKey) === "1") {
-            return;
-          }
-
-          window.sessionStorage.setItem(reloadKey, "1");
-
-          var nextUrl = new URL(window.location.href);
-          nextUrl.searchParams.set(reloadParam, Date.now().toString());
-          window.location.replace(nextUrl.toString());
-          return;
-        } catch {}
-
-        window.location.reload();
-      },
-      true
-    );
-  })();
-`;
-
 const resolvedMetadataBase = (() => {
   try {
     return new URL(siteUrl);
@@ -288,7 +214,6 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <script dangerouslySetInnerHTML={{ __html: identityHashRedirectScript }} />
-        <script dangerouslySetInnerHTML={{ __html: assetLoadRecoveryScript }} />
       </head>
       <body className="antialiased">
         <script
