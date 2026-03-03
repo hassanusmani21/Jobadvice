@@ -125,8 +125,9 @@ export const metadata: Metadata = {
     template: `%s | ${siteName}`,
   },
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
   },
   description: siteDescription,
   applicationName: siteName,
