@@ -13,7 +13,7 @@ tags:
   - developer salary india
   - ai
 isTrending: false
-author: "Ghazal "
+author: Hassan usmani
 coverImage: https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80
 date: 2026-03-03
 ---
