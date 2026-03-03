@@ -29,13 +29,19 @@ This mode:
 1. starts the local Next.js app
 2. starts the Decap CMS proxy
 3. watches `content/` and `public/uploads/`
-4. automatically commits and pushes content after a short quiet period
+4. automatically commits and pushes content after a 10-minute quiet period by default
 
 Use this only when:
 
 - you are synced with `origin/main`
 - you are publishing content only
 - you do not have staged non-content files
+
+You can override the default quiet period if needed:
+
+```bash
+AUTO_PUBLISH_QUIET_PERIOD_SECONDS=300 npm run local:admin:auto
+```
 
 ## Publish reviewed content
 
