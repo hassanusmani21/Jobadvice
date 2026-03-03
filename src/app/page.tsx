@@ -7,7 +7,7 @@ import { formatBlogDate, getLatestBlogs } from "@/lib/blogs";
 import { getLatestJobs } from "@/lib/jobs";
 
 export const metadata: Metadata = {
-  title: "Home",
+  title: "Verified Tech and Fresher Jobs",
   description:
     "Find the latest job updates with company details, location, salary, and direct application links.",
 };
