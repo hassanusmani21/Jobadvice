@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import ApplicationStatusBadge from "@/components/ApplicationStatusBadge";
 import { formatPostedDate, type JobPost } from "@/lib/jobs";
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import JobCard from "@/components/JobCard";
 import { getAllJobs, type JobPost } from "@/lib/jobs";
 

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import SiteHeader from "@/components/SiteHeader";
 import WhatsAppCta from "@/components/WhatsAppCta";
 import {
@@ -44,7 +44,9 @@ const assetLoadRecoveryScript = `
     var reloadTimestampParam = "__reload_ts";
     var storagePrefix = "jobadvice:asset-recovery";
     var retryWindowMs = 60000;
-    var maxAttempts = 2;
+    var maxAttempts = 1;
+    var successfulLoadResetDelayMs = 8000;
+    var recoveryResetTimer = 0;
 
     var getStorageKey = function () {
       return storagePrefix + ":" + window.location.pathname;
@@ -79,6 +81,14 @@ const assetLoadRecoveryScript = `
       } catch {}
     };
 
+    var hasReloadParam = function () {
+      try {
+        return new URL(window.location.href).searchParams.has(reloadParam);
+      } catch {
+        return false;
+      }
+    };
+
     var cleanupReloadParam = function () {
       try {
         var url = new URL(window.location.href);
@@ -91,6 +101,17 @@ const assetLoadRecoveryScript = `
         url.searchParams.delete(reloadTimestampParam);
         window.history.replaceState(window.history.state, "", url.toString());
       } catch {}
+    };
+
+    var scheduleRecoveryReset = function () {
+      if (recoveryResetTimer) {
+        window.clearTimeout(recoveryResetTimer);
+      }
+
+      recoveryResetTimer = window.setTimeout(function () {
+        cleanupReloadParam();
+        clearRecoveryState();
+      }, successfulLoadResetDelayMs);
     };
 
     var getRecentAttemptCount = function () {
@@ -135,32 +156,13 @@ const assetLoadRecoveryScript = `
     };
 
     window.addEventListener("load", function () {
+      if (hasReloadParam()) {
+        scheduleRecoveryReset();
+        return;
+      }
+
       cleanupReloadParam();
-      clearRecoveryState();
     });
-
-    window.addEventListener(
-      "error",
-      function (event) {
-        var target = event.target;
-        var assetUrl = "";
-
-        if (target && "tagName" in target) {
-          if (target.tagName === "SCRIPT" && typeof target.src === "string") {
-            assetUrl = target.src;
-          } else if (target.tagName === "LINK" && typeof target.href === "string") {
-            assetUrl = target.href;
-          }
-        }
-
-        if (!assetUrl || assetUrl.indexOf("/_next/static/") === -1) {
-          return;
-        }
-
-        reloadPage();
-      },
-      true
-    );
 
     window.addEventListener("unhandledrejection", function (event) {
       var reason = event.reason;

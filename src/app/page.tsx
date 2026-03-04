@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import EmptyStateCard from "@/components/EmptyStateCard";
 import IdentityHashRedirect from "@/components/IdentityHashRedirect";
 import JobCard from "@/components/JobCard";

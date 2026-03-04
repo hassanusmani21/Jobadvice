@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/AppLink";
 import { formatBlogDate, type BlogPost } from "@/lib/blogs";
 
 type BlogCardProps = {
