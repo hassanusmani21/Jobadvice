@@ -89,6 +89,16 @@ const nextConfig = {
   trailingSlash: true,
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "trainings.internshala.com",
+      },
+    ],
   },
   async headers() {
     if (isStaticExport) {

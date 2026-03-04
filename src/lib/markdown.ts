@@ -20,6 +20,11 @@ export type MarkdownBlock =
       type: "table";
       headers: string[];
       rows: string[][];
+    }
+  | {
+      type: "callout";
+      tone: "note" | "tip" | "warning";
+      text: string;
     };
 
 const headingPattern = /^(#{1,6})\s+(.*)$/;
@@ -28,6 +33,7 @@ const orderedListItemPattern = /^\d+\.\s+(.*)$/;
 const horizontalRulePattern = /^([-*_])\1{2,}$/;
 const tableRowPattern = /^\|(.+)\|$/;
 const tableDividerPattern = /^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|$/;
+const calloutPattern = /^(note|tip|warning):\s*(.*)$/i;
 const markdownEscapePattern = /\\([\\`*_{}[\]()#+.!|>\-])/g;
 const isTableLikeLine = (line: string) =>
   tableRowPattern.test(line.trim()) || tableDividerPattern.test(line.trim());
@@ -137,6 +143,43 @@ export const markdownToBlocks = (markdown: string): MarkdownBlock[] => {
       flushParagraph();
       flushList();
       blocks.push({ type: "rule" });
+      continue;
+    }
+
+    const calloutMatch = trimmedLine.match(calloutPattern);
+    if (calloutMatch) {
+      flushParagraph();
+      flushList();
+
+      const tone = calloutMatch[1].toLowerCase() as "note" | "tip" | "warning";
+      const calloutLines = [calloutMatch[2].trim()].filter(Boolean);
+
+      while (index + 1 < lines.length) {
+        const nextLine = lines[index + 1].trim();
+
+        if (
+          !nextLine ||
+          headingPattern.test(nextLine) ||
+          horizontalRulePattern.test(nextLine) ||
+          orderedListItemPattern.test(nextLine) ||
+          unorderedListItemPattern.test(nextLine) ||
+          calloutPattern.test(nextLine) ||
+          (tableRowPattern.test(nextLine) &&
+            index + 2 < lines.length &&
+            tableDividerPattern.test(lines[index + 2].trim()))
+        ) {
+          break;
+        }
+
+        calloutLines.push(nextLine);
+        index += 1;
+      }
+
+      blocks.push({
+        type: "callout",
+        tone,
+        text: calloutLines.join(" ").trim(),
+      });
       continue;
     }
 

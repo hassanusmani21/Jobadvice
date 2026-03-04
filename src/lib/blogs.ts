@@ -16,6 +16,10 @@ export type BlogPost = {
   tags: string[];
   isTrending: boolean;
   author: string;
+  authorRole?: string;
+  reviewedBy?: string;
+  reviewerRole?: string;
+  reviewedAt?: string;
   coverImage?: string;
   date: string;
   updatedAt: string;
@@ -179,9 +183,14 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
   const tags = normalizeList(data.tags);
   const summary = normalizeTextValue(data.summary || data.excerpt).replace(/\s+/g, " ").trim();
   const author = normalizeTextValue(data.author);
+  const authorRole = normalizeTextValue(data.authorRole);
+  const reviewedBy = normalizeTextValue(data.reviewedBy);
+  const reviewerRole = normalizeTextValue(data.reviewerRole);
+  const reviewedAt = toDateString(data.reviewedAt);
   const coverImage = normalizeTextValue(data.coverImage || data.image || data.thumbnail);
   const date = toDateString(data.date || data.publishedAt) || getTodayDateString();
   const updatedAt =
+    toDateString(data.updatedAt || data.updated || data.lastUpdated) ||
     toDateString(fileStats.mtime.toISOString()) || getTodayDateString();
   const isTrending = toBoolean(data.isTrending || data.trending);
   const postContent = normalizeMarkdownSource(content || summary);
@@ -199,6 +208,10 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
     tags,
     isTrending,
     author,
+    ...(authorRole ? { authorRole } : {}),
+    ...(reviewedBy ? { reviewedBy } : {}),
+    ...(reviewerRole ? { reviewerRole } : {}),
+    ...(reviewedAt ? { reviewedAt } : {}),
     ...(coverImage ? { coverImage } : {}),
     date,
     updatedAt,

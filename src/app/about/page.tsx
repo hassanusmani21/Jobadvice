@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { siteName } from "@/lib/site";
 
-const aboutSections = [
+const aboutSections: Array<{
+  title: string;
+  paragraphs: string[];
+  bullets?: string[];
+  id?: string;
+}> = [
   {
     title: "What JobAdvice Is",
     paragraphs: [
@@ -37,6 +42,19 @@ const aboutSections = [
     paragraphs: [
       "We aim to keep information accurate and updated, but users should always verify the final details on the official company website before applying.",
       `${siteName} never asks for payment for job information or job applications.`,
+    ],
+  },
+  {
+    id: "how-we-verify-information",
+    title: "How We Verify Information",
+    paragraphs: [
+      "For job posts, internships, and career guides, we review official company career pages, university websites, government notices, and source material before publishing when those sources are available.",
+      "Each article shows published and updated dates, and we revise pages when source information changes or readers report an issue.",
+    ],
+    bullets: [
+      "Official company websites and career portals",
+      "University, scholarship, and government notices",
+      "Visible publish and update dates on article pages",
     ],
   },
 ];
@@ -74,6 +92,7 @@ export default function AboutPage() {
         {aboutSections.map((section, index) => (
           <section
             key={section.title}
+            id={section.id}
             className={`px-5 py-6 sm:px-8 sm:py-7 ${
               index === 0 ? "" : "border-t border-slate-200/80"
             }`}

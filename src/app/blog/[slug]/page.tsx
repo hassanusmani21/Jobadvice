@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import BlogCard from "@/components/BlogCard";
+import type { ReactNode } from "react";
 import {
   formatBlogDate,
   getAllBlogs,
   getBlogBySlug,
   type BlogPost,
 } from "@/lib/blogs";
-import { decodeMarkdownEscapes, markdownToBlocks } from "@/lib/markdown";
+import {
+  decodeMarkdownEscapes,
+  markdownToBlocks,
+  type MarkdownBlock,
+} from "@/lib/markdown";
+import { toContentSlug } from "@/lib/slug";
 import { organizationId, siteLogoUrl, siteName, siteUrl } from "@/lib/site";
 
 type BlogDetailPageProps = {
@@ -18,6 +23,20 @@ type BlogDetailPageProps = {
   };
 };
 
+type OutlineItem = {
+  id: string;
+  level: 2 | 3;
+  text: string;
+};
+
+type ArticleHeadingBlock = Extract<MarkdownBlock, { type: "heading" }> & {
+  anchorId: string;
+};
+
+type ArticleRenderBlock =
+  | Exclude<MarkdownBlock, { type: "heading" }>
+  | ArticleHeadingBlock;
+
 export const dynamicParams = false;
 
 const getBlogDescription = (blog: BlogPost) =>
@@ -25,27 +44,44 @@ const getBlogDescription = (blog: BlogPost) =>
 
 const getRelatedBlogs = (allBlogs: BlogPost[], currentBlog: BlogPost) => {
   const currentTags = new Set(currentBlog.tags.map((tag) => tag.toLowerCase()));
+  const currentTopic = currentBlog.topic.toLowerCase();
 
   const scoredBlogs = allBlogs
     .filter((blog) => blog.slug !== currentBlog.slug)
     .map((blog) => {
-      const tagScore = blog.tags.reduce(
+      const sharedTagCount = blog.tags.reduce(
         (score, tag) => score + (currentTags.has(tag.toLowerCase()) ? 1 : 0),
         0,
       );
-
-      const topicScore =
-        blog.topic.toLowerCase() === currentBlog.topic.toLowerCase() ? 2 : 0;
+      const sameTopic = blog.topic.toLowerCase() === currentTopic;
+      const score =
+        (sameTopic ? 10 : 0) +
+        sharedTagCount * 4 +
+        (sameTopic && sharedTagCount > 0 ? 3 : 0) +
+        (blog.isTrending ? 1 : 0);
 
       return {
         blog,
-        score: tagScore + topicScore,
+        freshness: new Date(blog.updatedAt || blog.date).getTime(),
+        score,
       };
     })
-    .sort((firstItem, secondItem) => secondItem.score - firstItem.score);
+    .sort((firstItem, secondItem) => {
+      if (secondItem.score !== firstItem.score) {
+        return secondItem.score - firstItem.score;
+      }
+
+      return secondItem.freshness - firstItem.freshness;
+    });
 
   return scoredBlogs.map((item) => item.blog).slice(0, 4);
 };
+
+const toPersonJsonLd = (name: string, jobTitle?: string) => ({
+  "@type": "Person",
+  name,
+  ...(jobTitle ? { jobTitle } : {}),
+});
 
 const toBlogJsonLd = (blog: BlogPost) => ({
   "@context": "https://schema.org",
@@ -56,10 +92,12 @@ const toBlogJsonLd = (blog: BlogPost) => ({
   dateModified: blog.updatedAt,
   ...(blog.topic ? { articleSection: blog.topic } : {}),
   keywords: [blog.topic, ...blog.tags].filter(Boolean).join(", "),
-  author: {
-    "@type": "Person",
-    name: blog.author || "JobAdvice",
-  },
+  author: toPersonJsonLd(blog.author || siteName, blog.authorRole),
+  ...(blog.reviewedBy
+    ? {
+        reviewedBy: toPersonJsonLd(blog.reviewedBy, blog.reviewerRole),
+      }
+    : {}),
   publisher: {
     "@id": organizationId,
     "@type": "Organization",
@@ -72,6 +110,31 @@ const toBlogJsonLd = (blog: BlogPost) => ({
   },
   ...(blog.coverImage ? { image: [blog.coverImage] } : {}),
   mainEntityOfPage: `${siteUrl}/blog/${blog.slug}`,
+});
+
+const toBreadcrumbJsonLd = (blog: BlogPost) => ({
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: siteUrl,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Blog",
+      item: `${siteUrl}/blog`,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: blog.title,
+      item: `${siteUrl}/blog/${blog.slug}`,
+    },
+  ],
 });
 
 const inlineMarkdownPattern =
@@ -109,7 +172,9 @@ const renderInlineMarkdown = (text: string): ReactNode => {
         </a>,
       );
     } else if (match[4] || match[5]) {
-      nodes.push(<strong key={`strong-${startIndex}`}>{match[4] || match[5]}</strong>);
+      nodes.push(
+        <strong key={`strong-${startIndex}`}>{match[4] || match[5]}</strong>,
+      );
     } else if (match[6]) {
       nodes.push(
         <code
@@ -132,6 +197,74 @@ const renderInlineMarkdown = (text: string): ReactNode => {
 
   return nodes.length > 0 ? nodes : normalizedText;
 };
+
+const buildArticleStructure = (blocks: MarkdownBlock[], blogTitle: string) => {
+  const anchorCounts = new Map<string, number>();
+  const articleBlocks: ArticleRenderBlock[] = [];
+  const outline: OutlineItem[] = [];
+  const normalizedTitle = toContentSlug(blogTitle);
+
+  for (const [index, block] of blocks.entries()) {
+    if (block.type !== "heading") {
+      articleBlocks.push(block);
+      continue;
+    }
+
+    const normalizedHeading = toContentSlug(block.text);
+    if (
+      articleBlocks.length === 0 &&
+      block.level === 1 &&
+      normalizedHeading &&
+      normalizedHeading === normalizedTitle
+    ) {
+      continue;
+    }
+
+    const baseId = normalizedHeading || `section-${index + 1}`;
+    const currentCount = anchorCounts.get(baseId) || 0;
+    const nextCount = currentCount + 1;
+    anchorCounts.set(baseId, nextCount);
+
+    const anchorId = nextCount === 1 ? baseId : `${baseId}-${nextCount}`;
+    const headingBlock = {
+      ...block,
+      anchorId,
+    };
+
+    articleBlocks.push(headingBlock);
+
+    if (block.level === 2 || block.level === 3) {
+      outline.push({
+        id: anchorId,
+        level: block.level,
+        text: decodeMarkdownEscapes(block.text),
+      });
+    }
+  }
+
+  return {
+    articleBlocks,
+    outline,
+  };
+};
+
+const calloutStyles = {
+  note: {
+    container:
+      "rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm text-slate-700",
+    label: "text-slate-500",
+  },
+  tip: {
+    container:
+      "rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-950",
+    label: "text-emerald-700",
+  },
+  warning: {
+    container:
+      "rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950",
+    label: "text-amber-700",
+  },
+} as const;
 
 export async function generateStaticParams() {
   const blogs = await getAllBlogs();
@@ -170,7 +303,9 @@ export async function generateMetadata({
       description,
       url: blogUrl,
       type: "article",
-      ...(blog.coverImage ? { images: [{ url: blog.coverImage, alt: blog.title }] } : {}),
+      ...(blog.coverImage
+        ? { images: [{ url: blog.coverImage, alt: blog.title }] }
+        : {}),
     },
     twitter: {
       card: "summary_large_image",
@@ -192,47 +327,84 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const allBlogs = await getAllBlogs();
   const relatedBlogs = getRelatedBlogs(allBlogs, blog);
   const markdownBlocks = markdownToBlocks(blog.content);
-  const blogJsonLd = toBlogJsonLd(blog);
+  const { articleBlocks, outline } = buildArticleStructure(
+    markdownBlocks,
+    blog.title,
+  );
+  const showTableOfContents =
+    outline.length >= 3 || blog.readingTimeMinutes >= 5;
+  const structuredData = [toBlogJsonLd(blog), toBreadcrumbJsonLd(blog)];
+  const reviewedLabel = blog.reviewedBy
+    ? [blog.reviewedBy, blog.reviewerRole].filter(Boolean).join(", ")
+    : "";
 
   return (
     <div className="grid gap-6 lg:grid-cols-10">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
       <article className="space-y-6 lg:col-span-7">
         <header className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
+          <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
+            <ol className="flex flex-wrap items-center gap-2">
+              <li>
+                <Link href="/" className="transition hover:text-slate-900">
+                  Home
+                </Link>
+              </li>
+              <li aria-hidden="true">/</li>
+              <li>
+                <Link href="/blog" className="transition hover:text-slate-900">
+                  Blog
+                </Link>
+              </li>
+              <li aria-hidden="true">/</li>
+              <li className="min-w-0 truncate text-slate-700">{blog.title}</li>
+            </ol>
+          </nav>
+
           {blog.coverImage ? (
-            <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-              <img
+            <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+              <Image
                 src={blog.coverImage}
                 alt={blog.title}
+                width={1200}
+                height={675}
+                priority
+                sizes="(min-width: 1024px) 70vw, 100vw"
                 className="h-56 w-full object-cover sm:h-72"
-                loading="eager"
               />
             </div>
           ) : null}
+
           {blog.topic ? (
-            <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
+            <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-teal-700">
               {blog.topic}
             </p>
           ) : null}
-          <h1 className="mt-2 font-serif text-[1.5rem] leading-[1.2] text-slate-900 sm:text-[1.875rem]">{blog.title}</h1>
-          {blog.summary ? <p className="mt-4 text-sm text-slate-700 sm:text-base">{blog.summary}</p> : null}
+
+          <h1 className="mt-2 font-serif text-[1.5rem] leading-[1.2] text-slate-900 sm:text-[1.875rem]">
+            {blog.title}
+          </h1>
+
+          {blog.summary ? (
+            <p className="mt-4 text-sm leading-7 text-slate-700 sm:text-base">
+              {blog.summary}
+            </p>
+          ) : null}
+
           <div className="mt-5 flex flex-wrap gap-2 text-[11px] text-slate-600 sm:text-xs">
+            <span className="rounded-full bg-slate-100 px-3 py-1">
+              {blog.readingTimeMinutes} min read
+            </span>
             <span className="rounded-full bg-slate-100 px-3 py-1">
               Published: {formatBlogDate(blog.date)}
             </span>
             <span className="rounded-full bg-slate-100 px-3 py-1">
               Updated: {formatBlogDate(blog.updatedAt)}
             </span>
-            <span className="rounded-full bg-slate-100 px-3 py-1">
-              {blog.readingTimeMinutes} min read
-            </span>
-            {blog.author ? (
-              <span className="rounded-full bg-slate-100 px-3 py-1">By {blog.author}</span>
-            ) : null}
             {blog.isTrending ? (
               <span className="rounded-full bg-amber-100 px-3 py-1 font-semibold text-amber-800">
                 Trending
@@ -254,29 +426,84 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
           ) : null}
         </header>
 
+        {showTableOfContents ? (
+          <section
+            className="fade-up card-surface rounded-3xl px-5 py-4 lg:hidden"
+            style={{ animationDelay: "60ms" }}
+          >
+            <details>
+              <summary className="cursor-pointer text-sm font-semibold text-slate-900">
+                On this page
+              </summary>
+              <ol className="mt-4 space-y-2 text-sm text-slate-600">
+                {outline.map((item) => (
+                  <li key={item.id} className={item.level === 3 ? "pl-4" : ""}>
+                    <a
+                      href={`#${item.id}`}
+                      className="transition hover:text-teal-900"
+                    >
+                      {item.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          </section>
+        ) : null}
+
         <section
           className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
           style={{ animationDelay: "90ms" }}
         >
           <div className="space-y-5 text-sm text-slate-700 sm:text-base">
-            {markdownBlocks.map((block, index) => {
+            {articleBlocks.map((block, index) => {
               if (block.type === "rule") {
                 return <hr key={`rule-${index}`} className="border-slate-200" />;
               }
 
               if (block.type === "heading") {
-                if (block.level <= 2) {
-                  return (
-                    <h2 key={`${block.text}-${index}`} className="font-serif text-2xl text-slate-900">
-                      {renderInlineMarkdown(block.text)}
-                    </h2>
-                  );
-                }
+                const HeadingTag = block.level <= 2 ? "h2" : "h3";
+                const headingClassName =
+                  block.level <= 2
+                    ? "scroll-mt-24 font-serif text-[1.45rem] leading-tight text-slate-900"
+                    : "scroll-mt-24 font-serif text-[1.18rem] leading-tight text-slate-900";
 
                 return (
-                  <h3 key={`${block.text}-${index}`} className="font-serif text-xl text-slate-900">
-                    {renderInlineMarkdown(block.text)}
-                  </h3>
+                  <HeadingTag
+                    key={`${block.anchorId}-${index}`}
+                    id={block.anchorId}
+                    className={headingClassName}
+                  >
+                    <a
+                      href={`#${block.anchorId}`}
+                      className="group inline-flex items-start gap-2 transition hover:text-teal-900"
+                    >
+                      <span>{renderInlineMarkdown(block.text)}</span>
+                      <span
+                        aria-hidden="true"
+                        className="pt-1 text-sm text-slate-400 opacity-0 transition group-hover:opacity-100"
+                      >
+                        #
+                      </span>
+                    </a>
+                  </HeadingTag>
+                );
+              }
+
+              if (block.type === "callout") {
+                const styles = calloutStyles[block.tone];
+
+                return (
+                  <div key={`callout-${index}`} className={styles.container}>
+                    <p
+                      className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${styles.label}`}
+                    >
+                      {block.tone}
+                    </p>
+                    <p className="mt-1 leading-7">
+                      {renderInlineMarkdown(block.text)}
+                    </p>
+                  </div>
                 );
               }
 
@@ -286,7 +513,11 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 return (
                   <ListTag
                     key={`list-${index}`}
-                    className={block.ordered ? "list-decimal space-y-2 pl-5" : "list-disc space-y-2 pl-5"}
+                    className={
+                      block.ordered
+                        ? "list-decimal space-y-1.5 pl-5 leading-7 marker:font-semibold marker:text-slate-400"
+                        : "list-disc space-y-1.5 pl-5 leading-7 marker:text-slate-400"
+                    }
                   >
                     {block.items.map((item) => (
                       <li key={item}>{renderInlineMarkdown(item)}</li>
@@ -299,9 +530,9 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 return (
                   <div
                     key={`table-${index}`}
-                    className="overflow-x-auto rounded-2xl border border-slate-200"
+                    className="overflow-x-auto rounded-2xl border border-slate-200 bg-white"
                   >
-                    <table className="min-w-full border-collapse text-left text-sm">
+                    <table className="min-w-full border-collapse text-left text-sm leading-6">
                       <thead className="bg-slate-50 text-slate-900">
                         <tr>
                           {block.headers.map((header) => (
@@ -320,7 +551,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                             {row.map((cell, cellIndex) => (
                               <td
                                 key={`${cell}-${cellIndex}`}
-                                className="border-b border-slate-100 px-4 py-3 align-top text-slate-700"
+                                className="border-b border-slate-100 px-4 py-3 align-top text-slate-700 last:border-b-0"
                               >
                                 {renderInlineMarkdown(cell)}
                               </td>
@@ -334,11 +565,53 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               }
 
               return (
-                <p key={`${block.text}-${index}`} className="leading-8">
+                <p key={`${block.text}-${index}`} className="leading-7">
                   {renderInlineMarkdown(block.text)}
                 </p>
               );
             })}
+          </div>
+
+          <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm text-slate-600 sm:px-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Article information
+            </p>
+            <div className="mt-3 flex flex-col gap-2 leading-6">
+              <p>
+                <span className="font-semibold text-slate-900">By:</span>{" "}
+                {blog.author || siteName}
+                {blog.authorRole ? `, ${blog.authorRole}` : ""}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">Published:</span>{" "}
+                {formatBlogDate(blog.date)}
+              </p>
+              <p>
+                <span className="font-semibold text-slate-900">Updated:</span>{" "}
+                {formatBlogDate(blog.updatedAt)}
+              </p>
+              {reviewedLabel ? (
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Reviewed by:
+                  </span>{" "}
+                  {reviewedLabel}
+                  {blog.reviewedAt
+                    ? ` on ${formatBlogDate(blog.reviewedAt)}`
+                    : ""}
+                </p>
+              ) : null}
+            </div>
+            <p className="mt-3 text-xs leading-6 text-slate-500">
+              We verify job and career information against official source pages
+              where available.{" "}
+              <Link
+                href="/about#how-we-verify-information"
+                className="font-medium text-slate-700 underline underline-offset-4 transition hover:text-slate-900"
+              >
+                How we verify information
+              </Link>
+            </p>
           </div>
         </section>
 
@@ -353,34 +626,57 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
       </article>
 
       <aside className="space-y-5 lg:col-span-3">
-        <section className="fade-up card-surface rounded-3xl p-5">
-          <h2 className="text-lg font-bold text-slate-900">Related Articles</h2>
+        {showTableOfContents ? (
+          <section className="fade-up hidden lg:block lg:sticky lg:top-24">
+            <div className="card-surface rounded-3xl p-5">
+              <h2 className="text-lg font-bold text-slate-900">On this page</h2>
+              <ol className="mt-4 space-y-2 text-sm text-slate-600">
+                {outline.map((item) => (
+                  <li key={item.id} className={item.level === 3 ? "pl-4" : ""}>
+                    <a
+                      href={`#${item.id}`}
+                      className="transition hover:text-teal-900"
+                    >
+                      {item.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </section>
+        ) : null}
+
+        <section
+          className="fade-up card-surface rounded-3xl p-5"
+          style={{ animationDelay: showTableOfContents ? "90ms" : "0ms" }}
+        >
+          <h2 className="text-lg font-bold text-slate-900">Read next</h2>
           {relatedBlogs.length > 0 ? (
             <div className="mt-4 space-y-3">
               {relatedBlogs.map((relatedBlog) => (
-                <div key={relatedBlog.slug} className="rounded-xl border border-slate-200 bg-white/80 p-3">
-                  <Link
-                    href={`/blog/${relatedBlog.slug}`}
-                    className="text-sm font-semibold text-slate-900 transition hover:text-teal-900"
-                  >
+                <Link
+                  key={relatedBlog.slug}
+                  href={`/blog/${relatedBlog.slug}`}
+                  className="block rounded-2xl border border-slate-200 bg-white/85 p-4 transition hover:border-teal-200 hover:bg-teal-50/70"
+                >
+                  <p className="text-sm font-semibold leading-6 text-slate-900">
                     {relatedBlog.title}
-                  </Link>
+                  </p>
                   <p className="mt-1 text-xs text-slate-600">
                     {relatedBlog.topic ? `${relatedBlog.topic} • ` : ""}
                     {relatedBlog.readingTimeMinutes} min read
                   </p>
-                </div>
+                  {relatedBlog.excerpt ? (
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {relatedBlog.excerpt}
+                    </p>
+                  ) : null}
+                </Link>
               ))}
             </div>
           ) : (
             <p className="mt-3 text-sm text-slate-600">No related articles yet.</p>
           )}
-        </section>
-
-        <section className="fade-up" style={{ animationDelay: "80ms" }}>
-          {relatedBlogs.slice(0, 1).map((featuredBlog) => (
-            <BlogCard key={featuredBlog.slug} blog={featuredBlog} />
-          ))}
         </section>
       </aside>
     </div>

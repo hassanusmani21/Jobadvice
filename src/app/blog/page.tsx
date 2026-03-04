@@ -129,9 +129,19 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             <ul className="mt-4 space-y-2">
               {topTopics.map((item) => (
                 <li key={item.topic}>
-                  <span className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700">
+                  <Link
+                    href={{
+                      pathname: "/blog",
+                      query: { q: item.topic },
+                    }}
+                    className={`inline-flex rounded-full border px-3 py-1 text-sm transition ${
+                      query.toLowerCase() === item.topic.toLowerCase()
+                        ? "border-teal-200 bg-teal-50 text-teal-900"
+                        : "border-slate-200 text-slate-700 hover:border-teal-200 hover:text-teal-900"
+                    }`}
+                  >
                     {item.topic}
-                  </span>
+                  </Link>
                 </li>
               ))}
             </ul>
