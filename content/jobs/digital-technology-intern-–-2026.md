@@ -1,5 +1,5 @@
 ---
-title: Digital Technology Intern – 2026
+title: "Digital Technology Intern – 2026 "
 date: 2026-03-03
 company: Haier (GE Appliances Division)
 location: Hyderabad, Telangana, India

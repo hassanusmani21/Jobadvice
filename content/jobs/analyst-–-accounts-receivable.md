@@ -1,5 +1,5 @@
 ---
-title: Analyst – Accounts Receivable
+title: "Analyst – Accounts Receivable "
 date: 2026-03-01
 company: Flex
 location: Chennai, Tamil Nadu, India

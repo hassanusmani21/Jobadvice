@@ -1,5 +1,5 @@
 ---
-title: Intern – Tool Developer
+title: "Intern – Tool Developer "
 date: 2026-03-04
 company: Siemens Gamesa Renewable Power Private Limited
 location: Bangalore, Karnataka, India
