@@ -25,5 +25,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Validate job front matter
+        run: npm run validate:jobs
+
       - name: Build
         run: npm run build
