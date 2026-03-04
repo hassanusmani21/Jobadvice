@@ -10,7 +10,7 @@ type GlobalErrorPageProps = {
 const chunkReloadStoragePrefix = "jobadvice:asset-recovery";
 const chunkReloadParam = "__chunk_reload";
 const chunkReloadWindowMs = 60000;
-const maxChunkReloadAttempts = 2;
+const maxChunkReloadAttempts = 1;
 
 const isChunkLoadError = (error: Error) => {
   const message = error.message || "";

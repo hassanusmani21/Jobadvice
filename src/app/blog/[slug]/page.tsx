@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import Link from "next/link";
+import Image from "next/image";
+import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import BlogCard from "@/components/BlogCard";
 import {
   formatBlogDate,
