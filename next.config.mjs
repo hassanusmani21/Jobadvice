@@ -1,6 +1,25 @@
 /** @type {import('next').NextConfig} */
 const isStaticExport = process.env.NEXT_OUTPUT_EXPORT === "true";
 const isDevelopment = process.env.NODE_ENV !== "production";
+const resolveDeploymentId = () => {
+  const rawValue =
+    process.env.DEPLOY_ID ||
+    process.env.BUILD_ID ||
+    process.env.COMMIT_REF ||
+    "";
+
+  const sanitizedValue = rawValue.replace(/[^A-Za-z0-9_-]/g, "");
+  return sanitizedValue || undefined;
+};
+
+const deploymentId = !isDevelopment ? resolveDeploymentId() : undefined;
+
+if (!isDevelopment && !isStaticExport && !deploymentId) {
+  console.warn(
+    "[next.config] No deployment ID detected. Deploy-skew protection will be weaker for this build.",
+  );
+}
+
 const connectSrc = [
   "'self'",
   "https://identity.netlify.com",
@@ -83,8 +102,21 @@ const noStoreHeaders = [
   },
 ];
 
+const publicNoStoreSources = [
+  "/",
+  "/about",
+  "/blog",
+  "/blog/:path*",
+  "/contact",
+  "/jobs",
+  "/jobs/:path*",
+  "/login",
+  "/privacy-policy",
+];
+
 const nextConfig = {
   output: isStaticExport ? "export" : undefined,
+  ...(deploymentId ? { deploymentId } : {}),
   poweredByHeader: false,
   trailingSlash: true,
   images: {
@@ -96,6 +128,10 @@ const nextConfig = {
     }
 
     return [
+      ...publicNoStoreSources.map((source) => ({
+        source,
+        headers: noStoreHeaders,
+      })),
       {
         source: "/admin",
         headers: noStoreHeaders,

@@ -1,4 +1,5 @@
 import { normalizeMarkdownSource } from "./markdown";
+import { extractIsoDatesFromText, toIsoDateString } from "./dateParsing";
 export type ExtractMode = "ollama" | "fallback";
 
 type JobExtractedData = {
@@ -335,43 +336,7 @@ const filterGenericListItems = (
 const takeLimitedItems = (items: string[], limit: number) =>
   dedupeItems(items).slice(0, limit);
 
-const toIsoDate = (value: string) => {
-  const trimmedValue = value.trim();
-  if (!trimmedValue) {
-    return "";
-  }
-
-  const parsedDate = new Date(trimmedValue);
-  if (!Number.isNaN(parsedDate.getTime())) {
-    return parsedDate.toISOString().split("T")[0];
-  }
-
-  const slashDateMatch = trimmedValue.match(
-    /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/,
-  );
-  if (!slashDateMatch) {
-    return "";
-  }
-
-  const day = Number.parseInt(slashDateMatch[1], 10);
-  const month = Number.parseInt(slashDateMatch[2], 10);
-  let year = Number.parseInt(slashDateMatch[3], 10);
-
-  if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) {
-    return "";
-  }
-
-  if (year < 100) {
-    year += 2000;
-  }
-
-  const normalizedDate = new Date(Date.UTC(year, month - 1, day));
-  if (Number.isNaN(normalizedDate.getTime())) {
-    return "";
-  }
-
-  return normalizedDate.toISOString().split("T")[0];
-};
+const toIsoDate = (value: string) => toIsoDateString(value);
 
 const findHeadingTitle = (text: string) => {
   const headingMatch = normalizeMarkdownSource(text).match(/^#{1,6}\s+(.+)$/m);
@@ -1235,6 +1200,17 @@ const mergeJobData = (
   ),
 });
 
+const keepAiDateOnlyWhenPresentInSource = (
+  value: string,
+  sourceDates: Set<string>,
+) => {
+  if (!value || sourceDates.has(value)) {
+    return value;
+  }
+
+  return "";
+};
+
 const normalizeBlogData = (value: Record<string, unknown>): BlogExtractedData => {
   const title = normalizeString(value.title || value.headline);
   const body = normalizeMarkdownSource(normalizeString(value.body)).slice(0, 12000);
@@ -1366,6 +1342,7 @@ export const extractJobFromText = async (
     throw new Error("Source text is required for job extraction");
   }
   const fallbackData = extractJobFallback(trimmedText);
+  const sourceDates = extractIsoDatesFromText(trimmedText);
   const sourceForModel = compactSourceForPrompt(trimmedText);
   const softTimeoutMs = getOllamaSoftTimeoutMs();
 
@@ -1399,6 +1376,7 @@ Rules:
 - "eligibilityCriteria" should summarize who can apply / candidate profile in 1-2 lines.
 - Keep fields concise and human-readable.
 - Use YYYY-MM-DD for dates when possible.
+- Do not invent applicationStartDate or applicationEndDate. Leave them empty when the source does not provide them.
 - "skills" and "education" must include specific items. Do not return only section headers like "Technical Skills" or "Education".
 - "responsibilities" should include concrete responsibility points when available.
 - Include all available items for "skills", "education", and "responsibilities" (not just first 1-2 items).
@@ -1419,9 +1397,20 @@ ${sourceForModel}
   try {
     const aiData = await withSoftTimeout(ollamaGenerate(prompt), softTimeoutMs);
     const normalizedAiData = normalizeJobData(aiData);
+    const sanitizedAiData = {
+      ...normalizedAiData,
+      applicationStartDate: keepAiDateOnlyWhenPresentInSource(
+        normalizedAiData.applicationStartDate,
+        sourceDates,
+      ),
+      applicationEndDate: keepAiDateOnlyWhenPresentInSource(
+        normalizedAiData.applicationEndDate,
+        sourceDates,
+      ),
+    };
     return {
       mode: "ollama",
-      data: mergeJobData(normalizedAiData, fallbackData),
+      data: mergeJobData(sanitizedAiData, fallbackData),
     };
   } catch (error) {
     const reason = toErrorMessage(error);
@@ -1468,6 +1457,7 @@ Rules:
   "Publish Date", "Date", "Content", or "Body", map those fields directly.
 - Preserve the exact topic wording from the source. Do not shorten "Career Growth" to "Career".
 - Do not invent summary, author, topic, or coverImage when they are not present in the source.
+- Do not invent date when it is not present in the source.
 - slug should be URL-safe lowercase with hyphens.
 - Use YYYY-MM-DD for date when possible.
 - body should contain only the article content in clean markdown.
@@ -1480,9 +1470,20 @@ ${sourceForModel}
 
   try {
     const aiData = await withSoftTimeout(ollamaGenerate(prompt), softTimeoutMs);
+    const sourceDates = extractIsoDatesFromText(trimmedText);
+    const normalizedBlogData = normalizeBlogData(aiData);
     return {
       mode: "ollama",
-      data: mergeBlogData(normalizeBlogData(aiData), fallbackData),
+      data: mergeBlogData(
+        {
+          ...normalizedBlogData,
+          date: keepAiDateOnlyWhenPresentInSource(
+            normalizedBlogData.date,
+            sourceDates,
+          ),
+        },
+        fallbackData,
+      ),
     };
   } catch (error) {
     const reason = toErrorMessage(error);

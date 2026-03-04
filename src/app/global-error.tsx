@@ -7,9 +7,10 @@ type GlobalErrorPageProps = {
   reset: () => void;
 };
 
-const chunkReloadStoragePrefix = "jobadvice:chunk-reload";
+const chunkReloadStoragePrefix = "jobadvice:asset-recovery";
 const chunkReloadParam = "__chunk_reload";
 const chunkReloadWindowMs = 60000;
+const maxChunkReloadAttempts = 2;
 
 const isChunkLoadError = (error: Error) => {
   const message = error.message || "";
@@ -30,23 +31,86 @@ const getChunkReloadKey = () => {
   return `${chunkReloadStoragePrefix}:${window.location.pathname}`;
 };
 
-const recoverChunkLoad = () => {
+const getChunkReloadState = () => {
+  if (typeof window === "undefined") {
+    return {
+      attempts: 0,
+      lastAttempt: 0,
+    };
+  }
+
+  try {
+    const rawValue = window.sessionStorage.getItem(getChunkReloadKey());
+    if (!rawValue) {
+      return {
+        attempts: 0,
+        lastAttempt: 0,
+      };
+    }
+
+    const parsed = JSON.parse(rawValue) as {
+      attempts?: unknown;
+      lastAttempt?: unknown;
+    };
+    const attempts =
+      typeof parsed.attempts === "number" && Number.isFinite(parsed.attempts)
+        ? parsed.attempts
+        : 0;
+    const lastAttempt =
+      typeof parsed.lastAttempt === "number" && Number.isFinite(parsed.lastAttempt)
+        ? parsed.lastAttempt
+        : 0;
+
+    return {
+      attempts,
+      lastAttempt,
+    };
+  } catch {
+    return {
+      attempts: 0,
+      lastAttempt: 0,
+    };
+  }
+};
+
+const clearChunkReloadState = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.sessionStorage.removeItem(getChunkReloadKey());
+  } catch {}
+};
+
+const recoverChunkLoad = (force = false) => {
   if (typeof window === "undefined") {
     return false;
   }
 
   try {
-    const reloadKey = getChunkReloadKey();
-    const lastAttempt = Number(window.sessionStorage.getItem(reloadKey) || "0");
+    const recoveryState = getChunkReloadState();
+    const withinRetryWindow =
+      Number.isFinite(recoveryState.lastAttempt) &&
+      Date.now() - recoveryState.lastAttempt < chunkReloadWindowMs;
+    const attempts = withinRetryWindow ? recoveryState.attempts : 0;
 
-    if (Number.isFinite(lastAttempt) && Date.now() - lastAttempt < chunkReloadWindowMs) {
+    if (!force && attempts >= maxChunkReloadAttempts) {
       return false;
     }
 
-    window.sessionStorage.setItem(reloadKey, String(Date.now()));
+    const nextAttempt = force ? 1 : attempts + 1;
+    window.sessionStorage.setItem(
+      getChunkReloadKey(),
+      JSON.stringify({
+        attempts: nextAttempt,
+        lastAttempt: Date.now(),
+      }),
+    );
 
     const nextUrl = new URL(window.location.href);
-    nextUrl.searchParams.set(chunkReloadParam, Date.now().toString());
+    nextUrl.searchParams.set(chunkReloadParam, nextAttempt.toString());
+    nextUrl.searchParams.set("__reload_ts", Date.now().toString());
     window.location.replace(nextUrl.toString());
     return true;
   } catch {
@@ -70,11 +134,8 @@ export default function GlobalErrorPage({ error, reset }: GlobalErrorPageProps) 
 
   const handleAction = () => {
     if (chunkLoadError && typeof window !== "undefined") {
-      try {
-        window.sessionStorage.removeItem(getChunkReloadKey());
-      } catch {}
-
-      recoverChunkLoad();
+      clearChunkReloadState();
+      recoverChunkLoad(true);
       return;
     }
 
