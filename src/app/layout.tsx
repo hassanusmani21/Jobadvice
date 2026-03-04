@@ -41,11 +41,42 @@ const assetLoadRecoveryScript = `
     if (typeof window === "undefined") return;
 
     var reloadParam = "__chunk_reload";
+    var reloadTimestampParam = "__reload_ts";
     var storagePrefix = "jobadvice:asset-recovery";
     var retryWindowMs = 60000;
+    var maxAttempts = 2;
 
     var getStorageKey = function () {
       return storagePrefix + ":" + window.location.pathname;
+    };
+
+    var readRecoveryState = function () {
+      try {
+        var rawValue = window.sessionStorage.getItem(getStorageKey());
+        if (!rawValue) {
+          return { attempts: 0, lastAttempt: 0 };
+        }
+
+        var parsed = JSON.parse(rawValue);
+        var attempts =
+          typeof parsed.attempts === "number" && isFinite(parsed.attempts)
+            ? parsed.attempts
+            : 0;
+        var lastAttempt =
+          typeof parsed.lastAttempt === "number" && isFinite(parsed.lastAttempt)
+            ? parsed.lastAttempt
+            : 0;
+
+        return { attempts: attempts, lastAttempt: lastAttempt };
+      } catch {
+        return { attempts: 0, lastAttempt: 0 };
+      }
+    };
+
+    var clearRecoveryState = function () {
+      try {
+        window.sessionStorage.removeItem(getStorageKey());
+      } catch {}
     };
 
     var cleanupReloadParam = function () {
@@ -57,35 +88,45 @@ const assetLoadRecoveryScript = `
         }
 
         url.searchParams.delete(reloadParam);
+        url.searchParams.delete(reloadTimestampParam);
         window.history.replaceState(window.history.state, "", url.toString());
       } catch {}
     };
 
-    var hasRetriedRecently = function () {
-      try {
-        var lastAttempt = Number(window.sessionStorage.getItem(getStorageKey()) || "0");
-        return Number.isFinite(lastAttempt) && Date.now() - lastAttempt < retryWindowMs;
-      } catch {
-        return false;
+    var getRecentAttemptCount = function () {
+      var state = readRecoveryState();
+      if (!isFinite(state.lastAttempt) || Date.now() - state.lastAttempt >= retryWindowMs) {
+        return 0;
       }
+
+      return state.attempts;
     };
 
-    var rememberRetry = function () {
+    var rememberRetry = function (attemptCount) {
       try {
-        window.sessionStorage.setItem(getStorageKey(), String(Date.now()));
+        window.sessionStorage.setItem(
+          getStorageKey(),
+          JSON.stringify({
+            attempts: attemptCount,
+            lastAttempt: Date.now(),
+          })
+        );
       } catch {}
     };
 
     var reloadPage = function () {
-      if (hasRetriedRecently()) {
+      var attempts = getRecentAttemptCount();
+      if (attempts >= maxAttempts) {
         return;
       }
 
-      rememberRetry();
+      var nextAttempt = attempts + 1;
+      rememberRetry(nextAttempt);
 
       try {
         var nextUrl = new URL(window.location.href);
-        nextUrl.searchParams.set(reloadParam, Date.now().toString());
+        nextUrl.searchParams.set(reloadParam, String(nextAttempt));
+        nextUrl.searchParams.set(reloadTimestampParam, String(Date.now()));
         window.location.replace(nextUrl.toString());
         return;
       } catch {}
@@ -93,7 +134,10 @@ const assetLoadRecoveryScript = `
       window.location.reload();
     };
 
-    window.addEventListener("load", cleanupReloadParam);
+    window.addEventListener("load", function () {
+      cleanupReloadParam();
+      clearRecoveryState();
+    });
 
     window.addEventListener(
       "error",

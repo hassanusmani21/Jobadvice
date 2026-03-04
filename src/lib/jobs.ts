@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { toIsoDateString } from "./dateParsing";
 import { toContentSlug } from "./slug";
 
 const jobsDirectory = path.join(process.cwd(), "content", "jobs");
@@ -106,18 +107,7 @@ const parseQuotedValue = (value: string, quote: '"' | "'") => {
     .trim();
 };
 
-const toDateString = (value: unknown) => {
-  if (typeof value !== "string") {
-    return "";
-  }
-
-  const parsedDate = new Date(value);
-  if (Number.isNaN(parsedDate.getTime())) {
-    return "";
-  }
-
-  return parsedDate.toISOString().split("T")[0];
-};
+const toDateString = (value: unknown) => toIsoDateString(value);
 
 const normalizeTextValue = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
