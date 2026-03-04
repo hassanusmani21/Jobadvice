@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
