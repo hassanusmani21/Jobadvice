@@ -26,5 +26,5 @@ responsibilities:
   - Support month-end and year-end closing
   - Ensure compliance with accounting standards
 applyLink: https://www.capgemini.com/in-en/jobs/323286-en_GB_SAPBTP/
-applicationStartDate: 2026-01-02
+applicationStartDate: 2026-03-01
 ---

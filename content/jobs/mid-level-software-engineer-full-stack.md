@@ -57,5 +57,5 @@ responsibilities:
 workingDays: Monday–Friday (Agile Sprint Based)
 jobTiming: As per company schedule
 applyLink: https://in.linkedin.com/jobs/view/mid-level-software-engineer-full-stack-at-ebay-4261158323?trk=public_jobs_topcard-title
-applicationStartDate: 2026-01-02
+applicationStartDate: 2026-03-01
 ---

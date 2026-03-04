@@ -43,5 +43,5 @@ responsibilities:
 workingDays: Monday – Friday (As per project requirement)
 jobTiming: Regular Business Hours / Project-Based Timing
 applyLink: https://www.accenture.com/in-en/careers/jobdetails?id=ATCI-5076834-S1877838_en&title=Custom+Software+Engineer
-applicationStartDate: 2026-03-02
+applicationStartDate: 2026-03-03
 ---

@@ -48,5 +48,5 @@ responsibilities:
 workingDays: Monday-Friday (As per business requirement)
 jobTiming: As per company shift schedule
 applyLink: https://flextronics.wd1.myworkdayjobs.com/Careers/job/India-Chennai/Analyst---Accounts-Receivable_WD215427
-applicationStartDate: 2026-01-02
+applicationStartDate: 2026-03-04
 ---

@@ -31,5 +31,5 @@ responsibilities:
   - Collaborate with development teams
   - Ensure product quality and performance
 applyLink: https://www.capgemini.com/in-en/jobs/383624-en_GB_SAPBTP/
-applicationStartDate: 2026-01-02
+applicationStartDate: 2026-03-01
 ---

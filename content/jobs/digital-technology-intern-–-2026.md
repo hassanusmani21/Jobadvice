@@ -40,5 +40,5 @@ responsibilities:
 workingDays: Monday – Friday (As per internship guidelines)
 jobTiming: Regular Business Hours
 applyLink: https://haier.wd3.myworkdayjobs.com/en-US/GE_Appliances/job/Hyderabad-SAL-IN/Digital-Technology-Intern_REQ-25071
-applicationStartDate: 2026-03-02
+applicationStartDate: 2026-03-03
 ---

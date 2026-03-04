@@ -51,5 +51,5 @@ responsibilities:
 workingDays: Monday-Friday
 jobTiming: Day Shift
 applyLink: https://careers.unitedhealthgroup.com/job/23072057/software-engineer-hyderabad-in/
-applicationStartDate: 2026-01-02
+applicationStartDate: 2026-03-01
 ---

@@ -32,5 +32,5 @@ responsibilities:
   - Collaborate with data and business teams
   - Ensure data quality and governance
 applyLink: https://www.capgemini.com/in-en/jobs/355474-en_GB_SAPBTP/
-applicationStartDate: 2026-01-02
+applicationStartDate: 2026-03-01
 ---

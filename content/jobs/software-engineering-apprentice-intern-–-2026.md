@@ -44,5 +44,5 @@ responsibilities:
 workingDays: Monday – Friday (As per project requirement)
 jobTiming: Regular Business Hours
 applyLink: https://careers.synopsys.com/job/-/-/44408/92181995088
-applicationStartDate: 2026-03-02
+applicationStartDate: 2026-03-03
 ---

@@ -47,5 +47,5 @@ responsibilities:
 workingDays: Monday – Friday (As per business requirement)
 jobTiming: Shift-based (May include rotational shifts)
 applyLink: https://careers.oracle.com/en/sites/jobsearch/job/321765/
-applicationStartDate: 2026-03-02
+applicationStartDate: 2026-03-03
 ---

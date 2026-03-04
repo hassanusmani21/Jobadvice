@@ -49,5 +49,5 @@ responsibilities:
 workingDays: Monday – Friday (May vary by project)
 jobTiming: As per assigned team schedule
 applyLink: https://www.accenture.com/in-en/careers/jobdetails?id=ATCI-4817203-S1853038_en&title=Application+Support+Engineer
-applicationStartDate: 2025-12-31
+applicationStartDate: 2026-03-04
 ---
