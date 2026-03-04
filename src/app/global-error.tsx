@@ -8,6 +8,8 @@ type GlobalErrorPageProps = {
 };
 
 const chunkReloadStoragePrefix = "jobadvice:chunk-reload";
+const chunkReloadParam = "__chunk_reload";
+const chunkReloadWindowMs = 60000;
 
 const isChunkLoadError = (error: Error) => {
   const message = error.message || "";
@@ -20,12 +22,37 @@ const isChunkLoadError = (error: Error) => {
   );
 };
 
-const getChunkReloadKey = (error: Error) => {
+const getChunkReloadKey = () => {
   if (typeof window === "undefined") {
     return chunkReloadStoragePrefix;
   }
 
-  return `${chunkReloadStoragePrefix}:${window.location.pathname}:${error.message}`;
+  return `${chunkReloadStoragePrefix}:${window.location.pathname}`;
+};
+
+const recoverChunkLoad = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const reloadKey = getChunkReloadKey();
+    const lastAttempt = Number(window.sessionStorage.getItem(reloadKey) || "0");
+
+    if (Number.isFinite(lastAttempt) && Date.now() - lastAttempt < chunkReloadWindowMs) {
+      return false;
+    }
+
+    window.sessionStorage.setItem(reloadKey, String(Date.now()));
+
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set(chunkReloadParam, Date.now().toString());
+    window.location.replace(nextUrl.toString());
+    return true;
+  } catch {
+    window.location.reload();
+    return true;
+  }
 };
 
 export default function GlobalErrorPage({ error, reset }: GlobalErrorPageProps) {
@@ -38,27 +65,16 @@ export default function GlobalErrorPage({ error, reset }: GlobalErrorPageProps) 
       return;
     }
 
-    try {
-      const reloadKey = getChunkReloadKey(error);
-
-      if (window.sessionStorage.getItem(reloadKey) === "1") {
-        return;
-      }
-
-      window.sessionStorage.setItem(reloadKey, "1");
-      window.location.reload();
-    } catch {
-      window.location.reload();
-    }
+    recoverChunkLoad();
   }, [chunkLoadError, error]);
 
   const handleAction = () => {
     if (chunkLoadError && typeof window !== "undefined") {
       try {
-        window.sessionStorage.removeItem(getChunkReloadKey(error));
+        window.sessionStorage.removeItem(getChunkReloadKey());
       } catch {}
 
-      window.location.reload();
+      recoverChunkLoad();
       return;
     }
 

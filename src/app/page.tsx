@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import EmptyStateCard from "@/components/EmptyStateCard";
-import JobCard from "@/components/JobCard";
 import IdentityHashRedirect from "@/components/IdentityHashRedirect";
+import JobCard from "@/components/JobCard";
 import { formatBlogDate, getLatestBlogs } from "@/lib/blogs";
 import { getLatestJobs } from "@/lib/jobs";
 
@@ -59,7 +59,7 @@ export default async function HomePage() {
 
         <ul className="grid gap-5 md:grid-cols-2">
           {latestJobs.map((job, index) => (
-            <li key={job.slug}>
+            <li key={job.slug} className="min-w-0">
               <JobCard job={job} style={{ animationDelay: `${180 + index * 90}ms` }} />
             </li>
           ))}

@@ -203,14 +203,14 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                 Apply Link Not Available
               </span>
             ) : (
-              <Link
+              <a
                 href={`/api/apply/${job.slug}`}
                 target="_blank"
                 rel="noopener noreferrer nofollow"
                 className="inline-flex justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 sm:w-auto"
               >
                 Apply Now
-              </Link>
+              </a>
             )}
           </div>
         </header>

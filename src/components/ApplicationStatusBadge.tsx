@@ -22,7 +22,7 @@ export default function ApplicationStatusBadge({
 
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${badgeClassName} ${
+      className={`inline-flex max-w-full whitespace-normal rounded-full border px-3 py-1 text-center text-xs font-semibold uppercase leading-4 tracking-wide ${badgeClassName} ${
         className || ""
       }`.trim()}
     >
