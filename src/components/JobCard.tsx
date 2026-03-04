@@ -85,31 +85,37 @@ export default function JobCard({ job, style }: JobCardProps) {
     kind: MetaIconProps["kind"];
     label: string;
   }>;
-
   return (
     <article
-      className="group fade-up flex h-full flex-col rounded-2xl border border-slate-200/80 bg-white/96 px-5 py-6 shadow-[0_18px_38px_-30px_rgba(15,23,42,0.2)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_44px_-30px_rgba(15,23,42,0.24)] sm:px-6"
+      className="group fade-up flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white/96 px-5 py-6 shadow-[0_18px_38px_-30px_rgba(15,23,42,0.2)] transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_44px_-30px_rgba(15,23,42,0.24)] sm:px-6"
       style={style}
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0">
           <h2 className="text-[1.125rem] font-bold leading-[1.35] text-slate-900 transition-colors group-hover:text-teal-900">
             {job.title}
           </h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">{job.company}</p>
         </div>
-        <ApplicationStatusBadge status={job.applicationStatus} className="shrink-0 text-[10px]" />
+        <ApplicationStatusBadge
+          status={job.applicationStatus}
+          className="max-w-full shrink-0 self-start text-[10px]"
+        />
       </div>
 
       {metaItems.length > 0 ? (
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-700">
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-700 sm:flex sm:flex-wrap sm:items-center">
           {metaItems.map((item) => (
             <span
               key={`${item.kind}-${item.label}`}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5"
+              className={`inline-flex min-w-0 items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-1.5 ${
+                item.kind === "location"
+                  ? "col-span-2 w-full sm:col-auto sm:w-auto sm:max-w-[calc(100%-0.5rem)]"
+                  : "max-w-full"
+              }`}
             >
               <MetaIcon kind={item.kind} />
-              <span className="truncate">{item.label}</span>
+              <span className="min-w-0 truncate">{item.label}</span>
             </span>
           ))}
         </div>
@@ -127,7 +133,7 @@ export default function JobCard({ job, style }: JobCardProps) {
         </Link>
 
         {job.applyLink ? (
-          <Link
+          <a
             href={`/api/apply/${job.slug}`}
             target="_blank"
             rel="noopener noreferrer nofollow"
@@ -135,7 +141,7 @@ export default function JobCard({ job, style }: JobCardProps) {
             aria-label={`Apply for ${job.title} at ${job.company}`}
           >
             Apply
-          </Link>
+          </a>
         ) : null}
       </div>
     </article>

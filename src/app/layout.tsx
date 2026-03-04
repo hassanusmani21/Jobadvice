@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import WhatsAppCta from "@/components/WhatsAppCta";
@@ -33,6 +33,110 @@ const identityHashRedirectScript = `
     }
 
     window.location.replace("/admin/" + hash);
+  })();
+`;
+
+const assetLoadRecoveryScript = `
+  (function () {
+    if (typeof window === "undefined") return;
+
+    var reloadParam = "__chunk_reload";
+    var storagePrefix = "jobadvice:asset-recovery";
+    var retryWindowMs = 60000;
+
+    var getStorageKey = function () {
+      return storagePrefix + ":" + window.location.pathname;
+    };
+
+    var cleanupReloadParam = function () {
+      try {
+        var url = new URL(window.location.href);
+
+        if (!url.searchParams.has(reloadParam)) {
+          return;
+        }
+
+        url.searchParams.delete(reloadParam);
+        window.history.replaceState(window.history.state, "", url.toString());
+      } catch {}
+    };
+
+    var hasRetriedRecently = function () {
+      try {
+        var lastAttempt = Number(window.sessionStorage.getItem(getStorageKey()) || "0");
+        return Number.isFinite(lastAttempt) && Date.now() - lastAttempt < retryWindowMs;
+      } catch {
+        return false;
+      }
+    };
+
+    var rememberRetry = function () {
+      try {
+        window.sessionStorage.setItem(getStorageKey(), String(Date.now()));
+      } catch {}
+    };
+
+    var reloadPage = function () {
+      if (hasRetriedRecently()) {
+        return;
+      }
+
+      rememberRetry();
+
+      try {
+        var nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set(reloadParam, Date.now().toString());
+        window.location.replace(nextUrl.toString());
+        return;
+      } catch {}
+
+      window.location.reload();
+    };
+
+    window.addEventListener("load", cleanupReloadParam);
+
+    window.addEventListener(
+      "error",
+      function (event) {
+        var target = event.target;
+        var assetUrl = "";
+
+        if (target && "tagName" in target) {
+          if (target.tagName === "SCRIPT" && typeof target.src === "string") {
+            assetUrl = target.src;
+          } else if (target.tagName === "LINK" && typeof target.href === "string") {
+            assetUrl = target.href;
+          }
+        }
+
+        if (!assetUrl || assetUrl.indexOf("/_next/static/") === -1) {
+          return;
+        }
+
+        reloadPage();
+      },
+      true
+    );
+
+    window.addEventListener("unhandledrejection", function (event) {
+      var reason = event.reason;
+      var message = "";
+
+      if (typeof reason === "string") {
+        message = reason;
+      } else if (reason && typeof reason.message === "string") {
+        message = reason.message;
+      }
+
+      if (
+        /ChunkLoadError/i.test(message) ||
+        /Loading chunk [\\w-]+ failed/i.test(message) ||
+        /Failed to fetch dynamically imported module/i.test(message) ||
+        /Importing a module script failed/i.test(message)
+      ) {
+        reloadPage();
+      }
+    });
   })();
 `;
 
@@ -95,6 +199,12 @@ export const metadata: Metadata = {
     description: siteDescription,
     images: [siteLogoUrl],
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 const footerLinks = [
@@ -215,6 +325,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <script dangerouslySetInnerHTML={{ __html: identityHashRedirectScript }} />
+        <script dangerouslySetInnerHTML={{ __html: assetLoadRecoveryScript }} />
       </head>
       <body className="antialiased">
         <script
@@ -229,7 +340,7 @@ export default function RootLayout({
 
           <SiteHeader />
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6 lg:px-8">{children}</main>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-24 sm:px-6 sm:pt-10 sm:pb-10 lg:px-8">{children}</main>
 
           <footer className="mt-8 border-t border-[#E5E7EB] bg-[#F7F8FA]">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-24 sm:px-6 sm:pb-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
