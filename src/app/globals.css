@@ -3,23 +3,64 @@
 :root {
   --background: #f5f7fb;
   --foreground: #0f172a;
+  --surface-bg: rgba(255, 255, 255, 0.96);
+  --surface-border: rgba(226, 232, 240, 0.9);
+  --surface-shadow: 0 18px 40px -34px rgba(15, 23, 42, 0.22);
+  --hero-border: rgba(186, 230, 253, 0.6);
+  --hero-bg: linear-gradient(
+    145deg,
+    rgba(220, 252, 231, 0.88),
+    rgba(255, 255, 255, 0.98) 48%,
+    rgba(224, 242, 254, 0.94)
+  );
+  --hero-shadow: 0 26px 56px -38px rgba(15, 23, 42, 0.28);
+  --glow-left: rgba(45, 212, 191, 0.62);
+  --glow-right: rgba(251, 191, 36, 0.48);
   --radius-surface: 1rem;
   --radius-control: 0.875rem;
   --radius-chip: 0.75rem;
 }
 
+html[data-theme="dark"] {
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --surface-bg: rgba(15, 23, 42, 0.88);
+  --surface-border: rgba(51, 65, 85, 0.85);
+  --surface-shadow: 0 22px 48px -32px rgba(2, 6, 23, 0.82);
+  --hero-border: rgba(45, 212, 191, 0.35);
+  --hero-bg: linear-gradient(
+    145deg,
+    rgba(13, 148, 136, 0.18),
+    rgba(15, 23, 42, 0.94) 48%,
+    rgba(14, 116, 144, 0.2)
+  );
+  --hero-shadow: 0 24px 52px -30px rgba(2, 6, 23, 0.85);
+  --glow-left: rgba(20, 184, 166, 0.35);
+  --glow-right: rgba(251, 191, 36, 0.18);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
-  --font-serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+  --font-sans: "Avenir Next", "Gill Sans", "Trebuchet MS", "Segoe UI", sans-serif;
+  --font-serif: "Baskerville", "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
-  line-height: 1.6;
+  font-family: "Avenir Next", "Gill Sans", "Trebuchet MS", "Segoe UI", sans-serif;
+  line-height: 1.62;
+  letter-spacing: 0.005em;
+  transition: background-color 220ms ease, color 220ms ease;
 }
 
 html,
@@ -51,7 +92,7 @@ body {
   height: 22rem;
   top: -8rem;
   left: -9rem;
-  background: rgba(45, 212, 191, 0.62);
+  background: var(--glow-left);
   animation: drift 18s ease-in-out infinite;
 }
 
@@ -60,23 +101,157 @@ body {
   height: 26rem;
   top: 16rem;
   right: -11rem;
-  background: rgba(251, 191, 36, 0.48);
+  background: var(--glow-right);
   animation: drift 21s ease-in-out infinite reverse;
 }
 
 .card-surface {
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid var(--surface-border);
   border-radius: var(--radius-surface);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 18px 40px -34px rgba(15, 23, 42, 0.22);
+  background: var(--surface-bg);
+  box-shadow: var(--surface-shadow);
   backdrop-filter: blur(4px);
 }
 
 .hero-surface {
-  border: 1px solid rgba(186, 230, 253, 0.6);
+  border: 1px solid var(--hero-border);
   border-radius: var(--radius-surface);
-  background: linear-gradient(145deg, rgba(220, 252, 231, 0.88), rgba(255, 255, 255, 0.98) 48%, rgba(224, 242, 254, 0.94));
-  box-shadow: 0 26px 56px -38px rgba(15, 23, 42, 0.28);
+  background: var(--hero-bg);
+  box-shadow: var(--hero-shadow);
+}
+
+html[data-theme="dark"] [class*="bg-white"] {
+  background-color: rgba(15, 23, 42, 0.9);
+}
+
+html[data-theme="dark"] [class*="bg-slate-50"] {
+  background-color: rgba(15, 23, 42, 0.84);
+}
+
+html[data-theme="dark"] [class*="bg-slate-100"] {
+  background-color: rgba(30, 41, 59, 0.9);
+}
+
+html[data-theme="dark"] [class*="bg-slate-700"] {
+  background-color: rgba(51, 65, 85, 0.96);
+}
+
+html[data-theme="dark"] [class*="bg-slate-900"] {
+  background-color: rgba(2, 6, 23, 0.96);
+}
+
+html[data-theme="dark"] [class*="bg-slate-950"] {
+  background-color: rgba(2, 6, 23, 0.82);
+}
+
+html[data-theme="dark"] [class*="bg-teal-50"] {
+  background-color: rgba(13, 148, 136, 0.18);
+}
+
+html[data-theme="dark"] [class*="bg-teal-100"] {
+  background-color: rgba(13, 148, 136, 0.24);
+}
+
+html[data-theme="dark"] [class*="bg-teal-700"] {
+  background-color: rgba(15, 118, 110, 0.95);
+}
+
+html[data-theme="dark"] [class*="bg-teal-800"] {
+  background-color: rgba(17, 94, 89, 0.96);
+}
+
+html[data-theme="dark"] [class*="bg-amber-100"] {
+  background-color: rgba(217, 119, 6, 0.24);
+}
+
+html[data-theme="dark"] [class*="bg-rose-100"] {
+  background-color: rgba(244, 63, 94, 0.2);
+}
+
+html[data-theme="dark"] [class*="bg-sky-100"] {
+  background-color: rgba(14, 165, 233, 0.2);
+}
+
+html[data-theme="dark"] [class*="border-slate-200"] {
+  border-color: rgba(51, 65, 85, 0.88);
+}
+
+html[data-theme="dark"] [class*="border-slate-300"] {
+  border-color: rgba(71, 85, 105, 0.9);
+}
+
+html[data-theme="dark"] [class*="border-teal-200"] {
+  border-color: rgba(45, 212, 191, 0.45);
+}
+
+html[data-theme="dark"] [class*="border-teal-300"] {
+  border-color: rgba(45, 212, 191, 0.58);
+}
+
+html[data-theme="dark"] [class*="border-teal-400"] {
+  border-color: rgba(45, 212, 191, 0.72);
+}
+
+html[data-theme="dark"] [class*="border-amber-200"] {
+  border-color: rgba(251, 191, 36, 0.48);
+}
+
+html[data-theme="dark"] [class*="border-rose-200"] {
+  border-color: rgba(251, 113, 133, 0.48);
+}
+
+html[data-theme="dark"] [class*="border-sky-200"] {
+  border-color: rgba(125, 211, 252, 0.45);
+}
+
+html[data-theme="dark"] [class*="text-slate-950"] {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] [class*="text-slate-900"] {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] [class*="text-slate-800"] {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] [class*="text-slate-700"] {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] [class*="text-slate-600"] {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] [class*="text-slate-500"] {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] [class*="text-slate-400"] {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] [class*="text-teal-950"],
+html[data-theme="dark"] [class*="text-teal-900"] {
+  color: #99f6e4;
+}
+
+html[data-theme="dark"] [class*="text-teal-800"],
+html[data-theme="dark"] [class*="text-teal-700"] {
+  color: #5eead4;
+}
+
+html[data-theme="dark"] [class*="text-amber-900"] {
+  color: #fcd34d;
+}
+
+html[data-theme="dark"] [class*="text-rose-900"] {
+  color: #fda4af;
+}
+
+html[data-theme="dark"] [class*="text-sky-900"] {
+  color: #bae6fd;
 }
 
 .fade-up {

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "@/components/AppLink";
+import ThemeToggle from "@/components/ThemeToggle";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -93,6 +94,7 @@ export default function SiteHeader() {
                 </Link>
               );
             })}
+            <ThemeToggle />
             <Link
               href="/admin"
               className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-slate-700 transition-colors hover:border-teal-200 hover:text-teal-900"
@@ -122,6 +124,7 @@ export default function SiteHeader() {
                 />
               </svg>
             </Link>
+            <ThemeToggle compact />
 
             <button
               type="button"

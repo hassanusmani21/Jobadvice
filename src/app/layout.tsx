@@ -15,6 +15,29 @@ import {
 } from "@/lib/site";
 import "./globals.css";
 
+const themePreferenceScript = `
+  (function () {
+    if (typeof window === "undefined") return;
+
+    var storageKey = "jobadvice-theme";
+    var storedTheme = "";
+
+    try {
+      storedTheme = window.localStorage.getItem(storageKey) || "";
+    } catch {}
+
+    var resolvedTheme =
+      storedTheme === "dark" || storedTheme === "light"
+        ? storedTheme
+        : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+
+    document.documentElement.dataset.theme = resolvedTheme;
+    document.documentElement.style.colorScheme = resolvedTheme;
+  })();
+`;
+
 const identityHashRedirectScript = `
   (function () {
     if (typeof window === "undefined") return;
@@ -368,8 +391,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themePreferenceScript }} />
         <script dangerouslySetInnerHTML={{ __html: identityHashRedirectScript }} />
         <script dangerouslySetInnerHTML={{ __html: assetLoadRecoveryScript }} />
       </head>
@@ -388,7 +412,7 @@ export default function RootLayout({
 
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-24 sm:px-6 sm:pt-10 sm:pb-10 lg:px-8">{children}</main>
 
-          <footer className="mt-8 border-t border-[#E5E7EB] bg-[#F7F8FA]">
+          <footer className="mt-8 border-t border-slate-200 bg-slate-50">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-24 sm:px-6 sm:pb-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
               <p className="text-center text-[13px] font-medium leading-6 text-slate-500 lg:text-left">
                 © 2026 JobAdvice. All rights reserved.
@@ -402,7 +426,7 @@ export default function RootLayout({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="text-[14px] font-medium text-[#374151] underline-offset-4 transition hover:text-slate-900 hover:underline"
+                    className="text-[14px] font-medium text-slate-700 underline-offset-4 transition hover:text-slate-900 hover:underline"
                   >
                     {item.label}
                   </Link>
