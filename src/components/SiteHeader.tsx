@@ -31,6 +31,7 @@ const isActivePath = (pathname: string, href: string) => {
 export default function SiteHeader() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -57,10 +58,28 @@ export default function SiteHeader() {
     };
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    const updateScrollState = () => {
+      const isScrolled = window.scrollY > 10;
+      setHasScrolled((previous) => (previous === isScrolled ? previous : isScrolled));
+    };
+
+    updateScrollState();
+    window.addEventListener("scroll", updateScrollState, { passive: true });
+
+    return () => window.removeEventListener("scroll", updateScrollState);
+  }, []);
+
+  const shouldElevateHeader = hasScrolled || isMenuOpen;
+
   return (
-    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-4 pt-3 sm:static sm:px-6 sm:pt-6 lg:px-8">
-      <div className="fade-up relative rounded-2xl border border-slate-200/80 bg-white/92 px-4 py-3 shadow-[0_16px_34px_-28px_rgba(15,23,42,0.22)] backdrop-blur-xl sm:px-6">
-        <div className="flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-4 pt-3 sm:px-6 sm:pt-4 lg:px-8">
+      <div
+        className={`fade-up header-shell relative rounded-2xl px-4 py-3 sm:px-6 ${
+          shouldElevateHeader ? "header-shell-scrolled" : "header-shell-top"
+        }`}
+      >
+        <div className="hidden items-center gap-4 sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto]">
           <Link href="/" aria-label="JobAdvice Home" className="inline-flex items-center">
             <Image
               src="/jobadvice-logo.svg"
@@ -81,7 +100,7 @@ export default function SiteHeader() {
           </Link>
 
           <nav
-            className="hidden flex-wrap items-center gap-1 text-sm font-semibold text-slate-600 sm:flex"
+            className="mx-auto flex flex-wrap items-center justify-center gap-1 text-sm font-semibold text-slate-600"
             aria-label="Primary"
           >
             {navigation.map((item) => {
@@ -102,6 +121,9 @@ export default function SiteHeader() {
                 </Link>
               );
             })}
+          </nav>
+
+          <div className="flex items-center justify-end gap-2">
             <ThemeToggle />
             <Link
               href="/admin"
@@ -109,9 +131,30 @@ export default function SiteHeader() {
             >
               Admin
             </Link>
-          </nav>
+          </div>
+        </div>
 
-          <div className="flex items-center gap-2 sm:hidden">
+        <div className="flex items-center justify-between gap-3 sm:hidden">
+          <Link href="/" aria-label="JobAdvice Home" className="inline-flex items-center">
+            <Image
+              src="/jobadvice-logo.svg"
+              alt="JobAdvice"
+              width={220}
+              height={76}
+              priority
+              className="jobadvice-logo-light h-auto w-[132px]"
+            />
+            <Image
+              src="/jobadvice-logo-dark.svg"
+              alt="JobAdvice"
+              width={220}
+              height={76}
+              priority
+              className="jobadvice-logo-dark h-auto w-[132px]"
+            />
+          </Link>
+
+          <div className="flex items-center gap-2">
             <Link
               href="/jobs"
               aria-label="Search jobs"

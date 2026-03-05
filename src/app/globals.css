@@ -16,6 +16,12 @@
   --hero-shadow: 0 26px 56px -38px rgba(15, 23, 42, 0.28);
   --glow-left: rgba(45, 212, 191, 0.62);
   --glow-right: rgba(251, 191, 36, 0.48);
+  --header-bg-top: rgba(255, 255, 255, 0.92);
+  --header-bg-scrolled: rgba(255, 255, 255, 0.78);
+  --header-border-top: rgba(203, 213, 225, 0.72);
+  --header-border-scrolled: rgba(203, 213, 225, 0.9);
+  --header-shadow-top: 0 10px 24px -24px rgba(15, 23, 42, 0.2);
+  --header-shadow-scrolled: 0 16px 34px -26px rgba(15, 23, 42, 0.24);
   --radius-surface: 1rem;
   --radius-control: 0.875rem;
   --radius-chip: 0.75rem;
@@ -37,6 +43,12 @@ html[data-theme="dark"] {
   --hero-shadow: 0 24px 52px -30px rgba(2, 6, 23, 0.85);
   --glow-left: rgba(20, 184, 166, 0.35);
   --glow-right: rgba(251, 191, 36, 0.18);
+  --header-bg-top: rgba(2, 6, 23, 0.86);
+  --header-bg-scrolled: rgba(2, 6, 23, 0.64);
+  --header-border-top: rgba(51, 65, 85, 0.68);
+  --header-border-scrolled: rgba(71, 85, 105, 0.9);
+  --header-shadow-top: 0 10px 24px -24px rgba(2, 6, 23, 0.7);
+  --header-shadow-scrolled: 0 18px 38px -24px rgba(2, 6, 23, 0.82);
 }
 
 @theme inline {
@@ -118,6 +130,26 @@ body {
   border-radius: var(--radius-surface);
   background: var(--hero-bg);
   box-shadow: var(--hero-shadow);
+}
+
+.header-shell {
+  border-width: 1px;
+  border-style: solid;
+  transition: background-color 220ms ease, border-color 220ms ease, box-shadow 220ms ease, backdrop-filter 220ms ease;
+}
+
+.header-shell-top {
+  background: var(--header-bg-top);
+  border-color: var(--header-border-top);
+  box-shadow: var(--header-shadow-top);
+  backdrop-filter: blur(10px);
+}
+
+.header-shell-scrolled {
+  background: var(--header-bg-scrolled);
+  border-color: var(--header-border-scrolled);
+  box-shadow: var(--header-shadow-scrolled);
+  backdrop-filter: blur(14px);
 }
 
 .jobadvice-logo-dark {
