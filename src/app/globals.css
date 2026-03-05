@@ -120,6 +120,18 @@ body {
   box-shadow: var(--hero-shadow);
 }
 
+.jobadvice-logo-dark {
+  display: none;
+}
+
+html[data-theme="dark"] .jobadvice-logo-light {
+  display: none;
+}
+
+html[data-theme="dark"] .jobadvice-logo-dark {
+  display: block;
+}
+
 html[data-theme="dark"] [class*="bg-white"] {
   background-color: rgba(15, 23, 42, 0.9);
 }

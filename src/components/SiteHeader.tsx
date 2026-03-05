@@ -68,7 +68,15 @@ export default function SiteHeader() {
               width={220}
               height={76}
               priority
-              className="h-auto w-[132px] sm:w-[190px]"
+              className="jobadvice-logo-light h-auto w-[132px] sm:w-[190px]"
+            />
+            <Image
+              src="/jobadvice-logo-dark.svg"
+              alt="JobAdvice"
+              width={220}
+              height={76}
+              priority
+              className="jobadvice-logo-dark h-auto w-[132px] sm:w-[190px]"
             />
           </Link>
 
