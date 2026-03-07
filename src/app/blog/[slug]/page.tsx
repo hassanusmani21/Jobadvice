@@ -368,8 +368,8 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
       <article className="space-y-6 lg:col-span-7">
         <header className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
-          <nav aria-label="Breadcrumb" className="text-xs text-slate-500">
-            <ol className="flex flex-wrap items-center gap-2">
+          <nav aria-label="Breadcrumb" className="overflow-hidden text-xs text-slate-500">
+            <ol className="flex min-w-0 flex-wrap items-center gap-2">
               <li>
                 <Link href="/" className="transition hover:text-slate-900">
                   Home
@@ -382,7 +382,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
-              <li className="min-w-0 truncate text-slate-700">{blog.title}</li>
+              <li className="min-w-0 max-w-full break-words text-slate-700">{blog.title}</li>
             </ol>
           </nav>
 
@@ -406,7 +406,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             </p>
           ) : null}
 
-          <h1 className="mt-2 font-serif text-[1.5rem] leading-[1.2] text-slate-900 sm:text-[1.875rem]">
+          <h1 className="mt-2 break-words font-serif text-[1.5rem] leading-[1.2] text-slate-900 sm:text-[1.875rem]">
             {blog.title}
           </h1>
 
@@ -438,7 +438,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               {blog.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700"
+                  className="max-w-full break-words rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700"
                 >
                   #{tag}
                 </span>

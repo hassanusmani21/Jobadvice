@@ -152,6 +152,37 @@ body {
   backdrop-filter: blur(14px);
 }
 
+.route-progress-indicator {
+  pointer-events: none;
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 80;
+  height: 3px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.route-progress-indicator::before {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 34%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #14b8a6, #22d3ee);
+  box-shadow: 0 0 0.7rem rgba(20, 184, 166, 0.55);
+  transform: translateX(-130%);
+}
+
+html[data-nav-pending="true"] .route-progress-indicator {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html[data-nav-pending="true"] .route-progress-indicator::before {
+  animation: route-progress-slide 1.05s linear infinite;
+}
+
 .jobadvice-logo-dark {
   display: none;
 }
@@ -321,6 +352,15 @@ html[data-theme="dark"] [class*="text-sky-900"] {
   }
   50% {
     transform: translate3d(18px, -22px, 0);
+  }
+}
+
+@keyframes route-progress-slide {
+  from {
+    transform: translateX(-130%);
+  }
+  to {
+    transform: translateX(390%);
   }
 }
 

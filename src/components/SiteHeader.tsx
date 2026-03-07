@@ -73,9 +73,9 @@ export default function SiteHeader() {
   const shouldElevateHeader = hasScrolled || isMenuOpen;
 
   return (
-    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-4 pt-3 sm:px-6 sm:pt-4 lg:px-8">
+    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-3 pt-2.5 min-[360px]:px-4 min-[360px]:pt-3 sm:px-6 sm:pt-4 lg:px-8">
       <div
-        className={`fade-up header-shell relative rounded-2xl px-4 py-3 sm:px-6 ${
+        className={`fade-up header-shell relative rounded-2xl px-3 py-2.5 min-[360px]:px-4 min-[360px]:py-3 sm:px-6 ${
           shouldElevateHeader ? "header-shell-scrolled" : "header-shell-top"
         }`}
       >
@@ -134,15 +134,15 @@ export default function SiteHeader() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-3 sm:hidden">
-          <Link href="/" aria-label="JobAdvice Home" className="inline-flex items-center">
+        <div className="flex items-center justify-between gap-2 sm:hidden">
+          <Link href="/" aria-label="JobAdvice Home" className="inline-flex min-w-0 items-center">
             <Image
               src="/jobadvice-logo.svg"
               alt="JobAdvice"
               width={220}
               height={76}
               priority
-              className="jobadvice-logo-light h-auto w-[132px]"
+              className="jobadvice-logo-light h-auto max-w-full w-[108px] min-[360px]:w-[120px]"
             />
             <Image
               src="/jobadvice-logo-dark.svg"
@@ -150,15 +150,15 @@ export default function SiteHeader() {
               width={220}
               height={76}
               priority
-              className="jobadvice-logo-dark h-auto w-[132px]"
+              className="jobadvice-logo-dark h-auto max-w-full w-[108px] min-[360px]:w-[120px]"
             />
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 min-[360px]:gap-2">
             <Link
               href="/jobs"
               aria-label="Search jobs"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.22)] transition hover:border-teal-200 hover:text-teal-900"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.22)] transition hover:border-teal-200 hover:text-teal-900 min-[360px]:h-11 min-[360px]:w-11"
             >
               <svg
                 aria-hidden="true"
@@ -183,12 +183,12 @@ export default function SiteHeader() {
               aria-controls="mobile-site-menu"
               aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               onClick={() => setIsMenuOpen((open) => !open)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-white shadow-[0_18px_34px_-26px_rgba(15,23,42,0.4)] transition hover:bg-slate-700"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-[0_18px_34px_-26px_rgba(15,23,42,0.4)] transition hover:bg-slate-700 min-[360px]:h-11 min-[360px]:w-11"
             >
               <svg
                 aria-hidden="true"
                 viewBox="0 0 20 20"
-                className={`h-5 w-5 transition-transform ${isMenuOpen ? "rotate-90" : ""}`}
+                className={`h-[18px] w-[18px] transition-transform min-[360px]:h-5 min-[360px]:w-5 ${isMenuOpen ? "rotate-90" : ""}`}
               >
                 <path
                   d={isMenuOpen ? "M5 5 15 15M15 5 5 15" : "M3 5h14M3 10h14M3 15h14"}

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Link from "@/components/AppLink";
+import RouteProgressReset from "@/components/RouteProgressReset";
 import SiteHeader from "@/components/SiteHeader";
 import WhatsAppCta from "@/components/WhatsAppCta";
 import {
@@ -398,6 +399,8 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: assetLoadRecoveryScript }} />
       </head>
       <body className="antialiased">
+        <RouteProgressReset />
+        <div aria-hidden className="route-progress-indicator" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
