@@ -360,14 +360,14 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     : "";
 
   return (
-    <div className="grid min-w-0 gap-6 lg:grid-cols-10">
+    <div className="grid gap-6 lg:grid-cols-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      <article className="min-w-0 space-y-6 lg:col-span-7">
-        <header className="fade-up card-surface min-w-0 rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
+      <article className="space-y-6 lg:col-span-7">
+        <header className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
           <nav aria-label="Breadcrumb" className="overflow-hidden text-xs text-slate-500">
             <ol className="flex min-w-0 flex-wrap items-center gap-2">
               <li>
@@ -449,7 +449,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
         {showTableOfContents ? (
           <section
-            className="fade-up card-surface min-w-0 rounded-3xl px-5 py-4 lg:hidden"
+            className="fade-up card-surface rounded-3xl px-5 py-4 lg:hidden"
             style={{ animationDelay: "60ms" }}
           >
             <details>
@@ -473,7 +473,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         ) : null}
 
         <section
-          className="fade-up card-surface min-w-0 rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
+          className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
           style={{ animationDelay: "90ms" }}
         >
           <div className="space-y-5 text-sm text-slate-700 sm:text-base">
@@ -497,7 +497,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                   >
                     <a
                       href={`#${block.anchorId}`}
-                      className="group inline-flex max-w-full items-start gap-2 break-words transition hover:text-teal-900"
+                      className="group inline-flex items-start gap-2 transition hover:text-teal-900"
                     >
                       <span>{renderInlineMarkdown(block.text)}</span>
                       <span
@@ -646,9 +646,9 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         </div>
       </article>
 
-      <aside className="min-w-0 space-y-5 lg:col-span-3">
+      <aside className="space-y-5 lg:col-span-3">
         {showTableOfContents ? (
-          <section className="fade-up min-w-0 hidden lg:block lg:sticky lg:top-24">
+          <section className="fade-up hidden lg:block lg:sticky lg:top-24">
             <div className="card-surface rounded-3xl p-5">
               <h2 className="text-lg font-bold text-slate-900">On this page</h2>
               <ol className="mt-4 space-y-2 text-sm text-slate-600">
@@ -668,7 +668,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         ) : null}
 
         <section
-          className="fade-up card-surface min-w-0 rounded-3xl p-5"
+          className="fade-up card-surface rounded-3xl p-5"
           style={{ animationDelay: showTableOfContents ? "90ms" : "0ms" }}
         >
           <h2 className="text-lg font-bold text-slate-900">Read next</h2>
@@ -680,7 +680,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                   href={`/blog/${relatedBlog.slug}`}
                   className="block rounded-2xl border border-slate-200 bg-white/85 p-4 transition hover:border-teal-200 hover:bg-teal-50/70"
                 >
-                  <p className="break-words text-sm font-semibold leading-6 text-slate-900">
+                  <p className="text-sm font-semibold leading-6 text-slate-900">
                     {relatedBlog.title}
                   </p>
                   <p className="mt-1 text-xs text-slate-600">

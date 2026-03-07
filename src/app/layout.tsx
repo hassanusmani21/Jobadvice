@@ -3,7 +3,6 @@ import Link from "@/components/AppLink";
 import RouteProgressReset from "@/components/RouteProgressReset";
 import SiteHeader from "@/components/SiteHeader";
 import WhatsAppCta from "@/components/WhatsAppCta";
-import { Suspense } from "react";
 import {
   organizationId,
   siteDescription,
@@ -400,9 +399,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: assetLoadRecoveryScript }} />
       </head>
       <body className="antialiased">
-        <Suspense fallback={null}>
-          <RouteProgressReset />
-        </Suspense>
+        <RouteProgressReset />
         <div aria-hidden className="route-progress-indicator" />
         <script
           type="application/ld+json"
