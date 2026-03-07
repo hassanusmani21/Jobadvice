@@ -109,7 +109,7 @@ const toBlogJsonLd = (blog: BlogPost) => ({
     },
   },
   ...(blog.coverImage ? { image: [blog.coverImage] } : {}),
-  mainEntityOfPage: `${siteUrl}/blog/${blog.slug}`,
+  mainEntityOfPage: `${siteUrl}/blog/${blog.slug}/`,
 });
 
 const toBreadcrumbJsonLd = (blog: BlogPost) => ({
@@ -126,19 +126,40 @@ const toBreadcrumbJsonLd = (blog: BlogPost) => ({
       "@type": "ListItem",
       position: 2,
       name: "Blog",
-      item: `${siteUrl}/blog`,
+      item: `${siteUrl}/blog/`,
     },
     {
       "@type": "ListItem",
       position: 3,
       name: blog.title,
-      item: `${siteUrl}/blog/${blog.slug}`,
+      item: `${siteUrl}/blog/${blog.slug}/`,
     },
   ],
 });
 
 const inlineMarkdownPattern =
   /(\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|__([^_]+)__|`([^`]+)`|\*([^*]+)\*|_([^_]+)_)/g;
+
+const normalizeInternalHref = (href: string) => {
+  if (!href.startsWith("/")) {
+    return href;
+  }
+
+  const match = href.match(/^([^?#]*)(.*)$/);
+  const pathname = match?.[1] || href;
+  const suffix = match?.[2] || "";
+
+  if (
+    pathname === "/" ||
+    pathname.endsWith("/") ||
+    pathname.startsWith("/api") ||
+    /\.[a-z0-9]+$/i.test(pathname)
+  ) {
+    return href;
+  }
+
+  return `${pathname}/${suffix}`;
+};
 
 const renderInlineMarkdown = (text: string): ReactNode => {
   const normalizedText = decodeMarkdownEscapes(text);
@@ -153,7 +174,7 @@ const renderInlineMarkdown = (text: string): ReactNode => {
     }
 
     if (match[2] && match[3]) {
-      const href = match[3];
+      const href = normalizeInternalHref(match[3]);
       const externalLink = /^https?:\/\//i.test(href);
 
       nodes.push(
@@ -289,14 +310,14 @@ export async function generateMetadata({
 
   const title = `${blog.title} | JobAdvice Blog`;
   const description = getBlogDescription(blog);
-  const blogUrl = `${siteUrl}/blog/${blog.slug}`;
+  const blogUrl = `${siteUrl}/blog/${blog.slug}/`;
 
   return {
     title,
     description,
     keywords: [blog.topic, ...blog.tags].filter(Boolean),
     alternates: {
-      canonical: `/blog/${blog.slug}`,
+      canonical: `/blog/${blog.slug}/`,
     },
     openGraph: {
       title,

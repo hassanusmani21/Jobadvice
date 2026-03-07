@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-const GROUP_URL = "https://chat.whatsapp.com/L6Qh1hBedLZ3vfL3kQMB4r";
+const GROUP_URL = "https://whatsapp.com/channel/0029Vb7MyM0BPzjaKwa1cr1f";
 const DISMISSED_UNTIL_KEY = "jobadvice-whatsapp-bubble-dismissed-until";
 const SESSION_COUNT_KEY = "jobadvice-whatsapp-bubble-session-count";
 const MAX_DISPLAYS_PER_SESSION = 3;
@@ -149,7 +149,7 @@ export default function WhatsAppCta() {
   const bubbleClasses = useMemo(
     () =>
       [
-        "absolute bottom-[calc(100%+0.9rem)] right-0 w-[220px] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition-all duration-300 sm:bottom-1/2 sm:right-[calc(100%+1rem)] sm:w-[240px] sm:translate-y-1/2",
+        "absolute right-0 bottom-[calc(100%+0.75rem)] w-[200px] max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition-all duration-300 sm:bottom-1/2 sm:right-[calc(100%+1rem)] sm:w-[240px] sm:max-w-none sm:translate-y-1/2",
         isBubbleVisible
           ? "pointer-events-auto translate-y-0 opacity-100 sm:translate-y-1/2"
           : "pointer-events-none translate-y-2 opacity-0 sm:translate-y-[calc(50%+6px)]",
@@ -159,13 +159,13 @@ export default function WhatsAppCta() {
 
   if (isSuppressed && !isBubbleVisible) {
     return (
-      <div className="pointer-events-none fixed bottom-5 right-5 z-[70] sm:bottom-6 sm:right-6">
+      <div className="pointer-events-none fixed right-4 bottom-4 z-[70] hidden sm:block sm:right-6 sm:bottom-6">
         <a
           href={GROUP_URL}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Join the JobAdvice WhatsApp group"
-          className="pointer-events-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_10px_24px_rgba(37,211,102,0.24)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2"
+          aria-label="Join the JobAdvice WhatsApp channel"
+          className="pointer-events-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_10px_24px_rgba(37,211,102,0.24)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 sm:h-14 sm:w-14"
         >
           <WhatsAppIcon />
         </a>
@@ -174,7 +174,7 @@ export default function WhatsAppCta() {
   }
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-[70] sm:bottom-6 sm:right-6">
+    <div className="pointer-events-none fixed right-4 bottom-4 z-[70] hidden sm:block sm:right-6 sm:bottom-6">
       <div className={bubbleClasses} aria-hidden={!isBubbleVisible}>
         <div className="flex items-start gap-3">
           <p className="flex-1 text-[13px] font-medium leading-5 text-slate-700">
@@ -195,8 +195,8 @@ export default function WhatsAppCta() {
         href={GROUP_URL}
         target="_blank"
         rel="noopener noreferrer"
-        aria-label="Join the JobAdvice WhatsApp group"
-        className="pointer-events-auto inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_10px_24px_rgba(37,211,102,0.24)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2"
+        aria-label="Join the JobAdvice WhatsApp channel"
+        className="pointer-events-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_10px_24px_rgba(37,211,102,0.24)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 sm:h-14 sm:w-14"
       >
         <WhatsAppIcon />
       </a>

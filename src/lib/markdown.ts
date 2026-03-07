@@ -118,11 +118,33 @@ export const markdownToBlocks = (markdown: string): MarkdownBlock[] => {
     listBuffer = null;
   };
 
+  const findNextNonEmptyLine = (currentIndex: number) => {
+    for (let nextIndex = currentIndex + 1; nextIndex < lines.length; nextIndex += 1) {
+      const nextLine = lines[nextIndex].trim();
+      if (nextLine.length > 0) {
+        return nextLine;
+      }
+    }
+
+    return "";
+  };
+
   for (let index = 0; index < lines.length; index += 1) {
     const trimmedLine = lines[index].trim();
 
     if (trimmedLine.length === 0) {
       flushParagraph();
+      if (listBuffer) {
+        const nextNonEmptyLine = findNextNonEmptyLine(index);
+        const sameListContinues =
+          (listBuffer.ordered && orderedListItemPattern.test(nextNonEmptyLine)) ||
+          (!listBuffer.ordered && unorderedListItemPattern.test(nextNonEmptyLine));
+
+        if (sameListContinues) {
+          continue;
+        }
+      }
+
       flushList();
       continue;
     }

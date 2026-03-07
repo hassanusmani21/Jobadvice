@@ -39,6 +39,46 @@ const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "")
 const normalizeTextValue = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 
+const hasClosingQuote = (value: string, quote: '"' | "'") => {
+  const trimmedValue = value.trimEnd();
+  if (!trimmedValue.endsWith(quote)) {
+    return false;
+  }
+
+  let trailingBackslashCount = 0;
+  for (
+    let index = trimmedValue.length - 2;
+    index >= 0 && trimmedValue[index] === "\\";
+    index -= 1
+  ) {
+    trailingBackslashCount += 1;
+  }
+
+  return trailingBackslashCount % 2 === 0;
+};
+
+const parseQuotedValue = (value: string, quote: '"' | "'") => {
+  const trimmedValue = value.trim();
+  if (!(trimmedValue.startsWith(quote) && hasClosingQuote(trimmedValue, quote))) {
+    return stripWrappingQuotes(value);
+  }
+
+  const innerValue = trimmedValue.slice(1, -1);
+  if (quote === "'") {
+    return innerValue.replace(/''/g, "'").replace(/\r?\n\s*/g, " ").trim();
+  }
+
+  return innerValue
+    .replace(/\\\r?\n\s*/g, "")
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, "\\")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\r?\n\s*/g, " ")
+    .trim();
+};
+
 const toDateString = (value: unknown) => toIsoDateString(value);
 
 const toBoolean = (value: unknown) => {
@@ -123,7 +163,8 @@ const parseFrontMatter = (rawFile: string) => {
   const data: Record<string, unknown> = {};
   let activeListKey: string | null = null;
 
-  for (const line of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex];
     const keyValueMatch = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
     if (keyValueMatch) {
       const [, key, rawValue] = keyValueMatch;
@@ -132,7 +173,52 @@ const parseFrontMatter = (rawFile: string) => {
         data[key] = [];
         activeListKey = key;
       } else {
-        data[key] = stripWrappingQuotes(value);
+        const quotedMarker = value[0];
+
+        if (quotedMarker === '"' || quotedMarker === "'") {
+          const quote = quotedMarker as '"' | "'";
+          let quotedValue = value;
+
+          while (!hasClosingQuote(quotedValue, quote) && lineIndex + 1 < lines.length) {
+            const nextLine = lines[lineIndex + 1];
+            if (!/^\s+/.test(nextLine)) {
+              break;
+            }
+
+            lineIndex += 1;
+            quotedValue += `\n${nextLine.trimStart()}`;
+          }
+
+          data[key] = parseQuotedValue(quotedValue, quote);
+          activeListKey = null;
+          continue;
+        }
+
+        if (/^[>|][+-]?$/.test(value)) {
+          const blockLines: string[] = [];
+
+          while (lineIndex + 1 < lines.length && /^\s+/.test(lines[lineIndex + 1])) {
+            lineIndex += 1;
+            blockLines.push(lines[lineIndex].trimStart());
+          }
+
+          data[key] = value.startsWith(">") ? blockLines.join(" ").trim() : blockLines.join("\n");
+          activeListKey = null;
+          continue;
+        }
+
+        const continuationLines: string[] = [];
+        while (lineIndex + 1 < lines.length && /^\s+/.test(lines[lineIndex + 1])) {
+          lineIndex += 1;
+          continuationLines.push(lines[lineIndex].trimStart());
+        }
+
+        const combinedValue =
+          continuationLines.length > 0
+            ? `${value} ${continuationLines.join(" ")}`
+            : value;
+
+        data[key] = stripWrappingQuotes(combinedValue);
         activeListKey = null;
       }
       continue;
@@ -144,6 +230,22 @@ const parseFrontMatter = (rawFile: string) => {
         ? (data[activeListKey] as string[])
         : [];
       data[activeListKey] = [...currentItems, stripWrappingQuotes(listItemMatch[1])];
+      continue;
+    }
+
+    if (activeListKey && /^\s+/.test(line)) {
+      const continuationValue = line.trim();
+      const currentItems = Array.isArray(data[activeListKey])
+        ? [...(data[activeListKey] as string[])]
+        : [];
+
+      if (continuationValue && currentItems.length > 0) {
+        const lastIndex = currentItems.length - 1;
+        currentItems[lastIndex] = `${currentItems[lastIndex]} ${continuationValue}`
+          .replace(/\s+/g, " ")
+          .trim();
+        data[activeListKey] = currentItems;
+      }
     }
   }
 

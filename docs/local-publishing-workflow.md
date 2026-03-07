@@ -29,7 +29,7 @@ This mode:
 1. starts the local Next.js app
 2. starts the Decap CMS proxy
 3. watches `content/` and `public/uploads/`
-4. automatically commits and pushes content after a 10-minute quiet period by default
+4. automatically commits and pushes content after a 30-minute quiet period by default
 
 Use this only when:
 

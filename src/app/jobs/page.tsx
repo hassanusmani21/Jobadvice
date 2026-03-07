@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description:
     "Browse all job updates on JobAdvice including company, location, and role details.",
   alternates: {
-    canonical: "/jobs",
+    canonical: "/jobs/",
   },
 };
 

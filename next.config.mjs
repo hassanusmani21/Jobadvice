@@ -132,6 +132,34 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    if (isStaticExport) {
+      return [];
+    }
+
+    return [
+      {
+        source: "/blog/title",
+        destination: "/blog/tcs-nqt-2026-preparation-strategy-for-freshers/",
+        permanent: true,
+      },
+      {
+        source: "/blog/title/",
+        destination: "/blog/tcs-nqt-2026-preparation-strategy-for-freshers/",
+        permanent: true,
+      },
+      {
+        source: "/jobs/ai-developer-intern",
+        destination: "/jobs/intern-machine-learning-gen-ai/",
+        permanent: true,
+      },
+      {
+        source: "/jobs/ai-developer-intern/",
+        destination: "/jobs/intern-machine-learning-gen-ai/",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     if (isStaticExport) {
       return [];

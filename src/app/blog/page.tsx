@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description:
     "Read daily career insights, tech updates, and hiring news from JobAdvice.",
   alternates: {
-    canonical: "/blog",
+    canonical: "/blog/",
   },
 };
 

@@ -7,7 +7,7 @@ import {
   formatApplicationWindow,
   formatPostedDate,
   getAllJobs,
-  getJobBySlug,
+  getRelatedJobs,
 } from "@/lib/jobs";
 import { siteUrl } from "@/lib/site";
 
@@ -44,7 +44,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: JobPageProps): Promise<Metadata> {
   const { slug } = params;
-  const job = await getJobBySlug(slug);
+  const job = (await getAllJobs()).find((listedJob) => listedJob.slug === slug);
 
   if (!job) {
     return {
@@ -61,14 +61,14 @@ export async function generateMetadata({ params }: JobPageProps): Promise<Metada
   const description = `${job.title} opening at ${job.company}${
     job.location ? ` in ${job.location}` : ""
   }.`;
-  const jobUrl = `${siteUrl}/jobs/${job.slug}`;
+  const jobUrl = `${siteUrl}/jobs/${job.slug}/`;
 
   return {
     title,
     description,
     keywords: [job.title, job.company, job.location, ...job.skills],
     alternates: {
-      canonical: `/jobs/${job.slug}`,
+      canonical: `/jobs/${job.slug}/`,
     },
     openGraph: {
       title,
@@ -91,7 +91,8 @@ export default async function JobDetailPage({ params }: JobPageProps) {
     notFound();
   }
 
-  const job = await getJobBySlug(slug);
+  const allJobs = await getAllJobs();
+  const job = allJobs.find((listedJob) => listedJob.slug === slug);
 
   if (!job) {
     notFound();
@@ -100,9 +101,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   const isJobExpired = job.applicationStatus.state === "expired";
   const isApplicationUpcoming = job.applicationStatus.state === "upcoming";
   const hasApplyLink = Boolean(job.applyLink);
-  const recommendedJobs = (await getAllJobs())
-    .filter((listedJob) => listedJob.slug !== job.slug)
-    .slice(0, 5);
+  const relatedJobs = getRelatedJobs(job, allJobs, 5);
 
   const employmentType = job.employmentType || job.jobType;
   const workMode = job.workMode;
@@ -138,7 +137,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
       },
     },
     ...(job.applyLink ? { directApply: true } : {}),
-    url: `${siteUrl}/jobs/${job.slug}`,
+    url: `${siteUrl}/jobs/${job.slug}/`,
     identifier: {
       "@type": "PropertyValue",
       name: job.company,
@@ -288,7 +287,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
       </article>
 
       <div className="lg:col-span-3">
-        <RecommendedJobs jobs={recommendedJobs} />
+        <RecommendedJobs jobs={relatedJobs} />
       </div>
     </div>
   );

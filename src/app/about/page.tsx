@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   description:
     "Learn what JobAdvice publishes, how job information is sourced, and what role the platform plays.",
   alternates: {
-    canonical: "/about",
+    canonical: "/about/",
   },
 };
 

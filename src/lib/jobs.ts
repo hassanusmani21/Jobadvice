@@ -8,6 +8,132 @@ const frontMatterPattern = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/;
 const placeholderSlugPattern = /^\{\{.+\}\}$/;
 const millisecondsInDay = 24 * 60 * 60 * 1000;
 const defaultNoExpiryRetentionDays = 30;
+const relatedJobsStopWords = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "for",
+  "from",
+  "in",
+  "of",
+  "on",
+  "or",
+  "the",
+  "to",
+  "with",
+  "job",
+  "role",
+  "opening",
+  "opportunity",
+  "full",
+  "time",
+]);
+
+const relatedJobDomainKeywords = {
+  tech: [
+    "software",
+    "developer",
+    "development",
+    "engineering",
+    "engineer",
+    "frontend",
+    "backend",
+    "fullstack",
+    "java",
+    "python",
+    "javascript",
+    "typescript",
+    "react",
+    "nodejs",
+    "nextjs",
+    "cloud",
+    "aws",
+    "azure",
+    "devops",
+    "database",
+    "sql",
+    "api",
+    "application",
+    "it",
+    "automation",
+    "testing",
+    "ai",
+    "ml",
+    "machine",
+    "data",
+  ],
+  finance: [
+    "accounts",
+    "accounting",
+    "finance",
+    "financial",
+    "treasury",
+    "invoice",
+    "billing",
+    "receivable",
+    "payable",
+    "audit",
+    "tax",
+    "collection",
+  ],
+  operations: [
+    "operations",
+    "support",
+    "service",
+    "process",
+    "compliance",
+    "logistics",
+    "procurement",
+    "supply",
+    "admin",
+  ],
+  sales: [
+    "sales",
+    "marketing",
+    "growth",
+    "business",
+    "recruiter",
+    "recruitment",
+    "talent",
+    "hr",
+    "human",
+    "customer",
+  ],
+  coreEngineering: [
+    "mechanical",
+    "electrical",
+    "civil",
+    "manufacturing",
+    "production",
+    "industrial",
+    "tool",
+    "cad",
+    "cam",
+    "automotive",
+    "plant",
+    "quality",
+  ],
+} as const;
+
+type RelatedJobDomain = keyof typeof relatedJobDomainKeywords | "general";
+type RelatedJobGroup = "tech" | "non_tech" | "general";
+
+type RelatedJobProfile = {
+  domain: RelatedJobDomain;
+  group: RelatedJobGroup;
+};
+
+type RelatedJobSignals = {
+  titleTokens: Set<string>;
+  skillTokens: Set<string>;
+  contextTokens: Set<string>;
+  locationTokens: Set<string>;
+  employmentType: string;
+  workMode: string;
+  profile: RelatedJobProfile;
+};
 
 const resolveNoExpiryRetentionDays = () => {
   const rawValue = Number.parseInt(
@@ -23,6 +149,183 @@ const resolveNoExpiryRetentionDays = () => {
 };
 
 const noExpiryRetentionDays = resolveNoExpiryRetentionDays();
+
+const normalizeTextForTokens = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/c\+\+/g, "cplusplus")
+    .replace(/c#/g, "csharp")
+    .replace(/node\.js/g, "nodejs")
+    .replace(/next\.js/g, "nextjs")
+    .replace(/[^\da-z\s]+/g, " ");
+
+const toTokenSet = (value: string) =>
+  new Set(
+    normalizeTextForTokens(value)
+      .split(/\s+/)
+      .map((token) => token.trim())
+      .filter((token) => token.length > 1 && !relatedJobsStopWords.has(token)),
+  );
+
+const countSharedTokens = (
+  firstTokens: Set<string>,
+  secondTokens: Set<string>,
+  maxMatches = Number.POSITIVE_INFINITY,
+) => {
+  let matches = 0;
+  for (const token of firstTokens) {
+    if (!secondTokens.has(token)) {
+      continue;
+    }
+
+    matches += 1;
+    if (matches >= maxMatches) {
+      break;
+    }
+  }
+
+  return matches;
+};
+
+const resolveRelatedJobProfile = (job: JobPost): RelatedJobProfile => {
+  const profileTokens = toTokenSet(
+    [
+      job.title,
+      job.summary || "",
+      job.excerpt,
+      job.experience || "",
+      job.experienceLevel || "",
+      job.experienceYears || "",
+      job.employmentType || job.jobType || "",
+      job.workMode || "",
+      job.skills.join(" "),
+      job.responsibilities.join(" "),
+      job.education.join(" "),
+    ].join(" "),
+  );
+
+  let bestDomain: RelatedJobDomain = "general";
+  let bestScore = 0;
+
+  for (const [domain, keywords] of Object.entries(relatedJobDomainKeywords)) {
+    const score = keywords.reduce(
+      (total, keyword) => total + (profileTokens.has(keyword) ? 1 : 0),
+      0,
+    );
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestDomain = domain as Exclude<RelatedJobDomain, "general">;
+    }
+  }
+
+  if (bestScore < 2) {
+    return {
+      domain: "general",
+      group: "general",
+    };
+  }
+
+  return {
+    domain: bestDomain,
+    group: bestDomain === "tech" ? "tech" : "non_tech",
+  };
+};
+
+const toRelatedJobSignals = (job: JobPost): RelatedJobSignals => ({
+  titleTokens: toTokenSet(job.title),
+  skillTokens: toTokenSet(job.skills.join(" ")),
+  contextTokens: toTokenSet(
+    [
+      job.title,
+      job.summary || "",
+      job.excerpt,
+      job.experience || "",
+      job.experienceLevel || "",
+      job.experienceYears || "",
+      job.eligibilityCriteria || "",
+      job.employmentType || job.jobType || "",
+      job.workMode || "",
+      job.skills.join(" "),
+      job.responsibilities.slice(0, 8).join(" "),
+      job.education.join(" "),
+    ].join(" "),
+  ),
+  locationTokens: toTokenSet(job.location),
+  employmentType: normalizeTextForTokens(job.employmentType || job.jobType || "").trim(),
+  workMode: normalizeTextForTokens(job.workMode || "").trim(),
+  profile: resolveRelatedJobProfile(job),
+});
+
+const scoreRelatedJob = (
+  sourceSignals: RelatedJobSignals,
+  candidateSignals: RelatedJobSignals,
+) => {
+  const sharedSkillTokens = countSharedTokens(
+    sourceSignals.skillTokens,
+    candidateSignals.skillTokens,
+    6,
+  );
+  const sharedTitleTokens = countSharedTokens(
+    sourceSignals.titleTokens,
+    candidateSignals.titleTokens,
+    4,
+  );
+  const sharedContextTokens = countSharedTokens(
+    sourceSignals.contextTokens,
+    candidateSignals.contextTokens,
+    12,
+  );
+  const sharedLocationTokens = countSharedTokens(
+    sourceSignals.locationTokens,
+    candidateSignals.locationTokens,
+    2,
+  );
+
+  let score =
+    sharedSkillTokens * 8 +
+    sharedTitleTokens * 5 +
+    sharedContextTokens * 2 +
+    sharedLocationTokens;
+
+  if (
+    sourceSignals.profile.domain !== "general" &&
+    sourceSignals.profile.domain === candidateSignals.profile.domain
+  ) {
+    score += 14;
+  } else if (
+    sourceSignals.profile.group !== "general" &&
+    sourceSignals.profile.group === candidateSignals.profile.group
+  ) {
+    score += 6;
+  }
+
+  if (
+    sourceSignals.employmentType &&
+    sourceSignals.employmentType === candidateSignals.employmentType
+  ) {
+    score += 4;
+  }
+
+  if (sourceSignals.workMode && sourceSignals.workMode === candidateSignals.workMode) {
+    score += 2;
+  }
+
+  if (
+    sharedSkillTokens === 0 &&
+    sharedTitleTokens === 0 &&
+    sharedContextTokens <= 1
+  ) {
+    score -= 4;
+  }
+
+  return score;
+};
+
+const toSortableDateTimestamp = (value: string) => {
+  const parsedTimestamp = Date.parse(`${value}T00:00:00Z`);
+  return Number.isNaN(parsedTimestamp) ? 0 : parsedTimestamp;
+};
 
 export type JobApplicationStatus = {
   state:
@@ -887,6 +1190,47 @@ export const getLatestJobs = async (limit = 6) => {
 export const getJobBySlug = async (slug: string) => {
   const jobs = await readJobs();
   return jobs.find((job) => job.slug === slug) ?? null;
+};
+
+export const getRelatedJobs = (sourceJob: JobPost, jobs: JobPost[], limit = 5) => {
+  if (limit <= 0) {
+    return [] as JobPost[];
+  }
+
+  const sourceSignals = toRelatedJobSignals(sourceJob);
+  const scoredJobs = jobs
+    .filter((job) => job.slug !== sourceJob.slug)
+    .map((job) => {
+      const candidateSignals = toRelatedJobSignals(job);
+      return {
+        job,
+        score: scoreRelatedJob(sourceSignals, candidateSignals),
+      };
+    })
+    .filter((item) => item.score > 0)
+    .sort(
+      (firstItem, secondItem) =>
+        secondItem.score - firstItem.score ||
+        toSortableDateTimestamp(secondItem.job.date) -
+          toSortableDateTimestamp(firstItem.job.date),
+    );
+
+  const primaryJobs = scoredJobs.map((item) => item.job).slice(0, limit);
+  if (primaryJobs.length >= limit) {
+    return primaryJobs;
+  }
+
+  const selectedSlugs = new Set(primaryJobs.map((job) => job.slug));
+  const fallbackJobs = jobs
+    .filter((job) => job.slug !== sourceJob.slug && !selectedSlugs.has(job.slug))
+    .sort(
+      (firstJob, secondJob) =>
+        toSortableDateTimestamp(secondJob.date) -
+        toSortableDateTimestamp(firstJob.date),
+    )
+    .slice(0, limit - primaryJobs.length);
+
+  return [...primaryJobs, ...fallbackJobs];
 };
 
 export const formatPostedDate = (dateString: string) => {

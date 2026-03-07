@@ -125,7 +125,7 @@ export const metadata: Metadata = {
   title: "Contact",
   description: "Reach JobAdvice for support, feedback, or partnership queries.",
   alternates: {
-    canonical: "/contact",
+    canonical: "/contact/",
   },
 };
 

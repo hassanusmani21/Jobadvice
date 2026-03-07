@@ -12,9 +12,9 @@ export default function RecommendedJobs({ jobs }: RecommendedJobsProps) {
 
   return (
     <aside className="fade-up card-surface rounded-3xl p-5 lg:sticky lg:top-6">
-      <h2 className="text-lg font-bold text-slate-900">Recommended Jobs</h2>
+      <h2 className="text-lg font-bold text-slate-900">Related Jobs</h2>
       <p className="mt-1 text-sm text-slate-600">
-        Explore other roles that match similar skills.
+        Explore similar roles matched by domain, skills, and job profile.
       </p>
 
       <ul className="mt-4 space-y-3">

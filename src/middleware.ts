@@ -21,6 +21,34 @@ const toDecodedPathSegment = (value: string) => {
   }
 };
 
+const canonicalTrailingSlashPaths = new Set([
+  "/about",
+  "/blog",
+  "/contact",
+  "/jobs",
+  "/privacy-policy",
+]);
+
+const shouldForceTrailingSlash = (pathname: string) =>
+  canonicalTrailingSlashPaths.has(pathname) ||
+  pathname.startsWith("/blog/") ||
+  pathname.startsWith("/jobs/");
+
+const redirectMissingTrailingSlash = (request: NextRequest) => {
+  const pathname = request.nextUrl.pathname;
+  if (!shouldForceTrailingSlash(pathname)) {
+    return null;
+  }
+
+  if (pathname === "/" || pathname.endsWith("/") || /\.[^/]+$/i.test(pathname)) {
+    return null;
+  }
+
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.pathname = `${pathname}/`;
+  return NextResponse.redirect(redirectUrl);
+};
+
 const redirectMalformedJobSlug = (request: NextRequest) => {
   const jobSlugMatch = request.nextUrl.pathname.match(/^\/jobs\/([^/]+)\/?$/);
 
@@ -46,6 +74,11 @@ export async function middleware(request: NextRequest) {
     return jobSlugRedirect;
   }
 
+  const trailingSlashRedirect = redirectMissingTrailingSlash(request);
+  if (trailingSlashRedirect) {
+    return trailingSlashRedirect;
+  }
+
   if (!request.nextUrl.pathname.startsWith("/admin/login")) {
     return NextResponse.next();
   }
@@ -65,5 +98,13 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/login", "/admin/login/:path*", "/jobs/:path*"],
+  matcher: [
+    "/admin/login",
+    "/admin/login/:path*",
+    "/about",
+    "/blog/:path*",
+    "/contact",
+    "/jobs/:path*",
+    "/privacy-policy",
+  ],
 };

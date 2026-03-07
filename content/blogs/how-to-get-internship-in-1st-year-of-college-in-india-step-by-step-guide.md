@@ -310,4 +310,4 @@ Start learning today apply regularly and improve step by step.
 
 Students who begin early always stay ahead in placements and career growth.
 
-Students aiming for tech placements later can also review this [TCS NQT 2026 preparation strategy](/blog/title).
+Students aiming for tech placements later can also review this [TCS NQT 2026 preparation strategy](/blog/tcs-nqt-2026-preparation-strategy-for-freshers).

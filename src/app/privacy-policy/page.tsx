@@ -82,7 +82,7 @@ export const metadata: Metadata = {
   description:
     "Read the JobAdvice privacy policy and disclaimer covering external links, website data, and platform limitations.",
   alternates: {
-    canonical: "/privacy-policy",
+    canonical: "/privacy-policy/",
   },
 };
 
