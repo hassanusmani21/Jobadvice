@@ -90,7 +90,7 @@
               if (attempts >= maxAttempts) {
                 updateLoadingCopy(
                   "Local Admin",
-                  "Run npm run local:admin or npm run cms:proxy. Localhost does not use your Netlify email/password login.",
+                  "Run npm run local:admin or npm run cms:proxy. Localhost uses the local CMS proxy instead of GitHub login.",
                   "JobAdvice Local",
                 );
                 return;
@@ -103,16 +103,9 @@
         checkProxy();
       }
 
-      if (!isLocalHost) {
-        var identityScript = document.createElement("script");
-        identityScript.src =
-          "https://identity.netlify.com/v1/netlify-identity-widget.js";
-        document.head.appendChild(identityScript);
-      } else {
+      if (isLocalHost) {
         waitForLocalProxy();
-      }
-
-      if (!isLocalHost) {
+      } else {
         loadCmsScripts();
       }
     </script>
@@ -149,62 +142,6 @@
 
         hideLoadingWhenReady();
         registerPreviewStyles();
-      })();
-    </script>
-    <script>
-      var isLocalAdminHost =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
-
-      (function bindNetlifyIdentity() {
-        var identityHash = window.location.hash || "";
-        var isRecoveryFlow = /(?:^#|&)recovery_token=/i.test(identityHash);
-        var isConfirmationFlow = /(?:^#|&)confirmation_token=/i.test(identityHash);
-        var pollAttempts = 0;
-        var hasOpenedTokenFlow = false;
-
-        function attachIdentityHandlers() {
-          if (!window.netlifyIdentity || isLocalAdminHost) {
-            if (pollAttempts >= 50 || isLocalAdminHost) {
-              return;
-            }
-
-            pollAttempts += 1;
-            window.setTimeout(attachIdentityHandlers, 120);
-            return;
-          }
-
-          window.netlifyIdentity.on("login", function () {
-            document.location.href = "/admin/";
-          });
-
-          window.netlifyIdentity.on("recovery", function () {
-            window.netlifyIdentity.open("recovery");
-          });
-
-          window.netlifyIdentity.on("init", function (user) {
-            if ((isRecoveryFlow || isConfirmationFlow) && !hasOpenedTokenFlow) {
-              hasOpenedTokenFlow = true;
-
-              if (user) {
-                window.netlifyIdentity.logout();
-              }
-
-              window.setTimeout(function () {
-                window.netlifyIdentity.open(isRecoveryFlow ? "recovery" : "login");
-              }, 150);
-              return;
-            }
-
-            if (isConfirmationFlow && !user) {
-              window.netlifyIdentity.open("login");
-            }
-          });
-
-          window.netlifyIdentity.init();
-        }
-
-        attachIdentityHandlers();
       })();
     </script>
     <script>
@@ -499,6 +436,9 @@
         var panelId = "jobadvice-auto-extract-panel";
         var buttonId = "jobadvice-auto-extract-btn";
         var sourceTextareaId = "jobadvice-auto-extract-source";
+        var collapseToggleId = "jobadvice-auto-extract-collapse";
+        var clearButtonId = "jobadvice-auto-extract-clear";
+        var collapseStorageKey = "jobadvice_auto_extract_collapsed";
 
         function getCollectionFromHash() {
           var routeValue = (window.location.pathname || "") + (window.location.hash || "");
@@ -523,6 +463,22 @@
           var existingPanel = document.getElementById(panelId);
           if (existingPanel) {
             existingPanel.remove();
+          }
+        }
+
+        function getPanelCollapsedState() {
+          try {
+            return window.localStorage.getItem(collapseStorageKey) === "1";
+          } catch {
+            return false;
+          }
+        }
+
+        function setPanelCollapsedState(isCollapsed) {
+          try {
+            window.localStorage.setItem(collapseStorageKey, isCollapsed ? "1" : "0");
+          } catch {
+            // Ignore localStorage errors.
           }
         }
 
@@ -1167,44 +1123,74 @@
             return;
           }
 
-          if (document.getElementById(buttonId)) {
+          if (document.getElementById(panelId)) {
             return;
           }
 
+          var isCollapsed = getPanelCollapsedState();
           var panel = document.createElement("div");
           panel.id = panelId;
           panel.style.position = "fixed";
-          panel.style.right = "14px";
-          panel.style.bottom = "14px";
+          panel.style.right = "18px";
+          panel.style.bottom = "18px";
           panel.style.zIndex = "9999";
-          panel.style.maxWidth = "420px";
+          panel.style.width = "min(430px, calc(100vw - 24px))";
           panel.style.padding = "12px";
-          panel.style.borderRadius = "10px";
-          panel.style.border = "1px solid rgba(15, 23, 42, 0.12)";
-          panel.style.background = "rgba(255, 255, 255, 0.92)";
-          panel.style.boxShadow = "0 10px 24px rgba(15, 23, 42, 0.18)";
+          panel.style.borderRadius = "12px";
+          panel.style.border = "1px solid rgba(15, 23, 42, 0.14)";
+          panel.style.background = "rgba(255, 255, 255, 0.96)";
+          panel.style.boxShadow = "0 12px 28px rgba(15, 23, 42, 0.16)";
+          panel.style.backdropFilter = "blur(8px)";
+          panel.style.fontFamily = "Manrope, sans-serif";
+
+          var header = document.createElement("div");
+          header.style.display = "flex";
+          header.style.alignItems = "center";
+          header.style.justifyContent = "space-between";
+          header.style.gap = "10px";
+          header.style.marginBottom = isCollapsed ? "0" : "10px";
+
+          var title = document.createElement("p");
+          title.textContent = collection === "jobs" ? "AI Job Extractor" : "AI Blog Extractor";
+          title.style.margin = "0";
+          title.style.fontSize = "13px";
+          title.style.fontWeight = "800";
+          title.style.color = "#0f172a";
+
+          var collapseToggle = document.createElement("button");
+          collapseToggle.id = collapseToggleId;
+          collapseToggle.type = "button";
+          collapseToggle.textContent = isCollapsed ? "Expand" : "Collapse";
+          collapseToggle.style.padding = "6px 10px";
+          collapseToggle.style.borderRadius = "8px";
+          collapseToggle.style.border = "1px solid rgba(148, 163, 184, 0.85)";
+          collapseToggle.style.background = "#ffffff";
+          collapseToggle.style.color = "#0f172a";
+          collapseToggle.style.fontSize = "11px";
+          collapseToggle.style.fontWeight = "700";
+          collapseToggle.style.cursor = "pointer";
 
           var helper = document.createElement("p");
           helper.textContent =
             collection === "jobs"
-              ? "Paste full source text here (long text supported), then auto-fill job fields."
-              : "Paste full source content here (long text supported), then auto-fill fields.";
+              ? "Paste full job source text and auto-fill all fields."
+              : "Paste full blog source text and auto-fill all fields.";
           helper.style.margin = "0 0 8px";
           helper.style.fontSize = "12px";
           helper.style.color = "#334155";
 
           var sourceInput = document.createElement("textarea");
           sourceInput.id = sourceTextareaId;
-          sourceInput.rows = 7;
+          sourceInput.rows = 6;
           sourceInput.placeholder =
             collection === "jobs"
               ? "Paste complete job details text here for accurate extraction."
               : "Paste complete blog content/details here for accurate extraction.";
           sourceInput.style.width = "100%";
-          sourceInput.style.minHeight = "120px";
-          sourceInput.style.maxHeight = "220px";
+          sourceInput.style.minHeight = "110px";
+          sourceInput.style.maxHeight = "260px";
           sourceInput.style.resize = "vertical";
-          sourceInput.style.margin = "0 0 10px";
+          sourceInput.style.margin = "0";
           sourceInput.style.padding = "8px 10px";
           sourceInput.style.borderRadius = "8px";
           sourceInput.style.border = "1px solid rgba(148, 163, 184, 0.8)";
@@ -1234,14 +1220,54 @@
           button.style.fontSize = "13px";
           button.style.fontWeight = "700";
           button.style.cursor = "pointer";
+          button.style.flex = "1";
 
           button.addEventListener("click", function () {
             runAutoExtract(button);
           });
 
-          panel.appendChild(helper);
-          panel.appendChild(sourceInput);
-          panel.appendChild(button);
+          var clearButton = document.createElement("button");
+          clearButton.id = clearButtonId;
+          clearButton.type = "button";
+          clearButton.textContent = "Clear";
+          clearButton.style.padding = "9px 12px";
+          clearButton.style.borderRadius = "8px";
+          clearButton.style.border = "1px solid rgba(148, 163, 184, 0.85)";
+          clearButton.style.background = "#ffffff";
+          clearButton.style.color = "#0f172a";
+          clearButton.style.fontSize = "12px";
+          clearButton.style.fontWeight = "700";
+          clearButton.style.cursor = "pointer";
+
+          clearButton.addEventListener("click", function () {
+            sourceInput.value = "";
+            sourceInput.focus();
+          });
+
+          collapseToggle.addEventListener("click", function () {
+            setPanelCollapsedState(!isCollapsed);
+            removePanel();
+            injectPanel();
+          });
+
+          var actionRow = document.createElement("div");
+          actionRow.style.display = "flex";
+          actionRow.style.gap = "8px";
+          actionRow.style.marginTop = "10px";
+
+          actionRow.appendChild(button);
+          actionRow.appendChild(clearButton);
+
+          panel.appendChild(header);
+          header.appendChild(title);
+          header.appendChild(collapseToggle);
+
+          if (!isCollapsed) {
+            panel.appendChild(helper);
+            panel.appendChild(sourceInput);
+            panel.appendChild(actionRow);
+          }
+
           document.body.appendChild(panel);
         }
 
@@ -1250,6 +1276,6 @@
         injectPanel();
       })();
     </script>
-    <script src="/admin/jobs-dashboard-tools.js"></script>
+    <script src="/admin/jobs-dashboard-tools.js?v=20260307d"></script>
   </body>
 </html>

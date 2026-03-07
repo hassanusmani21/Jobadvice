@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "@/components/AppLink";
 import EmptyStateCard from "@/components/EmptyStateCard";
-import IdentityHashRedirect from "@/components/IdentityHashRedirect";
 import JobCard from "@/components/JobCard";
 import { formatBlogDate, getLatestBlogs } from "@/lib/blogs";
 import { getLatestJobs } from "@/lib/jobs";
@@ -22,7 +21,6 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-10">
-      <IdentityHashRedirect />
       <section className="fade-up hero-surface px-5 py-8 sm:px-10 sm:py-10">
         <h1 className="font-serif text-[2rem] leading-[1.15] text-slate-900 sm:text-[2.5rem]">
           JobAdvice
