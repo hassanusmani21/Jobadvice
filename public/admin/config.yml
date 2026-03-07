@@ -1,6 +1,9 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: hassanusmani21/Jobadvice
   branch: main
+  base_url: https://YOUR-DECAP-OAUTH-HOST
+  auth_endpoint: /auth
 
 local_backend:
   url: http://localhost:8081/api/v1
@@ -23,7 +26,10 @@ collections:
     format: frontmatter
     slug: "{{slug}}"
     identifier_field: title
-    summary: "{{title}} - {{company}}"
+    summary: "{{date}} | {{title}} - {{company}}"
+    sortable_fields:
+      - date
+    sort: "date:desc"
     fields:
       - label: Job Title
         name: title
@@ -128,7 +134,10 @@ collections:
     format: frontmatter
     slug: "{{slug}}"
     identifier_field: title
-    summary: "{{title}} - {{topic}}"
+    summary: "{{date}} | {{title}} - {{topic}}"
+    sortable_fields:
+      - date
+    sort: "date:desc"
     fields:
       - label: Title
         name: title

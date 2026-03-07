@@ -40,27 +40,6 @@ const themePreferenceScript = `
   })();
 `;
 
-const identityHashRedirectScript = `
-  (function () {
-    if (typeof window === "undefined") return;
-    var hash = window.location.hash || "";
-    var pathname = window.location.pathname || "/";
-    var recoveryHashPattern = /(recovery_token|type=recovery)/i;
-    var identityHashPattern = /(recovery_token|confirmation_token|invite_token|email_change_token|type=recovery|type=invite|type=signup)/i;
-
-    if (pathname !== "/" || !hash || !identityHashPattern.test(hash)) {
-      return;
-    }
-
-    if (recoveryHashPattern.test(hash)) {
-      window.location.replace("/admin/recover" + hash);
-      return;
-    }
-
-    window.location.replace("/admin/" + hash);
-  })();
-`;
-
 const assetLoadRecoveryScript = `
   (function () {
     if (typeof window === "undefined") return;
@@ -396,7 +375,6 @@ export default function RootLayout({
     <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themePreferenceScript }} />
-        <script dangerouslySetInnerHTML={{ __html: identityHashRedirectScript }} />
         <script dangerouslySetInnerHTML={{ __html: assetLoadRecoveryScript }} />
       </head>
       <body className="antialiased">

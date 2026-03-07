@@ -27,9 +27,20 @@ const connectSrc = [
     ? ["http://localhost:8081", "http://127.0.0.1:8081"]
     : []),
 ].join(" ");
+const adminConnectSrc = [
+  "'self'",
+  "https://api.github.com",
+  "https://github.com",
+  "https://YOUR-DECAP-OAUTH-HOST",
+  ...(isDevelopment
+    ? ["http://localhost:8081", "http://127.0.0.1:8081"]
+    : []),
+].join(" ");
 const scriptSrc = isDevelopment
   ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com"
   : "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com";
+const adminScriptSrc =
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net";
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -42,6 +53,23 @@ const contentSecurityPolicy = [
   `connect-src ${connectSrc}`,
   "frame-src https://accounts.google.com",
   "form-action 'self' https://accounts.google.com",
+  "manifest-src 'self'",
+  "media-src 'self'",
+  "worker-src 'self' blob:",
+  ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
+].join("; ");
+const adminContentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "frame-ancestors 'none'",
+  "object-src 'none'",
+  adminScriptSrc,
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https:",
+  `connect-src ${adminConnectSrc}`,
+  "frame-src https://github.com",
+  "form-action 'self' https://github.com",
   "manifest-src 'self'",
   "media-src 'self'",
   "worker-src 'self' blob:",
@@ -94,6 +122,14 @@ const securityHeaders = [
       ]
     : []),
 ];
+const adminSecurityHeaders = securityHeaders.map((header) =>
+  header.key === "Content-Security-Policy"
+    ? {
+        ...header,
+        value: adminContentSecurityPolicy,
+      }
+    : header,
+);
 
 const noStoreHeaders = [
   {
@@ -172,11 +208,11 @@ const nextConfig = {
       })),
       {
         source: "/admin",
-        headers: noStoreHeaders,
+        headers: [...noStoreHeaders, ...adminSecurityHeaders],
       },
       {
         source: "/admin/:path*",
-        headers: noStoreHeaders,
+        headers: [...noStoreHeaders, ...adminSecurityHeaders],
       },
       {
         source: "/api/admin/:path*",
