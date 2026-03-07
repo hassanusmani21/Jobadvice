@@ -49,11 +49,223 @@
         }
       }
 
+      window.CMS_MANUAL_INIT = true;
+      window.jobAdviceCmsConfig = {
+        load_config_file: false,
+        backend: {
+          name: "github",
+          repo: "hassanusmani21/Jobadvice",
+          branch: "main",
+          base_url: "https://YOUR-DECAP-OAUTH-HOST",
+          auth_endpoint: "/auth",
+        },
+        local_backend: {
+          url: "http://localhost:8081/api/v1",
+          allowed_hosts: ["localhost", "127.0.0.1"],
+        },
+        logo_url: "/favicon.ico",
+        media_folder: "public/uploads",
+        public_folder: "/uploads",
+        collections: [
+          {
+            name: "jobs",
+            label: "Jobs",
+            folder: "content/jobs",
+            create: true,
+            delete: true,
+            extension: "md",
+            format: "frontmatter",
+            slug: "{{slug}}",
+            identifier_field: "title",
+            fields: [
+              { label: "Job Title", name: "title", widget: "string", required: true },
+              {
+                label: "Publish Date",
+                name: "date",
+                widget: "datetime",
+                format: "YYYY-MM-DD",
+                date_format: "YYYY-MM-DD",
+                time_format: false,
+                required: true,
+              },
+              { label: "Company Name", name: "company", widget: "string", required: true },
+              {
+                label: "Location",
+                name: "location",
+                widget: "string",
+                required: true,
+                hint: "City, State, Country or Remote",
+              },
+              {
+                label: "Work Mode",
+                name: "workMode",
+                widget: "string",
+                required: false,
+                hint: "Examples: On-site, Remote, Hybrid",
+              },
+              {
+                label: "Employment Type",
+                name: "employmentType",
+                widget: "string",
+                required: false,
+                hint: "Examples: Full-time, Part-time, Internship, Contract",
+              },
+              { label: "Salary", name: "salary", widget: "string", required: false },
+              {
+                label: "Experience Required",
+                name: "experience",
+                widget: "string",
+                required: false,
+                hint: "Examples: Fresher, 1-3 years, 3+ years",
+              },
+              {
+                label: "Eligibility Criteria",
+                name: "eligibilityCriteria",
+                widget: "text",
+                required: false,
+                hint: "Optional: Who can apply / candidate profile criteria",
+              },
+              {
+                label: "Education",
+                name: "education",
+                widget: "list",
+                required: false,
+                hint: "Add one item per line. Example: B.Tech, MCA",
+              },
+              {
+                label: "Skills Required",
+                name: "skills",
+                widget: "list",
+                required: true,
+                hint: "Add one skill per item. Example: Selenium, SQL, Python",
+              },
+              {
+                label: "Roles & Responsibilities",
+                name: "responsibilities",
+                widget: "list",
+                required: false,
+                hint: "Add one responsibility per item.",
+              },
+              {
+                label: "Working Days",
+                name: "workingDays",
+                widget: "string",
+                required: false,
+                hint: "Example: Monday-Friday",
+              },
+              {
+                label: "Job Timing",
+                name: "jobTiming",
+                widget: "string",
+                required: false,
+                hint: "Example: 9:30 AM - 6:30 PM IST",
+              },
+              {
+                label: "Apply Link",
+                name: "applyLink",
+                widget: "string",
+                required: true,
+                pattern: [
+                  "^(https?://|/).+",
+                  "Use an external URL (http/https) or internal path (/apply/...)",
+                ],
+              },
+              {
+                label: "Application Start Date",
+                name: "applicationStartDate",
+                widget: "datetime",
+                format: "YYYY-MM-DD",
+                date_format: "YYYY-MM-DD",
+                time_format: false,
+                required: true,
+              },
+              {
+                label: "Application End Date",
+                name: "applicationEndDate",
+                widget: "datetime",
+                format: "YYYY-MM-DD",
+                date_format: "YYYY-MM-DD",
+                time_format: false,
+                required: false,
+                hint: "Jobs with this date are auto-hidden after expiry. If empty, jobs are auto-hidden after 30 days.",
+              },
+            ],
+          },
+          {
+            name: "blogs",
+            label: "Blogs",
+            folder: "content/blogs",
+            create: true,
+            delete: true,
+            extension: "md",
+            format: "frontmatter",
+            slug: "{{slug}}",
+            identifier_field: "title",
+            fields: [
+              { label: "Title", name: "title", widget: "string", required: true },
+              {
+                label: "Slug",
+                name: "slug",
+                widget: "string",
+                required: true,
+                hint: "Use lowercase words separated by hyphens. Example: interview-tips-freshers",
+              },
+              { label: "Summary", name: "summary", widget: "text", required: false },
+              {
+                label: "Topic",
+                name: "topic",
+                widget: "string",
+                required: true,
+                hint: "Examples: Interview Prep, Resume, AI, Hiring News",
+              },
+              { label: "Tags", name: "tags", widget: "list", required: false },
+              {
+                label: "Mark as Trending",
+                name: "isTrending",
+                widget: "boolean",
+                required: false,
+                default: false,
+              },
+              { label: "Author", name: "author", widget: "string", required: false },
+              { label: "Cover Image", name: "coverImage", widget: "image", required: false },
+              {
+                label: "Publish Date",
+                name: "date",
+                widget: "datetime",
+                format: "YYYY-MM-DD",
+                date_format: "YYYY-MM-DD",
+                time_format: false,
+                required: true,
+              },
+              { label: "Content", name: "body", widget: "markdown", required: true },
+            ],
+          },
+        ],
+      };
+
+      function initCms() {
+        if (window.jobAdviceCmsInitialized) {
+          return;
+        }
+
+        if (!window.CMS || typeof window.initCMS !== "function") {
+          window.setTimeout(initCms, 120);
+          return;
+        }
+
+        window.jobAdviceCmsInitialized = true;
+        window.initCMS({
+          config: window.jobAdviceCmsConfig,
+        });
+      }
+
       function loadCmsScripts() {
         var primary = document.createElement("script");
+        primary.onload = initCms;
         primary.src = "https://unpkg.com/decap-cms@3.8.3/dist/decap-cms.js";
         primary.onerror = function () {
           var fallback = document.createElement("script");
+          fallback.onload = initCms;
           fallback.src = "https://cdn.jsdelivr.net/npm/decap-cms@3.8.3/dist/decap-cms.js";
           document.body.appendChild(fallback);
         };
