@@ -14,7 +14,7 @@ Use this checklist in order. Do not skip steps.
 ## 2) Netlify Project Setup
 
 - [ ] Netlify -> Add new site -> Import from GitHub
-- [ ] Select repo: `hassanusmani21/Job-Portal`
+- [ ] Select repo: `hassanusmani21/Jobadvice`
 - [ ] Branch: `main`
 - [ ] Build command: `rm -rf .next out && npm run build`
 - [ ] Publish settings: default Next.js runtime (no static export mode)
@@ -91,4 +91,3 @@ After custom domain is connected:
 - [ ] Update `NEXT_PUBLIC_SITE_URL` to custom domain
 - [ ] Update Google OAuth origin + redirect URI to custom domain
 - [ ] Redeploy and rerun smoke test
-

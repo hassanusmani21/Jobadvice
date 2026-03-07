@@ -1,5 +1,6 @@
 [build]
   command = "rm -rf .next out && npm run build"
+  publish = ".next"
 
 # Let Netlify's Next.js runtime manage the deploy output. Forcing a raw
 # publish directory here can leave HTML and hashed assets out of sync.

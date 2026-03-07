@@ -1,8 +1,8 @@
+import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import {
   ALLOWED_ADMIN_EMAILS,
-  PRIMARY_ADMIN_EMAIL,
   isAllowedAdminEmail,
 } from "@/lib/adminAccess";
 import { redirect } from "next/navigation";
@@ -13,6 +13,15 @@ type AdminLoginPageProps = {
     callbackUrl?: string | string[];
     error?: string | string[];
   };
+};
+
+export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Admin Login",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 const toSafeCallbackUrl = (value: string | string[] | undefined) => {
@@ -36,12 +45,7 @@ const toErrorMessage = (error: string | undefined) => {
   }
 
   if (error === "AccessDenied") {
-    const allowedEmailsText =
-      ALLOWED_ADMIN_EMAILS.length > 1
-        ? ALLOWED_ADMIN_EMAILS.join(", ")
-        : PRIMARY_ADMIN_EMAIL;
-
-    return `This account is not authorized. Use one of: ${allowedEmailsText}.`;
+    return "This Google account is not authorized for admin access.";
   }
 
   if (error === "OAuthSignin" || error === "OAuthCallback") {
@@ -63,6 +67,7 @@ export default async function AdminLoginPage({
     ? searchParams?.error[0]
     : searchParams?.error;
   const errorMessage = toErrorMessage(error);
+  const hasConfiguredAdmins = ALLOWED_ADMIN_EMAILS.length > 0;
 
   const session = await getServerSession(authOptions);
   if (isAllowedAdminEmail(session?.user?.email)) {
@@ -99,9 +104,16 @@ export default async function AdminLoginPage({
             Continue with your Google account to enter the admin dashboard.
           </p>
 
-          <div className="mt-8">
-            <GoogleAdminSignInButton callbackUrl={callbackUrl} />
-          </div>
+          {hasConfiguredAdmins ? (
+            <div className="mt-8">
+              <GoogleAdminSignInButton callbackUrl={callbackUrl} />
+            </div>
+          ) : (
+            <p className="mt-8 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+              Admin access is not configured correctly. Set <code>ALLOWED_ADMIN_EMAILS</code>{" "}
+              before using this page.
+            </p>
+          )}
 
           {errorMessage ? (
             <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
