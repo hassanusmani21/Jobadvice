@@ -1,5 +1,3 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
 import { extractBlogFromText, extractJobFromText } from "@/lib/autoExtract";
 import { isAllowedAdminEmail } from "@/lib/adminAccess";
 import { hasTrustedSameOrigin, noStoreJson } from "@/lib/requestSecurity";
@@ -38,6 +36,20 @@ const toSourceText = (body: Record<string, unknown>) => {
   return rawSourceText.trim();
 };
 
+const resolveAdminSession = async () => {
+  try {
+    const [{ getServerSession }, { authOptions }] = await Promise.all([
+      import("next-auth"),
+      import("@/auth"),
+    ]);
+
+    return getServerSession(authOptions);
+  } catch (error) {
+    console.error("[auto-extract] Unable to resolve admin session:", error);
+    return null;
+  }
+};
+
 export async function POST(request: Request) {
   if (!hasTrustedSameOrigin(request)) {
     return noStoreJson(
@@ -49,7 +61,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await getServerSession(authOptions);
+  const session = await resolveAdminSession();
   const sessionEmail = session?.user?.email || "";
 
   if (!sessionEmail) {

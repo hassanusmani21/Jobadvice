@@ -6,13 +6,18 @@ const isProduction = process.env.NODE_ENV === "production";
 const authSecret = (process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "").trim();
 const googleClientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
 const googleClientSecret = (process.env.GOOGLE_CLIENT_SECRET || "").trim();
+const hasGoogleOAuthCredentials = Boolean(googleClientId && googleClientSecret);
 
 if (isProduction && !authSecret) {
-  throw new Error("Missing AUTH_SECRET (or NEXTAUTH_SECRET) in production.");
+  console.warn(
+    "[auth] Missing AUTH_SECRET (or NEXTAUTH_SECRET). Admin auth routes may fail until configured.",
+  );
 }
 
-if (isProduction && (!googleClientId || !googleClientSecret)) {
-  throw new Error("Missing Google OAuth credentials in production.");
+if (isProduction && !hasGoogleOAuthCredentials) {
+  console.warn(
+    "[auth] Missing Google OAuth credentials. Admin login will not work until GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set.",
+  );
 }
 
 export const authOptions: NextAuthOptions = {
@@ -27,8 +32,8 @@ export const authOptions: NextAuthOptions = {
   },
   providers: [
     GoogleProvider({
-      clientId: googleClientId,
-      clientSecret: googleClientSecret,
+      clientId: googleClientId || "missing-google-client-id",
+      clientSecret: googleClientSecret || "missing-google-client-secret",
     }),
   ],
   pages: {

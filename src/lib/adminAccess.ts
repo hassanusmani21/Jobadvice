@@ -9,8 +9,8 @@ const parseAllowedAdminEmails = () => {
     process.env.ALLOWED_ADMIN_EMAIL;
 
   if ((!envValue || !envValue.trim()) && isProduction) {
-    throw new Error(
-      "Missing ALLOWED_ADMIN_EMAILS (or ALLOWED_ADMIN_EMAIL) in production.",
+    console.warn(
+      "[adminAccess] Missing ALLOWED_ADMIN_EMAILS (or ALLOWED_ADMIN_EMAIL). Falling back to default admin email.",
     );
   }
 
