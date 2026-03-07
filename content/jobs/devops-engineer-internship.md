@@ -47,5 +47,6 @@ workingDays: 5 Days a Week
 jobTiming: Full Time Internship
 applyLink: https://unstop.com/
 applicationStartDate: 2026-04-02
+allowFutureApplicationStartDate: true
 applicationEndDate: 2026-10-02
 ---
