@@ -3,14 +3,16 @@ import { formatBlogDate, type BlogPost } from "@/lib/blogs";
 
 type BlogCardProps = {
   blog: BlogPost;
+  style?: React.CSSProperties;
 };
 
-export default function BlogCard({ blog }: BlogCardProps) {
+export default function BlogCard({ blog, style }: BlogCardProps) {
   return (
     <Link
       href={`/blog/${blog.slug}`}
       className="group fade-up card-surface flex h-full flex-col p-5 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_44px_-32px_rgba(15,23,42,0.2)]"
       aria-label={`Read ${blog.title}`}
+      style={style}
     >
       {blog.coverImage ? (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">

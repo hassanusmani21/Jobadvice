@@ -4,8 +4,8 @@ import BlogCard from "@/components/BlogCard";
 import EmptyStateCard from "@/components/EmptyStateCard";
 import {
   getAllBlogs,
+  getLatestBlogs,
   getTopBlogTopics,
-  getTrendingBlogs,
   type BlogPost,
 } from "@/lib/blogs";
 
@@ -46,9 +46,9 @@ const matchesSearch = (blog: BlogPost, query: string) => {
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const query = toSearchQuery(searchParams?.q);
-  const [allBlogs, trendingBlogs, topTopics] = await Promise.all([
+  const [allBlogs, latestBlogs, topTopics] = await Promise.all([
     getAllBlogs(),
-    getTrendingBlogs(5),
+    getLatestBlogs(5),
     getTopBlogTopics(6),
   ]);
 
@@ -151,10 +151,10 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         </section>
 
         <section className="fade-up card-surface rounded-3xl p-5" style={{ animationDelay: "90ms" }}>
-          <h2 className="text-lg font-bold text-slate-900">Latest Reads</h2>
-          {trendingBlogs.length > 0 ? (
+          <h2 className="text-lg font-bold text-slate-900">Latest Blogs</h2>
+          {latestBlogs.length > 0 ? (
             <ul className="mt-4 space-y-3">
-              {trendingBlogs.map((blog) => (
+              {latestBlogs.map((blog) => (
                 <li key={blog.slug}>
                   <Link
                     href={`/blog/${blog.slug}`}

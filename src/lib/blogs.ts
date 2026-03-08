@@ -256,6 +256,22 @@ const parseFrontMatter = (rawFile: string) => {
 };
 
 const getTodayDateString = () => new Date().toISOString().split("T")[0];
+const getTodayTimestamp = () => Date.parse(`${getTodayDateString()}T23:59:59.999Z`);
+const toSortableTimestamp = (value: string) => Date.parse(`${value}T00:00:00Z`);
+
+const getBlogSortValues = (blog: BlogPost) => {
+  const todayTimestamp = getTodayTimestamp();
+  const publishedTimestamp = toSortableTimestamp(blog.date);
+  const updatedTimestamp = toSortableTimestamp(blog.updatedAt || blog.date);
+  const publishedInFuture = publishedTimestamp > todayTimestamp;
+  const updatedInFuture = updatedTimestamp > todayTimestamp;
+
+  return {
+    futureRank: publishedInFuture && updatedInFuture ? 1 : 0,
+    primaryTimestamp: updatedInFuture ? 0 : updatedTimestamp,
+    secondaryTimestamp: publishedInFuture ? 0 : publishedTimestamp,
+  };
+};
 
 const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
   const filePath = path.join(blogsDirectory, fileName);
@@ -330,10 +346,17 @@ const loadBlogs = async () => {
 
   return blogs
     .filter((blog): blog is BlogPost => Boolean(blog))
-    .sort(
-      (firstBlog, secondBlog) =>
-        new Date(secondBlog.date).getTime() - new Date(firstBlog.date).getTime(),
-    );
+    .sort((firstBlog, secondBlog) => {
+      const firstValues = getBlogSortValues(firstBlog);
+      const secondValues = getBlogSortValues(secondBlog);
+
+      return (
+        firstValues.futureRank - secondValues.futureRank ||
+        secondValues.primaryTimestamp - firstValues.primaryTimestamp ||
+        secondValues.secondaryTimestamp - firstValues.secondaryTimestamp ||
+        firstBlog.title.localeCompare(secondBlog.title)
+      );
+    });
 };
 
 const readBlogs = () => loadBlogs();

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "@/components/AppLink";
+import BlogCard from "@/components/BlogCard";
 import EmptyStateCard from "@/components/EmptyStateCard";
 import JobCard from "@/components/JobCard";
-import { formatBlogDate, getLatestBlogs } from "@/lib/blogs";
+import { getLatestBlogs } from "@/lib/blogs";
 import { getLatestJobs } from "@/lib/jobs";
 
 export const metadata: Metadata = {
@@ -81,27 +82,11 @@ export default async function HomePage() {
 
         <ul className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {latestBlogs.map((blog, index) => (
-            <li
-              key={blog.slug}
-              className="fade-up card-surface rounded-2xl px-5 py-5"
-              style={{ animationDelay: `${220 + index * 90}ms` }}
-            >
-              {blog.topic ? (
-                <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">
-                  {blog.topic}
-                </p>
-              ) : null}
-              <h3 className="mt-2 text-lg font-bold text-slate-900">{blog.title}</h3>
-              {blog.excerpt ? <p className="mt-2 text-sm leading-6 text-slate-600">{blog.excerpt}</p> : null}
-              <p className="mt-3 text-xs text-slate-500">
-                {formatBlogDate(blog.date)} • {blog.readingTimeMinutes} min read
-              </p>
-              <Link
-                href={`/blog/${blog.slug}`}
-                className="mt-4 inline-flex rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-900 transition hover:border-teal-300 hover:bg-teal-100"
-              >
-                Read Post
-              </Link>
+            <li key={blog.slug} className="min-w-0">
+              <BlogCard
+                blog={blog}
+                style={{ animationDelay: `${220 + index * 90}ms` }}
+              />
             </li>
           ))}
         </ul>
