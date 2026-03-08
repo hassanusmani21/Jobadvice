@@ -52,7 +52,7 @@ const cityRegionCountryMap: Record<
   mumbai: { locality: "Mumbai", region: "Maharashtra", country: "IN" },
   mysore: { locality: "Mysuru", region: "Karnataka", country: "IN" },
   mysuru: { locality: "Mysuru", region: "Karnataka", country: "IN" },
-  navi mumbai: { locality: "Navi Mumbai", region: "Maharashtra", country: "IN" },
+  "navi mumbai": { locality: "Navi Mumbai", region: "Maharashtra", country: "IN" },
   noida: { locality: "Noida", region: "Uttar Pradesh", country: "IN" },
   pune: { locality: "Pune", region: "Maharashtra", country: "IN" },
 };
