@@ -1154,7 +1154,7 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
   };
 };
 
-const loadJobs = async () => {
+const loadJobs = async (options: { includeExpired?: boolean } = {}) => {
   let files: string[] = [];
 
   try {
@@ -1171,16 +1171,18 @@ const loadJobs = async () => {
 
   return jobs
     .filter((job): job is JobPost => Boolean(job))
-    .filter((job) => isJobStillActive(job))
+    .filter((job) => (options.includeExpired ? true : isJobStillActive(job)))
     .sort(
       (firstJob, secondJob) =>
         new Date(secondJob.date).getTime() - new Date(firstJob.date).getTime(),
     );
 };
 
-const readJobs = () => loadJobs();
+const readJobs = (options: { includeExpired?: boolean } = {}) => loadJobs(options);
 
 export const getAllJobs = async () => readJobs();
+
+export const getAllJobsForAdmin = async () => readJobs({ includeExpired: true });
 
 export const getLatestJobs = async (limit = 6) => {
   const jobs = await readJobs();
@@ -1261,4 +1263,23 @@ export const formatApplicationWindow = (
   return `${formatPostedDate(applicationStartDate)} - ${formatPostedDate(
     applicationEndDate,
   )}`;
+};
+
+export const resolveStructuredValidThrough = (
+  postedDate: string,
+  applicationEndDate: string | null,
+) => {
+  if (applicationEndDate) {
+    return applicationEndDate;
+  }
+
+  const postedAtTimestamp = toUtcDayTimestamp(postedDate);
+  if (!Number.isFinite(postedAtTimestamp)) {
+    return postedDate;
+  }
+
+  const expiresAtDate = new Date(
+    postedAtTimestamp + noExpiryRetentionDays * millisecondsInDay,
+  );
+  return expiresAtDate.toISOString().split("T")[0];
 };

@@ -2,9 +2,9 @@
 title: Graduate Engineer Trainee
 date: 2026-03-07
 company: Iris Software
-location: Noida
+location: Noida, Uttar Pradesh, India
 employmentType: Full-time
-salary: Experience Required (optional)
+salary: ""
 experience: Fresher
 eligibilityCriteria: B.E / B.Tech graduates
 education:
