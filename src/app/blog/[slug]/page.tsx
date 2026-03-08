@@ -29,6 +29,12 @@ type OutlineItem = {
   text: string;
 };
 
+type BlogCta = {
+  label: string;
+  href: string;
+  sourceHost: string;
+};
+
 type ArticleHeadingBlock = Extract<MarkdownBlock, { type: "heading" }> & {
   anchorId: string;
 };
@@ -138,7 +144,10 @@ const toBreadcrumbJsonLd = (blog: BlogPost) => ({
 });
 
 const inlineMarkdownPattern =
-  /(\[([^\]]+)\]\(([^)\s]+)\)|\*\*([^*]+)\*\*|__([^_]+)__|`([^`]+)`|\*([^*]+)\*|_([^_]+)_)/g;
+  /(\[([^\]]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s<]+)|\*\*([^*]+)\*\*|__([^_]+)__|`([^`]+)`|\*([^*]+)\*|_([^_]+)_)/g;
+const ctaKeywordPattern =
+  /\b(register|registration|apply|application|join|sign\s?up|signup|enroll)\b/i;
+const plainUrlPattern = /https?:\/\/[^\s<]+/gi;
 
 const normalizeInternalHref = (href: string) => {
   if (!href.startsWith("/")) {
@@ -159,6 +168,81 @@ const normalizeInternalHref = (href: string) => {
   }
 
   return `${pathname}/${suffix}`;
+};
+
+const trimTrailingUrlPunctuation = (value: string) =>
+  value.replace(/[>)\],.;!?]+$/g, "");
+
+const resolveCtaLabel = (value: string) => {
+  const normalizedValue = value.toLowerCase();
+
+  if (/\bregister|registration|sign\s?up|signup|enroll\b/.test(normalizedValue)) {
+    return "Register Link";
+  }
+
+  if (/\bapply|application\b/.test(normalizedValue)) {
+    return "Apply Link";
+  }
+
+  if (/\bjoin\b/.test(normalizedValue)) {
+    return "Join Link";
+  }
+
+  return "Link";
+};
+
+const resolveUrlHost = (value: string) => {
+  try {
+    return new URL(value).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+};
+
+const extractBlogCta = (blog: BlogPost, articleBlocks: ArticleRenderBlock[]) => {
+  if (blog.ctaLink) {
+    return {
+      label: blog.ctaLabel || "Open Link",
+      href: blog.ctaLink,
+      sourceHost: resolveUrlHost(blog.ctaLink),
+    } satisfies BlogCta;
+  }
+
+  for (const block of articleBlocks) {
+    if (block.type !== "paragraph") {
+      continue;
+    }
+
+    const urls = Array.from(block.text.match(plainUrlPattern) || []).map(
+      trimTrailingUrlPunctuation,
+    );
+
+    if (urls.length === 0 || !ctaKeywordPattern.test(block.text)) {
+      continue;
+    }
+
+    const href = urls[0];
+    return {
+      label: resolveCtaLabel(block.text),
+      href,
+      sourceHost: resolveUrlHost(href),
+    } satisfies BlogCta;
+  }
+
+  return null;
+};
+
+const shouldHideCtaParagraph = (block: MarkdownBlock, cta: BlogCta | null) => {
+  if (!cta || block.type !== "paragraph" || !block.text.includes(cta.href)) {
+    return false;
+  }
+
+  const normalizedText = block.text.replace(/\s+/g, " ").trim();
+  if (ctaKeywordPattern.test(normalizedText)) {
+    return true;
+  }
+
+  return normalizedText === cta.href;
 };
 
 const renderInlineMarkdown = (text: string): ReactNode => {
@@ -192,21 +276,35 @@ const renderInlineMarkdown = (text: string): ReactNode => {
           {match[2]}
         </a>,
       );
-    } else if (match[4] || match[5]) {
+    } else if (match[4]) {
+      const href = trimTrailingUrlPunctuation(match[4]);
+
       nodes.push(
-        <strong key={`strong-${startIndex}`}>{match[4] || match[5]}</strong>,
+        <a
+          key={`${href}-${startIndex}`}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium break-all text-teal-800 underline underline-offset-4 transition hover:text-teal-900"
+        >
+          {href}
+        </a>,
       );
-    } else if (match[6]) {
+    } else if (match[5] || match[6]) {
+      nodes.push(
+        <strong key={`strong-${startIndex}`}>{match[5] || match[6]}</strong>,
+      );
+    } else if (match[7]) {
       nodes.push(
         <code
           key={`code-${startIndex}`}
           className="rounded bg-slate-100 px-1.5 py-0.5 text-[0.95em] text-slate-900"
         >
-          {match[6]}
+          {match[7]}
         </code>,
       );
-    } else if (match[7] || match[8]) {
-      nodes.push(<em key={`em-${startIndex}`}>{match[7] || match[8]}</em>);
+    } else if (match[8] || match[9]) {
+      nodes.push(<em key={`em-${startIndex}`}>{match[8] || match[9]}</em>);
     }
 
     lastIndex = startIndex + match[0].length;
@@ -352,6 +450,10 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     markdownBlocks,
     blog.title,
   );
+  const cta = extractBlogCta(blog, articleBlocks);
+  const visibleArticleBlocks = articleBlocks.filter(
+    (block) => !shouldHideCtaParagraph(block, cta),
+  );
   const showTableOfContents =
     outline.length >= 3 || blog.readingTimeMinutes >= 5;
   const structuredData = [toBlogJsonLd(blog), toBreadcrumbJsonLd(blog)];
@@ -477,7 +579,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
           style={{ animationDelay: "90ms" }}
         >
           <div className="space-y-5 text-sm text-slate-700 sm:text-base">
-            {articleBlocks.map((block, index) => {
+            {visibleArticleBlocks.map((block, index) => {
               if (block.type === "rule") {
                 return <hr key={`rule-${index}`} className="border-slate-200" />;
               }
@@ -586,12 +688,33 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               }
 
               return (
-                <p key={`${block.text}-${index}`} className="leading-7">
+                <p key={`${block.text}-${index}`} className="whitespace-pre-line break-words leading-7">
                   {renderInlineMarkdown(block.text)}
                 </p>
               );
             })}
           </div>
+
+          {cta ? (
+            <section className="mt-8 overflow-hidden rounded-2xl border border-teal-200 bg-[linear-gradient(135deg,rgba(20,184,166,0.12),rgba(15,23,42,0.04))]">
+              <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <div className="min-w-0">
+                  <h2 className="font-serif text-xl text-slate-900">{cta.label}</h2>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {cta.sourceHost ? `Official source: ${cta.sourceHost}` : "Official link"}
+                  </p>
+                </div>
+                <a
+                  href={cta.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(15,118,110,0.55)] transition hover:bg-teal-800"
+                >
+                  Open
+                </a>
+              </div>
+            </section>
+          ) : null}
 
           <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm text-slate-600 sm:px-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">

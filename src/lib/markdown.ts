@@ -100,7 +100,7 @@ export const markdownToBlocks = (markdown: string): MarkdownBlock[] => {
 
     blocks.push({
       type: "paragraph",
-      text: paragraphBuffer.join(" ").trim(),
+      text: paragraphBuffer.join("\n").trim(),
     });
     paragraphBuffer.length = 0;
   };

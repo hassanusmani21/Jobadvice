@@ -27,6 +27,8 @@ export type BlogPost = {
   excerpt: string;
   content: string;
   readingTimeMinutes: number;
+  ctaLabel?: string;
+  ctaLink?: string;
 };
 
 export type TrendingTopic = {
@@ -38,6 +40,24 @@ const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "")
 
 const normalizeTextValue = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
+
+const normalizeExternalUrl = (value: unknown) => {
+  const rawValue = normalizeTextValue(value);
+  if (!rawValue) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(rawValue);
+    if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+      return parsedUrl.toString();
+    }
+  } catch {
+    return "";
+  }
+
+  return "";
+};
 
 const hasClosingQuote = (value: string, quote: '"' | "'") => {
   const trimmedValue = value.trimEnd();
@@ -296,6 +316,12 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
   const reviewerRole = normalizeTextValue(data.reviewerRole);
   const reviewedAt = toDateString(data.reviewedAt);
   const coverImage = normalizeTextValue(data.coverImage || data.image || data.thumbnail);
+  const ctaLabel = normalizeTextValue(
+    data.ctaLabel || data.registrationLabel || data.applyLabel || data.joinLabel,
+  );
+  const ctaLink = normalizeExternalUrl(
+    data.ctaLink || data.registrationLink || data.applyLink || data.joinLink,
+  );
   const date = toDateString(data.date || data.publishedAt) || getTodayDateString();
   const updatedAt =
     toDateString(data.updatedAt || data.updated || data.lastUpdated) ||
@@ -326,6 +352,8 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
     excerpt,
     content: postContent,
     readingTimeMinutes,
+    ...(ctaLabel ? { ctaLabel } : {}),
+    ...(ctaLink ? { ctaLink } : {}),
   };
 };
 
