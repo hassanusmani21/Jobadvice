@@ -1,5 +1,5 @@
 ---
-title: "AI Agents Kya Hain? 2026 Kyu Ho Sakta Hai Background AI Agents Ka Year  "
+title: "AI Agents Kya Hain? 2026 Kyu Ho Sakta Hai Background AI Agents Ka Year "
 slug: ai-agents-2026-background-ai-automation
 summary: Artificial Intelligence fast evolve ho rahi hai. ChatGPT aur Gemini
   jaise tools ne AI ko popular bana diya hai, lekin next big shift AI agents ho
