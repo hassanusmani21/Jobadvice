@@ -2,8 +2,8 @@ backend:
   name: github
   repo: hassanusmani21/Jobadvice
   branch: main
-  base_url: https://YOUR-DECAP-OAUTH-HOST
-  auth_endpoint: /auth
+  base_url: https://jobadvice.in
+  auth_endpoint: api/decap/auth
 
 local_backend:
   url: http://localhost:8081/api/v1

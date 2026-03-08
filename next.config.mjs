@@ -25,7 +25,6 @@ const connectSrc = [
   "https://identity.netlify.com",
   "https://api.github.com",
   "https://github.com",
-  "https://YOUR-DECAP-OAUTH-HOST",
   ...(isDevelopment
     ? ["http://localhost:8081", "http://127.0.0.1:8081"]
     : []),
@@ -78,7 +77,7 @@ const securityHeaders = [
   },
   {
     key: "Cross-Origin-Opener-Policy",
-    value: "same-origin",
+    value: "unsafe-none",
   },
   {
     key: "Cross-Origin-Resource-Policy",
@@ -186,6 +185,10 @@ const nextConfig = {
       },
       {
         source: "/api/auth/:path*",
+        headers: noStoreHeaders,
+      },
+      {
+        source: "/api/decap/:path*",
         headers: noStoreHeaders,
       },
       {
