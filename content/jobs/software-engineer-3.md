@@ -2,9 +2,9 @@
 title: Software Engineer
 date: 2026-03-07
 company: NetApp
-location: Bengaluru
+location: Bengaluru, Karnataka, India
 employmentType: Full-time
-salary: Experience Required (optional)
+salary: ""
 experience: Fresher
 eligibilityCriteria: >-
   Strong programming skills in Ruby, Python, Go, or C/C++

@@ -2,12 +2,12 @@
 title: Software Engineer
 date: 2026-03-05
 company: Q2
-location: Work Mode (optional)
+location: Bengaluru, Karnataka, India
 workMode: Hybrid
 employmentType: Full-time
-salary: Experience Required (optional)
+salary: ""
 experience: 1-3 years
-eligibilityCriteria: Education (optional)
+eligibilityCriteria: ""
 education:
   - Bachelor’s degree in Computer Science
   - Information Systems
@@ -42,7 +42,7 @@ responsibilities:
   - and privacy standards
   - Collaborate with team members to maintain engineering best practices
   - Explore AI-assisted development tools and integration patterns
-workingDays: Job Timing (optional)
+workingDays: ""
 jobTiming: ""
 applyLink: https://q2ebanking.wd5.myworkdayjobs.com/Q2/job/Bangalore-India/Software-Engineer_REQ-12155-1?source=LinkedIn
 applicationStartDate: 2026-03-05
