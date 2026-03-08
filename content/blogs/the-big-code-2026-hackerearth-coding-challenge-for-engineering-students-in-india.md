@@ -1,7 +1,7 @@
 ---
 title: "The Big Code 2026: HackerEarth Coding Challenge for Engineering Students
   in India"
-slug: the-big-code-hackerearth-coding-challenge-india
+slug: "the-big-code-hackerearth-coding-challenge-india "
 summary: The Big Code is a national coding challenge hosted on HackerEarth for
   engineering students in India. Learn how the competition works, who can
   participate, the benefits, and how to prepare for coding contests.
@@ -17,6 +17,7 @@ tags:
 isTrending: false
 author: Hassan usmani
 coverImage: https://www.brainlabsdigital.com/wp-content/uploads/2024/02/Google-Hackathon-NV-1.png
+ctaLink: https://rsvp.withgoogle.com/events/the-big-code-2026?utm_source=event-website&utm_medium=website&utm_campaign=in-campus-thebigcode-hackerearth-2026&src=Online/TOPs/campus-partnership>)
 date: 2026-03-08
 ---
 \# The Big Code 2026: HackerEarth Coding Challenge for Engineering Students in India
@@ -269,7 +270,4 @@ Yes. Coding competitions help students improve problem-solving skills and prepar
 
 \### How can beginners start competitive programming?
 
-Beginners should learn programming basics, study data structures and algorithms, and practice coding problems regularly. 
-
-
-https://rsvp.withgoogle.com/events/the-big-code-2026?utm_source=event-website&utm_medium=website&utm_campaign=in-campus-thebigcode-hackerearth-2026&src=Online/TOPs/campus-partnership>)
+Beginners should learn programming basics, study data structures and algorithms, and practice coding problems regularly.
