@@ -328,6 +328,58 @@
       }
     </script>
     <script>
+      (function showLocalAdminNotice() {
+        if (!isLocalHost) {
+          return;
+        }
+
+        var banner = document.createElement("div");
+        banner.style.position = "fixed";
+        banner.style.left = "12px";
+        banner.style.right = "12px";
+        banner.style.bottom = "12px";
+        banner.style.zIndex = "9998";
+        banner.style.border = "1px solid rgba(15, 118, 110, 0.24)";
+        banner.style.borderRadius = "14px";
+        banner.style.background = "rgba(240, 253, 250, 0.96)";
+        banner.style.boxShadow = "0 16px 32px rgba(15, 23, 42, 0.14)";
+        banner.style.padding = "12px 14px";
+        banner.style.fontFamily = "Manrope, sans-serif";
+        banner.style.color = "#134e4a";
+
+        var title = document.createElement("p");
+        title.textContent = "Local Admin Mode";
+        title.style.margin = "0";
+        title.style.fontSize = "13px";
+        title.style.fontWeight = "800";
+        title.style.letterSpacing = "0.02em";
+
+        var body = document.createElement("p");
+        body.textContent =
+          "localhost admin reads your local repo only. Posts published from phone or jobadvice.in/admin appear here only after your local repo is updated. Use the live admin for shared cross-device content.";
+        body.style.margin = "6px 0 0";
+        body.style.fontSize = "12px";
+        body.style.lineHeight = "1.5";
+
+        var link = document.createElement("a");
+        link.href = "https://jobadvice.in/admin/";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Open live admin";
+        link.style.display = "inline-flex";
+        link.style.marginTop = "10px";
+        link.style.fontSize = "12px";
+        link.style.fontWeight = "700";
+        link.style.color = "#0f766e";
+        link.style.textDecoration = "underline";
+
+        banner.appendChild(title);
+        banner.appendChild(body);
+        banner.appendChild(link);
+        document.body.appendChild(banner);
+      })();
+    </script>
+    <script>
       (function applyCmsEnhancements() {
         var attempts = 0;
 
