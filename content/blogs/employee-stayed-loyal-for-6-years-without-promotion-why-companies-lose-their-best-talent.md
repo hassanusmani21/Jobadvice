@@ -1,7 +1,7 @@
 ---
 title: Employee Stayed Loyal for 6 Years Without Promotion  Why Companies Lose
   Their Best Talent
-slug: employee-loyal-6-years-without-promotion-resigns
+slug: "employee-loyal-6-years-without-promotion-resigns "
 summary: An employee worked loyally for six years without receiving a promotion.
   After he resigned, his boss realized the true loss. This story highlights the
   importance of employee recognition, career growth, and workplace appreciation.
