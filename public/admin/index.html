@@ -363,6 +363,99 @@
       })();
     </script>
     <script>
+      (function proxyAdminPreviewImages() {
+        var observer = null;
+
+        function toProxyUrl(value) {
+          var normalizedValue = String(value || "").trim();
+          if (!normalizedValue) {
+            return "";
+          }
+
+          if (normalizedValue.indexOf("/api/image?url=") === 0) {
+            return normalizedValue;
+          }
+
+          try {
+            var parsedUrl = new URL(normalizedValue, window.location.origin);
+            if (!/^https?:$/i.test(parsedUrl.protocol)) {
+              return normalizedValue;
+            }
+
+            if (parsedUrl.origin === window.location.origin) {
+              return parsedUrl.toString();
+            }
+
+            return "/api/image?url=" + encodeURIComponent(parsedUrl.toString());
+          } catch {
+            return normalizedValue;
+          }
+        }
+
+        function rewritePreviewImages(root) {
+          if (!root) {
+            return;
+          }
+
+          var images = root.querySelectorAll("img");
+          for (var index = 0; index < images.length; index += 1) {
+            var image = images[index];
+            var originalSrc = image.getAttribute("src") || "";
+
+            if (!originalSrc || originalSrc.indexOf("/api/image?url=") === 0) {
+              continue;
+            }
+
+            var proxiedSrc = toProxyUrl(originalSrc);
+            if (!proxiedSrc || proxiedSrc === originalSrc) {
+              continue;
+            }
+
+            image.setAttribute("data-jobadvice-original-src", originalSrc);
+            image.setAttribute("src", proxiedSrc);
+            image.removeAttribute("srcset");
+          }
+        }
+
+        function startObserving(root) {
+          if (!root || observer) {
+            return;
+          }
+
+          observer = new MutationObserver(function () {
+            rewritePreviewImages(root);
+          });
+
+          observer.observe(root, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["src"],
+          });
+
+          rewritePreviewImages(root);
+        }
+
+        function waitForRoot(attempts) {
+          var root = document.getElementById("nc-root");
+          if (root) {
+            startObserving(root);
+            return;
+          }
+
+          if (attempts > 180) {
+            return;
+          }
+
+          window.setTimeout(function () {
+            waitForRoot(attempts + 1);
+          }, 250);
+        }
+
+        waitForRoot(0);
+      })();
+    </script>
+    <script>
       (function injectAdminAccountPanel() {
         var panelId = "next-auth-admin-menu";
         var triggerId = "next-auth-admin-trigger";
