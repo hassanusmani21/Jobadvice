@@ -24,7 +24,6 @@ skills:
   - API Testing
   - Agile
 responsibilities:
-  - optional)
   - Design and maintain automation frameworks
   - Develop automated test scripts
   - Integrate testing with CI/CD pipelines

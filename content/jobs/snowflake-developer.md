@@ -25,7 +25,6 @@ skills:
   - Performance Tuning
   - Data Modeling
 responsibilities:
-  - optional)
   - Develop and maintain Snowflake-based data solutions
   - Optimize data warehouse performance
   - Design and implement ETL processes

@@ -36,7 +36,6 @@ skills:
   - Security Frameworks (OWASP
   - MITRE ATT&CK)
 responsibilities:
-  - optional)
   - Build and maintain DevOps infrastructure
   - Set up and manage CI/CD pipelines
   - Improve monitoring and observability of SaaS applications

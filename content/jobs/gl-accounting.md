@@ -20,7 +20,6 @@ skills:
   - MS Excel
   - Accounting Principles
 responsibilities:
-  - optional)
   - Manage GL accounting activities
   - Perform reconciliations and reporting
   - Support month-end and year-end closing

@@ -24,7 +24,6 @@ skills:
   - Agile Development
   - Communication Skills
 responsibilities:
-  - optional)
   - Review and understand use cases
   - specifications
   - and Statements of Work

@@ -14,14 +14,11 @@ eligibilityCriteria: |-
   Strong academic background preferred
 education:
   - BTech Computer Science
-  - ion
   - BTech Information Technology
   - BE Computer Engineering
   - ME Computer Science
   - MTech Information Technology
-  - "(Extractor-safe format: one qualification per line.)"
 skills:
-  - red
   - Java
   - Spring Boot
   - SQL
@@ -38,7 +35,6 @@ skills:
   - Problem Solving
   - Teamwork
   - Adaptability
-  - (Each skill separated properly to avoid AI extractor skipping items.)
 responsibilities:
   - Design and develop software applications
   - Write clean and maintainable code

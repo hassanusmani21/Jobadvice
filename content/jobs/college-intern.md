@@ -14,16 +14,13 @@ eligibilityCriteria: |-
   Good written and verbal communication skills
 education:
   - BTech Computer Science
-  - ion
   - BTech Information Technology
   - BE Electronics
   - BE Electrical
   - MTech Computer Science
   - MCA
-  - (One qualification per line for better AI extraction.)
 skills:
   - Python
-  - red
   - Java
   - C++
   - SQL
@@ -35,7 +32,6 @@ skills:
   - Problem Solving
   - Communication
   - Teamwork
-  - (Extractor-safe formatting — one skill per line.)
 responsibilities:
   - Assist in technical or business projects
   - Conduct research on new tools and technologies
