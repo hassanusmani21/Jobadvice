@@ -44,7 +44,7 @@ responsibilities:
   - Participate in application design discussions and improve system architecture
   - Stay updated with emerging technologies and contribute to continuous
     improvements
-workingDays: Job Timing (optional)
+workingDays: ""
 jobTiming: ""
 applyLink: https://www.linkedin.com/jobs/view/4380456054/?alternateChannel=search&eBP=CwEAAAGcwaOfgqu5HiYCMBux_DJe3Cao0Sz9YWK9NHnRlWMiiDVBnOHE6UfgeMbu_vWA4lT4ir4CxZJaTT21Y2Rr1C603oxi1n-zODj8WW_zXKZu7pZTrAjP_X5GKtNtDUGUl-nQsC3vVVMXcuEUfnctoGIxShYu_cIT9m3tIsOF5BCws2jshhq42o2AO3IJXjwDsbR9NF2VVNhRrBiX8TnuO_Lxon0-oVuUDRKXrsZMqgppAS6yrbUU2UkhitKyh2o1GQtHbBZRSNZAbbTvpOUAQ6KyGht1utwULChTWGP4-TcMcwt62UVncDdTAzPFQkD8zQ8IDZ-WSJzFGxrpEFEkuIA0zTEWzmxDfapoK47vayFgQK0rEjGNo8hkSMlHd5X3VE_X7HbM11Hu3bWAjkcJFHCULgfG35Iddy0mx50fXvzV-zFfYww_G8WhvQjbo_17rXDTIP0JA0xQQu5gBy4BSj9bR9Xn6IoUuMNb3txuYtY-MzR7WXgIsrU4PDN5NKaXpjaILXq9oXoRknfDXtEEfiXKmMWn3yFZkia9A_-c_Q_WxraNQKXKn9BruPBqvw
 applicationStartDate: 2026-03-07

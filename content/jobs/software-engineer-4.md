@@ -29,7 +29,6 @@ skills:
   - ITSM
   - CMDB
 responsibilities:
-  - optional)
   - Design solutions to resolve customer business issues and remove technical
     objections
   - Manage and facilitate complex Proof of Concepts (POCs)
@@ -42,7 +41,7 @@ responsibilities:
   - and UNIX systems
   - Support configuration management and compliance monitoring
   - Deploy custom software and manage application release lifecycle
-workingDays: Job Timing (optional)
+workingDays: ""
 jobTiming: ""
 applyLink: https://sjobs.brassring.com/TGnewUI/Search/home/HomeWithPreLoad?partnerid=25667&siteid=5417&PageType=JobDetails&jobid=5182269#jobDetails=5182269_5417
 applicationStartDate: 2026-03-09

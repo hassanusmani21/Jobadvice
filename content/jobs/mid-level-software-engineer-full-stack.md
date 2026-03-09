@@ -41,7 +41,6 @@ skills:
   - CSS3
   - Agile Methodology
 responsibilities:
-  - optional)
   - Design
   - develop and test full stack risk engineering solutions
   - Build scalable distributed systems using large-scale databases

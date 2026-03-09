@@ -14,14 +14,11 @@ eligibilityCriteria: |
   Strong written and verbal communication skills
 education:
   - BTech Computer Science
-  - ion
   - BTech Information Technology
   - BE Computer Engineering
   - MCA
   - MSc Computer Science
-  - (Formatted one per line for proper AI extraction.)
 skills:
-  - red
   - Windows
   - Linux
   - SQL
@@ -38,7 +35,6 @@ skills:
   - Problem Solving
   - Team Collaboration
   - Analytical Thinking
-  - (Each skill separated clearly to prevent extractor skipping.)
 responsibilities:
   - Monitor application performance and availability
   - Analyze and resolve incidents and service requests
