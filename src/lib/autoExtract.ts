@@ -59,7 +59,7 @@ const genericSkillItemPattern =
 const genericEducationItemPattern =
   /^(education|educational requirements?|qualification|qualifications|academic qualifications?|academic)$/i;
 const fieldLabelPattern = /^[A-Za-z][A-Za-z0-9 /&()'"-]{1,50}\s*:/;
-const bulletLinePattern = /^[-*•]|\d+[.)]/;
+const bulletLinePattern = /^\s*(?:[-*•]|\d+[.)])/;
 const emptyBlogPlaceholderPattern = /^(title|topic|summary|slug|author|category)$/i;
 
 const toJsonFromModelResponse = (value: string) => {
@@ -226,8 +226,59 @@ const extractFieldValue = (text: string, labels: string[]) => {
   return extractValueAfterLabel(text, labels);
 };
 
+const normalizeLooseLabel = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/^#{1,6}\s+/, "")
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const placeholderOnlySectionLabels = new Set([
+  "optional",
+  "eligibility criteria optional",
+  "eligibility optional",
+  "candidate profile optional",
+  "who can apply optional",
+  "roles and responsibilities optional",
+  "role and responsibilities optional",
+  "roles responsibilities optional",
+  "role responsibilities optional",
+  "responsibilities optional",
+  "key responsibilities optional",
+  "working days optional",
+  "work days optional",
+  "job timing optional",
+  "timing optional",
+]);
+
 const normalizeListItem = (value: string) =>
-  value.replace(/^[-*•\d.)\s]+/, "").replace(/\s+/g, " ").trim();
+  value
+    .replace(/^\s*(?:[-*•]+|\d+[.)])\s*/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const isPlaceholderOnlySectionLine = (value: string) => {
+  const normalizedValue = normalizeLooseLabel(normalizeListItem(value));
+  return normalizedValue.length > 0 && placeholderOnlySectionLabels.has(normalizedValue);
+};
+
+const normalizeMultilinePlainText = (value: unknown) => {
+  const rawLines = Array.isArray(value)
+    ? value.map((item) => normalizeString(item))
+    : typeof value === "string"
+      ? value.replace(/\r/g, "").split("\n")
+      : [];
+
+  return dedupeItems(
+    rawLines
+      .map((line) => normalizeListItem(line))
+      .filter((line) => line.length > 1 && !isPlaceholderOnlySectionLine(line)),
+  )
+    .join("\n")
+    .trim();
+};
 
 const splitInlineList = (value: string) => {
   const normalizedValue = value.replace(/\r/g, "").trim();
@@ -290,7 +341,7 @@ const splitResponsibilitiesList = (value: string) => {
     .split(/\n|•|\|/)
     .flatMap((item) => item.split(responsibilitySentenceBreakPattern))
     .map((item) => normalizeListItem(item))
-    .filter((item) => item.length > 1);
+    .filter((item) => item.length > 1 && !isPlaceholderOnlySectionLine(item));
 };
 
 const normalizeResponsibilitiesArray = (value: unknown) => {
@@ -520,15 +571,7 @@ const normalizeWorkMode = (text: string) => {
 
 const extractSectionLines = (text: string, sectionTitles: string[]) => {
   const lines = text.replace(/\r/g, "").split("\n");
-  const normalizeSectionTitle = (value: string) =>
-    value
-      .toLowerCase()
-      .replace(/^#{1,6}\s+/, "")
-      .replace(/&/g, " and ")
-      .replace(/[^a-z0-9 ]+/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  const normalizedTitles = sectionTitles.map((title) => normalizeSectionTitle(title));
+  const normalizedTitles = sectionTitles.map((title) => normalizeLooseLabel(title));
   const structuredFieldHeadings = [
     "job title",
     "company name",
@@ -563,7 +606,7 @@ const extractSectionLines = (text: string, sectionTitles: string[]) => {
     "application end date",
   ];
   const isStructuredFieldHeading = (value: string) => {
-    const normalizedValue = normalizeSectionTitle(value);
+    const normalizedValue = normalizeLooseLabel(value);
     return structuredFieldHeadings.some(
       (heading) =>
         normalizedValue === heading || normalizedValue.startsWith(`${heading} `),
@@ -572,7 +615,7 @@ const extractSectionLines = (text: string, sectionTitles: string[]) => {
   const collectedLines: string[] = [];
 
   const matchSectionTitle = (value: string) => {
-    const normalizedValue = normalizeSectionTitle(value);
+    const normalizedValue = normalizeLooseLabel(value);
     return normalizedTitles.find(
       (title) =>
         normalizedValue === title ||
@@ -593,14 +636,13 @@ const extractSectionLines = (text: string, sectionTitles: string[]) => {
     }
 
     const lineWithoutHeadingPrefix = line.replace(/^#{1,6}\s+/, "").trim();
-    const inlineRemainder = lineWithoutHeadingPrefix
-      .slice(matchedTitle.length)
-      .trim();
-    const inlineSegment =
-      inlineRemainder && !/^\(.*\)$/.test(inlineRemainder)
-        ? normalizeListItem(inlineRemainder.replace(/^[:\-–]\s*/, ""))
-        : "";
-    if (inlineSegment) {
+    const inlineMatch = lineWithoutHeadingPrefix.match(
+      /^[^:–-]+(?:\s*\([^)]*\))?\s*[:–-]\s*(.+)$/,
+    );
+    const inlineSegment = inlineMatch?.[1]
+      ? normalizeListItem(inlineMatch[1])
+      : "";
+    if (inlineSegment && !isPlaceholderOnlySectionLine(inlineSegment)) {
       collectedLines.push(inlineSegment);
     }
 
@@ -627,6 +669,10 @@ const extractSectionLines = (text: string, sectionTitles: string[]) => {
         )
       ) {
         break;
+      }
+
+      if (isPlaceholderOnlySectionLine(candidateLine)) {
+        continue;
       }
 
       collectedLines.push(candidateLine);
@@ -726,18 +772,19 @@ const extractJobFallback = (text: string): JobExtractedData => {
     .filter(Boolean)
     .join("\n")
     .trim();
-  const eligibilityCriteria =
+  const eligibilityCriteria = normalizeMultilinePlainText(
     (eligibilitySection.length > eligibilityInline.length
       ? eligibilitySection
       : eligibilityInline ||
         extractFieldValue(text, [
-      "eligibility criteria",
-      "eligibility",
-      "candidate profile",
-      "who can apply",
-      "requirements",
-    ]))
-      .slice(0, 600);
+          "eligibility criteria",
+          "eligibility",
+          "candidate profile",
+          "who can apply",
+          "requirements",
+        ]))
+      .slice(0, 1200),
+  );
   const applyLink =
     extractFieldValue(text, ["apply link", "application link", "apply url"]) ||
     extractUrl(text);
@@ -1071,7 +1118,7 @@ const normalizeJobData = (value: Record<string, unknown>): JobExtractedData => {
       normalizeString(value.experienceLevel),
   );
   const experience = normalizeExperienceValue(rawExperience);
-  const eligibilityCriteria = normalizeString(
+  const eligibilityCriteria = normalizeMultilinePlainText(
     value.eligibilityCriteria ||
       value.eligibility ||
       value.candidateProfile ||
@@ -1373,12 +1420,14 @@ Rules:
 - workMode must be one of: "On-site", "Remote", "Hybrid".
 - employmentType must be one of: "Full-time", "Part-time", "Internship", "Contract".
 - experience should preserve source wording (examples: "Fresher", "1-3 years", "2-4 years", "6+ months").
-- "eligibilityCriteria" should summarize who can apply / candidate profile in 1-2 lines.
+- "eligibilityCriteria" should preserve all eligibility points from the source.
+- When multiple eligibility points exist, return them as newline-separated plain text, one point per line.
 - Keep fields concise and human-readable.
 - Use YYYY-MM-DD for dates when possible.
 - Do not invent applicationStartDate or applicationEndDate. Leave them empty when the source does not provide them.
 - "skills" and "education" must include specific items. Do not return only section headers like "Technical Skills" or "Education".
 - "responsibilities" should include concrete responsibility points when available.
+- Never include field labels or placeholder text like "(optional)" in any value.
 - Include all available items for "skills", "education", and "responsibilities" (not just first 1-2 items).
 - When eligibility has multiple points, include all points in "eligibilityCriteria".
 Template mapping priority:

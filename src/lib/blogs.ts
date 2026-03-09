@@ -27,6 +27,9 @@ export type BlogPost = {
   excerpt: string;
   content: string;
   readingTimeMinutes: number;
+  ctaLabel?: string;
+  ctaLink?: string;
+  sortTimestamp: number;
 };
 
 export type TrendingTopic = {
@@ -38,6 +41,24 @@ const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "")
 
 const normalizeTextValue = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
+
+const normalizeExternalUrl = (value: unknown) => {
+  const rawValue = normalizeTextValue(value);
+  if (!rawValue) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(rawValue);
+    if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+      return parsedUrl.toString();
+    }
+  } catch {
+    return "";
+  }
+
+  return "";
+};
 
 const hasClosingQuote = (value: string, quote: '"' | "'") => {
   const trimmedValue = value.trimEnd();
@@ -256,6 +277,20 @@ const parseFrontMatter = (rawFile: string) => {
 };
 
 const getTodayDateString = () => new Date().toISOString().split("T")[0];
+const getTodayTimestamp = () => Date.parse(`${getTodayDateString()}T23:59:59.999Z`);
+const toSortableTimestamp = (value: string) => Date.parse(`${value}T00:00:00Z`);
+
+const getBlogSortValues = (blog: BlogPost) => {
+  const todayTimestamp = getTodayTimestamp();
+  const publishedTimestamp = toSortableTimestamp(blog.date);
+  const publishedInFuture = publishedTimestamp > todayTimestamp;
+
+  return {
+    futureRank: publishedInFuture ? 1 : 0,
+    primaryTimestamp: publishedInFuture ? 0 : publishedTimestamp,
+    secondaryTimestamp: publishedInFuture ? 0 : blog.sortTimestamp,
+  };
+};
 
 const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
   const filePath = path.join(blogsDirectory, fileName);
@@ -280,10 +315,20 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
   const reviewerRole = normalizeTextValue(data.reviewerRole);
   const reviewedAt = toDateString(data.reviewedAt);
   const coverImage = normalizeTextValue(data.coverImage || data.image || data.thumbnail);
+  const ctaLabel = normalizeTextValue(
+    data.ctaLabel || data.registrationLabel || data.applyLabel || data.joinLabel,
+  );
+  const ctaLink = normalizeExternalUrl(
+    data.ctaLink || data.registrationLink || data.applyLink || data.joinLink,
+  );
   const date = toDateString(data.date || data.publishedAt) || getTodayDateString();
+  const explicitUpdatedAt = toDateString(data.updatedAt || data.updated || data.lastUpdated);
   const updatedAt =
-    toDateString(data.updatedAt || data.updated || data.lastUpdated) ||
+    explicitUpdatedAt ||
     toDateString(fileStats.mtime.toISOString()) || getTodayDateString();
+  const sortTimestamp = explicitUpdatedAt
+    ? toSortableTimestamp(explicitUpdatedAt)
+    : fileStats.mtimeMs;
   const isTrending = toBoolean(data.isTrending || data.trending);
   const postContent = normalizeMarkdownSource(content || summary);
   if (!postContent) {
@@ -310,6 +355,9 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
     excerpt,
     content: postContent,
     readingTimeMinutes,
+    ...(ctaLabel ? { ctaLabel } : {}),
+    ...(ctaLink ? { ctaLink } : {}),
+    sortTimestamp,
   };
 };
 
@@ -330,10 +378,17 @@ const loadBlogs = async () => {
 
   return blogs
     .filter((blog): blog is BlogPost => Boolean(blog))
-    .sort(
-      (firstBlog, secondBlog) =>
-        new Date(secondBlog.date).getTime() - new Date(firstBlog.date).getTime(),
-    );
+    .sort((firstBlog, secondBlog) => {
+      const firstValues = getBlogSortValues(firstBlog);
+      const secondValues = getBlogSortValues(secondBlog);
+
+      return (
+        firstValues.futureRank - secondValues.futureRank ||
+        secondValues.primaryTimestamp - firstValues.primaryTimestamp ||
+        secondValues.secondaryTimestamp - firstValues.secondaryTimestamp ||
+        firstBlog.title.localeCompare(secondBlog.title)
+      );
+    });
 };
 
 const readBlogs = () => loadBlogs();

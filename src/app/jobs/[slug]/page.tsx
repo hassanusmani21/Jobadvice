@@ -8,6 +8,7 @@ import {
   formatPostedDate,
   getAllJobs,
   getRelatedJobs,
+  resolveStructuredValidThrough,
 } from "@/lib/jobs";
 import { siteUrl } from "@/lib/site";
 
@@ -31,6 +32,194 @@ const resolveSourceHost = (applyLink: string | undefined) => {
   } catch {
     return null;
   }
+};
+
+const cityRegionCountryMap: Record<
+  string,
+  { locality: string; region: string; country: string }
+> = {
+  ahmedabad: { locality: "Ahmedabad", region: "Gujarat", country: "IN" },
+  bangalore: { locality: "Bengaluru", region: "Karnataka", country: "IN" },
+  bengaluru: { locality: "Bengaluru", region: "Karnataka", country: "IN" },
+  chandigarh: { locality: "Chandigarh", region: "Chandigarh", country: "IN" },
+  chennai: { locality: "Chennai", region: "Tamil Nadu", country: "IN" },
+  coimbatore: { locality: "Coimbatore", region: "Tamil Nadu", country: "IN" },
+  gurgaon: { locality: "Gurgaon", region: "Haryana", country: "IN" },
+  gurugram: { locality: "Gurugram", region: "Haryana", country: "IN" },
+  hyderabad: { locality: "Hyderabad", region: "Telangana", country: "IN" },
+  lucknow: { locality: "Lucknow", region: "Uttar Pradesh", country: "IN" },
+  mangalore: { locality: "Mangalore", region: "Karnataka", country: "IN" },
+  mumbai: { locality: "Mumbai", region: "Maharashtra", country: "IN" },
+  mysore: { locality: "Mysuru", region: "Karnataka", country: "IN" },
+  mysuru: { locality: "Mysuru", region: "Karnataka", country: "IN" },
+  "navi mumbai": { locality: "Navi Mumbai", region: "Maharashtra", country: "IN" },
+  noida: { locality: "Noida", region: "Uttar Pradesh", country: "IN" },
+  pune: { locality: "Pune", region: "Maharashtra", country: "IN" },
+};
+
+const placeholderValuePattern =
+  /\b(optional|experience required|work mode|job timing|education)\b/i;
+const remoteLocationPattern =
+  /\b(remote|work from home|wfh|telecommute)\b/i;
+const multipleLocationPattern =
+  /\b(various|multiple|campuses|centers|possible|locations?)\b/i;
+const genericSalaryPattern =
+  /\b(not disclosed|competitive|best in (the )?industry|as per company|company standards|company policy|company norms|optional)\b/i;
+
+const normalizeLocationPart = (value: string) =>
+  value
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[–—]/g, ",")
+    .replace(/\//g, ",")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const resolveJobAddress = (location: string) => {
+  const normalizedLocation = normalizeLocationPart(location);
+  if (!normalizedLocation || placeholderValuePattern.test(normalizedLocation)) {
+    return null;
+  }
+
+  if (remoteLocationPattern.test(normalizedLocation)) {
+    return {
+      remote: true,
+      country: /india/i.test(normalizedLocation) ? "IN" : "",
+    };
+  }
+
+  const rawParts = normalizedLocation
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const normalizedParts = rawParts.map((part) => part.toLowerCase());
+  const hasIndia = normalizedParts.some((part) => part === "india");
+  const hasMultipleLocations =
+    multipleLocationPattern.test(normalizedLocation) || rawParts.length > 3;
+
+  const mappedCity = normalizedParts
+    .map((part) => cityRegionCountryMap[part])
+    .find(Boolean);
+
+  const locality =
+    !hasMultipleLocations && mappedCity
+      ? mappedCity.locality
+      : !hasMultipleLocations && rawParts.length > 0
+        ? rawParts[0]
+        : "";
+
+  const region =
+    mappedCity?.region ||
+    rawParts.find((part) =>
+      [
+        "Karnataka",
+        "Maharashtra",
+        "Tamil Nadu",
+        "Telangana",
+        "Uttar Pradesh",
+        "Haryana",
+        "Gujarat",
+        "Chandigarh",
+      ].includes(part),
+    ) ||
+    "";
+
+  const country = mappedCity?.country || (hasIndia ? "IN" : "");
+
+  const address = {
+    "@type": "PostalAddress",
+    ...(locality ? { addressLocality: locality } : {}),
+    ...(region ? { addressRegion: region } : {}),
+    ...(country ? { addressCountry: country } : {}),
+  };
+
+  if (Object.keys(address).length === 1) {
+    return null;
+  }
+
+  return {
+    remote: false,
+    address,
+  };
+};
+
+const parseNumericSalaryPart = (value: string) => {
+  const normalizedValue = value.trim().toLowerCase().replace(/,/g, "");
+  const match = normalizedValue.match(/^(\d+(?:\.\d+)?)([k])?$/i);
+  if (!match) {
+    return null;
+  }
+
+  const numericValue = Number.parseFloat(match[1]);
+  if (!Number.isFinite(numericValue)) {
+    return null;
+  }
+
+  return match[2] ? numericValue * 1_000 : numericValue;
+};
+
+const resolveBaseSalary = (salary: string | undefined) => {
+  const normalizedSalary = (salary || "").trim();
+  if (!normalizedSalary || genericSalaryPattern.test(normalizedSalary)) {
+    return null;
+  }
+
+  const cleanedSalary = normalizedSalary
+    .toLowerCase()
+    .replace(/,/g, "")
+    .replace(/[–—]/g, "-")
+    .replace(/\(estimated[^)]*\)/g, "")
+    .replace(/\(industry[^)]*\)/g, "")
+    .replace(/\(based[^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const unitText = /per month|\/month|\bmonth\b/.test(cleanedSalary)
+    ? "MONTH"
+    : /lpa|per year|\/year|\byear\b|annual/.test(cleanedSalary)
+      ? "YEAR"
+      : null;
+
+  if (!unitText) {
+    return null;
+  }
+
+  const rawMatches = cleanedSalary.match(/\d+(?:\.\d+)?\s*k?/gi) || [];
+  const parsedValues = rawMatches
+    .map((match) => parseNumericSalaryPart(match))
+    .filter((value): value is number => Number.isFinite(value));
+
+  if (parsedValues.length === 0) {
+    return null;
+  }
+
+  const normalizedValues =
+    unitText === "YEAR" && /\blpa\b/.test(cleanedSalary)
+      ? parsedValues.map((value) => value * 100_000)
+      : parsedValues;
+
+  if (normalizedValues.length === 1) {
+    return {
+      "@type": "MonetaryAmount",
+      currency: "INR",
+      value: {
+        "@type": "QuantitativeValue",
+        value: normalizedValues[0],
+        unitText,
+      },
+    };
+  }
+
+  return {
+    "@type": "MonetaryAmount",
+    currency: "INR",
+    value: {
+      "@type": "QuantitativeValue",
+      minValue: Math.min(...normalizedValues),
+      maxValue: Math.max(...normalizedValues),
+      unitText,
+    },
+  };
 };
 
 export async function generateStaticParams() {
@@ -116,6 +305,12 @@ export default async function JobDetailPage({ params }: JobPageProps) {
     responsibilities.join(" ") ||
     `${job.title} at ${job.company}${job.location ? ` in ${job.location}` : ""}.`;
   const sourceHost = resolveSourceHost(job.applyLink);
+  const structuredValidThrough = resolveStructuredValidThrough(
+    job.date,
+    job.applicationEndDate,
+  );
+  const resolvedJobAddress = resolveJobAddress(job.location);
+  const baseSalary = resolveBaseSalary(job.salary);
   const jobPostingSchema = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
@@ -123,19 +318,33 @@ export default async function JobDetailPage({ params }: JobPageProps) {
     description: schemaDescription,
     ...(eligibilityCriteria ? { qualifications: eligibilityCriteria } : {}),
     datePosted: job.date,
-    ...(job.applicationEndDate ? { validThrough: job.applicationEndDate } : {}),
+    validThrough: structuredValidThrough,
     ...(employmentType ? { employmentType } : {}),
     hiringOrganization: {
       "@type": "Organization",
       name: job.company,
     },
-    jobLocation: {
-      "@type": "Place",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: job.location,
-      },
-    },
+    ...(baseSalary ? { baseSalary } : {}),
+    ...(resolvedJobAddress?.remote
+      ? {
+          jobLocationType: "TELECOMMUTE",
+          ...(resolvedJobAddress.country
+            ? {
+                applicantLocationRequirements: {
+                  "@type": "Country",
+                  name: resolvedJobAddress.country,
+                },
+              }
+            : {}),
+        }
+      : resolvedJobAddress?.address
+        ? {
+            jobLocation: {
+              "@type": "Place",
+              address: resolvedJobAddress.address,
+            },
+          }
+        : {}),
     ...(job.applyLink ? { directApply: true } : {}),
     url: `${siteUrl}/jobs/${job.slug}/`,
     identifier: {

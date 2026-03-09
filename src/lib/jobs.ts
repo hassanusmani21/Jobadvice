@@ -1264,3 +1264,22 @@ export const formatApplicationWindow = (
     applicationEndDate,
   )}`;
 };
+
+export const resolveStructuredValidThrough = (
+  postedDate: string,
+  applicationEndDate: string | null,
+) => {
+  if (applicationEndDate) {
+    return applicationEndDate;
+  }
+
+  const postedAtTimestamp = toUtcDayTimestamp(postedDate);
+  if (!Number.isFinite(postedAtTimestamp)) {
+    return postedDate;
+  }
+
+  const expiresAtDate = new Date(
+    postedAtTimestamp + noExpiryRetentionDays * millisecondsInDay,
+  );
+  return expiresAtDate.toISOString().split("T")[0];
+};

@@ -1,9 +1,11 @@
 :root {
-  --admin-bg: radial-gradient(circle at 12% 16%, #d8f4ec 0%, #f7fbff 42%, #eef6ff 100%);
+  --admin-bg: radial-gradient(circle at 10% 10%, #dcfce7 0%, #eff6ff 44%, #f8fafc 100%);
   --admin-surface: rgba(255, 255, 255, 0.9);
   --admin-surface-strong: rgba(255, 255, 255, 0.98);
-  --admin-border: rgba(15, 23, 42, 0.12);
-  --admin-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+  --admin-border: rgba(15, 23, 42, 0.14);
+  --admin-border-soft: rgba(148, 163, 184, 0.24);
+  --admin-shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.08);
+  --admin-shadow-md: 0 16px 34px rgba(15, 23, 42, 0.1);
   --admin-accent: #0f766e;
   --admin-accent-strong: #115e59;
   --admin-text: #0f172a;
@@ -93,61 +95,72 @@ body {
 
 #nc-root button,
 #nc-root [role="button"] {
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   font-weight: 700 !important;
-  transition: transform 150ms ease, box-shadow 170ms ease, background-color 170ms ease !important;
+  transition: box-shadow 160ms ease, background-color 160ms ease !important;
 }
 
 #nc-root button:hover,
 #nc-root [role="button"]:hover {
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(15, 118, 110, 0.12), 0 6px 14px rgba(15, 118, 110, 0.16);
 }
 
 #nc-root input,
 #nc-root textarea,
 #nc-root select {
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   border: 1px solid var(--admin-border) !important;
   background: var(--admin-surface-strong) !important;
   color: var(--admin-text) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 #nc-root input:focus,
 #nc-root textarea:focus,
 #nc-root select:focus {
   outline: none !important;
-  border-color: rgba(15, 118, 110, 0.65) !important;
+  border-color: rgba(15, 118, 110, 0.62) !important;
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18) !important;
 }
 
 #nc-root [class*="AppHeader"],
 #nc-root [class*="TopBar"],
 #nc-root [class*="Toolbar"] {
-  border-bottom: 1px solid var(--admin-border) !important;
-  background: rgba(255, 255, 255, 0.86) !important;
+  border-bottom: 1px solid var(--admin-border-soft) !important;
+  background: rgba(255, 255, 255, 0.88) !important;
   backdrop-filter: blur(10px);
 }
 
-#nc-root [class*="Sidebar"],
-#nc-root [class*="Collection"] {
-  background: rgba(255, 255, 255, 0.65) !important;
-  border-right: 1px solid var(--admin-border) !important;
+#nc-root [class*="Sidebar"] {
+  border-right: 1px solid var(--admin-border-soft) !important;
+  background: rgba(255, 255, 255, 0.74) !important;
 }
 
-#nc-root [class*="Card"],
-#nc-root [class*="Pane"],
-#nc-root [class*="Editor"] {
-  border-radius: 16px !important;
-  border: 1px solid var(--admin-border) !important;
-  background: var(--admin-surface) !important;
-  box-shadow: var(--admin-shadow) !important;
+#nc-root [class*="Editor"],
+#nc-root [class*="Main"] {
+  background: transparent !important;
 }
 
-#nc-root [aria-selected="true"],
-#nc-root [class*="active"],
-#nc-root [class*="Selected"] {
-  border-radius: 12px !important;
+#nc-root [role="listitem"],
+#nc-root [role="row"] {
+  margin: 0 !important;
+}
+
+#nc-root a[href*="#/collections/jobs/entries/"],
+#nc-root a[href*="#/collections/blogs/entries/"] {
+  display: block;
+  border: 1px solid var(--admin-border-soft);
+  border-radius: 12px;
+  background: var(--admin-surface-strong);
+  padding: 10px 12px !important;
+  line-height: 1.4;
+  box-shadow: var(--admin-shadow-sm);
+}
+
+#nc-root a[href*="#/collections/jobs/entries/"]:hover,
+#nc-root a[href*="#/collections/blogs/entries/"]:hover {
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 10px 20px rgba(15, 118, 110, 0.12);
 }
 
 #nc-root ::-webkit-scrollbar {
@@ -156,7 +169,7 @@ body {
 }
 
 #nc-root ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.05);
+  background: rgba(15, 23, 42, 0.06);
   border-radius: 999px;
 }
 
@@ -165,9 +178,19 @@ body {
   border-radius: 999px;
 }
 
+#next-auth-admin-menu {
+  box-shadow: var(--admin-shadow-md);
+  border: 1px solid var(--admin-border-soft);
+}
+
 @media (max-width: 900px) {
   .admin-loading {
     padding-top: 2.3rem;
     place-content: start center;
+  }
+
+  #nc-root a[href*="#/collections/jobs/entries/"],
+  #nc-root a[href*="#/collections/blogs/entries/"] {
+    padding: 9px 10px !important;
   }
 }

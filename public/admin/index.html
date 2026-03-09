@@ -49,11 +49,251 @@
         }
       }
 
+      window.CMS_MANUAL_INIT = true;
+      window.jobAdviceCmsConfig = {
+        load_config_file: false,
+        backend: {
+          name: "github",
+          repo: "hassanusmani21/Jobadvice",
+          branch: "main",
+          base_url: window.location.origin,
+          auth_endpoint: "api/decap/auth",
+        },
+        local_backend: {
+          url: "http://localhost:8081/api/v1",
+          allowed_hosts: ["localhost", "127.0.0.1"],
+        },
+        logo_url: "/favicon.ico",
+        media_folder: "public/uploads",
+        public_folder: "/uploads",
+        collections: [
+          {
+            name: "jobs",
+            label: "Jobs",
+            folder: "content/jobs",
+            create: true,
+            delete: true,
+            extension: "md",
+            format: "frontmatter",
+            slug: "{{slug}}",
+            identifier_field: "title",
+            summary: "{{date}} | {{title}} - {{company}}",
+            sortable_fields: ["date"],
+            sort: "date:desc",
+            fields: [
+              { label: "Job Title", name: "title", widget: "string", required: true },
+              {
+                label: "Publish Date",
+                name: "date",
+                widget: "datetime",
+                format: "YYYY-MM-DD",
+                date_format: "YYYY-MM-DD",
+                time_format: false,
+                required: true,
+                default: "{{now}}",
+              },
+              { label: "Company Name", name: "company", widget: "string", required: true },
+              {
+                label: "Location",
+                name: "location",
+                widget: "string",
+                required: true,
+                hint: "City, State, Country or Remote",
+              },
+              {
+                label: "Work Mode",
+                name: "workMode",
+                widget: "string",
+                required: false,
+                hint: "Examples: On-site, Remote, Hybrid",
+              },
+              {
+                label: "Employment Type",
+                name: "employmentType",
+                widget: "string",
+                required: false,
+                hint: "Examples: Full-time, Part-time, Internship, Contract",
+              },
+              { label: "Salary", name: "salary", widget: "string", required: false },
+              {
+                label: "Experience Required",
+                name: "experience",
+                widget: "string",
+                required: false,
+                hint: "Examples: Fresher, 1-3 years, 3+ years",
+              },
+              {
+                label: "Eligibility Criteria",
+                name: "eligibilityCriteria",
+                widget: "text",
+                required: false,
+                hint: "Multiple lines supported. Put one eligibility point per line.",
+              },
+              {
+                label: "Education",
+                name: "education",
+                widget: "list",
+                required: false,
+                hint: "Add one item per line. Example: B.Tech, MCA",
+              },
+              {
+                label: "Skills Required",
+                name: "skills",
+                widget: "list",
+                required: true,
+                hint: "Add one skill per item. Example: Selenium, SQL, Python",
+              },
+              {
+                label: "Roles & Responsibilities",
+                name: "responsibilities",
+                widget: "list",
+                required: false,
+                hint: "Add one responsibility per item.",
+              },
+              {
+                label: "Working Days",
+                name: "workingDays",
+                widget: "string",
+                required: false,
+                hint: "Example: Monday-Friday",
+              },
+              {
+                label: "Job Timing",
+                name: "jobTiming",
+                widget: "string",
+                required: false,
+                hint: "Example: 9:30 AM - 6:30 PM IST",
+              },
+              {
+                label: "Apply Link",
+                name: "applyLink",
+                widget: "string",
+                required: true,
+                pattern: [
+                  "^(https?://|/).+",
+                  "Use an external URL (http/https) or internal path (/apply/...)",
+                ],
+              },
+              {
+                label: "Application Start Date",
+                name: "applicationStartDate",
+                widget: "datetime",
+                format: "YYYY-MM-DD",
+                date_format: "YYYY-MM-DD",
+                time_format: false,
+                required: true,
+                default: "{{now}}",
+              },
+              {
+                label: "Application End Date",
+                name: "applicationEndDate",
+                widget: "datetime",
+                format: "YYYY-MM-DD",
+                date_format: "YYYY-MM-DD",
+                time_format: false,
+                required: false,
+                hint: "Jobs with this date are auto-hidden after expiry. If empty, jobs are auto-hidden after 30 days.",
+              },
+            ],
+          },
+          {
+            name: "blogs",
+            label: "Blogs",
+            folder: "content/blogs",
+            create: true,
+            delete: true,
+            extension: "md",
+            format: "frontmatter",
+            slug: "{{slug}}",
+            identifier_field: "title",
+            summary: "{{date}} | {{title}} - {{topic}}",
+            sortable_fields: ["date"],
+            sort: "date:desc",
+            fields: [
+              { label: "Title", name: "title", widget: "string", required: true },
+              {
+                label: "Slug",
+                name: "slug",
+                widget: "string",
+                required: true,
+                hint: "Use lowercase words separated by hyphens. Example: interview-tips-freshers",
+              },
+              { label: "Summary", name: "summary", widget: "text", required: false },
+              {
+                label: "Topic",
+                name: "topic",
+                widget: "string",
+                required: true,
+                hint: "Examples: Interview Prep, Resume, AI, Hiring News",
+              },
+              { label: "Tags", name: "tags", widget: "list", required: false },
+              {
+                label: "Mark as Trending",
+                name: "isTrending",
+                widget: "boolean",
+                required: false,
+                default: false,
+              },
+              { label: "Author", name: "author", widget: "string", required: false },
+              {
+                label: "Cover Image",
+                name: "coverImage",
+                widget: "image",
+                required: false,
+                hint: "Best option: upload the image here. If you paste a URL, use a direct image URL from a stable source. Avoid Google image result links, LinkedIn, or temporary signed links.",
+              },
+              {
+                label: "CTA Label",
+                name: "ctaLabel",
+                widget: "string",
+                required: false,
+                hint: "Optional: Example Register Now, Apply Now, Join Event",
+              },
+              {
+                label: "CTA Link",
+                name: "ctaLink",
+                widget: "string",
+                required: false,
+                pattern: ["^https?://.+", "Use a full http/https URL."],
+              },
+              {
+                label: "Publish Date",
+                name: "date",
+                widget: "datetime",
+                format: "YYYY-MM-DD",
+                date_format: "YYYY-MM-DD",
+                time_format: false,
+                required: true,
+              },
+              { label: "Content", name: "body", widget: "markdown", required: true },
+            ],
+          },
+        ],
+      };
+
+      function initCms() {
+        if (window.jobAdviceCmsInitialized) {
+          return;
+        }
+
+        if (!window.CMS || typeof window.initCMS !== "function") {
+          window.setTimeout(initCms, 120);
+          return;
+        }
+
+        window.jobAdviceCmsInitialized = true;
+        window.initCMS({
+          config: window.jobAdviceCmsConfig,
+        });
+      }
+
       function loadCmsScripts() {
         var primary = document.createElement("script");
+        primary.onload = initCms;
         primary.src = "https://unpkg.com/decap-cms@3.8.3/dist/decap-cms.js";
         primary.onerror = function () {
           var fallback = document.createElement("script");
+          fallback.onload = initCms;
           fallback.src = "https://cdn.jsdelivr.net/npm/decap-cms@3.8.3/dist/decap-cms.js";
           document.body.appendChild(fallback);
         };
@@ -110,6 +350,58 @@
       }
     </script>
     <script>
+      (function showLocalAdminNotice() {
+        if (!isLocalHost) {
+          return;
+        }
+
+        var banner = document.createElement("div");
+        banner.style.position = "fixed";
+        banner.style.left = "12px";
+        banner.style.right = "12px";
+        banner.style.bottom = "12px";
+        banner.style.zIndex = "9998";
+        banner.style.border = "1px solid rgba(15, 118, 110, 0.24)";
+        banner.style.borderRadius = "14px";
+        banner.style.background = "rgba(240, 253, 250, 0.96)";
+        banner.style.boxShadow = "0 16px 32px rgba(15, 23, 42, 0.14)";
+        banner.style.padding = "12px 14px";
+        banner.style.fontFamily = "Manrope, sans-serif";
+        banner.style.color = "#134e4a";
+
+        var title = document.createElement("p");
+        title.textContent = "Local Admin Mode";
+        title.style.margin = "0";
+        title.style.fontSize = "13px";
+        title.style.fontWeight = "800";
+        title.style.letterSpacing = "0.02em";
+
+        var body = document.createElement("p");
+        body.textContent =
+          "localhost admin reads your local repo only. Posts published from phone or jobadvice.in/admin appear here only after your local repo is updated. Use the live admin for shared cross-device content.";
+        body.style.margin = "6px 0 0";
+        body.style.fontSize = "12px";
+        body.style.lineHeight = "1.5";
+
+        var link = document.createElement("a");
+        link.href = "https://jobadvice.in/admin/";
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = "Open live admin";
+        link.style.display = "inline-flex";
+        link.style.marginTop = "10px";
+        link.style.fontSize = "12px";
+        link.style.fontWeight = "700";
+        link.style.color = "#0f766e";
+        link.style.textDecoration = "underline";
+
+        banner.appendChild(title);
+        banner.appendChild(body);
+        banner.appendChild(link);
+        document.body.appendChild(banner);
+      })();
+    </script>
+    <script>
       (function applyCmsEnhancements() {
         var attempts = 0;
 
@@ -142,6 +434,510 @@
 
         hideLoadingWhenReady();
         registerPreviewStyles();
+      })();
+    </script>
+    <script>
+      (function proxyAdminPreviewImages() {
+        var observer = null;
+
+        function toProxyUrl(value) {
+          var normalizedValue = String(value || "").trim();
+          if (!normalizedValue) {
+            return "";
+          }
+
+          if (normalizedValue.indexOf("/api/image?url=") === 0) {
+            return normalizedValue;
+          }
+
+          try {
+            var parsedUrl = new URL(normalizedValue, window.location.origin);
+            if (!/^https?:$/i.test(parsedUrl.protocol)) {
+              return normalizedValue;
+            }
+
+            if (parsedUrl.origin === window.location.origin) {
+              return parsedUrl.toString();
+            }
+
+            return "/api/image?url=" + encodeURIComponent(parsedUrl.toString());
+          } catch {
+            return normalizedValue;
+          }
+        }
+
+        function rewritePreviewImages(root) {
+          if (!root) {
+            return;
+          }
+
+          var images = root.querySelectorAll("img");
+          for (var index = 0; index < images.length; index += 1) {
+            var image = images[index];
+            var originalSrc = image.getAttribute("src") || "";
+
+            if (!originalSrc || originalSrc.indexOf("/api/image?url=") === 0) {
+              continue;
+            }
+
+            var proxiedSrc = toProxyUrl(originalSrc);
+            if (!proxiedSrc || proxiedSrc === originalSrc) {
+              continue;
+            }
+
+            image.setAttribute("data-jobadvice-original-src", originalSrc);
+            image.setAttribute("src", proxiedSrc);
+            image.removeAttribute("srcset");
+          }
+        }
+
+        function startObserving(root) {
+          if (!root || observer) {
+            return;
+          }
+
+          observer = new MutationObserver(function () {
+            rewritePreviewImages(root);
+          });
+
+          observer.observe(root, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["src"],
+          });
+
+          rewritePreviewImages(root);
+        }
+
+        function waitForRoot(attempts) {
+          var root = document.getElementById("nc-root");
+          if (root) {
+            startObserving(root);
+            return;
+          }
+
+          if (attempts > 180) {
+            return;
+          }
+
+          window.setTimeout(function () {
+            waitForRoot(attempts + 1);
+          }, 250);
+        }
+
+        waitForRoot(0);
+      })();
+    </script>
+    <script>
+      (function warnOnRiskyCoverImageUrls() {
+        var observer = null;
+        var warningAttribute = "data-jobadvice-cover-image-warning";
+        var boundAttribute = "data-jobadvice-cover-image-bound";
+        var riskyHostPatterns = [
+          /(^|\.)google\./i,
+          /(^|\.)gstatic\.com$/i,
+          /(^|\.)linkedin\.com$/i,
+          /(^|\.)licdn\.com$/i,
+          /(^|\.)economictimes\.com$/i,
+          /(^|\.)moneycontrol\.com$/i,
+          /(^|\.)facebook\.com$/i,
+          /(^|\.)fbcdn\.net$/i,
+          /(^|\.)instagram\.com$/i,
+          /(^|\.)twimg\.com$/i,
+          /(^|\.)x\.com$/i,
+          /(^|\.)twitter\.com$/i,
+        ];
+        var stableDirectHosts = [
+          "images.unsplash.com",
+          "images.pexels.com",
+          "cdn.pixabay.com",
+          "pixabay.com",
+          "images.ctfassets.net",
+          "res.cloudinary.com",
+        ];
+        var imageExtensionPattern = /\.(avif|gif|jpe?g|png|svg|webp)(?:$|[?#])/i;
+
+        function normalizeText(value) {
+          return String(value || "").trim();
+        }
+
+        function isCoverImageField(field) {
+          if (
+            !field ||
+            !(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)
+          ) {
+            return false;
+          }
+
+          var fieldName = normalizeText(field.name || field.id).toLowerCase();
+          if (fieldName.indexOf("coverimage") >= 0 || fieldName.indexOf("cover-image") >= 0) {
+            return true;
+          }
+
+          var labelNode = field.closest("div");
+          if (!labelNode) {
+            return false;
+          }
+
+          var labelText = normalizeText(labelNode.textContent).toLowerCase();
+          return labelText.indexOf("cover image") >= 0;
+        }
+
+        function getWarningNode(field) {
+          var fieldContainer = field.parentElement;
+          if (!fieldContainer) {
+            return null;
+          }
+
+          var existingNode = fieldContainer.querySelector("[" + warningAttribute + "]");
+          if (existingNode) {
+            return existingNode;
+          }
+
+          var warningNode = document.createElement("p");
+          warningNode.setAttribute(warningAttribute, "true");
+          warningNode.style.margin = "8px 0 0";
+          warningNode.style.fontSize = "12px";
+          warningNode.style.lineHeight = "1.45";
+          warningNode.style.display = "none";
+          fieldContainer.appendChild(warningNode);
+          return warningNode;
+        }
+
+        function classifyImageUrl(value) {
+          var normalizedValue = normalizeText(value);
+          if (!normalizedValue) {
+            return null;
+          }
+
+          if (
+            normalizedValue.indexOf("/uploads/") === 0 ||
+            normalizedValue.indexOf("public/uploads/") === 0
+          ) {
+            return {
+              tone: "safe",
+              text: "Uploaded image path looks stable.",
+            };
+          }
+
+          var parsedUrl = null;
+          try {
+            parsedUrl = new URL(normalizedValue, window.location.origin);
+          } catch {
+            return {
+              tone: "warning",
+              text: "Use a full http/https direct image URL, or upload the image instead.",
+            };
+          }
+
+          if (!/^https?:$/i.test(parsedUrl.protocol)) {
+            return {
+              tone: "warning",
+              text: "Use a full http/https direct image URL, or upload the image instead.",
+            };
+          }
+
+          if (parsedUrl.origin === window.location.origin) {
+            return {
+              tone: "safe",
+              text: "This local image URL should be stable.",
+            };
+          }
+
+          var hostname = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
+          var isRiskyHost = riskyHostPatterns.some(function (pattern) {
+            return pattern.test(hostname);
+          });
+
+          if (isRiskyHost) {
+            return {
+              tone: "warning",
+              text: "This host often blocks hotlinking or expires image URLs. Upload the image or use a stable direct image source.",
+            };
+          }
+
+          var looksDirect =
+            imageExtensionPattern.test(parsedUrl.pathname) ||
+            stableDirectHosts.indexOf(hostname) >= 0 ||
+            hostname.indexOf("images.") === 0 ||
+            hostname.indexOf("cdn.") === 0;
+
+          if (looksDirect) {
+            return {
+              tone: "safe",
+              text: "This looks like a direct image URL.",
+            };
+          }
+
+          return {
+            tone: "warning",
+            text: "This may be a page link or temporary URL, not a stable direct image. If preview breaks, upload the image instead.",
+          };
+        }
+
+        function applyWarning(field) {
+          var warningNode = getWarningNode(field);
+          if (!warningNode) {
+            return;
+          }
+
+          var result = classifyImageUrl(field.value);
+          if (!result) {
+            warningNode.textContent = "";
+            warningNode.style.display = "none";
+            return;
+          }
+
+          warningNode.textContent = result.text;
+          warningNode.style.display = "block";
+          warningNode.style.color =
+            result.tone === "safe" ? "#0f766e" : "#b45309";
+        }
+
+        function bindField(field) {
+          if (!isCoverImageField(field) || field.getAttribute(boundAttribute) === "true") {
+            return;
+          }
+
+          field.setAttribute(boundAttribute, "true");
+          field.addEventListener("input", function () {
+            applyWarning(field);
+          });
+          field.addEventListener("change", function () {
+            applyWarning(field);
+          });
+          applyWarning(field);
+        }
+
+        function bindFields(root) {
+          if (!root) {
+            return;
+          }
+
+          var fields = root.querySelectorAll("input, textarea");
+          for (var index = 0; index < fields.length; index += 1) {
+            bindField(fields[index]);
+          }
+        }
+
+        function startObserving(root) {
+          if (!root || observer) {
+            return;
+          }
+
+          observer = new MutationObserver(function () {
+            bindFields(root);
+          });
+
+          observer.observe(root, {
+            childList: true,
+            subtree: true,
+          });
+
+          bindFields(root);
+        }
+
+        function waitForRoot(attempts) {
+          var root = document.getElementById("nc-root");
+          if (root) {
+            startObserving(root);
+            return;
+          }
+
+          if (attempts > 180) {
+            return;
+          }
+
+          window.setTimeout(function () {
+            waitForRoot(attempts + 1);
+          }, 250);
+        }
+
+        waitForRoot(0);
+      })();
+    </script>
+    <script>
+      (function warnOnLargeUploadedCoverImages() {
+        var observer = null;
+        var noticeAttribute = "data-jobadvice-cover-image-file-warning";
+        var boundAttribute = "data-jobadvice-cover-image-file-bound";
+
+        function normalizeText(value) {
+          return String(value || "").trim();
+        }
+
+        function isImageUploadField(field) {
+          if (!(field instanceof HTMLInputElement) || field.type !== "file") {
+            return false;
+          }
+
+          var acceptValue = normalizeText(field.getAttribute("accept")).toLowerCase();
+          if (acceptValue.indexOf("image") >= 0) {
+            return true;
+          }
+
+          var container = field.closest("div");
+          if (!container) {
+            return false;
+          }
+
+          var labelText = normalizeText(container.textContent).toLowerCase();
+          return (
+            labelText.indexOf("cover image") >= 0 ||
+            labelText.indexOf("thumbnail") >= 0 ||
+            labelText.indexOf("replace with url") >= 0
+          );
+        }
+
+        function getNoticeNode(field) {
+          var container = field.parentElement;
+          if (!container) {
+            return null;
+          }
+
+          var existing = container.querySelector("[" + noticeAttribute + "]");
+          if (existing) {
+            return existing;
+          }
+
+          var notice = document.createElement("p");
+          notice.setAttribute(noticeAttribute, "true");
+          notice.style.margin = "8px 0 0";
+          notice.style.fontSize = "12px";
+          notice.style.lineHeight = "1.45";
+          notice.style.display = "none";
+          container.appendChild(notice);
+          return notice;
+        }
+
+        function formatFileSize(sizeInBytes) {
+          if (sizeInBytes >= 1024 * 1024) {
+            return (sizeInBytes / (1024 * 1024)).toFixed(1) + " MB";
+          }
+
+          return Math.max(1, Math.round(sizeInBytes / 1024)) + " KB";
+        }
+
+        function describeFile(file) {
+          if (!file) {
+            return null;
+          }
+
+          var isImage = /^image\//i.test(file.type || "");
+          if (!isImage) {
+            return {
+              tone: "warning",
+              text: "Selected file is not a normal image. Use JPG, PNG, or WEBP.",
+            };
+          }
+
+          if (file.size > 5 * 1024 * 1024) {
+            return {
+              tone: "warning",
+              text:
+                "Large image (" +
+                formatFileSize(file.size) +
+                "). Mobile publish may fail. Compress it below 2 MB if possible.",
+            };
+          }
+
+          if (file.size > 2 * 1024 * 1024) {
+            return {
+              tone: "warning",
+              text:
+                "Image size is " +
+                formatFileSize(file.size) +
+                ". It may still work, but smaller JPG/WEBP files publish more reliably on mobile.",
+            };
+          }
+
+          return {
+            tone: "safe",
+            text:
+              "Selected image: " +
+              formatFileSize(file.size) +
+              ". This size should usually publish fine.",
+          };
+        }
+
+        function updateNotice(field) {
+          var notice = getNoticeNode(field);
+          if (!notice) {
+            return;
+          }
+
+          var file = field.files && field.files[0] ? field.files[0] : null;
+          var message = describeFile(file);
+
+          if (!message) {
+            notice.textContent = "";
+            notice.style.display = "none";
+            return;
+          }
+
+          notice.textContent = message.text;
+          notice.style.display = "block";
+          notice.style.color = message.tone === "safe" ? "#0f766e" : "#b45309";
+        }
+
+        function bindField(field) {
+          if (!isImageUploadField(field) || field.getAttribute(boundAttribute) === "true") {
+            return;
+          }
+
+          field.setAttribute(boundAttribute, "true");
+          field.addEventListener("change", function () {
+            updateNotice(field);
+          });
+          updateNotice(field);
+        }
+
+        function bindFields(root) {
+          if (!root) {
+            return;
+          }
+
+          var fields = root.querySelectorAll('input[type="file"]');
+          for (var index = 0; index < fields.length; index += 1) {
+            bindField(fields[index]);
+          }
+        }
+
+        function startObserving(root) {
+          if (!root || observer) {
+            return;
+          }
+
+          observer = new MutationObserver(function () {
+            bindFields(root);
+          });
+
+          observer.observe(root, {
+            childList: true,
+            subtree: true,
+          });
+
+          bindFields(root);
+        }
+
+        function waitForRoot(attempts) {
+          var root = document.getElementById("nc-root");
+          if (root) {
+            startObserving(root);
+            return;
+          }
+
+          if (attempts > 180) {
+            return;
+          }
+
+          window.setTimeout(function () {
+            waitForRoot(attempts + 1);
+          }, 250);
+        }
+
+        waitForRoot(0);
       })();
     </script>
     <script>
@@ -1276,6 +2072,6 @@
         injectPanel();
       })();
     </script>
-    <script src="/admin/jobs-dashboard-tools.js?v=20260307d"></script>
+    <script src="/admin/jobs-dashboard-tools.js?v=20260309a"></script>
   </body>
 </html>

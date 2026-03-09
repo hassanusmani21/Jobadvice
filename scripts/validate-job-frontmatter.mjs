@@ -5,8 +5,21 @@ const jobsDirectory = path.join(process.cwd(), "content", "jobs");
 const frontMatterPattern = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*(?:\r?\n|$)/;
 const millisecondsInDay = 24 * 60 * 60 * 1000;
 const maxUnverifiedFutureStartDays = 7;
+const invalidLocationPattern = /\b(work mode|job timing|optional)\b/i;
+const invalidSalaryPattern = /\b(experience required|optional)\b/i;
 
 const stripWrappingQuotes = (value) => value.replace(/^['"]|['"]$/g, "").trim();
+
+const normalizeText = (value) =>
+  stripWrappingQuotes(String(value || ""))
+    .toLowerCase()
+    .replace(/c\+\+/g, "cplusplus")
+    .replace(/c#/g, "csharp")
+    .replace(/node\.js/g, "nodejs")
+    .replace(/next\.js/g, "nextjs")
+    .replace(/[^a-z0-9\s]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const readFrontMatterValue = (frontMatter, key) => {
   const match = frontMatter.match(new RegExp(`^${key}:\\s*(.*)$`, "m"));
@@ -42,6 +55,7 @@ const main = async () => {
     .sort();
 
   const validationErrors = [];
+  const titleCompanyKeyToFiles = new Map();
 
   for (const fileName of fileNames) {
     const filePath = path.join(jobsDirectory, fileName);
@@ -57,9 +71,24 @@ const main = async () => {
     const date = readFrontMatterValue(frontMatter, "date");
     const applicationStartDate = readFrontMatterValue(frontMatter, "applicationStartDate");
     const applicationEndDate = readFrontMatterValue(frontMatter, "applicationEndDate");
+    const title = readFrontMatterValue(frontMatter, "title");
+    const company = readFrontMatterValue(frontMatter, "company");
+    const location = readFrontMatterValue(frontMatter, "location");
+    const salary = readFrontMatterValue(frontMatter, "salary");
     const allowFutureApplicationStartDate =
       readFrontMatterValue(frontMatter, "allowFutureApplicationStartDate").toLowerCase() ===
       "true";
+
+    const normalizedTitle = normalizeText(title);
+    const normalizedCompany = normalizeText(company);
+
+    if (normalizedTitle && normalizedCompany) {
+      const titleCompanyKey = `${normalizedTitle}|${normalizedCompany}`;
+      if (!titleCompanyKeyToFiles.has(titleCompanyKey)) {
+        titleCompanyKeyToFiles.set(titleCompanyKey, []);
+      }
+      titleCompanyKeyToFiles.get(titleCompanyKey).push(fileName);
+    }
 
     if (!date) {
       validationErrors.push(`${fileName}: missing date`);
@@ -103,6 +132,18 @@ const main = async () => {
       }
     }
 
+    if (location && invalidLocationPattern.test(location)) {
+      validationErrors.push(
+        `${fileName}: location contains a placeholder value; received "${location}"`,
+      );
+    }
+
+    if (salary && invalidSalaryPattern.test(salary)) {
+      validationErrors.push(
+        `${fileName}: salary contains a placeholder value; received "${salary}"`,
+      );
+    }
+
     if (
       applicationStartDate &&
       applicationEndDate &&
@@ -114,6 +155,17 @@ const main = async () => {
         `${fileName}: applicationEndDate (${applicationEndDate}) cannot be before applicationStartDate (${applicationStartDate})`,
       );
     }
+  }
+
+  for (const [, matchingFiles] of titleCompanyKeyToFiles.entries()) {
+    if (matchingFiles.length < 2) {
+      continue;
+    }
+
+    const uniqueFiles = Array.from(new Set(matchingFiles)).sort();
+    validationErrors.push(
+      `Duplicate title+company entries detected across files: ${uniqueFiles.join(", ")}`,
+    );
   }
 
   if (validationErrors.length > 0) {

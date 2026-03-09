@@ -1,22 +1,19 @@
 (function injectJobAdviceAdminJobTools() {
-  var duplicatePanelId = "jobadvice-duplicate-check-panel";
-  var duplicateStatusId = "jobadvice-duplicate-check-status";
-  var duplicateCheckButtonId = "jobadvice-duplicate-check-button";
-  var jobsFilterPanelId = "jobadvice-jobs-date-filter-panel";
-  var jobsFilterListId = "jobadvice-jobs-date-filter-list";
-  var jobsFilterSummaryId = "jobadvice-jobs-date-filter-summary";
-  var jobsFilterQuickRangeId = "jobadvice-jobs-date-filter-quick-range";
-  var jobsFilterFromId = "jobadvice-jobs-date-filter-from";
-  var jobsFilterToId = "jobadvice-jobs-date-filter-to";
+  var sortMenuId = "jobadvice-sortby-menu";
+  var liveSyncRefreshStorageKey = "jobadvice-live-admin-refresh-route";
 
   var state = {
-    lastDuplicateFingerprint: "",
-    lastDuplicateResult: null,
-    duplicateDebounceTimer: 0,
-    duplicateCheckPending: false,
-    allowBypassSaveClick: false,
     hasGlobalListeners: false,
-    jobsFilterRequestPending: false,
+    cmsPreSaveGuardAttached: false,
+    publishCheckPending: false,
+    allowBypassSaveClick: false,
+    sortRequestPending: false,
+    listSortMode: {
+      jobs: "newest",
+      blogs: "newest",
+    },
+    pendingInitialSortRouteKey: "",
+    currentSortMenuCollection: "",
   };
 
   function normalizeText(value) {
@@ -37,6 +34,78 @@
     return match && match[1] ? match[1].toLowerCase() : "";
   }
 
+  function getCollectionRouteKey(collectionName) {
+    return collectionName + "|" + (window.location.hash || "");
+  }
+
+  function getStoredRefreshAttemptRouteKey() {
+    try {
+      return window.sessionStorage.getItem(liveSyncRefreshStorageKey) || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function markRefreshAttemptForRoute(routeKey) {
+    try {
+      window.sessionStorage.setItem(liveSyncRefreshStorageKey, routeKey);
+    } catch {
+      // Ignore sessionStorage failures.
+    }
+  }
+
+  function clearRefreshAttemptForRoute(routeKey) {
+    try {
+      if (window.sessionStorage.getItem(liveSyncRefreshStorageKey) === routeKey) {
+        window.sessionStorage.removeItem(liveSyncRefreshStorageKey);
+      }
+    } catch {
+      // Ignore sessionStorage failures.
+    }
+  }
+
+  function maybeRefreshStaleCollectionView(collectionName, orderedSlugs, rows) {
+    if (!collectionName || !Array.isArray(orderedSlugs) || !Array.isArray(rows) || rows.length === 0) {
+      return false;
+    }
+
+    var expectedVisibleSlugs = orderedSlugs.slice(0, rows.length);
+    if (expectedVisibleSlugs.length === 0) {
+      return false;
+    }
+
+    var renderedSlugSet = new Set();
+    for (var index = 0; index < rows.length; index += 1) {
+      var rowSlug = normalizeText(rows[index] && rows[index].slug);
+      if (rowSlug) {
+        renderedSlugSet.add(rowSlug);
+      }
+    }
+
+    var missingVisibleSlugCount = 0;
+    for (var slugIndex = 0; slugIndex < expectedVisibleSlugs.length; slugIndex += 1) {
+      if (!renderedSlugSet.has(expectedVisibleSlugs[slugIndex])) {
+        missingVisibleSlugCount += 1;
+      }
+    }
+
+    var routeKey = getCollectionRouteKey(collectionName);
+    if (missingVisibleSlugCount === 0) {
+      clearRefreshAttemptForRoute(routeKey);
+      return false;
+    }
+
+    if (getStoredRefreshAttemptRouteKey() === routeKey) {
+      return false;
+    }
+
+    markRefreshAttemptForRoute(routeKey);
+    window.setTimeout(function () {
+      window.location.reload();
+    }, 120);
+    return true;
+  }
+
   function isJobsCollection() {
     return getCollectionFromHash() === "jobs";
   }
@@ -50,13 +119,26 @@
     return hash.indexOf("/entries/") >= 0 || hash.indexOf("/new") >= 0;
   }
 
-  function isJobsCollectionListRoute() {
-    if (!isJobsCollection()) {
+  function isSupportedListCollection(collectionName) {
+    return collectionName === "jobs" || collectionName === "blogs";
+  }
+
+  function isCollectionListRoute(collectionName) {
+    if (!isSupportedListCollection(collectionName)) {
       return false;
     }
 
     var hash = window.location.hash || "";
-    return hash.indexOf("/entries/") < 0 && hash.indexOf("/new") < 0;
+    if (hash.indexOf("/collections/" + collectionName) < 0) {
+      return false;
+    }
+
+    return !/\/entries\/|\/new(?:\/|$)/i.test(hash);
+  }
+
+  function getActiveListCollection() {
+    var collection = getCollectionFromHash();
+    return isCollectionListRoute(collection) ? collection : "";
   }
 
   function getEditorRoot() {
@@ -84,6 +166,7 @@
 
   function getFieldValue(fieldNames) {
     var root = getEditorRoot() || document;
+
     for (var index = 0; index < fieldNames.length; index += 1) {
       var name = fieldNames[index];
       var selectors = [
@@ -122,94 +205,138 @@
     };
   }
 
-  function renderDuplicateStatus(message, tone) {
-    var statusNode = document.getElementById(duplicateStatusId);
-    if (!statusNode) {
-      return;
+  function resolveEntryRootValue(entry, fieldName) {
+    if (!entry || !fieldName) {
+      return "";
     }
 
-    var palette = {
-      neutral: { background: "#f8fafc", color: "#334155", borderColor: "#cbd5e1" },
-      success: { background: "#ecfdf5", color: "#065f46", borderColor: "#86efac" },
-      warning: { background: "#fffbeb", color: "#92400e", borderColor: "#fcd34d" },
-      danger: { background: "#fef2f2", color: "#991b1b", borderColor: "#fca5a5" },
-    };
+    try {
+      if (typeof entry.get === "function") {
+        var fromGetter = entry.get(fieldName);
+        if (fromGetter !== null && typeof fromGetter !== "undefined") {
+          return normalizeText(fromGetter);
+        }
+      }
+    } catch {
+      // Ignore immutable getter errors.
+    }
 
-    var style = palette[tone] || palette.neutral;
-    statusNode.textContent = message;
-    statusNode.style.background = style.background;
-    statusNode.style.color = style.color;
-    statusNode.style.borderColor = style.borderColor;
+    if (entry && Object.prototype.hasOwnProperty.call(entry, fieldName)) {
+      return normalizeText(entry[fieldName]);
+    }
+
+    return "";
   }
 
-  function toMatchSummary(match, includeScore) {
-    var scorePart = includeScore ? " (" + String(match.score || 0) + "%)" : "";
-    return (
-      "- " +
-      normalizeText(match.date) +
-      " | " +
-      normalizeText(match.title) +
-      " @ " +
-      normalizeText(match.company) +
-      scorePart
-    );
+  function resolveEntryDataValue(entry, fieldName) {
+    if (!entry || !fieldName) {
+      return "";
+    }
+
+    try {
+      if (typeof entry.getIn === "function") {
+        var fromGetIn = entry.getIn(["data", fieldName]);
+        if (fromGetIn !== null && typeof fromGetIn !== "undefined") {
+          return normalizeText(fromGetIn);
+        }
+      }
+    } catch {
+      // Ignore immutable getIn errors.
+    }
+
+    try {
+      if (typeof entry.get === "function") {
+        var dataNode = entry.get("data");
+        if (dataNode && typeof dataNode.get === "function") {
+          var fromDataNode = dataNode.get(fieldName);
+          if (fromDataNode !== null && typeof fromDataNode !== "undefined") {
+            return normalizeText(fromDataNode);
+          }
+        }
+
+        if (
+          dataNode &&
+          typeof dataNode === "object" &&
+          Object.prototype.hasOwnProperty.call(dataNode, fieldName)
+        ) {
+          return normalizeText(dataNode[fieldName]);
+        }
+      }
+    } catch {
+      // Ignore data traversal errors.
+    }
+
+    if (
+      entry &&
+      entry.data &&
+      typeof entry.data === "object" &&
+      Object.prototype.hasOwnProperty.call(entry.data, fieldName)
+    ) {
+      return normalizeText(entry.data[fieldName]);
+    }
+
+    return "";
   }
 
-  function summarizeDuplicateResult(result) {
-    if (!result || !result.success) {
-      return {
-        tone: "warning",
-        message: "Could not verify duplicates right now. Please retry.",
-      };
+  function resolveSlugFromPath(pathValue) {
+    var normalizedPath = normalizeText(pathValue);
+    if (!normalizedPath) {
+      return "";
     }
 
-    var exactMatches = Array.isArray(result.exactMatches) ? result.exactMatches : [];
-    var similarMatches = Array.isArray(result.similarMatches) ? result.similarMatches : [];
-    var previewLines = [];
+    var segments = normalizedPath.split("/");
+    var fileName = segments.length > 0 ? segments[segments.length - 1] : normalizedPath;
+    return normalizeText(fileName.replace(/\.[a-z0-9]+$/i, ""));
+  }
 
-    if (exactMatches.length > 0) {
-      for (var index = 0; index < Math.min(exactMatches.length, 3); index += 1) {
-        previewLines.push(toMatchSummary(exactMatches[index], false));
-      }
-
-      return {
-        tone: "danger",
-        message:
-          "Duplicate blocked: exact match found.\n" +
-          previewLines.join("\n"),
-      };
-    }
-
-    if (result.hasStrongSimilarDuplicate) {
-      for (var similarIndex = 0; similarIndex < Math.min(similarMatches.length, 3); similarIndex += 1) {
-        previewLines.push(toMatchSummary(similarMatches[similarIndex], true));
-      }
-
-      return {
-        tone: "danger",
-        message:
-          "Publish blocked: highly similar job already exists.\n" +
-          previewLines.join("\n"),
-      };
-    }
-
-    if (similarMatches.length > 0) {
-      for (var warningIndex = 0; warningIndex < Math.min(similarMatches.length, 3); warningIndex += 1) {
-        previewLines.push(toMatchSummary(similarMatches[warningIndex], true));
-      }
-
-      return {
-        tone: "warning",
-        message:
-          "Similar jobs found. Review carefully before publish.\n" +
-          previewLines.join("\n"),
-      };
-    }
+  function buildDuplicatePayloadFromEntry(eventPayload) {
+    var entry = eventPayload && eventPayload.entry ? eventPayload.entry : null;
+    var slugValue =
+      resolveEntryRootValue(entry, "slug") ||
+      resolveSlugFromPath(resolveEntryRootValue(entry, "path")) ||
+      getCurrentJobSlug();
 
     return {
-      tone: "success",
-      message: "No duplicate job found. Safe to publish.",
+      title: resolveEntryDataValue(entry, "title") || getFieldValue(["title"]),
+      company: resolveEntryDataValue(entry, "company") || getFieldValue(["company"]),
+      applyLink:
+        resolveEntryDataValue(entry, "applyLink") ||
+        resolveEntryDataValue(entry, "applyUrl") ||
+        getFieldValue(["applyLink", "applyUrl"]),
+      slug: slugValue,
     };
+  }
+
+  function resolveCollectionName(eventPayload) {
+    if (!eventPayload) {
+      return "";
+    }
+
+    var collectionValue = eventPayload.collection;
+    if (typeof collectionValue === "string") {
+      return normalizeLabel(collectionValue);
+    }
+
+    if (collectionValue && typeof collectionValue.get === "function") {
+      var fromCollectionMap = collectionValue.get("name");
+      if (fromCollectionMap) {
+        return normalizeLabel(fromCollectionMap);
+      }
+    }
+
+    if (collectionValue && typeof collectionValue.name === "string") {
+      return normalizeLabel(collectionValue.name);
+    }
+
+    var entry = eventPayload.entry;
+    if (entry && typeof entry.get === "function") {
+      var fromEntry = entry.get("collection");
+      if (typeof fromEntry === "string") {
+        return normalizeLabel(fromEntry);
+      }
+    }
+
+    return getCollectionFromHash();
   }
 
   async function readJsonResponse(response) {
@@ -231,33 +358,96 @@
     }
   }
 
-  function getDuplicateFingerprint(payload) {
-    return [
-      normalizeLabel(payload.title),
-      normalizeLabel(payload.company),
-      normalizeLabel(payload.applyLink),
-      normalizeLabel(payload.slug),
-    ].join("|");
+  function toMatchSummary(match, includeScore) {
+    var scorePart = includeScore ? " (" + String(match.score || 0) + "%)" : "";
+    return (
+      "- " +
+      normalizeText(match.date) +
+      " | " +
+      normalizeText(match.title) +
+      " @ " +
+      normalizeText(match.company) +
+      scorePart
+    );
   }
 
-  async function checkDuplicateJobs(options) {
-    var opts = options || {};
-    var payload = buildDuplicatePayload();
-    var fingerprint = getDuplicateFingerprint(payload);
+  function buildDuplicateBlockedAlertMessage(result) {
+    var exactMatches = Array.isArray(result.exactMatches) ? result.exactMatches : [];
 
+    var lines = ["This job is already available.", "", "Existing matching jobs:"];
+
+    for (var index = 0; index < Math.min(exactMatches.length, 5); index += 1) {
+      lines.push(toMatchSummary(exactMatches[index], false));
+    }
+
+    return lines.join("\n");
+  }
+
+  function buildDuplicateBlockedErrorMessage(result) {
+    var exactMatches = Array.isArray(result.exactMatches) ? result.exactMatches : [];
+    if (exactMatches.length === 0) {
+      return "This job is already available. Duplicate publish blocked.";
+    }
+
+    var firstMatch = exactMatches[0];
+    return (
+      "This job is already available: " +
+      normalizeText(firstMatch.title) +
+      " @ " +
+      normalizeText(firstMatch.company) +
+      " (" +
+      normalizeText(firstMatch.date) +
+      "). Duplicate publish blocked."
+    );
+  }
+
+  function buildStrongSimilarBlockedErrorMessage(result) {
+    var similarMatches = Array.isArray(result.similarMatches) ? result.similarMatches : [];
+    if (similarMatches.length === 0) {
+      return "A highly similar job already exists. Please review before publishing.";
+    }
+
+    var firstMatch = similarMatches[0];
+    return (
+      "A highly similar job already exists: " +
+      normalizeText(firstMatch.title) +
+      " @ " +
+      normalizeText(firstMatch.company) +
+      " (" +
+      String(firstMatch.score || 0) +
+      "% match). Publish blocked."
+    );
+  }
+
+  function buildSimilarWarningMessage(result) {
+    var similarMatches = Array.isArray(result.similarMatches) ? result.similarMatches : [];
+    if (similarMatches.length === 0) {
+      return "";
+    }
+
+    var title = result.hasStrongSimilarDuplicate
+      ? "A very similar job already exists. Publish anyway?"
+      : "Similar jobs were found. Publish anyway?";
+    var lines = [title, ""];
+
+    for (var index = 0; index < Math.min(similarMatches.length, 4); index += 1) {
+      lines.push(toMatchSummary(similarMatches[index], true));
+    }
+
+    return lines.join("\n");
+  }
+
+  async function checkDuplicateJobs(payloadOverride) {
+    var payload = payloadOverride || buildDuplicatePayload();
     if (!payload.title && !payload.company && !payload.applyLink) {
-      renderDuplicateStatus(
-        "Enter job title/company/apply link to run duplicate check.",
-        "neutral",
-      );
-      return null;
+      return {
+        success: true,
+        hasExactDuplicate: false,
+        hasStrongSimilarDuplicate: false,
+        exactMatches: [],
+        similarMatches: [],
+      };
     }
-
-    if (!opts.force && state.lastDuplicateResult && state.lastDuplicateFingerprint === fingerprint) {
-      return state.lastDuplicateResult;
-    }
-
-    renderDuplicateStatus("Checking duplicates...", "neutral");
 
     var response = await fetch("/api/admin/jobs/duplicates", {
       method: "POST",
@@ -279,167 +469,451 @@
       throw new Error(message);
     }
 
-    state.lastDuplicateFingerprint = fingerprint;
-    state.lastDuplicateResult = result;
-
-    var summary = summarizeDuplicateResult(result);
-    renderDuplicateStatus(summary.message, summary.tone);
-
     return result;
   }
 
-  function buildPublishBlockMessage(result) {
-    var lines = [
-      "Publish blocked to prevent duplicate job posting.",
-      "",
-    ];
-
-    var exactMatches = Array.isArray(result.exactMatches) ? result.exactMatches : [];
-    var similarMatches = Array.isArray(result.similarMatches) ? result.similarMatches : [];
-
-    if (exactMatches.length > 0) {
-      lines.push("Exact matches:");
-      for (var index = 0; index < Math.min(exactMatches.length, 5); index += 1) {
-        lines.push(toMatchSummary(exactMatches[index], false));
-      }
-      return lines.join("\n");
-    }
-
-    lines.push("Highly similar matches:");
-    for (var similarIndex = 0; similarIndex < Math.min(similarMatches.length, 5); similarIndex += 1) {
-      lines.push(toMatchSummary(similarMatches[similarIndex], true));
-    }
-
-    return lines.join("\n");
-  }
-
-  function buildSimilarWarningMessage(result) {
-    var similarMatches = Array.isArray(result.similarMatches) ? result.similarMatches : [];
-    if (similarMatches.length === 0) {
-      return "";
-    }
-
-    var lines = [
-      "Similar jobs were found. Continue publishing anyway?",
-      "",
-    ];
-
-    for (var index = 0; index < Math.min(similarMatches.length, 4); index += 1) {
-      lines.push(toMatchSummary(similarMatches[index], true));
-    }
-
-    return lines.join("\n");
-  }
-
-  function removeDuplicatePanel() {
-    var panel = document.getElementById(duplicatePanelId);
-    if (panel) {
-      panel.remove();
-    }
-  }
-
-  function injectDuplicatePanel() {
-    if (!isJobsEntryRoute()) {
-      removeDuplicatePanel();
-      return;
-    }
-
-    if (document.getElementById(duplicatePanelId)) {
-      return;
-    }
-
-    var panel = document.createElement("aside");
-    panel.id = duplicatePanelId;
-    panel.style.position = "fixed";
-    panel.style.right = "14px";
-    panel.style.bottom = "272px";
-    panel.style.zIndex = "9999";
-    panel.style.width = "min(420px, calc(100vw - 20px))";
-    panel.style.padding = "12px";
-    panel.style.borderRadius = "10px";
-    panel.style.border = "1px solid rgba(15, 23, 42, 0.12)";
-    panel.style.background = "rgba(255, 255, 255, 0.95)";
-    panel.style.boxShadow = "0 10px 24px rgba(15, 23, 42, 0.16)";
-    panel.style.fontFamily = "Manrope, sans-serif";
-
-    var heading = document.createElement("p");
-    heading.textContent = "Duplicate Guard";
-    heading.style.margin = "0 0 8px";
-    heading.style.fontSize = "13px";
-    heading.style.fontWeight = "700";
-    heading.style.color = "#0f172a";
-
-    var status = document.createElement("pre");
-    status.id = duplicateStatusId;
-    status.style.margin = "0";
-    status.style.padding = "8px";
-    status.style.borderRadius = "8px";
-    status.style.border = "1px solid #cbd5e1";
-    status.style.background = "#f8fafc";
-    status.style.color = "#334155";
-    status.style.fontFamily = "Manrope, sans-serif";
-    status.style.fontSize = "12px";
-    status.style.lineHeight = "1.45";
-    status.style.whiteSpace = "pre-wrap";
-    status.textContent = "Enter job details, then run duplicate check.";
-
-    var button = document.createElement("button");
-    button.id = duplicateCheckButtonId;
-    button.type = "button";
-    button.textContent = "Check Duplicates";
-    button.style.marginTop = "10px";
-    button.style.padding = "9px 12px";
-    button.style.borderRadius = "8px";
-    button.style.border = "none";
-    button.style.background = "#0f766e";
-    button.style.color = "#ffffff";
-    button.style.fontSize = "13px";
-    button.style.fontWeight = "700";
-    button.style.cursor = "pointer";
-
-    button.addEventListener("click", function () {
-      if (state.duplicateCheckPending) {
-        return;
-      }
-
-      state.duplicateCheckPending = true;
-      button.disabled = true;
-      button.textContent = "Checking...";
-
-      checkDuplicateJobs({ force: true })
-        .catch(function (error) {
-          var message = error && error.message ? error.message : "Duplicate check failed.";
-          renderDuplicateStatus(message, "warning");
-        })
-        .finally(function () {
-          state.duplicateCheckPending = false;
-          button.disabled = false;
-          button.textContent = "Check Duplicates";
-        });
-    });
-
-    panel.appendChild(heading);
-    panel.appendChild(status);
-    panel.appendChild(button);
-    document.body.appendChild(panel);
-  }
-
-  function isDuplicateRelevantField(target) {
-    if (
-      !(target instanceof HTMLInputElement) &&
-      !(target instanceof HTMLTextAreaElement) &&
-      !(target instanceof HTMLSelectElement)
-    ) {
+  function isSaveOrPublishButton(button) {
+    if (!(button instanceof HTMLButtonElement)) {
       return false;
     }
 
-    var fieldName = normalizeLabel(target.name || target.id || "");
-    return (
-      fieldName.indexOf("title") >= 0 ||
-      fieldName.indexOf("company") >= 0 ||
-      fieldName.indexOf("applylink") >= 0 ||
-      fieldName.indexOf("applyurl") >= 0
+    var textLabel = normalizeLabel(button.textContent || "");
+    var ariaLabel = normalizeLabel(button.getAttribute("aria-label") || "");
+    var combined = textLabel + " " + ariaLabel;
+
+    return combined.indexOf("publish") >= 0 || combined.indexOf("save") >= 0;
+  }
+
+  function lockButtonDuringCheck(button) {
+    var previousOpacity = button.style.opacity;
+    var previousCursor = button.style.cursor;
+
+    button.style.opacity = "0.7";
+    button.style.cursor = "progress";
+
+    return function restoreButton() {
+      button.style.opacity = previousOpacity;
+      button.style.cursor = previousCursor;
+    };
+  }
+
+  function resolveRecordsEndpoint(collectionName) {
+    if (collectionName === "jobs") {
+      return "/api/admin/jobs/records";
+    }
+
+    if (collectionName === "blogs") {
+      return "/api/admin/blogs/records";
+    }
+
+    return "";
+  }
+
+  function extractSlugFromHrefForCollection(hrefValue, collectionName) {
+    var match = String(hrefValue || "").match(
+      new RegExp("collections/" + collectionName + "/entries/([^/?#]+)", "i"),
     );
+    if (!match || !match[1]) {
+      return "";
+    }
+
+    try {
+      return decodeURIComponent(match[1]).trim();
+    } catch {
+      return normalizeText(match[1]);
+    }
+  }
+
+  function resolveEntryRow(linkNode) {
+    var current = linkNode;
+
+    while (current && current !== document.body) {
+      if (!(current instanceof HTMLElement)) {
+        return linkNode;
+      }
+
+      var tagName = (current.tagName || "").toUpperCase();
+      if (
+        tagName === "LI" ||
+        tagName === "TR" ||
+        tagName === "ARTICLE" ||
+        current.getAttribute("role") === "row"
+      ) {
+        return current;
+      }
+
+      current = current.parentElement;
+    }
+
+    return linkNode;
+  }
+
+  function getRenderedCollectionRows(collectionName) {
+    var selector = 'a[href*="collections/' + collectionName + '/entries/"]';
+    var linkNodes = document.querySelectorAll(selector);
+    var rows = [];
+
+    for (var index = 0; index < linkNodes.length; index += 1) {
+      var linkNode = linkNodes[index];
+      if (!(linkNode instanceof HTMLAnchorElement)) {
+        continue;
+      }
+
+      var slug = extractSlugFromHrefForCollection(
+        linkNode.getAttribute("href") || "",
+        collectionName,
+      );
+      if (!slug) {
+        continue;
+      }
+
+      var rowNode = resolveEntryRow(linkNode);
+      var exists = false;
+
+      for (var rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+        if (rows[rowIndex].row === rowNode) {
+          exists = true;
+          break;
+        }
+      }
+
+      if (exists) {
+        continue;
+      }
+
+      rows.push({
+        slug: slug,
+        row: rowNode,
+      });
+    }
+
+    return rows;
+  }
+
+  function reorderRenderedRowsBySlug(rows, orderedSlugs) {
+    if (!Array.isArray(rows) || rows.length < 2 || !Array.isArray(orderedSlugs)) {
+      return;
+    }
+
+    var firstRow = rows[0] && rows[0].row;
+    if (!(firstRow instanceof HTMLElement) || !firstRow.parentElement) {
+      return;
+    }
+
+    var parentNode = firstRow.parentElement;
+    for (var rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
+      if (!(rows[rowIndex].row instanceof HTMLElement)) {
+        continue;
+      }
+
+      if (rows[rowIndex].row.parentElement !== parentNode) {
+        return;
+      }
+    }
+
+    var rowBySlug = new Map();
+    for (var index = 0; index < rows.length; index += 1) {
+      rowBySlug.set(rows[index].slug, rows[index].row);
+    }
+
+    var appended = new Set();
+
+    for (var slugIndex = 0; slugIndex < orderedSlugs.length; slugIndex += 1) {
+      var slug = orderedSlugs[slugIndex];
+      if (appended.has(slug)) {
+        continue;
+      }
+
+      var row = rowBySlug.get(slug);
+      if (!row) {
+        continue;
+      }
+
+      parentNode.appendChild(row);
+      appended.add(slug);
+    }
+
+    for (var fallbackIndex = 0; fallbackIndex < rows.length; fallbackIndex += 1) {
+      var fallbackSlug = rows[fallbackIndex].slug;
+      if (appended.has(fallbackSlug)) {
+        continue;
+      }
+
+      parentNode.appendChild(rows[fallbackIndex].row);
+    }
+  }
+
+  async function applyCollectionSort(collectionName, sortMode, options) {
+    var opts = options || {};
+    if (state.sortRequestPending) {
+      return false;
+    }
+
+    var endpoint = resolveRecordsEndpoint(collectionName);
+    if (!endpoint) {
+      return false;
+    }
+
+    state.sortRequestPending = true;
+
+    try {
+      var response = await fetch(endpoint, {
+        method: "GET",
+        credentials: "same-origin",
+      });
+      var result = await readJsonResponse(response);
+
+      if (!response.ok || !result || !result.success) {
+        var message = (result && result.error) || "Unable to sort entries.";
+
+        if (message === "SessionRequired" || message === "EmailNotAllowed") {
+          window.location.href = "/admin/login?callbackUrl=" + encodeURIComponent("/admin");
+          return false;
+        }
+
+        if (!opts.silent) {
+          alert(message);
+        }
+        return false;
+      }
+
+      var records = Array.isArray(result.records) ? result.records : [];
+      var orderedRecords = records.slice();
+
+      if (sortMode === "oldest") {
+        orderedRecords.reverse();
+      }
+
+      var orderedSlugs = [];
+      for (var index = 0; index < orderedRecords.length; index += 1) {
+        var slug = normalizeText(orderedRecords[index] && orderedRecords[index].slug);
+        if (!slug) {
+          continue;
+        }
+
+        orderedSlugs.push(slug);
+      }
+
+      var rows = getRenderedCollectionRows(collectionName);
+      if (rows.length === 0) {
+        return false;
+      }
+
+      if (maybeRefreshStaleCollectionView(collectionName, orderedSlugs, rows)) {
+        return false;
+      }
+
+      reorderRenderedRowsBySlug(rows, orderedSlugs);
+      state.listSortMode[collectionName] = sortMode === "oldest" ? "oldest" : "newest";
+      return true;
+    } catch (error) {
+      if (!opts.silent) {
+        var message =
+          error && error.message ? error.message : "Unable to sort entries right now.";
+        alert(message);
+      }
+      return false;
+    } finally {
+      state.sortRequestPending = false;
+    }
+  }
+
+  function removeSortMenu() {
+    var menu = document.getElementById(sortMenuId);
+    if (menu) {
+      menu.remove();
+    }
+
+    state.currentSortMenuCollection = "";
+  }
+
+  function createSortMenuOption(label, mode, collectionName) {
+    var option = document.createElement("button");
+    option.type = "button";
+    option.textContent = label;
+    option.style.width = "100%";
+    option.style.display = "block";
+    option.style.padding = "8px 10px";
+    option.style.border = "none";
+    option.style.background =
+      state.listSortMode[collectionName] === mode ? "#ecfeff" : "#ffffff";
+    option.style.color = "#0f172a";
+    option.style.textAlign = "left";
+    option.style.fontSize = "12px";
+    option.style.fontWeight =
+      state.listSortMode[collectionName] === mode ? "700" : "600";
+    option.style.cursor = "pointer";
+
+    option.addEventListener("click", function () {
+      removeSortMenu();
+      applyCollectionSort(collectionName, mode, {
+        silent: false,
+      });
+    });
+
+    option.addEventListener("mouseenter", function () {
+      option.style.background = "#f1f5f9";
+    });
+
+    option.addEventListener("mouseleave", function () {
+      option.style.background =
+        state.listSortMode[collectionName] === mode ? "#ecfeff" : "#ffffff";
+    });
+
+    return option;
+  }
+
+  function openSortMenu(anchorElement, collectionName) {
+    removeSortMenu();
+
+    var rect = anchorElement.getBoundingClientRect();
+    var menuWidth = 190;
+    var proposedTop = rect.bottom + 6;
+    var proposedLeft = rect.right - menuWidth;
+    var clampedTop = Math.max(8, Math.min(proposedTop, window.innerHeight - 110));
+    var clampedLeft = Math.max(8, Math.min(proposedLeft, window.innerWidth - menuWidth - 8));
+
+    var menu = document.createElement("div");
+    menu.id = sortMenuId;
+    menu.setAttribute("data-collection", collectionName);
+    menu.style.position = "fixed";
+    menu.style.top = clampedTop + "px";
+    menu.style.left = clampedLeft + "px";
+    menu.style.width = menuWidth + "px";
+    menu.style.borderRadius = "10px";
+    menu.style.border = "1px solid rgba(148, 163, 184, 0.65)";
+    menu.style.background = "#ffffff";
+    menu.style.boxShadow = "0 12px 26px rgba(15, 23, 42, 0.16)";
+    menu.style.zIndex = "12000";
+    menu.style.overflow = "hidden";
+    menu.style.fontFamily = "Manrope, sans-serif";
+
+    menu.appendChild(createSortMenuOption("Newest first", "newest", collectionName));
+    menu.appendChild(createSortMenuOption("Oldest first", "oldest", collectionName));
+
+    document.body.appendChild(menu);
+    state.currentSortMenuCollection = collectionName;
+  }
+
+  function isVisibleElement(element) {
+    if (!(element instanceof HTMLElement)) {
+      return false;
+    }
+
+    if (element.hidden) {
+      return false;
+    }
+
+    var style = window.getComputedStyle(element);
+    if (style.display === "none" || style.visibility === "hidden") {
+      return false;
+    }
+
+    var rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
+  function findSortByTrigger() {
+    var candidates = document.querySelectorAll(
+      'button, [role="button"], [aria-label*="sort" i], [title*="sort" i]',
+    );
+    for (var index = 0; index < candidates.length; index += 1) {
+      var element = candidates[index];
+      if (!isVisibleElement(element)) {
+        continue;
+      }
+
+      var label = normalizeLabel(
+        (element.textContent || "") +
+          " " +
+          (element.getAttribute("aria-label") || "") +
+          " " +
+          (element.getAttribute("title") || ""),
+      );
+      if (label.indexOf("sort by") >= 0) {
+        return element;
+      }
+    }
+
+    return null;
+  }
+
+  function attachSortByEnhancer(collectionName) {
+    var sortTrigger = findSortByTrigger();
+    if (!(sortTrigger instanceof HTMLElement)) {
+      return;
+    }
+
+    if (sortTrigger.dataset.jobadviceSortBound === "1") {
+      return;
+    }
+
+    sortTrigger.dataset.jobadviceSortBound = "1";
+
+    sortTrigger.addEventListener(
+      "click",
+      function (event) {
+        var activeCollection = getActiveListCollection();
+        if (!activeCollection) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        var existingMenu = document.getElementById(sortMenuId);
+        if (existingMenu && state.currentSortMenuCollection === activeCollection) {
+          removeSortMenu();
+          return;
+        }
+
+        openSortMenu(sortTrigger, activeCollection);
+      },
+      true,
+    );
+
+    var routeKey = collectionName + "|" + (window.location.hash || "");
+    state.pendingInitialSortRouteKey = routeKey;
+  }
+
+  function registerCmsPreSaveGuard() {
+    if (state.cmsPreSaveGuardAttached) {
+      return;
+    }
+
+    if (!window.CMS || typeof window.CMS.registerEventListener !== "function") {
+      return;
+    }
+
+    window.CMS.registerEventListener({
+      name: "preSave",
+      handler: async function (eventPayload) {
+        var collectionName = resolveCollectionName(eventPayload);
+        if (collectionName !== "jobs") {
+          return eventPayload && eventPayload.entry ? eventPayload.entry : eventPayload;
+        }
+
+        var payload = buildDuplicatePayloadFromEntry(eventPayload);
+        var result = await checkDuplicateJobs(payload);
+
+        if (!result || !result.success) {
+          throw new Error("Unable to verify duplicate jobs right now. Please retry.");
+        }
+
+        if (result.hasExactDuplicate) {
+          throw new Error(buildDuplicateBlockedErrorMessage(result));
+        }
+
+        if (result.hasStrongSimilarDuplicate) {
+          throw new Error(buildStrongSimilarBlockedErrorMessage(result));
+        }
+
+        return eventPayload && eventPayload.entry ? eventPayload.entry : eventPayload;
+      },
+    });
+
+    state.cmsPreSaveGuardAttached = true;
   }
 
   function attachGlobalListeners() {
@@ -450,25 +924,15 @@
     state.hasGlobalListeners = true;
 
     document.addEventListener(
-      "input",
+      "click",
       function (event) {
-        if (!isJobsEntryRoute()) {
-          return;
+        var menuNode = document.getElementById(sortMenuId);
+        if (menuNode) {
+          var clickedNode = event.target;
+          if (!(clickedNode instanceof Node) || !menuNode.contains(clickedNode)) {
+            removeSortMenu();
+          }
         }
-
-        if (!isDuplicateRelevantField(event.target)) {
-          return;
-        }
-
-        if (state.duplicateDebounceTimer) {
-          window.clearTimeout(state.duplicateDebounceTimer);
-        }
-
-        state.duplicateDebounceTimer = window.setTimeout(function () {
-          checkDuplicateJobs({ force: false }).catch(function () {
-            // Keep silent for background checks; explicit button shows errors.
-          });
-        }, 700);
       },
       true,
     );
@@ -486,11 +950,11 @@
         }
 
         var button = clickedElement.closest("button");
-        if (!button) {
+        if (!(button instanceof HTMLButtonElement)) {
           return;
         }
 
-        if (button.id === duplicateCheckButtonId) {
+        if (!isSaveOrPublishButton(button)) {
           return;
         }
 
@@ -499,34 +963,26 @@
           return;
         }
 
-        var buttonLabel = normalizeLabel(button.textContent || "");
-        var isSaveOrPublish =
-          buttonLabel.indexOf("publish") >= 0 ||
-          buttonLabel.indexOf("save") >= 0;
-
-        if (!isSaveOrPublish) {
-          return;
-        }
-
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
 
-        if (state.duplicateCheckPending) {
+        if (state.publishCheckPending) {
           return;
         }
 
-        state.duplicateCheckPending = true;
+        state.publishCheckPending = true;
+        var restoreButton = lockButtonDuringCheck(button);
 
-        checkDuplicateJobs({ force: true })
+        checkDuplicateJobs()
           .then(function (result) {
             if (!result || !result.success) {
               alert("Unable to verify duplicate jobs. Please try again.");
               return;
             }
 
-            if (result.shouldBlockPublish) {
-              alert(buildPublishBlockMessage(result));
+            if (result.hasExactDuplicate) {
+              alert(buildDuplicateBlockedAlertMessage(result));
               return;
             }
 
@@ -549,387 +1005,50 @@
             alert(message);
           })
           .finally(function () {
-            state.duplicateCheckPending = false;
+            state.publishCheckPending = false;
+            restoreButton();
           });
       },
       true,
     );
   }
 
-  function formatIsoDate(dateValue) {
-    return dateValue.toISOString().split("T")[0];
-  }
+  function runEnhancements() {
+    registerCmsPreSaveGuard();
 
-  function shiftIsoDate(baseDate, dayDelta) {
-    var shiftedDate = new Date(baseDate);
-    shiftedDate.setUTCDate(shiftedDate.getUTCDate() + dayDelta);
-    return formatIsoDate(shiftedDate);
-  }
+    var activeCollection = getActiveListCollection();
+    if (activeCollection) {
+      attachSortByEnhancer(activeCollection);
 
-  function resolveDateFilterValues() {
-    var quickRangeInput = document.getElementById(jobsFilterQuickRangeId);
-    var fromInput = document.getElementById(jobsFilterFromId);
-    var toInput = document.getElementById(jobsFilterToId);
-
-    var quickValue =
-      quickRangeInput instanceof HTMLSelectElement ? quickRangeInput.value : "last3";
-    var fromDate =
-      fromInput instanceof HTMLInputElement ? normalizeText(fromInput.value) : "";
-    var toDate = toInput instanceof HTMLInputElement ? normalizeText(toInput.value) : "";
-    var today = new Date();
-    var todayIso = formatIsoDate(today);
-
-    if (quickValue === "today") {
-      return {
-        fromDate: todayIso,
-        toDate: todayIso,
-      };
-    }
-
-    if (quickValue === "yesterday") {
-      var yesterdayIso = shiftIsoDate(today, -1);
-      return {
-        fromDate: yesterdayIso,
-        toDate: yesterdayIso,
-      };
-    }
-
-    if (quickValue === "last2") {
-      return {
-        fromDate: shiftIsoDate(today, -1),
-        toDate: todayIso,
-      };
-    }
-
-    if (quickValue === "last3") {
-      return {
-        fromDate: shiftIsoDate(today, -2),
-        toDate: todayIso,
-      };
-    }
-
-    if (quickValue === "last7") {
-      return {
-        fromDate: shiftIsoDate(today, -6),
-        toDate: todayIso,
-      };
-    }
-
-    if (quickValue === "last30") {
-      return {
-        fromDate: shiftIsoDate(today, -29),
-        toDate: todayIso,
-      };
-    }
-
-    return {
-      fromDate: fromDate,
-      toDate: toDate,
-    };
-  }
-
-  function renderJobsFilterSummary(summaryText, tone) {
-    var summaryNode = document.getElementById(jobsFilterSummaryId);
-    if (!summaryNode) {
-      return;
-    }
-
-    var tones = {
-      neutral: "#334155",
-      success: "#065f46",
-      warning: "#92400e",
-    };
-
-    summaryNode.textContent = summaryText;
-    summaryNode.style.color = tones[tone] || tones.neutral;
-  }
-
-  function renderJobsFilterResults(records) {
-    var listNode = document.getElementById(jobsFilterListId);
-    if (!listNode) {
-      return;
-    }
-
-    while (listNode.firstChild) {
-      listNode.removeChild(listNode.firstChild);
-    }
-
-    if (!Array.isArray(records) || records.length === 0) {
-      var emptyNode = document.createElement("p");
-      emptyNode.textContent = "No jobs found for selected date range.";
-      emptyNode.style.margin = "0";
-      emptyNode.style.fontSize = "12px";
-      emptyNode.style.color = "#64748b";
-      listNode.appendChild(emptyNode);
-      return;
-    }
-
-    for (var index = 0; index < records.length; index += 1) {
-      var record = records[index];
-      var row = document.createElement("div");
-      row.style.border = "1px solid rgba(203, 213, 225, 0.75)";
-      row.style.borderRadius = "8px";
-      row.style.padding = "8px";
-      row.style.background = "#ffffff";
-
-      var dateNode = document.createElement("p");
-      dateNode.textContent = normalizeText(record.date);
-      dateNode.style.margin = "0";
-      dateNode.style.fontSize = "11px";
-      dateNode.style.color = "#0f766e";
-      dateNode.style.fontWeight = "700";
-
-      var titleNode = document.createElement("p");
-      titleNode.textContent =
-        normalizeText(record.title) + " @ " + normalizeText(record.company);
-      titleNode.style.margin = "4px 0 0";
-      titleNode.style.fontSize = "12px";
-      titleNode.style.color = "#0f172a";
-      titleNode.style.fontWeight = "600";
-      titleNode.style.lineHeight = "1.35";
-
-      var openLink = document.createElement("a");
-      openLink.href =
-        "/admin/#/collections/jobs/entries/" + encodeURIComponent(String(record.slug || ""));
-      openLink.textContent = "Open";
-      openLink.style.display = "inline-block";
-      openLink.style.marginTop = "6px";
-      openLink.style.fontSize = "11px";
-      openLink.style.fontWeight = "700";
-      openLink.style.color = "#0f766e";
-
-      row.appendChild(dateNode);
-      row.appendChild(titleNode);
-      row.appendChild(openLink);
-      listNode.appendChild(row);
-    }
-  }
-
-  async function applyJobsDateFilter() {
-    if (state.jobsFilterRequestPending) {
-      return;
-    }
-
-    var filterValues = resolveDateFilterValues();
-    if (!filterValues.fromDate || !filterValues.toDate) {
-      renderJobsFilterSummary(
-        "Select a quick range or set both From and To dates.",
-        "warning",
-      );
-      return;
-    }
-
-    state.jobsFilterRequestPending = true;
-    renderJobsFilterSummary("Loading jobs...", "neutral");
-
-    var requestUrl =
-      "/api/admin/jobs/records?from=" +
-      encodeURIComponent(filterValues.fromDate) +
-      "&to=" +
-      encodeURIComponent(filterValues.toDate);
-
-    try {
-      var response = await fetch(requestUrl, {
-        method: "GET",
-        credentials: "same-origin",
-      });
-      var result = await readJsonResponse(response);
-
-      if (!response.ok || !result || !result.success) {
-        var message = (result && result.error) || "Unable to load jobs.";
-        if (message === "SessionRequired" || message === "EmailNotAllowed") {
-          window.location.href = "/admin/login?callbackUrl=" + encodeURIComponent("/admin");
-          return;
-        }
-
-        renderJobsFilterSummary(message, "warning");
-        return;
+      var routeKey = activeCollection + "|" + (window.location.hash || "");
+      if (!state.pendingInitialSortRouteKey) {
+        state.pendingInitialSortRouteKey = routeKey;
       }
 
-      var total = Number(result.total || 0);
-      renderJobsFilterSummary(
-        total +
-          " jobs from " +
-          normalizeText(result.fromDate) +
-          " to " +
-          normalizeText(result.toDate),
-        "success",
-      );
-      renderJobsFilterResults(Array.isArray(result.records) ? result.records : []);
-    } catch (error) {
-      var message =
-        error && error.message ? error.message : "Unable to load jobs right now.";
-      renderJobsFilterSummary(message, "warning");
-    } finally {
-      state.jobsFilterRequestPending = false;
-    }
-  }
-
-  function removeJobsFilterPanel() {
-    var panel = document.getElementById(jobsFilterPanelId);
-    if (panel) {
-      panel.remove();
-    }
-  }
-
-  function injectJobsFilterPanel() {
-    if (!isJobsCollectionListRoute()) {
-      removeJobsFilterPanel();
-      return;
-    }
-
-    if (document.getElementById(jobsFilterPanelId)) {
-      return;
-    }
-
-    var panel = document.createElement("aside");
-    panel.id = jobsFilterPanelId;
-    panel.style.position = "fixed";
-    panel.style.right = "14px";
-    panel.style.bottom = "14px";
-    panel.style.zIndex = "9999";
-    panel.style.width = "min(420px, calc(100vw - 20px))";
-    panel.style.maxHeight = "min(70vh, 640px)";
-    panel.style.display = "flex";
-    panel.style.flexDirection = "column";
-    panel.style.padding = "12px";
-    panel.style.borderRadius = "10px";
-    panel.style.border = "1px solid rgba(15, 23, 42, 0.12)";
-    panel.style.background = "rgba(255, 255, 255, 0.95)";
-    panel.style.boxShadow = "0 10px 24px rgba(15, 23, 42, 0.16)";
-    panel.style.fontFamily = "Manrope, sans-serif";
-
-    var heading = document.createElement("p");
-    heading.textContent = "Jobs Date Filter";
-    heading.style.margin = "0 0 8px";
-    heading.style.fontSize = "13px";
-    heading.style.fontWeight = "700";
-    heading.style.color = "#0f172a";
-
-    var controls = document.createElement("div");
-    controls.style.display = "grid";
-    controls.style.gridTemplateColumns = "1fr 1fr";
-    controls.style.gap = "8px";
-
-    var quickRange = document.createElement("select");
-    quickRange.id = jobsFilterQuickRangeId;
-    quickRange.style.gridColumn = "1 / -1";
-    quickRange.style.padding = "8px";
-    quickRange.style.borderRadius = "8px";
-    quickRange.style.border = "1px solid rgba(148, 163, 184, 0.85)";
-    quickRange.style.fontSize = "12px";
-    quickRange.innerHTML =
-      '<option value="last3">Last 3 days</option>' +
-      '<option value="today">Today</option>' +
-      '<option value="yesterday">Yesterday</option>' +
-      '<option value="last2">Last 2 days</option>' +
-      '<option value="last7">Last 7 days</option>' +
-      '<option value="last30">Last 30 days</option>' +
-      '<option value="custom">Custom range</option>';
-
-    var fromInput = document.createElement("input");
-    fromInput.id = jobsFilterFromId;
-    fromInput.type = "date";
-    fromInput.style.padding = "8px";
-    fromInput.style.borderRadius = "8px";
-    fromInput.style.border = "1px solid rgba(148, 163, 184, 0.85)";
-    fromInput.style.fontSize = "12px";
-
-    var toInput = document.createElement("input");
-    toInput.id = jobsFilterToId;
-    toInput.type = "date";
-    toInput.style.padding = "8px";
-    toInput.style.borderRadius = "8px";
-    toInput.style.border = "1px solid rgba(148, 163, 184, 0.85)";
-    toInput.style.fontSize = "12px";
-
-    controls.appendChild(quickRange);
-    controls.appendChild(fromInput);
-    controls.appendChild(toInput);
-
-    var actions = document.createElement("div");
-    actions.style.display = "flex";
-    actions.style.gap = "8px";
-    actions.style.marginTop = "8px";
-
-    var applyButton = document.createElement("button");
-    applyButton.type = "button";
-    applyButton.textContent = "Apply Filter";
-    applyButton.style.flex = "1";
-    applyButton.style.padding = "9px 10px";
-    applyButton.style.borderRadius = "8px";
-    applyButton.style.border = "none";
-    applyButton.style.background = "#0f766e";
-    applyButton.style.color = "#ffffff";
-    applyButton.style.fontSize = "12px";
-    applyButton.style.fontWeight = "700";
-    applyButton.style.cursor = "pointer";
-
-    var resetButton = document.createElement("button");
-    resetButton.type = "button";
-    resetButton.textContent = "Reset";
-    resetButton.style.padding = "9px 10px";
-    resetButton.style.borderRadius = "8px";
-    resetButton.style.border = "1px solid rgba(148, 163, 184, 0.85)";
-    resetButton.style.background = "#ffffff";
-    resetButton.style.color = "#0f172a";
-    resetButton.style.fontSize = "12px";
-    resetButton.style.fontWeight = "700";
-    resetButton.style.cursor = "pointer";
-
-    actions.appendChild(applyButton);
-    actions.appendChild(resetButton);
-
-    var summary = document.createElement("p");
-    summary.id = jobsFilterSummaryId;
-    summary.style.margin = "10px 0 8px";
-    summary.style.fontSize = "12px";
-    summary.style.color = "#334155";
-    summary.textContent = "Filter by quick range or custom dates.";
-
-    var list = document.createElement("div");
-    list.id = jobsFilterListId;
-    list.style.display = "grid";
-    list.style.gap = "8px";
-    list.style.overflowY = "auto";
-    list.style.maxHeight = "42vh";
-    list.style.paddingRight = "4px";
-
-    quickRange.addEventListener("change", function () {
-      if (quickRange.value !== "custom") {
-        fromInput.value = "";
-        toInput.value = "";
+      if (
+        state.pendingInitialSortRouteKey === routeKey &&
+        !state.sortRequestPending
+      ) {
+        applyCollectionSort(activeCollection, state.listSortMode[activeCollection] || "newest", {
+          silent: true,
+        }).then(function (applied) {
+          if (applied) {
+            state.pendingInitialSortRouteKey = "";
+          }
+        });
       }
-    });
+      return;
+    }
 
-    applyButton.addEventListener("click", function () {
-      applyJobsDateFilter();
-    });
-
-    resetButton.addEventListener("click", function () {
-      quickRange.value = "last3";
-      fromInput.value = "";
-      toInput.value = "";
-      applyJobsDateFilter();
-    });
-
-    panel.appendChild(heading);
-    panel.appendChild(controls);
-    panel.appendChild(actions);
-    panel.appendChild(summary);
-    panel.appendChild(list);
-
-    document.body.appendChild(panel);
-    applyJobsDateFilter();
-  }
-
-  function runPanels() {
-    injectDuplicatePanel();
-    injectJobsFilterPanel();
+    state.pendingInitialSortRouteKey = "";
+    removeSortMenu();
   }
 
   attachGlobalListeners();
-  window.setInterval(runPanels, 1200);
-  window.addEventListener("hashchange", runPanels);
-  runPanels();
+  window.setInterval(runEnhancements, 1000);
+  window.addEventListener("hashchange", function () {
+    state.pendingInitialSortRouteKey = "";
+    window.setTimeout(runEnhancements, 120);
+  });
+  runEnhancements();
 })();

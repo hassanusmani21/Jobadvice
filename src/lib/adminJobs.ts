@@ -1,4 +1,5 @@
 import { getAllJobsForAdmin, type JobPost } from "./jobs";
+import { getRemoteJobRecords } from "./adminRepoRecords";
 import { toContentSlug } from "./slug";
 
 export type AdminJobRecord = {
@@ -131,10 +132,25 @@ const sortByRecentDate = (firstRecord: AdminJobRecord, secondRecord: AdminJobRec
     return secondDate - firstDate;
   }
 
-  return secondRecord.slug.localeCompare(firstRecord.slug);
+  const firstUpdatedAt = toDateTimestampOrNull(firstRecord.updatedAt) || 0;
+  const secondUpdatedAt = toDateTimestampOrNull(secondRecord.updatedAt) || 0;
+  if (secondUpdatedAt !== firstUpdatedAt) {
+    return secondUpdatedAt - firstUpdatedAt;
+  }
+
+  return firstRecord.slug.localeCompare(secondRecord.slug);
 };
 
 export const getAdminJobRecords = async () => {
+  try {
+    const remoteRecords = await getRemoteJobRecords();
+    if (remoteRecords.length > 0) {
+      return remoteRecords.sort(sortByRecentDate);
+    }
+  } catch (error) {
+    console.error("[adminJobs] Falling back to bundled job records:", error);
+  }
+
   const jobs = await getAllJobsForAdmin();
   return jobs.map(toAdminRecord).sort(sortByRecentDate);
 };
@@ -207,7 +223,9 @@ export const findDuplicateJobs = async (input: DuplicateCheckInput) => {
       reasons.push("Same company");
     }
 
-    if (sameApplyLink || (sameTitle && sameCompany)) {
+    // Company career portals often reuse one apply URL for multiple roles.
+    // Treating the apply link alone as an exact duplicate blocks legitimate jobs.
+    if (sameTitle && sameCompany) {
       exactMatches.push({
         slug: candidate.slug,
         title: candidate.title,
@@ -223,12 +241,24 @@ export const findDuplicateJobs = async (input: DuplicateCheckInput) => {
       continue;
     }
 
-    const similarityScore = Math.round(
-      titleSimilarity * 80 + (companyMatches ? 20 : 0),
+    const titleCompanySimilarityScore = titleSimilarity * 80 + (companyMatches ? 20 : 0);
+    const applyLinkSimilarityScore = sameApplyLink
+      ? titleSimilarity * 60 + (companyMatches ? 15 : 0) + 30
+      : 0;
+    const similarityScore = Math.min(
+      100,
+      Math.round(Math.max(titleCompanySimilarityScore, applyLinkSimilarityScore)),
     );
 
-    if (titleSimilarity >= 0.72 || (companyMatches && titleSimilarity >= 0.62)) {
+    if (
+      titleSimilarity >= 0.72 ||
+      (companyMatches && titleSimilarity >= 0.62) ||
+      (sameApplyLink && (titleSimilarity >= 0.2 || companyMatches))
+    ) {
       const similarReasons = [];
+      if (sameApplyLink) {
+        similarReasons.push("Apply link matched");
+      }
       if (companyMatches) {
         similarReasons.push("Company matched");
       }
