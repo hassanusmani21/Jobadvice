@@ -456,6 +456,234 @@
       })();
     </script>
     <script>
+      (function warnOnRiskyCoverImageUrls() {
+        var observer = null;
+        var warningAttribute = "data-jobadvice-cover-image-warning";
+        var boundAttribute = "data-jobadvice-cover-image-bound";
+        var riskyHostPatterns = [
+          /(^|\.)google\./i,
+          /(^|\.)gstatic\.com$/i,
+          /(^|\.)linkedin\.com$/i,
+          /(^|\.)licdn\.com$/i,
+          /(^|\.)economictimes\.com$/i,
+          /(^|\.)moneycontrol\.com$/i,
+          /(^|\.)facebook\.com$/i,
+          /(^|\.)fbcdn\.net$/i,
+          /(^|\.)instagram\.com$/i,
+          /(^|\.)twimg\.com$/i,
+          /(^|\.)x\.com$/i,
+          /(^|\.)twitter\.com$/i,
+        ];
+        var stableDirectHosts = [
+          "images.unsplash.com",
+          "images.pexels.com",
+          "cdn.pixabay.com",
+          "pixabay.com",
+          "images.ctfassets.net",
+          "res.cloudinary.com",
+        ];
+        var imageExtensionPattern = /\.(avif|gif|jpe?g|png|svg|webp)(?:$|[?#])/i;
+
+        function normalizeText(value) {
+          return String(value || "").trim();
+        }
+
+        function isCoverImageField(field) {
+          if (
+            !field ||
+            !(field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement)
+          ) {
+            return false;
+          }
+
+          var fieldName = normalizeText(field.name || field.id).toLowerCase();
+          if (fieldName.indexOf("coverimage") >= 0 || fieldName.indexOf("cover-image") >= 0) {
+            return true;
+          }
+
+          var labelNode = field.closest("div");
+          if (!labelNode) {
+            return false;
+          }
+
+          var labelText = normalizeText(labelNode.textContent).toLowerCase();
+          return labelText.indexOf("cover image") >= 0;
+        }
+
+        function getWarningNode(field) {
+          var fieldContainer = field.parentElement;
+          if (!fieldContainer) {
+            return null;
+          }
+
+          var existingNode = fieldContainer.querySelector("[" + warningAttribute + "]");
+          if (existingNode) {
+            return existingNode;
+          }
+
+          var warningNode = document.createElement("p");
+          warningNode.setAttribute(warningAttribute, "true");
+          warningNode.style.margin = "8px 0 0";
+          warningNode.style.fontSize = "12px";
+          warningNode.style.lineHeight = "1.45";
+          warningNode.style.display = "none";
+          fieldContainer.appendChild(warningNode);
+          return warningNode;
+        }
+
+        function classifyImageUrl(value) {
+          var normalizedValue = normalizeText(value);
+          if (!normalizedValue) {
+            return null;
+          }
+
+          if (
+            normalizedValue.indexOf("/uploads/") === 0 ||
+            normalizedValue.indexOf("public/uploads/") === 0
+          ) {
+            return {
+              tone: "safe",
+              text: "Uploaded image path looks stable.",
+            };
+          }
+
+          var parsedUrl = null;
+          try {
+            parsedUrl = new URL(normalizedValue, window.location.origin);
+          } catch {
+            return {
+              tone: "warning",
+              text: "Use a full http/https direct image URL, or upload the image instead.",
+            };
+          }
+
+          if (!/^https?:$/i.test(parsedUrl.protocol)) {
+            return {
+              tone: "warning",
+              text: "Use a full http/https direct image URL, or upload the image instead.",
+            };
+          }
+
+          if (parsedUrl.origin === window.location.origin) {
+            return {
+              tone: "safe",
+              text: "This local image URL should be stable.",
+            };
+          }
+
+          var hostname = parsedUrl.hostname.replace(/^www\./, "").toLowerCase();
+          var isRiskyHost = riskyHostPatterns.some(function (pattern) {
+            return pattern.test(hostname);
+          });
+
+          if (isRiskyHost) {
+            return {
+              tone: "warning",
+              text: "This host often blocks hotlinking or expires image URLs. Upload the image or use a stable direct image source.",
+            };
+          }
+
+          var looksDirect =
+            imageExtensionPattern.test(parsedUrl.pathname) ||
+            stableDirectHosts.indexOf(hostname) >= 0 ||
+            hostname.indexOf("images.") === 0 ||
+            hostname.indexOf("cdn.") === 0;
+
+          if (looksDirect) {
+            return {
+              tone: "safe",
+              text: "This looks like a direct image URL.",
+            };
+          }
+
+          return {
+            tone: "warning",
+            text: "This may be a page link or temporary URL, not a stable direct image. If preview breaks, upload the image instead.",
+          };
+        }
+
+        function applyWarning(field) {
+          var warningNode = getWarningNode(field);
+          if (!warningNode) {
+            return;
+          }
+
+          var result = classifyImageUrl(field.value);
+          if (!result) {
+            warningNode.textContent = "";
+            warningNode.style.display = "none";
+            return;
+          }
+
+          warningNode.textContent = result.text;
+          warningNode.style.display = "block";
+          warningNode.style.color =
+            result.tone === "safe" ? "#0f766e" : "#b45309";
+        }
+
+        function bindField(field) {
+          if (!isCoverImageField(field) || field.getAttribute(boundAttribute) === "true") {
+            return;
+          }
+
+          field.setAttribute(boundAttribute, "true");
+          field.addEventListener("input", function () {
+            applyWarning(field);
+          });
+          field.addEventListener("change", function () {
+            applyWarning(field);
+          });
+          applyWarning(field);
+        }
+
+        function bindFields(root) {
+          if (!root) {
+            return;
+          }
+
+          var fields = root.querySelectorAll("input, textarea");
+          for (var index = 0; index < fields.length; index += 1) {
+            bindField(fields[index]);
+          }
+        }
+
+        function startObserving(root) {
+          if (!root || observer) {
+            return;
+          }
+
+          observer = new MutationObserver(function () {
+            bindFields(root);
+          });
+
+          observer.observe(root, {
+            childList: true,
+            subtree: true,
+          });
+
+          bindFields(root);
+        }
+
+        function waitForRoot(attempts) {
+          var root = document.getElementById("nc-root");
+          if (root) {
+            startObserving(root);
+            return;
+          }
+
+          if (attempts > 180) {
+            return;
+          }
+
+          window.setTimeout(function () {
+            waitForRoot(attempts + 1);
+          }, 250);
+        }
+
+        waitForRoot(0);
+      })();
+    </script>
+    <script>
       (function injectAdminAccountPanel() {
         var panelId = "next-auth-admin-menu";
         var triggerId = "next-auth-admin-trigger";
