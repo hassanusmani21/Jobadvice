@@ -29,6 +29,7 @@ export type BlogPost = {
   readingTimeMinutes: number;
   ctaLabel?: string;
   ctaLink?: string;
+  sortTimestamp: number;
 };
 
 export type TrendingTopic = {
@@ -282,14 +283,12 @@ const toSortableTimestamp = (value: string) => Date.parse(`${value}T00:00:00Z`);
 const getBlogSortValues = (blog: BlogPost) => {
   const todayTimestamp = getTodayTimestamp();
   const publishedTimestamp = toSortableTimestamp(blog.date);
-  const updatedTimestamp = toSortableTimestamp(blog.updatedAt || blog.date);
   const publishedInFuture = publishedTimestamp > todayTimestamp;
-  const updatedInFuture = updatedTimestamp > todayTimestamp;
 
   return {
-    futureRank: publishedInFuture && updatedInFuture ? 1 : 0,
-    primaryTimestamp: updatedInFuture ? 0 : updatedTimestamp,
-    secondaryTimestamp: publishedInFuture ? 0 : publishedTimestamp,
+    futureRank: publishedInFuture ? 1 : 0,
+    primaryTimestamp: publishedInFuture ? 0 : publishedTimestamp,
+    secondaryTimestamp: publishedInFuture ? 0 : blog.sortTimestamp,
   };
 };
 
@@ -323,9 +322,13 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
     data.ctaLink || data.registrationLink || data.applyLink || data.joinLink,
   );
   const date = toDateString(data.date || data.publishedAt) || getTodayDateString();
+  const explicitUpdatedAt = toDateString(data.updatedAt || data.updated || data.lastUpdated);
   const updatedAt =
-    toDateString(data.updatedAt || data.updated || data.lastUpdated) ||
+    explicitUpdatedAt ||
     toDateString(fileStats.mtime.toISOString()) || getTodayDateString();
+  const sortTimestamp = explicitUpdatedAt
+    ? toSortableTimestamp(explicitUpdatedAt)
+    : fileStats.mtimeMs;
   const isTrending = toBoolean(data.isTrending || data.trending);
   const postContent = normalizeMarkdownSource(content || summary);
   if (!postContent) {
@@ -354,6 +357,7 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
     readingTimeMinutes,
     ...(ctaLabel ? { ctaLabel } : {}),
     ...(ctaLink ? { ctaLink } : {}),
+    sortTimestamp,
   };
 };
 
