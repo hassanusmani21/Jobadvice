@@ -280,7 +280,7 @@ const renderInlineMarkdown = (text: string): ReactNode => {
         </a>,
       );
     } else if (match[4]) {
-      const href = match[4];
+      const href = trimTrailingUrlPunctuation(match[4]);
 
       nodes.push(
         <a
