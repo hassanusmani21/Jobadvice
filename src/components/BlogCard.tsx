@@ -1,4 +1,5 @@
 import Link from "@/components/AppLink";
+import { toDisplayImageSrc } from "@/lib/images";
 import { formatBlogDate, type BlogPost } from "@/lib/blogs";
 
 type BlogCardProps = {
@@ -7,6 +8,8 @@ type BlogCardProps = {
 };
 
 export default function BlogCard({ blog, style }: BlogCardProps) {
+  const coverImageSrc = toDisplayImageSrc(blog.coverImage);
+
   return (
     <Link
       href={`/blog/${blog.slug}`}
@@ -14,10 +17,10 @@ export default function BlogCard({ blog, style }: BlogCardProps) {
       aria-label={`Read ${blog.title}`}
       style={style}
     >
-      {blog.coverImage ? (
+      {coverImageSrc ? (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
           <img
-            src={blog.coverImage}
+            src={coverImageSrc}
             alt={blog.title}
             className="h-32 w-full object-cover transition duration-300 group-hover:scale-[1.02] sm:h-36"
             loading="lazy"

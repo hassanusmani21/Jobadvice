@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -14,6 +13,7 @@ import {
   markdownToBlocks,
   type MarkdownBlock,
 } from "@/lib/markdown";
+import { toDisplayImageSrc } from "@/lib/images";
 import { toContentSlug } from "@/lib/slug";
 import { organizationId, siteLogoUrl, siteName, siteUrl } from "@/lib/site";
 
@@ -443,6 +443,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     notFound();
   }
 
+  const coverImageSrc = toDisplayImageSrc(blog.coverImage);
   const allBlogs = await getAllBlogs();
   const relatedBlogs = getRelatedBlogs(allBlogs, blog);
   const markdownBlocks = markdownToBlocks(blog.content);
@@ -488,16 +489,13 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             </ol>
           </nav>
 
-          {blog.coverImage ? (
+          {coverImageSrc ? (
             <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-              <Image
-                src={blog.coverImage}
+              <img
+                src={coverImageSrc}
                 alt={blog.title}
-                width={1200}
-                height={675}
-                priority
-                sizes="(min-width: 1024px) 70vw, 100vw"
                 className="h-56 w-full object-cover sm:h-72"
+                loading="eager"
               />
             </div>
           ) : null}

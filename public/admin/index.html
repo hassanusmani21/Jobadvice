@@ -227,7 +227,13 @@
                 default: false,
               },
               { label: "Author", name: "author", widget: "string", required: false },
-              { label: "Cover Image", name: "coverImage", widget: "image", required: false },
+              {
+                label: "Cover Image",
+                name: "coverImage",
+                widget: "image",
+                required: false,
+                hint: "Best option: upload the image here. If you paste a URL, use a direct image URL from a stable source. Avoid Google image result links, LinkedIn, or temporary signed links.",
+              },
               {
                 label: "Publish Date",
                 name: "date",
