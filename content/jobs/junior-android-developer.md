@@ -3,7 +3,7 @@ title: Junior Android Developer
 date: 2026-03-09
 company: Kutumb
 location: Bangalore
-salary: Experience Required (optional)
+salary: ""
 experience: 1-3 years
 eligibilityCriteria: |-
   1–2 years of Android development experience
@@ -22,7 +22,6 @@ skills:
   - Mobile Development
   - UI Development
 responsibilities:
-  - optional)
   - Develop and deliver Android features from design to deployment
   - Prototype
   - test

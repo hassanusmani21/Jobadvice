@@ -1,5 +1,5 @@
 ---
-title: Associate Software Engineer
+title: "Associate Software Engineer "
 date: 2026-03-09
 company: EY (Ernst & Young)
 location: Bangalore, Chennai, Gurgaon, Noida, Kolkata, Mumbai, Pune, Trivandrum, Kochi
@@ -29,19 +29,15 @@ skills:
   - Data Analytics
   - Databases
 responsibilities:
-  - Design and develop innovative technology solutions
-  - Work across different technology areas including Digital Technologies
-  - Data & Analytics
-  - Testing Services
-  - and Cloud
-  - Collaborate with global teams to deliver technology consulting services
-  - Apply emerging technologies such as AI
-  - Blockchain
-  - IoT
-  - Cloud
-  - and DevSecOps
-  - Support digital transformation and technology lifecycle projects
-  - Ensure software quality through testing and validation processes
+  - Develop and deliver Android features from design to deployment Prototype
+  - test
+  - and iterate on new product features Build fast and high-quality Android user
+    interfaces Work with Kotlin
+  - Firebase
+  - and Android SDKs Collaborate with founders
+  - product managers
+  - and designers Support technical decisions and contribute to product
+    architecture
 workingDays: ""
 jobTiming: ""
 applyLink: https://eyglobal.yello.co/jobs/gZb5m7-Knc63nrFieAkang?job_board_id=c1riT--B2O-KySgYWsZO1Q&utm_source=Associate_Software_Engineer_unstop&utm_medium=listing&utm_campaign=unstop
