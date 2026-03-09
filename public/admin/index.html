@@ -684,6 +684,189 @@
       })();
     </script>
     <script>
+      (function warnOnLargeUploadedCoverImages() {
+        var observer = null;
+        var noticeAttribute = "data-jobadvice-cover-image-file-warning";
+        var boundAttribute = "data-jobadvice-cover-image-file-bound";
+
+        function normalizeText(value) {
+          return String(value || "").trim();
+        }
+
+        function isImageUploadField(field) {
+          if (!(field instanceof HTMLInputElement) || field.type !== "file") {
+            return false;
+          }
+
+          var acceptValue = normalizeText(field.getAttribute("accept")).toLowerCase();
+          if (acceptValue.indexOf("image") >= 0) {
+            return true;
+          }
+
+          var container = field.closest("div");
+          if (!container) {
+            return false;
+          }
+
+          var labelText = normalizeText(container.textContent).toLowerCase();
+          return (
+            labelText.indexOf("cover image") >= 0 ||
+            labelText.indexOf("thumbnail") >= 0 ||
+            labelText.indexOf("replace with url") >= 0
+          );
+        }
+
+        function getNoticeNode(field) {
+          var container = field.parentElement;
+          if (!container) {
+            return null;
+          }
+
+          var existing = container.querySelector("[" + noticeAttribute + "]");
+          if (existing) {
+            return existing;
+          }
+
+          var notice = document.createElement("p");
+          notice.setAttribute(noticeAttribute, "true");
+          notice.style.margin = "8px 0 0";
+          notice.style.fontSize = "12px";
+          notice.style.lineHeight = "1.45";
+          notice.style.display = "none";
+          container.appendChild(notice);
+          return notice;
+        }
+
+        function formatFileSize(sizeInBytes) {
+          if (sizeInBytes >= 1024 * 1024) {
+            return (sizeInBytes / (1024 * 1024)).toFixed(1) + " MB";
+          }
+
+          return Math.max(1, Math.round(sizeInBytes / 1024)) + " KB";
+        }
+
+        function describeFile(file) {
+          if (!file) {
+            return null;
+          }
+
+          var isImage = /^image\//i.test(file.type || "");
+          if (!isImage) {
+            return {
+              tone: "warning",
+              text: "Selected file is not a normal image. Use JPG, PNG, or WEBP.",
+            };
+          }
+
+          if (file.size > 5 * 1024 * 1024) {
+            return {
+              tone: "warning",
+              text:
+                "Large image (" +
+                formatFileSize(file.size) +
+                "). Mobile publish may fail. Compress it below 2 MB if possible.",
+            };
+          }
+
+          if (file.size > 2 * 1024 * 1024) {
+            return {
+              tone: "warning",
+              text:
+                "Image size is " +
+                formatFileSize(file.size) +
+                ". It may still work, but smaller JPG/WEBP files publish more reliably on mobile.",
+            };
+          }
+
+          return {
+            tone: "safe",
+            text:
+              "Selected image: " +
+              formatFileSize(file.size) +
+              ". This size should usually publish fine.",
+          };
+        }
+
+        function updateNotice(field) {
+          var notice = getNoticeNode(field);
+          if (!notice) {
+            return;
+          }
+
+          var file = field.files && field.files[0] ? field.files[0] : null;
+          var message = describeFile(file);
+
+          if (!message) {
+            notice.textContent = "";
+            notice.style.display = "none";
+            return;
+          }
+
+          notice.textContent = message.text;
+          notice.style.display = "block";
+          notice.style.color = message.tone === "safe" ? "#0f766e" : "#b45309";
+        }
+
+        function bindField(field) {
+          if (!isImageUploadField(field) || field.getAttribute(boundAttribute) === "true") {
+            return;
+          }
+
+          field.setAttribute(boundAttribute, "true");
+          field.addEventListener("change", function () {
+            updateNotice(field);
+          });
+          updateNotice(field);
+        }
+
+        function bindFields(root) {
+          if (!root) {
+            return;
+          }
+
+          var fields = root.querySelectorAll('input[type="file"]');
+          for (var index = 0; index < fields.length; index += 1) {
+            bindField(fields[index]);
+          }
+        }
+
+        function startObserving(root) {
+          if (!root || observer) {
+            return;
+          }
+
+          observer = new MutationObserver(function () {
+            bindFields(root);
+          });
+
+          observer.observe(root, {
+            childList: true,
+            subtree: true,
+          });
+
+          bindFields(root);
+        }
+
+        function waitForRoot(attempts) {
+          var root = document.getElementById("nc-root");
+          if (root) {
+            startObserving(root);
+            return;
+          }
+
+          if (attempts > 180) {
+            return;
+          }
+
+          window.setTimeout(function () {
+            waitForRoot(attempts + 1);
+          }, 250);
+        }
+
+        waitForRoot(0);
+      })();
+    </script>
+    <script>
       (function injectAdminAccountPanel() {
         var panelId = "next-auth-admin-menu";
         var triggerId = "next-auth-admin-trigger";
