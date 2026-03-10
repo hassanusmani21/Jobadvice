@@ -1,5 +1,5 @@
 ---
-title: "AI Productivity Paradox: Why AI Sometimes Makes Work Slower"
+title: "AI Productivity Paradox: Why AI Sometimes Makes Work Slower "
 slug: ai-productivity-paradox-why-ai-sometimes-makes-work-slower
 summary: A Mumbai startup founder recently highlighted the “AI productivity
   paradox” — where tasks that once took 30 minutes can now take hours with AI.
