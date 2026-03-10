@@ -108,18 +108,31 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="space-y-5">
+      <section className="space-y-6 py-2">
         <div
-          className="fade-up flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between"
+          className="fade-up flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
           style={{ animationDelay: "100ms" }}
         >
-          <h2 className="font-serif text-[1.5rem] leading-[1.2] text-slate-900">Latest Job Updates</h2>
-          <Link href="/jobs" className="text-sm font-semibold text-teal-800 transition hover:text-teal-900">
-            View all openings
+          <div className="space-y-1.5">
+            <h2 className="text-[1.5rem] font-semibold leading-[1.15] text-slate-900">
+              Latest Job Updates
+            </h2>
+            <p className="text-sm text-gray-500">
+              Find the newest opportunities from top companies.
+            </p>
+          </div>
+          <Link
+            href="/jobs"
+            className="group inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-teal-800 underline-offset-4 transition hover:text-teal-900 hover:underline"
+          >
+            <span>View all openings</span>
+            <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5">
+              →
+            </span>
           </Link>
         </div>
 
-        <ul className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
           {latestJobs.map((job, index) => (
             <li key={job.slug} className="min-w-0">
               <JobCard job={job} style={{ animationDelay: `${180 + index * 90}ms` }} />

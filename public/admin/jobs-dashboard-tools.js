@@ -13,6 +13,7 @@
       blogs: "newest",
     },
     pendingInitialSortRouteKey: "",
+    lastAutoSortedRouteKey: "",
     currentSortMenuCollection: "",
   };
 
@@ -654,6 +655,11 @@
       return false;
     }
 
+    var rows = getRenderedCollectionRows(collectionName);
+    if (rows.length === 0) {
+      return false;
+    }
+
     state.sortRequestPending = true;
 
     try {
@@ -692,11 +698,6 @@
         }
 
         orderedSlugs.push(slug);
-      }
-
-      var rows = getRenderedCollectionRows(collectionName);
-      if (rows.length === 0) {
-        return false;
       }
 
       if (maybeRefreshStaleCollectionView(collectionName, orderedSlugs, rows)) {
@@ -873,8 +874,6 @@
       true,
     );
 
-    var routeKey = collectionName + "|" + (window.location.hash || "");
-    state.pendingInitialSortRouteKey = routeKey;
   }
 
   function registerCmsPreSaveGuard() {
@@ -1021,7 +1020,10 @@
       attachSortByEnhancer(activeCollection);
 
       var routeKey = activeCollection + "|" + (window.location.hash || "");
-      if (!state.pendingInitialSortRouteKey) {
+      if (
+        !state.pendingInitialSortRouteKey &&
+        state.lastAutoSortedRouteKey !== routeKey
+      ) {
         state.pendingInitialSortRouteKey = routeKey;
       }
 
@@ -1033,6 +1035,7 @@
           silent: true,
         }).then(function (applied) {
           if (applied) {
+            state.lastAutoSortedRouteKey = routeKey;
             state.pendingInitialSortRouteKey = "";
           }
         });
@@ -1048,6 +1051,7 @@
   window.setInterval(runEnhancements, 1000);
   window.addEventListener("hashchange", function () {
     state.pendingInitialSortRouteKey = "";
+    state.lastAutoSortedRouteKey = "";
     window.setTimeout(runEnhancements, 120);
   });
   runEnhancements();

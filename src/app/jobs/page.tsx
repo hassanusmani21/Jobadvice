@@ -218,7 +218,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         </p>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-3">
         {sortedJobs.map((job) => (
           <div key={job.slug} className="min-w-0">
             <JobCard job={job} />

@@ -8,6 +8,9 @@ const githubRepo = process.env.ADMIN_CONTENT_REPO_NAME || "Jobadvice";
 const githubBranch = process.env.ADMIN_CONTENT_REPO_BRANCH || "main";
 const githubContentsToken = (process.env.ADMIN_CONTENTS_TOKEN || "").trim();
 
+export const shouldUseRemoteAdminRecords = () =>
+  process.env.NODE_ENV === "production" || githubContentsToken.length > 0;
+
 type GithubContentsItem = {
   name?: string;
   download_url?: string | null;

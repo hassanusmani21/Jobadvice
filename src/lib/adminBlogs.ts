@@ -1,5 +1,5 @@
 import { getAllBlogs } from "./blogs";
-import { getRemoteBlogRecords } from "./adminRepoRecords";
+import { getRemoteBlogRecords, shouldUseRemoteAdminRecords } from "./adminRepoRecords";
 
 export type AdminBlogRecord = {
   slug: string;
@@ -43,13 +43,15 @@ const sortByRecentDate = (firstRecord: AdminBlogRecord, secondRecord: AdminBlogR
 };
 
 export const getAdminBlogRecords = async () => {
-  try {
-    const remoteRecords = await getRemoteBlogRecords();
-    if (remoteRecords.length > 0) {
-      return remoteRecords.sort(sortByRecentDate);
+  if (shouldUseRemoteAdminRecords()) {
+    try {
+      const remoteRecords = await getRemoteBlogRecords();
+      if (remoteRecords.length > 0) {
+        return remoteRecords.sort(sortByRecentDate);
+      }
+    } catch (error) {
+      console.error("[adminBlogs] Falling back to bundled blog records:", error);
     }
-  } catch (error) {
-    console.error("[adminBlogs] Falling back to bundled blog records:", error);
   }
 
   const blogs = await getAllBlogs();

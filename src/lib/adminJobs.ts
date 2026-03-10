@@ -1,5 +1,5 @@
 import { getAllJobsForAdmin, type JobPost } from "./jobs";
-import { getRemoteJobRecords } from "./adminRepoRecords";
+import { getRemoteJobRecords, shouldUseRemoteAdminRecords } from "./adminRepoRecords";
 import { toContentSlug } from "./slug";
 
 export type AdminJobRecord = {
@@ -142,13 +142,15 @@ const sortByRecentDate = (firstRecord: AdminJobRecord, secondRecord: AdminJobRec
 };
 
 export const getAdminJobRecords = async () => {
-  try {
-    const remoteRecords = await getRemoteJobRecords();
-    if (remoteRecords.length > 0) {
-      return remoteRecords.sort(sortByRecentDate);
+  if (shouldUseRemoteAdminRecords()) {
+    try {
+      const remoteRecords = await getRemoteJobRecords();
+      if (remoteRecords.length > 0) {
+        return remoteRecords.sort(sortByRecentDate);
+      }
+    } catch (error) {
+      console.error("[adminJobs] Falling back to bundled job records:", error);
     }
-  } catch (error) {
-    console.error("[adminJobs] Falling back to bundled job records:", error);
   }
 
   const jobs = await getAllJobsForAdmin();

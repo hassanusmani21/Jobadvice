@@ -69,7 +69,10 @@ CURRENT_COMMIT="$(git rev-parse HEAD)"
 PREVIOUS_COMMIT="$(git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
 
 echo "Pushing deploy content to ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}..."
-bash ./scripts/sync-publishable-commit.sh "${DEPLOY_REMOTE}" "${DEPLOY_BRANCH}" "${CURRENT_COMMIT}"
+if ! bash ./scripts/sync-publishable-commit.sh "${DEPLOY_REMOTE}" "${DEPLOY_BRANCH}" "${CURRENT_COMMIT}"; then
+  echo "Content push failed. Commit ${CURRENT_COMMIT} is still local and was not pushed to ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}."
+  exit 1
+fi
 
 echo "Sending Google job indexing notifications..."
 notify_google_indexing_api "${PREVIOUS_COMMIT}" "${CURRENT_COMMIT}"

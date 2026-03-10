@@ -34,6 +34,74 @@ const resolveSourceHost = (applyLink: string | undefined) => {
   }
 };
 
+type HeaderInfoIconProps = {
+  kind: "title" | "company" | "date" | "source";
+  className?: string;
+};
+
+const HeaderInfoIcon = ({
+  kind,
+  className = "h-4 w-4",
+}: HeaderInfoIconProps) => {
+  if (kind === "company") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 20 20" className={`${className} text-slate-600`}>
+        <path
+          d="M4 16.2V5.8A1.8 1.8 0 0 1 5.8 4h5.4A1.8 1.8 0 0 1 13 5.8v10.4M7.2 4V2.8h2.6V4m4.2 12.2V9.4A1.4 1.4 0 0 1 15.4 8H17v8.2M3 16.2h14"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.5"
+        />
+      </svg>
+    );
+  }
+
+  if (kind === "date") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 20 20" className={`${className} text-amber-700`}>
+        <path
+          d="M5.2 3.5v2.2m9.6-2.2v2.2M4.4 6.2h11.2A1.4 1.4 0 0 1 17 7.6v7A1.4 1.4 0 0 1 15.6 16H4.4A1.4 1.4 0 0 1 3 14.6v-7a1.4 1.4 0 0 1 1.4-1.4Zm0 3.1H17"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.5"
+        />
+      </svg>
+    );
+  }
+
+  if (kind === "source") {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 20 20" className={`${className} text-sky-700`}>
+        <path
+          d="M10 16c3.3 0 6-2.7 6-6S13.3 4 10 4 4 6.7 4 10s2.7 6 6 6Zm0-8.5v2.7l1.9 1.4"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.5"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className={`${className} text-teal-800`}>
+      <path
+        d="M4 6.8h12v7.4A1.8 1.8 0 0 1 14.2 16H5.8A1.8 1.8 0 0 1 4 14.2V6.8Zm3-2.8h6a1.8 1.8 0 0 1 1.8 1.8v1H5.2v-1A1.8 1.8 0 0 1 7 4Z"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.6"
+      />
+    </svg>
+  );
+};
+
 const cityRegionCountryMap: Record<
   string,
   { locality: string; region: string; country: string }
@@ -362,15 +430,36 @@ export default async function JobDetailPage({ params }: JobPageProps) {
       />
       <article className="space-y-6 lg:col-span-7">
         <header className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
-          <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
-            Posted {formatPostedDate(job.date)}
-          </p>
-          <h1 className="mt-2 font-serif text-[1.5rem] leading-[1.2] text-slate-900 sm:text-[1.875rem]">{job.title}</h1>
-          <p className="mt-3 text-base font-semibold text-slate-700 sm:text-lg">{job.company}</p>
-          <p className="mt-2 text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:text-xs">
-            Last updated {formatPostedDate(job.updatedAt)}
-            {sourceHost ? ` • Source: ${sourceHost}` : ""}
-          </p>
+          <div className="flex flex-wrap gap-2 text-[11px] font-semibold sm:text-xs">
+            <span className="inline-flex max-w-full items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-slate-700">
+              <HeaderInfoIcon kind="company" />
+              <span className="truncate">{job.company}</span>
+            </span>
+            <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-amber-900">
+              <HeaderInfoIcon kind="date" />
+              <span>Posted {formatPostedDate(job.date)}</span>
+            </span>
+            {sourceHost ? (
+              <span className="inline-flex max-w-full items-center gap-2 rounded-full bg-sky-50 px-3 py-1.5 text-sky-900">
+                <HeaderInfoIcon kind="source" />
+                <span className="truncate">Source: {sourceHost}</span>
+              </span>
+            ) : null}
+          </div>
+
+          <div className="mt-4 flex items-start gap-4">
+            <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-teal-50 ring-1 ring-teal-100">
+              <HeaderInfoIcon kind="title" className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h1 className="font-serif text-[1.5rem] leading-[1.15] text-slate-900 sm:text-[1.95rem]">
+                {job.title}
+              </h1>
+              <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-slate-500 sm:text-xs">
+                Last updated {formatPostedDate(job.updatedAt)}
+              </p>
+            </div>
+          </div>
 
           <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-700 sm:text-sm">
             {job.location ? (

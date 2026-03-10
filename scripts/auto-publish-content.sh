@@ -59,7 +59,11 @@ publish_content() {
   current_commit="$(git rev-parse HEAD)"
   previous_commit="$(git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
   echo "Pushing deploy content to ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}..."
-  bash ./scripts/sync-publishable-commit.sh "${DEPLOY_REMOTE}" "${DEPLOY_BRANCH}" "${current_commit}"
+  if ! bash ./scripts/sync-publishable-commit.sh "${DEPLOY_REMOTE}" "${DEPLOY_BRANCH}" "${current_commit}"; then
+    echo "Auto publish failed. Commit ${current_commit} is still local and was not pushed to ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}."
+    return 1
+  fi
+
   notify_google_indexing_api "${previous_commit}" "${current_commit}"
   echo "Auto publish complete. Netlify will deploy from ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}."
   return 0
