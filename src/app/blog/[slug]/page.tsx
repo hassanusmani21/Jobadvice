@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ActionButton from "@/components/ActionButton";
 import Image from "next/image";
 import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
@@ -709,19 +710,21 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                     {cta.sourceHost ? `Official source: ${cta.sourceHost}` : "Official link"}
                   </p>
                 </div>
-                <a
+                <ActionButton
                   href={cta.href}
+                  external
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex shrink-0 items-center justify-center rounded-xl bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_-20px_rgba(15,118,110,0.55)] transition hover:bg-teal-800"
+                  variant="primary"
+                  className="shrink-0 sm:w-auto"
                 >
                   Open
-                </a>
+                </ActionButton>
               </div>
             </section>
           ) : null}
 
-          <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 text-sm text-slate-600 sm:px-5">
+          <div className="soft-note mt-8 px-4 py-4 text-sm text-slate-600 sm:px-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
               Article information
             </p>
@@ -765,12 +768,9 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         </section>
 
         <div className="fade-up" style={{ animationDelay: "150ms" }}>
-          <Link
-            href="/blog"
-            className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
-          >
+          <ActionButton href="/blog" variant="secondary" className="sm:w-auto">
             Back to all blogs
-          </Link>
+          </ActionButton>
         </div>
       </article>
 
@@ -806,7 +806,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 <Link
                   key={relatedBlog.slug}
                   href={`/blog/${relatedBlog.slug}`}
-                  className="block rounded-2xl border border-slate-200 bg-white/85 p-4 transition hover:border-teal-200 hover:bg-teal-50/70"
+                  className="content-list-card p-4"
                 >
                   <p className="text-sm font-semibold leading-6 text-slate-900">
                     {relatedBlog.title}

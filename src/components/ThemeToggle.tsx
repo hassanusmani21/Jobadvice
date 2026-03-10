@@ -95,8 +95,8 @@ export default function ThemeToggle({ compact = false }: ThemeToggleProps) {
       onClick={toggleTheme}
       aria-label={label}
       title={label}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:border-teal-200 hover:text-teal-900 ${
-        compact ? "h-11 w-11" : "px-3 py-1.5 text-sm font-semibold"
+      className={`utility-button ${
+        compact ? "h-11 w-11 px-0" : "px-3 py-1.5 text-sm font-semibold"
       }`}
     >
       {isDark ? <SunIcon /> : <MoonIcon />}

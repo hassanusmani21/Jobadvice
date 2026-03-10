@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "@/components/AppLink";
+import ActionButton from "@/components/ActionButton";
 import JobCard from "@/components/JobCard";
 import { getAllJobs, type JobPost } from "@/lib/jobs";
 
@@ -131,13 +131,14 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
   return (
     <section className="space-y-6">
-      <div className="fade-up space-y-4">
-        <h1 className="font-serif text-[1.5rem] leading-[1.2] text-slate-900">All Jobs</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
+      <div className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8">
+        <span className="page-kicker">Jobs Directory</span>
+        <h1 className="page-title">All Jobs</h1>
+        <p className="page-copy">
           Explore the latest job openings with complete role information and direct application
           links.
         </p>
-        <form action="/jobs" method="get" className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <form action="/jobs" method="get" className="filter-panel mt-5 sm:grid-cols-2 xl:grid-cols-4">
           <label htmlFor="jobs-search" className="sr-only">
             Search jobs
           </label>
@@ -147,12 +148,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             type="search"
             defaultValue={query}
             placeholder="Search by title, company, location, or skill"
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-teal-200 transition focus:border-teal-300 focus:ring-2 sm:col-span-2 xl:col-span-2"
+            className="form-control sm:col-span-2 xl:col-span-2"
           />
           <select
             name="location"
             defaultValue={locationFilter}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none ring-teal-200 transition focus:border-teal-300 focus:ring-2"
+            className="form-control"
           >
             <option value="">All locations</option>
             {locationOptions.map((locationOption) => (
@@ -164,7 +165,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           <select
             name="type"
             defaultValue={typeFilter}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none ring-teal-200 transition focus:border-teal-300 focus:ring-2"
+            className="form-control"
           >
             <option value="">All types</option>
             {typeOptions.map((typeOption) => (
@@ -176,7 +177,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           <select
             name="status"
             defaultValue={statusFilter}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none ring-teal-200 transition focus:border-teal-300 focus:ring-2"
+            className="form-control"
           >
             <option value="">All statuses</option>
             <option value="open">Open now</option>
@@ -186,28 +187,22 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           <select
             name="sort"
             defaultValue={sortFilter}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none ring-teal-200 transition focus:border-teal-300 focus:ring-2"
+            className="form-control"
           >
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
             <option value="closingSoon">Closing soon</option>
           </select>
-          <button
-            type="submit"
-            className="inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
-          >
+          <ActionButton variant="primary" buttonType="submit" className="w-full">
             Search
-          </button>
+          </ActionButton>
           {hasActiveFilters || sortFilter !== "newest" ? (
-            <Link
-              href="/jobs"
-              className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
-            >
+            <ActionButton href="/jobs" variant="secondary" className="w-full">
               Clear
-            </Link>
+            </ActionButton>
           ) : null}
         </form>
-        <p className="text-sm text-slate-600">
+        <p className="mt-4 text-sm text-slate-600">
           {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
           {query ? (
             <>
@@ -227,13 +222,13 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       </div>
 
       {sortedJobs.length === 0 && (query || hasActiveFilters) ? (
-        <p className="rounded-2xl bg-white/80 p-4 text-slate-600">
+        <p className="soft-note px-4 py-4 text-slate-600">
           No jobs matched your filters. Try different keywords or reset the filters.
         </p>
       ) : null}
 
       {jobs.length === 0 && !hasActiveFilters ? (
-        <p className="rounded-2xl bg-white/80 p-4 text-slate-600">No jobs available right now.</p>
+        <p className="soft-note px-4 py-4 text-slate-600">No jobs available right now.</p>
       ) : null}
     </section>
   );

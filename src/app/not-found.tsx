@@ -1,4 +1,4 @@
-import Link from "@/components/AppLink";
+import ActionButton from "@/components/ActionButton";
 
 export default function NotFoundPage() {
   return (
@@ -7,12 +7,9 @@ export default function NotFoundPage() {
       <p className="mt-3 text-slate-600">
         The page you requested does not exist or may have been removed.
       </p>
-      <Link
-        href="/jobs"
-        className="mt-6 inline-flex rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
-      >
+      <ActionButton href="/jobs" variant="primary" className="mt-6 sm:w-auto">
         Browse Jobs
-      </Link>
+      </ActionButton>
     </section>
   );
 }

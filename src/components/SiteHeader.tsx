@@ -113,8 +113,8 @@ export default function SiteHeader() {
                   aria-current={isActive ? "page" : undefined}
                   className={`rounded-xl px-3 py-1.5 transition-colors ${
                     isActive
-                      ? "bg-teal-50 text-teal-900"
-                      : "hover:bg-teal-50 hover:text-teal-900"
+                      ? "bg-teal-50 text-teal-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
+                      : "hover:bg-teal-50/80 hover:text-teal-900"
                   }`}
                 >
                   {item.label}
@@ -127,7 +127,7 @@ export default function SiteHeader() {
             <ThemeToggle />
             <Link
               href="/admin"
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-slate-700 transition-colors hover:border-teal-200 hover:text-teal-900"
+              className="utility-button px-3 py-1.5 text-sm font-semibold"
             >
               Admin
             </Link>
@@ -158,7 +158,7 @@ export default function SiteHeader() {
             <Link
               href="/jobs"
               aria-label="Search jobs"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-[0_14px_28px_-24px_rgba(15,23,42,0.22)] transition hover:border-teal-200 hover:text-teal-900 min-[360px]:h-11 min-[360px]:w-11"
+              className="utility-button h-10 w-10 px-0 min-[360px]:h-11 min-[360px]:w-11"
             >
               <svg
                 aria-hidden="true"
@@ -183,7 +183,7 @@ export default function SiteHeader() {
               aria-controls="mobile-site-menu"
               aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               onClick={() => setIsMenuOpen((open) => !open)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white shadow-[0_18px_34px_-26px_rgba(15,23,42,0.4)] transition hover:bg-slate-700 min-[360px]:h-11 min-[360px]:w-11"
+              className="job-action-button job-action-button-primary h-10 w-10 px-0 min-[360px]:h-11 min-[360px]:w-11"
             >
               <svg
                 aria-hidden="true"
@@ -214,7 +214,7 @@ export default function SiteHeader() {
               id="mobile-site-menu"
               className="absolute inset-x-0 top-full z-50 mt-3 sm:hidden"
             >
-              <div className="overflow-hidden rounded-2xl border border-slate-200/85 bg-white/96 p-4 shadow-[0_26px_50px_-36px_rgba(15,23,42,0.26)] backdrop-blur-xl">
+              <div className="card-surface overflow-hidden rounded-2xl p-4 backdrop-blur-xl">
                 <div className="flex items-center justify-between gap-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-teal-700">
                     Navigation
@@ -223,7 +223,7 @@ export default function SiteHeader() {
                     type="button"
                     aria-label="Close navigation menu"
                     onClick={() => setIsMenuOpen(false)}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:border-teal-200 hover:text-teal-900"
+                    className="utility-button h-10 w-10 rounded-full px-0"
                   >
                     <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
                       <path
@@ -246,10 +246,10 @@ export default function SiteHeader() {
                         key={item.href}
                         href={item.href}
                         aria-current={isActive ? "page" : undefined}
-                        className={`rounded-xl border px-4 py-4 transition ${
+                        className={`interactive-tile rounded-xl border px-4 py-4 transition ${
                           isActive
                             ? "border-teal-200 bg-teal-50 text-teal-950"
-                            : "border-slate-200/80 bg-white/80 text-slate-800 hover:border-teal-200 hover:bg-teal-50/80"
+                            : "text-slate-800"
                         }`}
                       >
                         <div className="flex items-center justify-between gap-3">
@@ -272,7 +272,7 @@ export default function SiteHeader() {
                 <div className="mt-4">
                   <Link
                     href="/admin"
-                    className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-teal-200 hover:text-teal-900"
+                    className="utility-button w-full px-4 py-3 text-sm font-semibold"
                   >
                     Admin
                   </Link>

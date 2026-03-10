@@ -89,29 +89,29 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <div className="space-y-5">
-      <section className="fade-up rounded-2xl border border-slate-200/80 bg-white/92 px-5 py-8 sm:px-8 sm:py-10">
+      <section className="fade-up page-intro-surface px-5 py-8 sm:px-8 sm:py-10">
         <div className="max-w-3xl">
           <div className="flex flex-wrap items-center gap-2 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-slate-500">
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+            <span className="page-kicker">
               Privacy Policy
             </span>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1">
+            <span className="page-kicker">
               Effective date: March 1, 2026
             </span>
           </div>
 
-          <h1 className="mt-4 text-[1.65rem] font-semibold tracking-[-0.03em] text-slate-950 sm:text-[2rem]">
+          <h1 className="page-title">
             Privacy Policy and Disclaimer
           </h1>
 
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+          <p className="page-copy max-w-2xl">
             This page explains how {siteName} handles website information, external links, and the
             limits of our role as a job information platform.
           </p>
         </div>
       </section>
 
-      <article className="fade-up rounded-2xl border border-slate-200/80 bg-white/92">
+      <article className="fade-up card-surface rounded-3xl">
         {policySections.map((section, index) => (
           <section
             key={section.id}
@@ -141,7 +141,7 @@ export default function PrivacyPolicyPage() {
             ) : null}
 
             {section.id === "contact" ? (
-              <div className="mt-4 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-4">
+              <div className="soft-note mt-4 px-4 py-4">
                 <p className="text-sm leading-6 text-slate-600">
                   Email:{" "}
                   <a
@@ -157,7 +157,7 @@ export default function PrivacyPolicyPage() {
         ))}
       </article>
 
-      <section className="fade-up rounded-2xl border border-slate-200/80 bg-slate-50/70 px-5 py-5 sm:px-8">
+      <section className="fade-up soft-note px-5 py-5 sm:px-8">
         <p className="text-sm leading-6 text-slate-600">
           For general queries or corrections, use the{" "}
           <Link href="/contact" className="font-medium text-slate-900 underline underline-offset-4">

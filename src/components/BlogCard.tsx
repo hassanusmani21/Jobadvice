@@ -34,7 +34,7 @@ export default function BlogCard({ blog, style }: BlogCardProps) {
       <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
         {blog.topic ? <span className="text-teal-700">{blog.topic}</span> : null}
         {blog.isTrending ? (
-          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">
+          <span className="content-chip content-chip-amber">
             Trending
           </span>
         ) : null}
@@ -64,10 +64,10 @@ export default function BlogCard({ blog, style }: BlogCardProps) {
         </p>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-600">
-        <span className="rounded-full bg-slate-100 px-2.5 py-1">
+        <span className="content-chip">
           {formatBlogDate(blog.date)}
         </span>
-        <span className="rounded-full bg-slate-100 px-2.5 py-1">
+        <span className="content-chip">
           {blog.readingTimeMinutes} min read
         </span>
       </div>
@@ -76,14 +76,14 @@ export default function BlogCard({ blog, style }: BlogCardProps) {
           {blog.tags.slice(0, 2).map((tag, index) => (
             <span
               key={`${tag}-${index}`}
-              className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] text-slate-700"
+              className="content-chip text-[11px]"
             >
               #{tag}
             </span>
           ))}
         </div>
       ) : null}
-      <span className="mt-4 inline-flex w-fit rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-900 transition-colors group-hover:border-teal-300 group-hover:bg-teal-100">
+      <span className="inline-action-label mt-4 w-fit">
         Read Article
       </span>
     </Link>

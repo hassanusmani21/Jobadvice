@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ActionButton from "@/components/ActionButton";
 import Link from "@/components/AppLink";
 import BlogCard from "@/components/BlogCard";
 import EmptyStateCard from "@/components/EmptyStateCard";
@@ -48,22 +49,16 @@ export default async function HomePage() {
             </div>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link
-                href="/jobs"
-                className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_22px_42px_-28px_rgba(15,23,42,0.36)] transition hover:bg-slate-800"
-              >
+              <ActionButton href="/jobs" variant="primary" className="sm:w-auto">
                 Browse Jobs
-              </Link>
-              <Link
-                href="/blog"
-                className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-300 bg-white/78 px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-[0_18px_36px_-28px_rgba(15,23,42,0.18)] transition hover:border-teal-200 hover:text-teal-900"
-              >
+              </ActionButton>
+              <ActionButton href="/blog" variant="secondary" className="sm:w-auto">
                 Browse Blog
-              </Link>
+              </ActionButton>
             </div>
           </div>
 
-          <aside className="flex h-full flex-col justify-between rounded-[1.4rem] border border-slate-200/80 bg-white/88 p-4 shadow-[0_24px_52px_-34px_rgba(15,23,42,0.28)] backdrop-blur sm:p-[1.125rem]">
+          <aside className="card-surface flex h-full flex-col justify-between rounded-[1.4rem] p-4 sm:p-[1.125rem]">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
                 Community
@@ -95,14 +90,16 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              <a
+              <ActionButton
                 href={whatsappChannelUrl}
+                external
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-[#25D366] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_22px_42px_-28px_rgba(37,211,102,0.42)] transition hover:bg-[#1fb95a]"
+                variant="primary"
+                className="w-full"
               >
                 Join WhatsApp Community
-              </a>
+              </ActionButton>
             </div>
           </aside>
         </div>
@@ -110,21 +107,16 @@ export default async function HomePage() {
 
       <section className="space-y-6 py-2">
         <div
-          className="fade-up flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+          className="fade-up section-header"
           style={{ animationDelay: "100ms" }}
         >
-          <div className="space-y-1.5">
-            <h2 className="text-[1.5rem] font-semibold leading-[1.15] text-slate-900">
-              Latest Job Updates
-            </h2>
-            <p className="text-sm text-gray-500">
+          <div className="section-header-body">
+            <h2 className="section-header-title">Latest Job Updates</h2>
+            <p className="section-header-copy">
               Find the newest opportunities from top companies.
             </p>
           </div>
-          <Link
-            href="/jobs"
-            className="group inline-flex cursor-pointer items-center gap-1.5 text-sm font-medium text-teal-800 underline-offset-4 transition hover:text-teal-900 hover:underline"
-          >
+          <Link href="/jobs" className="section-header-link group">
             <span>View all openings</span>
             <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5">
               →
@@ -147,12 +139,20 @@ export default async function HomePage() {
 
       <section className="space-y-5">
         <div
-          className="fade-up flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between"
+          className="fade-up section-header"
           style={{ animationDelay: "120ms" }}
         >
-          <h2 className="font-serif text-[1.5rem] leading-[1.2] text-slate-900">Latest Blog Insights</h2>
-          <Link href="/blog" className="text-sm font-semibold text-teal-800 transition hover:text-teal-900">
-            Read all blogs
+          <div className="section-header-body">
+            <h2 className="section-header-title">Latest Blog Insights</h2>
+            <p className="section-header-copy">
+              Career guides, hiring signals, and practical reads from the same visual system.
+            </p>
+          </div>
+          <Link href="/blog" className="section-header-link group">
+            <span>Read all blogs</span>
+            <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5">
+              →
+            </span>
           </Link>
         </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import ActionButton from "@/components/ActionButton";
 import { useEffect } from "react";
 
 type ErrorPageProps = {
@@ -19,13 +20,14 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
         The page failed to load. Please try again, or return to the jobs list.
       </p>
       <div className="mt-6 flex justify-center gap-3">
-        <button
-          type="button"
+        <ActionButton
+          variant="primary"
+          buttonType="button"
           onClick={reset}
-          className="inline-flex rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+          className="sm:w-auto"
         >
           Try again
-        </button>
+        </ActionButton>
       </div>
     </section>
   );

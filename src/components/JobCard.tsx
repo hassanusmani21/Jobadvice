@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import Link from "@/components/AppLink";
+import JobActionButton from "@/components/JobActionButton";
 import { formatPostedDate, type JobPost } from "@/lib/jobs";
 
 type JobCardProps = {
@@ -342,11 +342,11 @@ export default function JobCard({ job, style }: JobCardProps) {
   }>;
   return (
     <article
-      className="group fade-up relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.7rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,251,0.96)_58%,rgba(242,247,246,0.94)_100%)] px-5 py-5 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.14),0_18px_40px_-30px_rgba(20,184,166,0.10),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] sm:px-6"
+      className="job-card-surface group fade-up relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.7rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,251,0.96)_58%,rgba(242,247,246,0.94)_100%)] px-5 py-5 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.14),0_18px_40px_-30px_rgba(20,184,166,0.10),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] sm:px-6"
       style={style}
     >
-      <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-white/80" />
-      <div className="pointer-events-none absolute -bottom-10 left-2 h-24 w-28 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.12)_0%,rgba(125,211,252,0.05)_42%,rgba(255,255,255,0)_74%)]" />
+      <div className="job-card-top-line pointer-events-none absolute inset-x-6 top-0 h-px bg-white/80" />
+      <div className="job-card-accent pointer-events-none absolute -bottom-10 left-2 h-24 w-28 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.12)_0%,rgba(125,211,252,0.05)_42%,rgba(255,255,255,0)_74%)]" />
       <div className="relative z-10 flex h-full flex-col">
         <div className="flex min-h-[4.6rem] items-start gap-2.5">
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-50/80 ring-1 ring-teal-100/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)]">
@@ -365,7 +365,7 @@ export default function JobCard({ job, style }: JobCardProps) {
               {titleParts.title}
             </h2>
             {titleParts.subtitle ? (
-              <p className="mt-1 truncate text-[0.875rem] font-medium leading-[1.35] text-gray-500">
+              <p className="mt-1 truncate text-[0.875rem] font-medium leading-[1.35] text-slate-500">
                 {titleParts.subtitle}
               </p>
             ) : null}
@@ -383,7 +383,7 @@ export default function JobCard({ job, style }: JobCardProps) {
               <p className="truncate text-[0.97rem] font-semibold leading-tight text-slate-800">
                 {job.company}
               </p>
-              <p className="mt-1 inline-flex items-center gap-1.5 text-[0.8rem] leading-none text-gray-500">
+              <p className="mt-1 inline-flex items-center gap-1.5 text-[0.8rem] leading-none text-slate-500">
                 <HeaderIcon kind="date" className="h-3.5 w-3.5 text-slate-400" />
                 <span>Posted {formatPostedDate(job.date)}</span>
               </p>
@@ -410,7 +410,7 @@ export default function JobCard({ job, style }: JobCardProps) {
               </div>
             ) : null}
             {cardHighlight ? (
-              <div className="flex min-w-0 items-center gap-1.5 text-[0.8125rem] font-normal leading-[1.35] text-gray-500">
+              <div className="flex min-w-0 items-center gap-1.5 text-[0.8125rem] font-normal leading-[1.35] text-slate-500">
                 <HighlightIcon className="h-3.5 w-3.5 shrink-0 opacity-70" />
                 <span
                   className="min-w-0 flex-1 overflow-hidden"
@@ -431,28 +431,31 @@ export default function JobCard({ job, style }: JobCardProps) {
 
         <div className="mt-auto grid gap-4 pt-4 sm:grid-cols-2">
           {job.applyLink ? (
-            <a
+            <JobActionButton
               href={`/api/apply/${job.slug}`}
+              external
               target="_blank"
               rel="noopener noreferrer nofollow"
-              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[linear-gradient(135deg,#0d9488_0%,#0f766e_60%,#34d399_118%)] px-5 py-3 text-[0.98rem] font-semibold text-white shadow-[0_6px_16px_rgba(16,185,129,0.25),inset_0_-2px_0_rgba(6,78,59,0.34),inset_0_1px_0_rgba(255,255,255,0.22)] transition duration-200 hover:-translate-y-0.5 hover:brightness-[1.05]"
-              aria-label={`Apply for ${job.title} at ${job.company}`}
+              variant="primary"
+              className="w-full"
+              ariaLabel={`Apply for ${job.title} at ${job.company}`}
             >
               Apply Now
-            </a>
+            </JobActionButton>
           ) : (
-            <span className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-100/85 px-5 py-3 text-[0.98rem] font-semibold text-slate-500 shadow-[0_12px_24px_-20px_rgba(15,23,42,0.2)]">
+            <JobActionButton variant="muted" className="w-full">
               Apply Unavailable
-            </span>
+            </JobActionButton>
           )}
 
-          <Link
+          <JobActionButton
             href={`/jobs/${job.slug}`}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl border-[1.5px] border-slate-300/85 bg-white/92 px-5 py-3 text-[0.98rem] font-semibold text-slate-900 shadow-[0_12px_26px_-22px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.84)] transition duration-200 hover:border-teal-200 hover:text-teal-900"
-            aria-label={`View details for ${job.title} at ${job.company}`}
+            variant="secondary"
+            className="w-full"
+            ariaLabel={`View details for ${job.title} at ${job.company}`}
           >
             View Details
-          </Link>
+          </JobActionButton>
         </div>
       </div>
     </article>

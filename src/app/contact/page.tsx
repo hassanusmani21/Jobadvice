@@ -131,39 +131,44 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <section className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
-      <h1 className="font-serif text-[1.5rem] leading-[1.2] text-slate-900">Contact</h1>
-      <p className="mt-4 max-w-3xl text-sm text-slate-700 sm:text-base">
-        For support, feedback, or partnership queries, reach us on any channel below.
-      </p>
+    <div className="space-y-6">
+      <section className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8">
+        <span className="page-kicker">Contact</span>
+        <h1 className="page-title">Reach JobAdvice</h1>
+        <p className="page-copy max-w-3xl">
+          For support, feedback, or partnership queries, use any of the official channels below.
+        </p>
+      </section>
 
-      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {contactLinks.map((item) => (
-          <a
-            key={item.label}
-            href={item.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group rounded-2xl border border-slate-200 bg-white px-5 py-4 transition hover:border-teal-200 hover:shadow-[0_18px_34px_-28px_rgba(15,23,42,0.16)]"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition group-hover:bg-teal-50 group-hover:text-teal-900">
-                {item.icon}
-              </span>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                {item.cta}
-              </span>
-            </div>
+      <section className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {contactLinks.map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="interactive-tile group px-5 py-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition group-hover:bg-teal-50 group-hover:text-teal-900">
+                  {item.icon}
+                </span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  {item.cta}
+                </span>
+              </div>
 
-            <h2 className="mt-4 text-base font-semibold text-slate-900">{item.label}</h2>
-            <p className="mt-1 break-all text-sm text-slate-600">{item.handle}</p>
-          </a>
-        ))}
-      </div>
+              <h2 className="mt-4 text-base font-semibold text-slate-900">{item.label}</h2>
+              <p className="mt-1 break-all text-sm text-slate-600">{item.handle}</p>
+            </a>
+          ))}
+        </div>
 
-      <p className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        We will never ask for your password or OTP. If someone does, it&apos;s a scam.
-      </p>
-    </section>
+        <p className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          We will never ask for your password or OTP. If someone does, it&apos;s a scam.
+        </p>
+      </section>
+    </div>
   );
 }

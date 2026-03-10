@@ -71,24 +71,24 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="space-y-5">
-      <section className="fade-up rounded-2xl border border-slate-200/80 bg-white/92 px-5 py-8 sm:px-8 sm:py-10">
+      <section className="fade-up page-intro-surface px-5 py-8 sm:px-8 sm:py-10">
         <div className="max-w-3xl">
-          <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-slate-500">
+          <span className="page-kicker">
             About {siteName}
           </span>
 
-          <h1 className="mt-4 text-[1.65rem] font-semibold tracking-[-0.03em] text-slate-950 sm:text-[2rem]">
+          <h1 className="page-title">
             Simple job information for freshers and early-career professionals.
           </h1>
 
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+          <p className="page-copy max-w-2xl">
             {siteName} shares job updates and career information in a clean format that is easier
             to read and verify.
           </p>
         </div>
       </section>
 
-      <article className="fade-up rounded-2xl border border-slate-200/80 bg-white/92">
+      <article className="fade-up card-surface rounded-3xl">
         {aboutSections.map((section, index) => (
           <section
             key={section.title}
@@ -121,7 +121,7 @@ export default function AboutPage() {
         ))}
       </article>
 
-      <section className="fade-up rounded-2xl border border-slate-200/80 bg-slate-50/70 px-5 py-5 sm:px-8">
+      <section className="fade-up soft-note px-5 py-5 sm:px-8">
         <p className="text-sm leading-6 text-slate-600">
           For corrections, partnerships, or general questions, visit the{" "}
           <Link href="/contact" className="font-medium text-slate-900 underline underline-offset-4">
