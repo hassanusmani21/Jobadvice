@@ -183,7 +183,9 @@ export default function SiteHeader() {
               aria-controls="mobile-site-menu"
               aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               onClick={() => setIsMenuOpen((open) => !open)}
-              className="job-action-button job-action-button-primary h-10 w-10 px-0 min-[360px]:h-11 min-[360px]:w-11"
+              className={`utility-button header-menu-toggle h-10 w-10 px-0 min-[360px]:h-11 min-[360px]:w-11 ${
+                isMenuOpen ? "header-menu-toggle-active" : ""
+              }`}
             >
               <svg
                 aria-hidden="true"

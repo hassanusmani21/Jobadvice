@@ -552,21 +552,21 @@ export default async function JobDetailPage({ params }: JobPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
       />
       <article className="space-y-6 lg:col-span-7">
-        <header className="job-detail-header-surface fade-up relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(249,251,252,0.96)_58%,rgba(242,247,246,0.94)_100%)] px-5 py-6 shadow-[0_18px_42px_-32px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.92)] sm:px-8 sm:py-8">
-          <div className="job-detail-header-top-line pointer-events-none absolute inset-x-8 top-0 h-px bg-white/80" />
+        <header className="job-detail-header-surface fade-up relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(249,251,252,0.96)_58%,rgba(242,247,246,0.94)_100%)] px-4 py-5 shadow-[0_18px_42px_-32px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.92)] sm:px-8 sm:py-8">
+          <div className="job-detail-header-top-line pointer-events-none absolute inset-x-4 top-0 h-px bg-white/80 sm:inset-x-8" />
           <div className="job-detail-header-accent pointer-events-none absolute -bottom-10 left-0 h-28 w-36 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.12)_0%,rgba(125,211,252,0.05)_42%,rgba(255,255,255,0)_74%)]" />
 
           <div className="relative z-10">
-            <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold sm:text-xs">
-              <span className="job-detail-top-badge job-detail-top-badge-neutral inline-flex h-9 items-center gap-1.5 rounded-full bg-slate-100/90 px-3.5 text-slate-600">
+            <div className="flex flex-wrap gap-2 text-[11px] font-semibold sm:text-xs">
+              <span className="job-detail-top-badge job-detail-top-badge-neutral inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-slate-100/90 px-3.5 text-slate-600">
                 <HeaderInfoIcon kind="company" className="h-4 w-4" />
-                <span>{job.company}</span>
+                <span className="truncate">{job.company}</span>
               </span>
-              <span className="job-detail-top-badge job-detail-top-badge-amber inline-flex h-9 items-center gap-1.5 rounded-full bg-amber-50 px-3.5 text-amber-900">
+              <span className="job-detail-top-badge job-detail-top-badge-amber inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-amber-50 px-3.5 text-amber-900">
                 <HeaderInfoIcon kind="date" className="h-4 w-4" />
                 <span>Posted {formatPostedDate(job.date)}</span>
               </span>
-              <span className="job-detail-top-badge job-detail-top-badge-neutral inline-flex h-9 items-center gap-1.5 rounded-full bg-slate-100/90 px-3.5 text-slate-500">
+              <span className="job-detail-top-badge job-detail-top-badge-neutral inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-slate-100/90 px-3.5 text-slate-500">
                 <HeaderInfoIcon kind="date" className="h-4 w-4 text-slate-400" />
                 <span>Updated {formatPostedDate(job.updatedAt)}</span>
               </span>
@@ -578,69 +578,78 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               ) : null}
             </div>
 
-            <div className="mt-5 flex items-start gap-4">
-              <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.35rem] bg-teal-50/90 ring-1 ring-teal-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)]">
-                <HeaderInfoIcon kind="title" className="h-6 w-6" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <h1 className="font-serif text-[1.85rem] font-semibold leading-[1.15] text-slate-900 sm:text-[2rem]">
-                  {job.title}
-                </h1>
-
-                <div className="mt-4 flex min-w-0 items-start gap-3">
-                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(186,230,253,0.95),rgba(153,246,228,0.92))] text-sm font-semibold tracking-wide text-teal-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-                    {companyInitials}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-[1rem] font-semibold leading-tight text-slate-800">
-                      {job.company}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Verified listing with direct application source
-                    </p>
-                  </div>
-                </div>
-
-                {summary ? (
-                  <p className="mt-4 max-w-3xl text-[0.98rem] leading-7 text-slate-600">
-                    {summary}
+            <div className="mt-5">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-teal-50/90 ring-1 ring-teal-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)] sm:h-14 sm:w-14 sm:rounded-[1.35rem]">
+                  <HeaderInfoIcon kind="title" className="h-5 w-5 sm:h-6 sm:w-6" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-teal-700 sm:text-[11px]">
+                    Open Role
                   </p>
-                ) : null}
+                  <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                    Verified listing with direct application source
+                  </p>
+                </div>
               </div>
+
+              <h1 className="mt-4 text-balance font-serif text-[1.68rem] font-semibold leading-[1.06] tracking-[-0.028em] text-slate-900 sm:mt-5 sm:text-[2rem] sm:leading-[1.1] sm:tracking-[-0.02em]">
+                {job.title}
+              </h1>
+
+              <div className="mt-4 flex min-w-0 items-start gap-3 sm:mt-5">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(186,230,253,0.95),rgba(153,246,228,0.92))] text-sm font-semibold tracking-wide text-teal-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                  {companyInitials}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-[1rem] font-semibold leading-tight text-slate-800">
+                    {job.company}
+                  </p>
+                  <p className="mt-1 text-sm leading-5 text-slate-500">
+                    Direct application source
+                  </p>
+                </div>
+              </div>
+
+              {summary ? (
+                <p className="mt-4 max-w-3xl text-[0.97rem] leading-7 text-slate-600">
+                  {summary}
+                </p>
+              ) : null}
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2.5 text-sm text-slate-700">
+            <div className="mt-5 grid grid-cols-2 gap-2 text-[12px] text-slate-700 sm:mt-6 sm:flex sm:flex-wrap sm:gap-2.5 sm:text-sm">
               {job.location ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75">
+                <span className="job-detail-meta-chip job-detail-meta-chip-neutral col-span-2 inline-flex w-full items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75 sm:w-auto">
                   <HeaderInfoIcon kind="location" className="h-4 w-4 text-slate-400" />
                   <span>{job.location}</span>
                 </span>
               ) : null}
               {workMode ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75">
+                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex w-full items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75 sm:w-auto">
                   <HeaderInfoIcon kind="mode" className="h-4 w-4 text-slate-400" />
                   <span>{workMode}</span>
                 </span>
               ) : null}
               {employmentType ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75">
+                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex w-full items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75 sm:w-auto">
                   <HeaderInfoIcon kind="type" className="h-4 w-4 text-slate-400" />
                   <span>{employmentType}</span>
                 </span>
               ) : null}
               {experience ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75">
+                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex w-full items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75 sm:w-auto">
                   <HeaderInfoIcon kind="experience" className="h-4 w-4 text-slate-400" />
                   <span>{experience}</span>
                 </span>
               ) : null}
               {job.salary ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-amber inline-flex items-center gap-2 rounded-full bg-amber-50 px-3.5 py-2 text-amber-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)] ring-1 ring-amber-200/80">
+                <span className="job-detail-meta-chip job-detail-meta-chip-amber inline-flex w-full items-center gap-2 rounded-full bg-amber-50 px-3.5 py-2 text-amber-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)] ring-1 ring-amber-200/80 sm:w-auto">
                   <HeaderInfoIcon kind="salary" className="h-4 w-4" />
                   <span>{job.salary}</span>
                 </span>
               ) : null}
-              <span className="job-detail-meta-chip job-detail-meta-chip-sky inline-flex items-center gap-2 rounded-full bg-sky-50/85 px-3.5 py-2 text-sky-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)] ring-1 ring-sky-200/75">
+              <span className="job-detail-meta-chip job-detail-meta-chip-sky col-span-2 inline-flex w-full items-center gap-2 rounded-full bg-sky-50/85 px-3.5 py-2 text-sky-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)] ring-1 ring-sky-200/75 sm:w-auto">
                 <HeaderInfoIcon kind="window" className="h-4 w-4" />
                 <span>{formatApplicationWindow(job.applicationStartDate, job.applicationEndDate)}</span>
               </span>
