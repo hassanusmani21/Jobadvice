@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "@/components/AppLink";
 import { toDisplayImageSrc } from "@/lib/images";
 import { formatBlogDate, type BlogPost } from "@/lib/blogs";
@@ -18,12 +19,15 @@ export default function BlogCard({ blog, style }: BlogCardProps) {
       style={style}
     >
       {coverImageSrc ? (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-          <img
+        <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+          <Image
             src={coverImageSrc}
             alt={blog.title}
+            width={1200}
+            height={720}
             className="h-32 w-full object-cover transition duration-300 group-hover:scale-[1.02] sm:h-36"
             loading="lazy"
+            sizes="(min-width: 1024px) 24rem, (min-width: 768px) 50vw, 100vw"
           />
         </div>
       ) : null}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -494,11 +495,14 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
           {coverImageSrc ? (
             <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-              <img
+              <Image
                 src={coverImageSrc}
                 alt={blog.title}
+                width={1600}
+                height={900}
                 className="h-56 w-full object-cover sm:h-72"
-                loading="eager"
+                priority
+                sizes="(min-width: 1024px) 70vw, 100vw"
               />
             </div>
           ) : null}

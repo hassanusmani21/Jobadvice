@@ -260,13 +260,13 @@ const compactLocationLabel = (location: string) => {
   return String(location || "").trim();
 };
 
-const normalizeCardText = (value: string) =>
+const normalizeCardText = (value: string | undefined) =>
   String(value || "")
     .replace(/\([^)]*\)/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
-const cropCardText = (value: string, maxLength = 58) => {
+const cropCardText = (value: string | undefined, maxLength = 58) => {
   const normalizedValue = normalizeCardText(value);
   if (normalizedValue.length <= maxLength) {
     return normalizedValue;
