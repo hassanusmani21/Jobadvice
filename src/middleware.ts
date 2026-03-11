@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { isAllowedAdminEmail } from "./lib/adminAccess";
+import { siteUrl } from "./lib/site";
 import { toContentSlug } from "./lib/slug";
 
 const toSafeCallbackUrl = (request: NextRequest) => {
@@ -33,6 +34,39 @@ const shouldForceTrailingSlash = (pathname: string) =>
   canonicalTrailingSlashPaths.has(pathname) ||
   pathname.startsWith("/blog/") ||
   pathname.startsWith("/jobs/");
+
+const resolvedCanonicalSite = (() => {
+  try {
+    return new URL(siteUrl);
+  } catch {
+    return new URL("https://jobadvice.in");
+  }
+})();
+
+const canonicalHost = resolvedCanonicalSite.host.toLowerCase();
+const canonicalProtocol = resolvedCanonicalSite.protocol;
+
+const redirectNonCanonicalHost = (request: NextRequest) => {
+  const requestHost = (
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    request.nextUrl.host
+  ).toLowerCase();
+
+  if (
+    !requestHost ||
+    requestHost === canonicalHost ||
+    requestHost.startsWith("localhost") ||
+    requestHost.startsWith("127.0.0.1")
+  ) {
+    return null;
+  }
+
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.host = canonicalHost;
+  redirectUrl.protocol = canonicalProtocol;
+  return NextResponse.redirect(redirectUrl, 308);
+};
 
 const redirectMissingTrailingSlash = (request: NextRequest) => {
   const pathname = request.nextUrl.pathname;
@@ -69,6 +103,11 @@ const redirectMalformedJobSlug = (request: NextRequest) => {
 };
 
 export async function middleware(request: NextRequest) {
+  const canonicalHostRedirect = redirectNonCanonicalHost(request);
+  if (canonicalHostRedirect) {
+    return canonicalHostRedirect;
+  }
+
   const jobSlugRedirect = redirectMalformedJobSlug(request);
   if (jobSlugRedirect) {
     return jobSlugRedirect;
@@ -99,6 +138,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/admin/login",
     "/admin/login/:path*",
     "/about",

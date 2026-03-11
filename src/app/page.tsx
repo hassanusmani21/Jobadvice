@@ -6,11 +6,11 @@ import EmptyStateCard from "@/components/EmptyStateCard";
 import JobCard from "@/components/JobCard";
 import { getLatestBlogs } from "@/lib/blogs";
 import { getLatestJobs } from "@/lib/jobs";
+import { siteDescription } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Verified Tech and Fresher Jobs",
-  description:
-    "Find the latest job updates with company details, location, salary, and direct application links.",
+  title: "Verified Jobs and Internships in India",
+  description: siteDescription,
 };
 
 export const revalidate = 60 * 60;

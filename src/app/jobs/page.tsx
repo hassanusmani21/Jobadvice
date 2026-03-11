@@ -131,78 +131,81 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
   return (
     <section className="space-y-6">
-      <div className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8">
-        <span className="page-kicker">Jobs Directory</span>
-        <h1 className="page-title">All Jobs</h1>
-        <p className="page-copy">
-          Explore the latest job openings with complete role information and direct application
-          links.
-        </p>
-        <form action="/jobs" method="get" className="filter-panel mt-5 sm:grid-cols-2 xl:grid-cols-4">
-          <label htmlFor="jobs-search" className="sr-only">
-            Search jobs
-          </label>
-          <input
-            id="jobs-search"
-            name="q"
-            type="search"
-            defaultValue={query}
-            placeholder="Search by title, company, location, or skill"
-            className="form-control sm:col-span-2 xl:col-span-2"
-          />
-          <select
-            name="location"
-            defaultValue={locationFilter}
-            className="form-control"
-          >
-            <option value="">All locations</option>
-            {locationOptions.map((locationOption) => (
-              <option key={locationOption} value={locationOption}>
-                {locationOption}
-              </option>
-            ))}
-          </select>
-          <select
-            name="type"
-            defaultValue={typeFilter}
-            className="form-control"
-          >
-            <option value="">All types</option>
-            {typeOptions.map((typeOption) => (
-              <option key={typeOption} value={typeOption}>
-                {typeOption}
-              </option>
-            ))}
-          </select>
-          <select
-            name="status"
-            defaultValue={statusFilter}
-            className="form-control"
-          >
-            <option value="">All statuses</option>
-            <option value="open">Open now</option>
-            <option value="upcoming">Upcoming</option>
-            <option value="expired">Expired</option>
-          </select>
-          <select
-            name="sort"
-            defaultValue={sortFilter}
-            className="form-control"
-          >
-            <option value="newest">Newest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="closingSoon">Closing soon</option>
-          </select>
-          <ActionButton variant="primary" buttonType="submit" className="w-full">
-            Search
-          </ActionButton>
-          {hasActiveFilters || sortFilter !== "newest" ? (
-            <ActionButton href="/jobs" variant="secondary" className="w-full">
-              Clear
+      <div className="space-y-4">
+        <div className="fade-up page-intro-surface px-5 py-5 sm:px-8 sm:py-6">
+          <span className="page-kicker">Jobs Directory</span>
+          <h1 className="page-title">All Jobs</h1>
+          <p className="page-copy">
+            Explore the latest job openings with complete role information and direct application
+            links.
+          </p>
+          <form action="/jobs" method="get" className="filter-panel mt-4 sm:grid-cols-2 xl:grid-cols-4">
+            <label htmlFor="jobs-search" className="sr-only">
+              Search jobs
+            </label>
+            <input
+              id="jobs-search"
+              name="q"
+              type="search"
+              defaultValue={query}
+              placeholder="Search by title, company, location, or skill"
+              className="form-control sm:col-span-2 xl:col-span-2"
+            />
+            <select
+              name="location"
+              defaultValue={locationFilter}
+              className="form-control"
+            >
+              <option value="">All locations</option>
+              {locationOptions.map((locationOption) => (
+                <option key={locationOption} value={locationOption}>
+                  {locationOption}
+                </option>
+              ))}
+            </select>
+            <select
+              name="type"
+              defaultValue={typeFilter}
+              className="form-control"
+            >
+              <option value="">All types</option>
+              {typeOptions.map((typeOption) => (
+                <option key={typeOption} value={typeOption}>
+                  {typeOption}
+                </option>
+              ))}
+            </select>
+            <select
+              name="status"
+              defaultValue={statusFilter}
+              className="form-control"
+            >
+              <option value="">All statuses</option>
+              <option value="open">Open now</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="expired">Expired</option>
+            </select>
+            <select
+              name="sort"
+              defaultValue={sortFilter}
+              className="form-control"
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="closingSoon">Closing soon</option>
+            </select>
+            <ActionButton variant="primary" buttonType="submit" className="w-full">
+              Search
             </ActionButton>
-          ) : null}
-        </form>
-        <p className="mt-4 text-sm text-slate-600">
+            {hasActiveFilters || sortFilter !== "newest" ? (
+              <ActionButton href="/jobs" variant="secondary" className="w-full">
+                Clear
+              </ActionButton>
+            ) : null}
+          </form>
+        </div>
+
+        <p className="px-1 text-sm text-slate-600">
           {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
           {query ? (
             <>

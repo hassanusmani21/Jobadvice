@@ -1,13 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="JobAdvice">
   <title>JobAdvice</title>
-  <rect x="4" y="4" width="56" height="56" rx="14" fill="#073B36" />
+  <defs>
+    <linearGradient id="jobadvice-favicon-bg" x1="12" y1="8" x2="52" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F766E" />
+      <stop offset="1" stop-color="#073B36" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#jobadvice-favicon-bg)" />
   <path
-    d="M33 18V39Q33 50 22 50H20"
+    d="M23 24.5V22.5C23 18.9 25.8 16 29.3 16H34.7C38.2 16 41 18.9 41 22.5V24.5"
     fill="none"
-    stroke="#FFFFFF"
+    stroke="#5EEAD4"
     stroke-linecap="round"
     stroke-linejoin="round"
-    stroke-width="10"
+    stroke-width="4"
   />
-  <circle cx="48" cy="17" r="4.5" fill="#5EEAD4" />
+  <rect x="16" y="24" width="32" height="24" rx="6" fill="#FFFFFF" />
+  <path d="M16 31H48" fill="none" stroke="#0F766E" stroke-linecap="round" stroke-width="4" />
+  <rect x="29.5" y="33.5" width="5" height="5" rx="1.8" fill="#0F766E" />
 </svg>

@@ -2,7 +2,7 @@ const fallbackSiteUrl = "https://jobadvice.in";
 
 export const siteName = "JobAdvice";
 export const siteDescription =
-  "Verified tech and fresher jobs with direct apply links, daily updates, and practical career guidance.";
+  "Find verified jobs and internships in India with direct apply links, daily updates, and practical career guidance.";
 export const siteEmail = "hassan.usmani.career@gmail.com";
 export const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") || fallbackSiteUrl;

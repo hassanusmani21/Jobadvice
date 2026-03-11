@@ -200,7 +200,7 @@ const resolvedMetadataBase = (() => {
 export const metadata: Metadata = {
   metadataBase: resolvedMetadataBase,
   title: {
-    default: `${siteName} | Verified Tech and Fresher Jobs`,
+    default: `${siteName} | Verified Jobs and Internships in India`,
     template: `%s | ${siteName}`,
   },
   icons: {
