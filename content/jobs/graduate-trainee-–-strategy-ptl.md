@@ -1,5 +1,5 @@
 ---
-title: Graduate Trainee – Strategy PTL
+title: "Graduate Trainee – Strategy PTL "
 date: 2026-03-11
 company: Delhivery
 location: Bangalore, Karnataka, India
@@ -38,6 +38,6 @@ responsibilities:
 workingDays: Monday – Friday
 jobTiming: Standard Company Working Hours
 applyLink: https://www.linkedin.com/jobs/view/4380270637
-applicationStartDate: 2026-03-10
+applicationStartDate: 2026-03-11
 applicationEndDate: 2026-04-10
 ---
