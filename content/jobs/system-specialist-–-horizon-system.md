@@ -1,5 +1,5 @@
 ---
-title: System Specialist – Horizon System
+title: "System Specialist – Horizon System "
 date: 2026-03-12
 company: Amdocs
 location: Pune, Maharashtra, India

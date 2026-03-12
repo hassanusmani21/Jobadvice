@@ -1,5 +1,5 @@
 ---
-title: Data Scientist
+title: "Data Scientist "
 date: 2026-03-12
 company: RedBus
 location: Bangalore, Karnataka, India

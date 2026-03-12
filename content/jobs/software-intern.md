@@ -1,5 +1,5 @@
 ---
-title: Software Intern
+title: "Software Intern "
 date: 2026-03-12
 company: Danfoss
 location: Pune, Maharashtra, India
