@@ -14,6 +14,7 @@ tags:
   - AI Platforms
 isTrending: true
 author: "Hassan usmani "
+coverImage: https://akm-img-a-in.tosshub.com/indiatoday/images/story/202603/mark-zuckerberg--moltbook-110100243-16x9_0.png?VersionId=1uNSKlg3pZSoLPvSN8h0xMaq9my7R3M5&size=690:388
 date: 2026-03-13
 ---
 \# Mark Zuckerberg Buys Moltbook: The Social Media Platform Where Humans Cannot Post
