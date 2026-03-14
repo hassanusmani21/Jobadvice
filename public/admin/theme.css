@@ -253,12 +253,18 @@ body {
   display: none !important;
 }
 
+.jobadvice-mobile-hidden-node {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 @media (max-width: 900px) {
   body.jobadvice-mobile-entry-view [class*="AvatarDropdownButton"],
   body.jobadvice-mobile-entry-view [class*="ToolbarSectionMeta"],
   body.jobadvice-mobile-entry-view [class*="ViewControls"],
   body.jobadvice-mobile-entry-view [class*="ViewControlsButton"],
-  body.jobadvice-mobile-entry-view [class*="PreviewPane"],
+  body.jobadvice-mobile-entry-view [class*="PreviewPane"]:not([class*="ControlPaneContainer"]),
   body.jobadvice-mobile-entry-view [class*="EditorToggle"] {
     display: none !important;
     visibility: hidden !important;
@@ -274,6 +280,13 @@ body {
     bottom: auto !important;
     left: auto !important;
     z-index: auto !important;
+  }
+
+  body.jobadvice-mobile-entry-view {
+    position: static !important;
+    min-height: 100vh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
   }
 
   .admin-loading {
@@ -374,7 +387,7 @@ body {
   }
 
   #nc-root.jobadvice-mobile-entry-view iframe,
-  #nc-root.jobadvice-mobile-entry-view [class*="PreviewPane"] {
+  #nc-root.jobadvice-mobile-entry-view [class*="PreviewPane"]:not([class*="ControlPaneContainer"]) {
     width: 100% !important;
     max-width: 100% !important;
     min-height: 320px !important;
@@ -394,6 +407,25 @@ body {
     overflow: visible !important;
     overflow-y: visible !important;
     flex: none !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="SplitPane"] {
+    display: block !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view .Pane1,
+  #nc-root.jobadvice-mobile-entry-view [class*="ControlPaneContainer"] {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    visibility: visible !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view .Pane2 {
+    display: none !important;
   }
 
   #nc-root.jobadvice-mobile-entry-view {
@@ -420,6 +452,10 @@ body {
     display: none !important;
   }
 
+  #nc-root.jobadvice-mobile-entry-view [class*="AppHeader"] {
+    display: none !important;
+  }
+
   #nc-root.jobadvice-mobile-entry-view [class*="Toolbar"],
   #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSection"],
   #nc-root.jobadvice-mobile-entry-view [class*="EditorToolbar"],
@@ -439,6 +475,103 @@ body {
   #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSectionMeta"],
   #nc-root.jobadvice-mobile-entry-view [class*="ViewControlsButton"] {
     display: none !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarContainer"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px !important;
+    align-items: stretch !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSectionBackLink"] {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSectionBackLink"] [class*="BackCollection"] {
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSectionMain"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    flex: none !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSectionMain"] > *,
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSubSection"],
+  #nc-root.jobadvice-mobile-entry-view [class*="StyledWrapper"],
+  #nc-root.jobadvice-mobile-entry-view [class*="DropdownButton"],
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarButton"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSubSection"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSubSection"] > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSectionMain"] button,
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSectionMain"] [role="button"],
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSectionMain"] a {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="DateTimeControl"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+    align-items: stretch !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="DateTimeControl"] > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="DateTimeControl"] [class*="Buttons"] {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="DateTimeControl"] [class*="Buttons"] > * {
+    flex: 1 1 calc(50% - 4px) !important;
+    min-width: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="AppMainContainer"],
+  #nc-root.jobadvice-mobile-entry-view [class*="EditorContainer"] {
+    padding-top: 0 !important;
   }
 
   #nc-root input,
@@ -527,6 +660,11 @@ body {
 
   #nc-root.jobadvice-mobile-entry-view [class*="Editor"] {
     padding-inline: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarContainer"] {
+    padding: 10px !important;
+    gap: 8px !important;
   }
 
   #nc-root a[href*="#/collections/jobs/entries/"],

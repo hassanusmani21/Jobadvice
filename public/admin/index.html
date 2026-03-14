@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin/theme.css?v=20260314k" />
+    <link rel="stylesheet" href="/admin/theme.css?v=20260314n" />
   </head>
   <body>
     <div class="admin-loading" id="admin-loading">
@@ -25,7 +25,7 @@
 
     <script>
       (function ensureFreshAdminShell() {
-        var currentVersion = "20260314k";
+        var currentVersion = "20260314n";
         var params = new URLSearchParams(window.location.search || "");
         if (params.get("jobadvice_admin_v") === currentVersion) {
           return;
@@ -590,6 +590,115 @@
           }
         }
 
+        function hideNodeForMobile(node) {
+          if (!(node instanceof HTMLElement)) {
+            return;
+          }
+
+          node.classList.add("jobadvice-mobile-hidden-node");
+          node.setAttribute("aria-hidden", "true");
+          node.style.display = "none";
+          node.style.visibility = "hidden";
+          node.style.pointerEvents = "none";
+          node.style.width = "0";
+          node.style.minWidth = "0";
+          node.style.maxWidth = "0";
+          node.style.height = "0";
+          node.style.minHeight = "0";
+          node.style.maxHeight = "0";
+          node.style.margin = "0";
+          node.style.padding = "0";
+          node.style.overflow = "hidden";
+        }
+
+        function decorateMobileEntryToolbar(root) {
+          if (!isResponsiveViewport()) {
+            return;
+          }
+
+          var appHeader = root.querySelector('[class*="AppHeader"]');
+          if (appHeader) {
+            appHeader.classList.add("jobadvice-mobile-entry-header");
+          }
+
+          var appHeaderActions = root.querySelector('[class*="AppHeaderActions"]');
+          hideNodeForMobile(appHeaderActions);
+
+          var toolbarContainer = root.querySelector('[class*="ToolbarContainer"]');
+          if (!(toolbarContainer instanceof HTMLElement)) {
+            return;
+          }
+
+          toolbarContainer.classList.add("jobadvice-mobile-entry-toolbar");
+
+          var backSection = toolbarContainer.querySelector('[class*="ToolbarSectionBackLink"]');
+          if (backSection) {
+            backSection.classList.add("jobadvice-mobile-entry-backlink");
+          }
+
+          var mainSection = toolbarContainer.querySelector('[class*="ToolbarSectionMain"]');
+          if (!(mainSection instanceof HTMLElement)) {
+            return;
+          }
+
+          mainSection.classList.add("jobadvice-mobile-entry-actions");
+
+          var actionGroups = mainSection.children;
+          for (var index = 0; index < actionGroups.length; index += 1) {
+            var actionGroup = actionGroups[index];
+            if (!(actionGroup instanceof HTMLElement)) {
+              continue;
+            }
+
+            actionGroup.classList.add("jobadvice-mobile-entry-action-group");
+
+            var normalizedGroupText = normalizeText(actionGroup.textContent);
+            if (!normalizedGroupText) {
+              hideNodeForMobile(actionGroup);
+              continue;
+            }
+
+            if (
+              normalizedGroupText.indexOf("publish") >= 0 ||
+              normalizedGroupText.indexOf("published") >= 0
+            ) {
+              actionGroup.classList.add("jobadvice-mobile-entry-publish-group");
+            }
+
+            if (normalizedGroupText.indexOf("delete") >= 0) {
+              actionGroup.classList.add("jobadvice-mobile-entry-delete-group");
+            }
+          }
+
+          var iconOnlyControls = toolbarContainer.querySelectorAll(
+            'button, [role="button"], a, span',
+          );
+
+          for (var controlIndex = 0; controlIndex < iconOnlyControls.length; controlIndex += 1) {
+            var control = iconOnlyControls[controlIndex];
+            if (!(control instanceof HTMLElement)) {
+              continue;
+            }
+
+            var controlText = normalizeText(control.textContent);
+            var labelText = normalizeText(
+              control.getAttribute("aria-label") || control.getAttribute("title"),
+            );
+            var isInsidePublishGroup = Boolean(
+              control.closest(".jobadvice-mobile-entry-publish-group"),
+            );
+            var isInsideDeleteGroup = Boolean(
+              control.closest(".jobadvice-mobile-entry-delete-group"),
+            );
+
+            if (controlText || labelText || isInsidePublishGroup || isInsideDeleteGroup) {
+              continue;
+            }
+
+            hideNodeForMobile(control);
+          }
+        }
+
         function markDuplicateEntryToolbarMeta(root) {
           var toolbarMetaNodes = root.querySelectorAll('[class*="ToolbarSectionMeta"]');
 
@@ -697,6 +806,7 @@
             document.body.classList.add("jobadvice-entry-view");
             markDuplicateEntryToolbarMeta(root);
             applyEntryResponsiveFixes(root);
+            decorateMobileEntryToolbar(root);
 
             if (!isResponsiveViewport()) {
               return;
