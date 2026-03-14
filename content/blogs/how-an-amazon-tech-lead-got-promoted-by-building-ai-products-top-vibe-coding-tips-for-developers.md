@@ -1,7 +1,7 @@
 ---
 title: "How an Amazon Tech Lead Got Promoted by Building AI Products  Top Vibe
   Coding Tips  for Developers  "
-slug: "ai-vibe-coding-developers-career-growth-2026 "
+slug: ai-vibe-coding-developers-career-growth-2026
 summary: AI-powered “vibe coding” is transforming how developers write software.
   Learn how modern engineers are using AI tools to build products faster,
   improve productivity, and accelerate career growth in the tech industry.
