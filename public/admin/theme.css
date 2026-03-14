@@ -21,6 +21,11 @@
 html,
 body {
   min-height: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -28,6 +33,7 @@ body {
   background: var(--admin-bg);
   color: var(--admin-text);
   font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  position: relative;
 }
 
 .admin-loading {
@@ -80,6 +86,7 @@ body {
   min-height: 100vh;
   color: var(--admin-text);
   font-family: "Manrope", "Avenir Next", "Segoe UI", sans-serif;
+  overflow-x: clip;
 }
 
 #nc-root a {
@@ -183,14 +190,361 @@ body {
   border: 1px solid var(--admin-border-soft);
 }
 
+#nc-root [class*="Main"],
+#nc-root [class*="Editor"],
+#nc-root [class*="Collection"],
+#nc-root [class*="Pane"],
+#nc-root [class*="SplitPane"],
+#nc-root [class*="Card"],
+#nc-root [class*="Header"],
+#nc-root [class*="Toolbar"] {
+  min-width: 0 !important;
+}
+
+#nc-root img,
+#nc-root table {
+  max-width: 100%;
+}
+
+.jobadvice-local-admin-banner {
+  max-width: min(520px, calc(100vw - 24px));
+}
+
+#next-auth-admin-account,
+#next-auth-admin-menu,
+#next-auth-admin-trigger,
+.jobadvice-account-control,
+.jobadvice-account-menu,
+.jobadvice-auto-extract-panel {
+  max-width: calc(100vw - 16px);
+}
+
+.jobadvice-auto-extract-panel {
+  width: min(100%, 430px);
+}
+
+.jobadvice-auto-extract-panel[data-layout="trigger"] {
+  width: 48px;
+  height: 48px;
+}
+
+.jobadvice-auto-extract-panel[data-layout="compact-sheet"] {
+  width: min(430px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+}
+
+.jobadvice-auto-extract-actions {
+  flex-wrap: wrap;
+}
+
+#next-auth-admin-account,
+#next-auth-admin-menu,
+#next-auth-admin-trigger,
+.jobadvice-admin-account,
+.jobadvice-admin-popover {
+  display: none !important;
+}
+
+#nc-root.jobadvice-entry-view .jobadvice-entry-toolbar-meta-duplicate {
+  display: none !important;
+}
+
+#nc-root.jobadvice-entry-view [class*="ToolbarSectionMeta"] [class*="AvatarDropdownButton"] {
+  display: none !important;
+}
+
 @media (max-width: 900px) {
   .admin-loading {
     padding-top: 2.3rem;
     place-content: start center;
   }
 
+  #nc-root {
+    padding-bottom: 5rem;
+  }
+
+  #nc-root [class*="AppHeader"],
+  #nc-root [class*="TopBar"],
+  #nc-root [class*="Toolbar"] {
+    padding-inline: 0.7rem !important;
+  }
+
+  #nc-root [class*="Sidebar"] {
+    width: min(82vw, 320px) !important;
+    max-width: min(82vw, 320px) !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view [class*="SplitPane"],
+  #nc-root.jobadvice-mobile-entry-view [class*="SplitPane"] {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view [class*="Pane"],
+  #nc-root.jobadvice-mobile-entry-view [class*="Pane"] {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel,
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-main,
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results-frame,
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel {
+    position: relative !important;
+    inset: auto !important;
+    z-index: auto !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-main {
+    padding: 0 !important;
+    padding-inline: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results-frame {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel [class*="Toolbar"],
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel [role="toolbar"],
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results [class*="Toolbar"],
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results [role="toolbar"] {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    row-gap: 8px !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results [class*="Grid"],
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results [role="grid"],
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results > * {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results a[href*="#/collections/"][href*="/entries/"] {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view iframe,
+  #nc-root.jobadvice-mobile-entry-view [class*="PreviewPane"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 320px !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="EditorContainer"],
+  #nc-root.jobadvice-mobile-entry-view [class*="Editor"],
+  #nc-root.jobadvice-mobile-entry-view [class*="SplitPane"],
+  #nc-root.jobadvice-mobile-entry-view [class*="ControlPaneContainer"],
+  #nc-root.jobadvice-mobile-entry-view [class*="AppMainContainer"],
+  #nc-root.jobadvice-mobile-entry-view [class*="Pane"],
+  #nc-root.jobadvice-mobile-entry-view [class*="Main"] {
+    position: static !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    flex: none !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view {
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view > * {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view * {
+    touch-action: auto;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="PreviewPaneContainer"]:not([class*="ControlPaneContainer"]),
+  #nc-root.jobadvice-mobile-entry-view [class*="PreviewPaneFrame"] {
+    display: none !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="Toolbar"],
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSection"],
+  #nc-root.jobadvice-mobile-entry-view [class*="EditorToolbar"],
+  #nc-root.jobadvice-mobile-entry-view [class*="ViewControls"] {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    z-index: auto !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="EditorToggle"] {
+    display: none !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="ToolbarSectionMeta"],
+  #nc-root.jobadvice-mobile-entry-view [class*="ViewControlsButton"] {
+    display: none !important;
+  }
+
+  #nc-root input,
+  #nc-root textarea,
+  #nc-root select {
+    font-size: 16px !important;
+  }
+
+  #nc-root button,
+  #nc-root [role="button"] {
+    min-height: 42px;
+  }
+
+  #nc-root [role="dialog"],
+  #nc-root [class*="Modal"] {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    margin: 12px auto !important;
+  }
+
   #nc-root a[href*="#/collections/jobs/entries/"],
   #nc-root a[href*="#/collections/blogs/entries/"] {
     padding: 9px 10px !important;
+  }
+
+  .jobadvice-auto-extract-header {
+    align-items: flex-start !important;
+  }
+
+  .jobadvice-auto-extract-actions {
+    gap: 7px !important;
+  }
+
+  .jobadvice-auto-extract-panel {
+    display: none !important;
+  }
+
+  .jobadvice-local-admin-banner {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    background: linear-gradient(180deg, #ecfdf5 0%, #f8fafc 58%, #ffffff 100%);
+  }
+
+  .admin-loading {
+    padding: 1.2rem 1rem;
+  }
+
+  #nc-root {
+    padding-bottom: 5.5rem;
+  }
+
+  #nc-root [class*="AppHeader"],
+  #nc-root [class*="TopBar"],
+  #nc-root [class*="Toolbar"] {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+  }
+
+  #nc-root [class*="Sidebar"] {
+    width: min(92vw, 360px) !important;
+    max-width: min(92vw, 360px) !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel,
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collection-results {
+    border-radius: 16px !important;
+    box-shadow: var(--admin-shadow-sm) !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel [class*="Toolbar"],
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel [role="toolbar"] {
+    justify-content: flex-start !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel input,
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel select,
+  #nc-root.jobadvice-mobile-collection-view .jobadvice-mobile-collections-panel [role="combobox"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #nc-root.jobadvice-mobile-entry-view [class*="Editor"] {
+    padding-inline: 0 !important;
+  }
+
+  #nc-root a[href*="#/collections/jobs/entries/"],
+  #nc-root a[href*="#/collections/blogs/entries/"] {
+    border-radius: 14px;
+    padding: 10px 11px !important;
+  }
+
+  #nc-root textarea {
+    min-height: 150px !important;
+  }
+
+  .jobadvice-auto-extract-header {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .jobadvice-auto-extract-panel[data-layout="compact-sheet"] {
+    right: 8px !important;
+    left: 8px !important;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important;
+    border-radius: 16px !important;
+    max-height: min(68vh, 520px);
+    overflow-y: auto !important;
+  }
+
+  .jobadvice-auto-extract-actions {
+    flex-direction: column;
+  }
+
+  .jobadvice-auto-extract-actions > * {
+    width: 100%;
+  }
+
+  .jobadvice-local-admin-banner {
+    display: none !important;
+  }
+
+  .jobadvice-auto-extract-panel {
+    display: none !important;
   }
 }

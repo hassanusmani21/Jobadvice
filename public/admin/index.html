@@ -3,6 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>JobAdvice Admin</title>
     <meta name="robots" content="noindex" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -11,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin/theme.css" />
+    <link rel="stylesheet" href="/admin/theme.css?v=20260314j" />
   </head>
   <body>
     <div class="admin-loading" id="admin-loading">
@@ -20,6 +23,20 @@
       <p>Preparing your editor workspace...</p>
     </div>
 
+    <script>
+      (function ensureFreshAdminShell() {
+        var currentVersion = "20260314j";
+        var params = new URLSearchParams(window.location.search || "");
+        if (params.get("jobadvice_admin_v") === currentVersion) {
+          return;
+        }
+
+        params.set("jobadvice_admin_v", currentVersion);
+        window.location.replace(
+          window.location.pathname + "?" + params.toString() + (window.location.hash || ""),
+        );
+      })();
+    </script>
     <script>
       var isLocalHost =
         window.location.hostname === "localhost" ||
@@ -355,7 +372,12 @@
           return;
         }
 
+        if (window.matchMedia("(max-width: 900px)").matches) {
+          return;
+        }
+
         var banner = document.createElement("div");
+        banner.className = "jobadvice-local-admin-banner";
         banner.style.position = "fixed";
         banner.style.left = "12px";
         banner.style.right = "12px";
@@ -370,6 +392,7 @@
         banner.style.color = "#134e4a";
 
         var title = document.createElement("p");
+        title.className = "jobadvice-local-admin-banner-title";
         title.textContent = "Local Admin Mode";
         title.style.margin = "0";
         title.style.fontSize = "13px";
@@ -377,6 +400,7 @@
         title.style.letterSpacing = "0.02em";
 
         var body = document.createElement("p");
+        body.className = "jobadvice-local-admin-banner-body";
         body.textContent =
           "localhost admin reads your local repo only. Posts published from phone or jobadvice.in/admin appear here only after your local repo is updated. Use the live admin for shared cross-device content.";
         body.style.margin = "6px 0 0";
@@ -384,6 +408,7 @@
         body.style.lineHeight = "1.5";
 
         var link = document.createElement("a");
+        link.className = "jobadvice-local-admin-banner-link";
         link.href = "https://jobadvice.in/admin/";
         link.target = "_blank";
         link.rel = "noopener noreferrer";
@@ -399,6 +424,379 @@
         banner.appendChild(body);
         banner.appendChild(link);
         document.body.appendChild(banner);
+      })();
+    </script>
+    <script>
+      (function enhanceResponsiveAdminLayout() {
+        var observer = null;
+        var scrollUnlockTimer = null;
+
+        function isResponsiveViewport() {
+          return window.matchMedia("(max-width: 900px)").matches;
+        }
+
+        function normalizeText(value) {
+          return String(value || "")
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+        }
+
+        function getRouteState() {
+          var routeValue = (window.location.hash || "").toLowerCase();
+          return {
+            isCollectionRoute: routeValue.indexOf("/collections/") >= 0,
+            isEntryRoute: routeValue.indexOf("/entries/") >= 0,
+          };
+        }
+
+        function findCollectionsPanel(root) {
+          var textNodes = root.querySelectorAll("h1, h2, h3, h4, p, span, div");
+          var heading = null;
+
+          for (var index = 0; index < textNodes.length; index += 1) {
+            if (normalizeText(textNodes[index].textContent) === "collections") {
+              heading = textNodes[index];
+              break;
+            }
+          }
+
+          if (!heading) {
+            return null;
+          }
+
+          var searchField =
+            root.querySelector('input[placeholder*="Search"]') ||
+            root.querySelector('input[placeholder*="search"]');
+          var current = heading;
+
+          for (var depth = 0; current && depth < 8; depth += 1) {
+            if (
+              current instanceof HTMLElement &&
+              searchField &&
+              current.contains(searchField)
+            ) {
+              return current;
+            }
+            current = current.parentElement;
+          }
+
+          return heading.parentElement;
+        }
+
+        function findResultsContainer(root) {
+          var entryLinks = root.querySelectorAll(
+            'a[href*="#/collections/"][href*="/entries/"]',
+          );
+          if (entryLinks.length === 0) {
+            return null;
+          }
+
+          var firstLink = entryLinks[0];
+          var current = firstLink.parentElement;
+
+          while (current && current !== root) {
+            if (
+              current.querySelectorAll('a[href*="#/collections/"][href*="/entries/"]').length >=
+              Math.min(2, entryLinks.length)
+            ) {
+              return current;
+            }
+            current = current.parentElement;
+          }
+
+          return firstLink.parentElement;
+        }
+
+        function findSharedContainer(root, firstNode, secondNode) {
+          var current = firstNode;
+
+          while (current && current !== root) {
+            if (current.contains(secondNode)) {
+              return current;
+            }
+            current = current.parentElement;
+          }
+
+          return null;
+        }
+
+        function clearResponsiveClasses(root) {
+          root.classList.remove(
+            "jobadvice-entry-view",
+            "jobadvice-mobile-collection-view",
+            "jobadvice-mobile-entry-view",
+          );
+
+          var markedNodes = root.querySelectorAll(
+            ".jobadvice-entry-toolbar-meta-duplicate, .jobadvice-mobile-collection-layout, .jobadvice-mobile-collections-panel, .jobadvice-mobile-collection-main, .jobadvice-mobile-collection-results-frame, .jobadvice-mobile-collection-results",
+          );
+          for (var index = 0; index < markedNodes.length; index += 1) {
+            markedNodes[index].classList.remove(
+              "jobadvice-entry-toolbar-meta-duplicate",
+              "jobadvice-mobile-collection-layout",
+              "jobadvice-mobile-collections-panel",
+              "jobadvice-mobile-collection-main",
+              "jobadvice-mobile-collection-results-frame",
+              "jobadvice-mobile-collection-results",
+            );
+          }
+        }
+
+        function unlockDocumentScroll() {
+          var html = document.documentElement;
+          var body = document.body;
+          if (!html || !body) {
+            return;
+          }
+
+          html.style.height = "auto";
+          html.style.maxHeight = "none";
+          html.style.overflow = "auto";
+          html.style.overflowY = "auto";
+          body.style.height = "auto";
+          body.style.maxHeight = "none";
+          body.style.overflow = "auto";
+          body.style.overflowY = "auto";
+          body.style.position = "relative";
+          html.style.touchAction = "auto";
+          body.style.touchAction = "auto";
+        }
+
+        function unlockAncestorChain(root, node) {
+          var current = node instanceof HTMLElement ? node.parentElement : null;
+
+          while (current && current !== root && current !== document.body) {
+            current.style.position = "static";
+            current.style.top = "auto";
+            current.style.right = "auto";
+            current.style.bottom = "auto";
+            current.style.left = "auto";
+            current.style.height = "auto";
+            current.style.minHeight = "0";
+            current.style.maxHeight = "none";
+            current.style.overflow = "visible";
+            current.style.overflowY = "visible";
+            current.style.overflowX = "visible";
+            current.style.transform = "none";
+            current.style.pointerEvents = "auto";
+            current = current.parentElement;
+          }
+        }
+
+        function markDuplicateEntryToolbarMeta(root) {
+          var toolbarMetaNodes = root.querySelectorAll('[class*="ToolbarSectionMeta"]');
+
+          for (var index = 0; index < toolbarMetaNodes.length; index += 1) {
+            var toolbarMeta = toolbarMetaNodes[index];
+            var avatarButtons = toolbarMeta.querySelectorAll('[class*="AvatarDropdownButton"]');
+            if (avatarButtons.length === 0) {
+              continue;
+            }
+
+            var buttonLikeNodes = toolbarMeta.querySelectorAll('button, [role="button"]');
+            var normalizedText = normalizeText(toolbarMeta.textContent);
+            var containsOnlyAvatarButtons =
+              buttonLikeNodes.length === avatarButtons.length && normalizedText === "";
+
+            if (containsOnlyAvatarButtons) {
+              toolbarMeta.classList.add("jobadvice-entry-toolbar-meta-duplicate");
+              toolbarMeta.setAttribute("aria-hidden", "true");
+              toolbarMeta.style.display = "none";
+              toolbarMeta.style.width = "0";
+              toolbarMeta.style.minWidth = "0";
+              toolbarMeta.style.maxWidth = "0";
+              toolbarMeta.style.margin = "0";
+              toolbarMeta.style.padding = "0";
+              toolbarMeta.style.overflow = "hidden";
+              toolbarMeta.style.pointerEvents = "none";
+            }
+          }
+        }
+
+        function applyEntryResponsiveFixes(root) {
+          if (!isResponsiveViewport()) {
+            return;
+          }
+
+          unlockDocumentScroll();
+          root.style.height = "auto";
+          root.style.minHeight = "100vh";
+          root.style.maxHeight = "none";
+          root.style.overflow = "visible";
+          root.style.overflowY = "visible";
+
+          var layoutNodes = root.querySelectorAll(
+            '[class*="Main"], [class*="EditorContainer"], [class*="Editor"], [class*="SplitPane"], [class*="ControlPaneContainer"], [class*="AppMainContainer"], [class*="Pane"]',
+          );
+
+          for (var index = 0; index < layoutNodes.length; index += 1) {
+            var layoutNode = layoutNodes[index];
+            layoutNode.style.position = "static";
+            layoutNode.style.top = "auto";
+            layoutNode.style.right = "auto";
+            layoutNode.style.bottom = "auto";
+            layoutNode.style.left = "auto";
+            layoutNode.style.height = "auto";
+            layoutNode.style.minHeight = "0";
+            layoutNode.style.maxHeight = "none";
+            layoutNode.style.flex = "none";
+            layoutNode.style.overflow = "visible";
+            layoutNode.style.overflowY = "visible";
+            layoutNode.style.overflowX = "visible";
+          }
+
+          var toolbarNodes = root.querySelectorAll(
+            '[class*="Toolbar"], [class*="ToolbarSection"], [class*="EditorToolbar"]',
+          );
+
+          for (var toolbarIndex = 0; toolbarIndex < toolbarNodes.length; toolbarIndex += 1) {
+            var toolbarNode = toolbarNodes[toolbarIndex];
+            toolbarNode.style.position = "static";
+            toolbarNode.style.top = "auto";
+            toolbarNode.style.right = "auto";
+            toolbarNode.style.bottom = "auto";
+            toolbarNode.style.left = "auto";
+            toolbarNode.style.zIndex = "auto";
+          }
+
+          var hiddenNodes = root.querySelectorAll(
+            '[class*="PreviewPaneContainer"]:not([class*="ControlPaneContainer"]), [class*="PreviewPaneFrame"], [class*="EditorToggle"], [class*="ToolbarSectionMeta"]',
+          );
+
+          for (var hiddenIndex = 0; hiddenIndex < hiddenNodes.length; hiddenIndex += 1) {
+            hiddenNodes[hiddenIndex].style.display = "none";
+          }
+
+          var fieldNodes = root.querySelectorAll("input, textarea, select, button");
+          for (var fieldIndex = 0; fieldIndex < fieldNodes.length; fieldIndex += 1) {
+            unlockAncestorChain(root, fieldNodes[fieldIndex]);
+          }
+        }
+
+        function applyResponsiveClasses() {
+          var root = document.getElementById("nc-root");
+          if (!root) {
+            return;
+          }
+
+          clearResponsiveClasses(root);
+
+          var routeState = getRouteState();
+
+          if (routeState.isEntryRoute) {
+            root.classList.add("jobadvice-entry-view");
+            markDuplicateEntryToolbarMeta(root);
+            applyEntryResponsiveFixes(root);
+
+            if (!isResponsiveViewport()) {
+              return;
+            }
+
+            root.classList.add("jobadvice-mobile-entry-view");
+            return;
+          }
+
+          if (!isResponsiveViewport()) {
+            return;
+          }
+
+          if (!routeState.isCollectionRoute) {
+            return;
+          }
+
+          root.classList.add("jobadvice-mobile-collection-view");
+
+          var collectionsPanel = findCollectionsPanel(root);
+          var resultsContainer = findResultsContainer(root);
+          var resultsFrame = resultsContainer ? resultsContainer.parentElement : null;
+          var collectionMain = resultsContainer ? resultsContainer.closest("main") : null;
+          var layoutContainer =
+            collectionsPanel && resultsContainer
+              ? findSharedContainer(root, collectionsPanel, resultsContainer)
+              : null;
+
+          if (collectionsPanel) {
+            collectionsPanel.classList.add("jobadvice-mobile-collections-panel");
+          }
+
+          if (resultsContainer) {
+            resultsContainer.classList.add("jobadvice-mobile-collection-results");
+          }
+
+          if (resultsFrame) {
+            resultsFrame.classList.add("jobadvice-mobile-collection-results-frame");
+          }
+
+          if (collectionMain) {
+            collectionMain.classList.add("jobadvice-mobile-collection-main");
+          }
+
+          if (layoutContainer) {
+            layoutContainer.classList.add("jobadvice-mobile-collection-layout");
+          }
+        }
+
+        function scheduleApply() {
+          window.requestAnimationFrame(function () {
+            window.setTimeout(applyResponsiveClasses, 40);
+          });
+        }
+
+        function startScrollUnlockWatchdog() {
+          if (scrollUnlockTimer) {
+            return;
+          }
+
+          scrollUnlockTimer = window.setInterval(function () {
+            var root = document.getElementById("nc-root");
+            var routeState = getRouteState();
+            if (!root || !routeState.isEntryRoute || !isResponsiveViewport()) {
+              return;
+            }
+
+            applyEntryResponsiveFixes(root);
+          }, 700);
+        }
+
+        function startObserving(root) {
+          if (!root || observer) {
+            return;
+          }
+
+          observer = new MutationObserver(function () {
+            scheduleApply();
+          });
+
+          observer.observe(root, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+          });
+
+          scheduleApply();
+        }
+
+        function waitForRoot(attempts) {
+          var root = document.getElementById("nc-root");
+          if (root) {
+            startObserving(root);
+            return;
+          }
+
+          if (attempts > 180) {
+            return;
+          }
+
+          window.setTimeout(function () {
+            waitForRoot(attempts + 1);
+          }, 250);
+        }
+
+        window.addEventListener("hashchange", scheduleApply);
+        window.addEventListener("resize", scheduleApply);
+        startScrollUnlockWatchdog();
+        waitForRoot(0);
       })();
     </script>
     <script>
@@ -941,300 +1339,61 @@
       })();
     </script>
     <script>
-      (function injectAdminAccountPanel() {
-        var panelId = "next-auth-admin-menu";
-        var triggerId = "next-auth-admin-trigger";
-        var pollAttempts = 0;
-
-        async function readJsonResponse(response) {
-          var contentType = String(response.headers.get("content-type") || "").toLowerCase();
-          var rawText = await response.text();
-
-          if (!rawText) {
-            return null;
-          }
-
-          if (contentType.indexOf("application/json") === -1) {
-            return null;
-          }
-
-          try {
-            return JSON.parse(rawText);
-          } catch {
-            return null;
-          }
-        }
-
-        async function getSessionUser() {
-          var response = await fetch("/api/auth/session", {
-            credentials: "same-origin",
-          });
-
-          if (!response.ok) {
-            return null;
-          }
-
-          var result = await readJsonResponse(response);
-          if (!result || !result.user) {
-            return null;
-          }
-
-          return result.user;
-        }
-
-        function getInitials(value) {
-          var safeValue = (value || "Admin").trim();
-          return (
-            safeValue
-              .split(/\s+/)
-              .slice(0, 2)
-              .map(function (part) {
-                return part.charAt(0).toUpperCase();
-              })
-              .join("") || "A"
+      (function cleanupCustomAdminControls() {
+        function removeLegacyAccountNodes() {
+          var legacyNodes = document.querySelectorAll(
+            "#next-auth-admin-account, #next-auth-admin-menu, #next-auth-admin-trigger, .jobadvice-admin-account, .jobadvice-admin-popover, #jobadvice-account-control, #jobadvice-account-menu, #jobadvice-account-trigger",
           );
-        }
 
-        async function signOutAdmin() {
-          var csrfResponse = await fetch("/api/auth/csrf", {
-            credentials: "same-origin",
-          });
-          var csrfResult = await readJsonResponse(csrfResponse);
-
-          if (!csrfResult || !csrfResult.csrfToken) {
-            throw new Error("Unable to fetch CSRF token");
+          for (var index = 0; index < legacyNodes.length; index += 1) {
+            legacyNodes[index].remove();
           }
-
-          var form = document.createElement("form");
-          form.method = "POST";
-          form.action = "/api/auth/signout";
-          form.style.display = "none";
-
-          var csrfInput = document.createElement("input");
-          csrfInput.type = "hidden";
-          csrfInput.name = "csrfToken";
-          csrfInput.value = csrfResult.csrfToken;
-          form.appendChild(csrfInput);
-
-          var callbackInput = document.createElement("input");
-          callbackInput.type = "hidden";
-          callbackInput.name = "callbackUrl";
-          callbackInput.value = "/admin";
-          form.appendChild(callbackInput);
-
-          document.body.appendChild(form);
-          form.submit();
         }
 
-        function buildAccountMenu(user) {
-          if (
-            document.getElementById(panelId) ||
-            document.getElementById(triggerId)
-          ) {
+        function waitForBody(attempts) {
+          if (document.body) {
+            removeLegacyAccountNodes();
+
+            var observer = new MutationObserver(function () {
+              removeLegacyAccountNodes();
+            });
+
+            observer.observe(document.body, {
+              childList: true,
+              subtree: true,
+            });
             return;
           }
 
-          var wrapper = document.createElement("div");
-          wrapper.id = "next-auth-admin-account";
-          wrapper.style.position = "fixed";
-          wrapper.style.top = "14px";
-          wrapper.style.right = "14px";
-          wrapper.style.zIndex = "9999";
-          wrapper.style.fontFamily = "Manrope, sans-serif";
-
-          var trigger = document.createElement("button");
-          trigger.id = triggerId;
-          trigger.type = "button";
-          trigger.setAttribute("aria-label", "Open admin account menu");
-          trigger.setAttribute("aria-expanded", "false");
-          trigger.style.display = "inline-flex";
-          trigger.style.alignItems = "center";
-          trigger.style.justifyContent = "center";
-          trigger.style.width = "44px";
-          trigger.style.height = "44px";
-          trigger.style.borderRadius = "9999px";
-          trigger.style.border = "1px solid rgba(15, 23, 42, 0.16)";
-          trigger.style.background = "linear-gradient(135deg, #0f766e, #115e59)";
-          trigger.style.color = "#ffffff";
-          trigger.style.fontSize = "14px";
-          trigger.style.fontWeight = "800";
-          trigger.style.cursor = "pointer";
-          trigger.style.boxShadow = "0 8px 20px rgba(15, 23, 42, 0.2)";
-          trigger.textContent = getInitials(user.name || user.email || "Admin");
-
-          var panel = document.createElement("aside");
-          panel.id = panelId;
-          panel.setAttribute("aria-label", "Admin account details");
-          panel.style.position = "absolute";
-          panel.style.top = "52px";
-          panel.style.right = "0";
-          panel.style.width = "min(320px, calc(100vw - 24px))";
-          panel.style.borderRadius = "14px";
-          panel.style.border = "1px solid rgba(15, 23, 42, 0.12)";
-          panel.style.background = "rgba(255, 255, 255, 0.96)";
-          panel.style.boxShadow = "0 16px 32px rgba(15, 23, 42, 0.18)";
-          panel.style.backdropFilter = "blur(8px)";
-          panel.style.padding = "12px";
-          panel.style.display = "none";
-
-          var topRow = document.createElement("div");
-          topRow.style.display = "flex";
-          topRow.style.alignItems = "center";
-          topRow.style.gap = "10px";
-
-          var badge = document.createElement("span");
-          badge.textContent = trigger.textContent;
-          badge.style.display = "inline-flex";
-          badge.style.alignItems = "center";
-          badge.style.justifyContent = "center";
-          badge.style.width = "34px";
-          badge.style.height = "34px";
-          badge.style.borderRadius = "50%";
-          badge.style.background = "#0f766e";
-          badge.style.color = "#ffffff";
-          badge.style.fontSize = "13px";
-          badge.style.fontWeight = "800";
-
-          var identity = document.createElement("div");
-          identity.style.minWidth = "0";
-
-          var nameNode = document.createElement("p");
-          nameNode.textContent = (user.name || user.email || "Admin").trim();
-          nameNode.style.margin = "0";
-          nameNode.style.color = "#0f172a";
-          nameNode.style.fontSize = "14px";
-          nameNode.style.fontWeight = "700";
-          nameNode.style.lineHeight = "1.2";
-          nameNode.style.whiteSpace = "nowrap";
-          nameNode.style.overflow = "hidden";
-          nameNode.style.textOverflow = "ellipsis";
-
-          var emailNode = document.createElement("p");
-          emailNode.textContent = user.email || "";
-          emailNode.style.margin = "4px 0 0";
-          emailNode.style.color = "#475569";
-          emailNode.style.fontSize = "12px";
-          emailNode.style.lineHeight = "1.3";
-          emailNode.style.whiteSpace = "nowrap";
-          emailNode.style.overflow = "hidden";
-          emailNode.style.textOverflow = "ellipsis";
-
-          var roleNode = document.createElement("p");
-          roleNode.textContent = "Administrator";
-          roleNode.style.margin = "8px 0 0";
-          roleNode.style.color = "#0f766e";
-          roleNode.style.fontSize = "11px";
-          roleNode.style.fontWeight = "700";
-          roleNode.style.textTransform = "uppercase";
-          roleNode.style.letterSpacing = "0.04em";
-
-          identity.appendChild(nameNode);
-          identity.appendChild(emailNode);
-          identity.appendChild(roleNode);
-          topRow.appendChild(badge);
-          topRow.appendChild(identity);
-
-          var logoutButton = document.createElement("button");
-          logoutButton.type = "button";
-          logoutButton.textContent = "Logout";
-          logoutButton.setAttribute("aria-label", "Sign out of admin session");
-          logoutButton.style.marginTop = "10px";
-          logoutButton.style.width = "100%";
-          logoutButton.style.padding = "9px 12px";
-          logoutButton.style.borderRadius = "10px";
-          logoutButton.style.border = "none";
-          logoutButton.style.background = "#0f172a";
-          logoutButton.style.color = "#ffffff";
-          logoutButton.style.fontSize = "13px";
-          logoutButton.style.fontWeight = "700";
-          logoutButton.style.cursor = "pointer";
-
-          logoutButton.addEventListener("click", function () {
-            logoutButton.disabled = true;
-            logoutButton.textContent = "Logging out...";
-            signOutAdmin().catch(function () {
-              logoutButton.disabled = false;
-              logoutButton.textContent = "Logout";
-              alert("Logout failed. Please refresh and try again.");
-            });
-          });
-
-          function closeMenu() {
-            panel.style.display = "none";
-            trigger.setAttribute("aria-expanded", "false");
-          }
-
-          function openMenu() {
-            panel.style.display = "block";
-            trigger.setAttribute("aria-expanded", "true");
-          }
-
-          trigger.addEventListener("click", function () {
-            if (panel.style.display === "none") {
-              openMenu();
-            } else {
-              closeMenu();
-            }
-          });
-
-          document.addEventListener("click", function (event) {
-            if (!wrapper.contains(event.target)) {
-              closeMenu();
-            }
-          });
-
-          document.addEventListener("keydown", function (event) {
-            if (event.key === "Escape") {
-              closeMenu();
-            }
-          });
-
-          panel.appendChild(topRow);
-          panel.appendChild(logoutButton);
-          wrapper.appendChild(trigger);
-          wrapper.appendChild(panel);
-          document.body.appendChild(wrapper);
-        }
-
-        var pollTimer = window.setInterval(function () {
-          pollAttempts += 1;
-
-          if (
-            document.getElementById(panelId) &&
-            document.getElementById(triggerId)
-          ) {
-            clearInterval(pollTimer);
+          if (attempts > 120) {
             return;
           }
 
-          getSessionUser()
-            .then(function (user) {
-              if (!user) {
-                if (pollAttempts > 20) {
-                  clearInterval(pollTimer);
-                }
-                return;
-              }
+          window.setTimeout(function () {
+            waitForBody(attempts + 1);
+          }, 250);
+        }
 
-              buildAccountMenu(user);
-              clearInterval(pollTimer);
-            })
-            .catch(function () {
-              if (pollAttempts > 20) {
-                clearInterval(pollTimer);
-              }
-            });
-        }, 1000);
+        waitForBody(0);
       })();
     </script>
     <script>
       (function injectAdminAutoExtract() {
         var panelId = "jobadvice-auto-extract-panel";
         var buttonId = "jobadvice-auto-extract-btn";
+        var urlButtonId = "jobadvice-auto-extract-url-btn";
         var sourceTextareaId = "jobadvice-auto-extract-source";
+        var sourceUrlInputId = "jobadvice-auto-extract-url";
+        var statusId = "jobadvice-auto-extract-status";
         var collapseToggleId = "jobadvice-auto-extract-collapse";
         var clearButtonId = "jobadvice-auto-extract-clear";
-        var collapseStorageKey = "jobadvice_auto_extract_collapsed";
+        var collapseStorageKey = "jobadvice_auto_extract_collapsed_v2";
+        var panelVersion = "20260314j";
+        var compactPanelExpanded = false;
+
+        function isCompactViewport() {
+          return window.matchMedia("(max-width: 900px)").matches;
+        }
 
         function getCollectionFromHash() {
           var routeValue = (window.location.pathname || "") + (window.location.hash || "");
@@ -1246,10 +1405,19 @@
           return collection === "jobs" || collection === "blogs";
         }
 
-        function getEditorRoot() {
+        function getInlineEditorMountTarget() {
           return (
             document.querySelector(".nc-entryEditor") ||
             document.querySelector(".nc-entryEditor-container") ||
+            document.querySelector('[class*="ControlPaneContainer"]') ||
+            document.querySelector('[class*="EditorContainer"]') ||
+            document.querySelector('[class*="Editor"]')
+          );
+        }
+
+        function getEditorRoot() {
+          return (
+            getInlineEditorMountTarget() ||
             document.getElementById("nc-root") ||
             document.body
           );
@@ -1263,16 +1431,36 @@
         }
 
         function getPanelCollapsedState() {
-          try {
-            return window.localStorage.getItem(collapseStorageKey) === "1";
-          } catch {
-            return false;
+          if (isCompactViewport()) {
+            return !compactPanelExpanded;
           }
+
+          var storageKey = collapseStorageKey + (isCompactViewport() ? "_compact" : "_full");
+          try {
+            var storedValue = window.localStorage.getItem(storageKey);
+            if (storedValue === "1") {
+              return true;
+            }
+
+            if (storedValue === "0") {
+              return false;
+            }
+          } catch {
+            return true;
+          }
+
+          return true;
         }
 
         function setPanelCollapsedState(isCollapsed) {
+          if (isCompactViewport()) {
+            compactPanelExpanded = !isCollapsed;
+            return;
+          }
+
+          var storageKey = collapseStorageKey + (isCompactViewport() ? "_compact" : "_full");
           try {
-            window.localStorage.setItem(collapseStorageKey, isCollapsed ? "1" : "0");
+            window.localStorage.setItem(storageKey, isCollapsed ? "1" : "0");
           } catch {
             // Ignore localStorage errors.
           }
@@ -1284,29 +1472,6 @@
 
         function redirectToAdminLogin() {
           window.location.href = getAdminLoginUrl();
-        }
-
-        async function ensureAdminSession() {
-          var sessionResponse = await fetch("/api/auth/session", {
-            credentials: "same-origin",
-          });
-
-          if (!sessionResponse.ok) {
-            redirectToAdminLogin();
-            throw new Error("Session expired. Redirecting to login...");
-          }
-
-          var sessionData = null;
-          try {
-            sessionData = await sessionResponse.json();
-          } catch {
-            sessionData = null;
-          }
-
-          if (!sessionData || !sessionData.user || !sessionData.user.email) {
-            redirectToAdminLogin();
-            throw new Error("Session expired. Redirecting to login...");
-          }
         }
 
         async function readJsonOrThrow(response) {
@@ -1374,6 +1539,66 @@
           return normalizeText(value)
             .toLowerCase()
             .replace(/\s+/g, " ");
+        }
+
+        function getSourceTextarea() {
+          var sourceTextarea = document.getElementById(sourceTextareaId);
+          return sourceTextarea instanceof HTMLTextAreaElement ? sourceTextarea : null;
+        }
+
+        function getSourceUrlInput() {
+          var sourceUrlInput = document.getElementById(sourceUrlInputId);
+          return sourceUrlInput instanceof HTMLInputElement ? sourceUrlInput : null;
+        }
+
+        function getAutoExtractMountTarget() {
+          return document.body;
+        }
+
+        function sendDebugEvent(eventName, details) {
+          try {
+            fetch("/api/admin/auto-extract/debug", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "same-origin",
+              keepalive: true,
+              body: JSON.stringify({
+                event: String(eventName || ""),
+                version: panelVersion,
+                route: (window.location.pathname || "") + (window.location.hash || ""),
+                collection: getCollectionFromHash(),
+                mode: details && details.mode ? String(details.mode) : "",
+                status: details && details.status ? String(details.status) : "",
+                message: details && details.message ? String(details.message) : "",
+              }),
+            }).catch(function () {
+              return null;
+            });
+          } catch {
+            // Ignore debug beacon errors.
+          }
+        }
+
+        function setPanelStatus(message, tone) {
+          var statusNode = document.getElementById(statusId);
+          if (!statusNode) {
+            return;
+          }
+
+          var normalizedTone = String(tone || "muted").toLowerCase();
+          var color = "#64748b";
+          if (normalizedTone === "busy") {
+            color = "#1d4ed8";
+          } else if (normalizedTone === "success") {
+            color = "#047857";
+          } else if (normalizedTone === "error") {
+            color = "#b91c1c";
+          }
+
+          statusNode.textContent = String(message || "").trim() || "Ready";
+          statusNode.style.color = color;
         }
 
         function normalizeArrayValue(value) {
@@ -1696,6 +1921,40 @@
           summary.skipped += 1;
         }
 
+        function getManualSourceText(editorRoot, collection) {
+          var sourceTextarea = getSourceTextarea();
+          var sourceText = sourceTextarea ? String(sourceTextarea.value || "").trim() : "";
+
+          if (!sourceText && collection === "blogs") {
+            var sourceField =
+              editorRoot.querySelector('[name="body"]') ||
+              document.querySelector('textarea[name="body"]') ||
+              document.querySelector('input[name="body"]');
+            if (sourceField) {
+              sourceText = String(sourceField.value || "").trim();
+            }
+          }
+
+          return sourceText;
+        }
+
+        function setActionButtonsState(isBusy, mode) {
+          var textButton = document.getElementById(buttonId);
+          var urlButton = document.getElementById(urlButtonId);
+
+          if (textButton instanceof HTMLButtonElement) {
+            textButton.disabled = isBusy;
+            textButton.textContent =
+              isBusy && mode === "text" ? "Extracting..." : "Auto Extract Text";
+          }
+
+          if (urlButton instanceof HTMLButtonElement) {
+            urlButton.disabled = isBusy;
+            urlButton.textContent =
+              isBusy && mode === "url" ? "Fetching URL..." : "Fetch URL + Extract";
+          }
+        }
+
         function applyJobData(editorRoot, data) {
           var summary = createApplySummary();
           var fields = [
@@ -1773,41 +2032,48 @@
           return summary;
         }
 
-        async function runAutoExtract(button) {
+        async function runAutoExtract(mode) {
           var editorRoot = getEditorRoot() || document;
           var collection = getCollectionFromHash();
+          sendDebugEvent("button_clicked", { mode: mode });
 
           if (!isSupportedCollection(collection)) {
+            sendDebugEvent("unsupported_collection", { mode: mode, message: collection });
             alert("Auto extraction is available only for Jobs and Blogs entry forms.");
             return;
           }
 
-          await ensureAdminSession();
-
-          var sourceTextarea = document.getElementById(sourceTextareaId);
-          var manualSourceText =
-            sourceTextarea instanceof HTMLTextAreaElement
-              ? String(sourceTextarea.value || "").trim()
+          var sourceTextarea = getSourceTextarea();
+          var sourceUrlInput = getSourceUrlInput();
+          var sourceText = getManualSourceText(editorRoot, collection);
+          var sourceUrl =
+            sourceUrlInput instanceof HTMLInputElement
+              ? String(sourceUrlInput.value || "").trim()
               : "";
 
-          var sourceText = manualSourceText;
-          if (!sourceText && collection === "blogs") {
-            var sourceField =
-              editorRoot.querySelector('[name="body"]') ||
-              document.querySelector('textarea[name="body"]') ||
-              document.querySelector('input[name="body"]');
-            if (sourceField) {
-              sourceText = String(sourceField.value || "").trim();
-            }
+          if (mode === "url" && !sourceUrl) {
+            sendDebugEvent("validation_failed", {
+              mode: mode,
+              status: "missing_url",
+            });
+            setPanelStatus("Paste a public URL first.", "error");
+            alert("Paste a public URL into the URL field first.");
+            return;
           }
 
-          if (!sourceText) {
+          if (mode !== "url" && !sourceText) {
+            sendDebugEvent("validation_failed", {
+              mode: mode,
+              status: "missing_text",
+            });
+            setPanelStatus("Paste source text first.", "error");
             alert("Paste full source content into the Auto Extract panel textarea first.");
             return;
           }
 
-          button.disabled = true;
-          button.textContent = "Extracting...";
+          setActionButtonsState(true, mode);
+          setPanelStatus("Requesting /api/admin/auto-extract...", "busy");
+          sendDebugEvent("request_started", { mode: mode });
           var requestTimeoutId = null;
 
           try {
@@ -1825,7 +2091,8 @@
               signal: requestController.signal,
               body: JSON.stringify({
                 collection: collection,
-                sourceText: sourceText,
+                sourceText: mode === "url" ? "" : sourceText,
+                sourceUrl: mode === "url" ? sourceUrl : "",
               }),
             });
             window.clearTimeout(requestTimeoutId);
@@ -1851,13 +2118,27 @@
               throw new Error("Invalid extraction payload");
             }
 
+            if (sourceTextarea && typeof result.sourceText === "string" && result.sourceText.trim()) {
+              sourceTextarea.value = result.sourceText.trim();
+            }
+
+            if (
+              sourceUrlInput &&
+              typeof result.resolvedSourceUrl === "string" &&
+              result.resolvedSourceUrl.trim()
+            ) {
+              sourceUrlInput.value = result.resolvedSourceUrl.trim();
+            }
+
             var fillSummary =
               collection === "jobs"
                 ? applyJobData(editorRoot, result.data)
                 : applyBlogData(editorRoot, result.data);
 
             var completionMessage =
-              "Auto extraction completed (" +
+              (mode === "url"
+                ? "URL fetch + auto extraction completed ("
+                : "Auto extraction completed (") +
               (result.mode || "fallback") +
               "). Updated " +
               fillSummary.updated +
@@ -1885,7 +2166,17 @@
               completionMessage += " No fields were filled. Try richer structured text.";
             }
 
+            if (mode === "url" && result.resolvedSourceUrl) {
+              completionMessage += " Source: " + result.resolvedSourceUrl + ".";
+            }
+
             completionMessage += " Please review before publishing.";
+            setPanelStatus("Updated " + fillSummary.updated + " field(s).", "success");
+            sendDebugEvent("request_succeeded", {
+              mode: mode,
+              status: "ok",
+              message: String(fillSummary.updated),
+            });
             alert(completionMessage);
           } catch (error) {
             var message =
@@ -1893,6 +2184,12 @@
             if (String(message).toLowerCase().indexOf("abort") >= 0) {
               message = "Extraction timed out. Please shorten content or try again.";
             }
+            setPanelStatus(message, "error");
+            sendDebugEvent("request_failed", {
+              mode: mode,
+              status: "error",
+              message: message,
+            });
             if (
               String(message).indexOf("SessionRequired") >= 0 ||
               String(message).toLowerCase().indexOf("session expired") >= 0 ||
@@ -1906,8 +2203,7 @@
             if (requestTimeoutId) {
               window.clearTimeout(requestTimeoutId);
             }
-            button.disabled = false;
-            button.textContent = "Auto Extract with AI";
+            setActionButtonsState(false, mode);
           }
         }
 
@@ -1919,44 +2215,135 @@
             return;
           }
 
-          if (document.getElementById(panelId)) {
+          if (isCompactViewport()) {
+            removePanel();
             return;
           }
 
           var isCollapsed = getPanelCollapsedState();
+          var isCompact = isCompactViewport();
+          var mountTarget = getAutoExtractMountTarget();
+          var layoutMode = isCollapsed
+            ? "trigger"
+            : isCompact
+              ? "compact-sheet"
+              : "desktop-panel";
+          var existingPanel = document.getElementById(panelId);
+
+          if (existingPanel) {
+            var matchesCollection =
+              existingPanel.getAttribute("data-collection") === collection;
+            var matchesLayout = existingPanel.getAttribute("data-layout") === layoutMode;
+            var matchesParent = existingPanel.parentElement === mountTarget;
+
+            if (matchesCollection && matchesLayout && matchesParent) {
+              return;
+            }
+
+            existingPanel.remove();
+          }
+
           var panel = document.createElement("div");
           panel.id = panelId;
+          panel.className = "jobadvice-auto-extract-panel";
+          panel.setAttribute("data-collection", collection);
+          panel.setAttribute("data-layout", layoutMode);
           panel.style.position = "fixed";
-          panel.style.right = "18px";
-          panel.style.bottom = "18px";
-          panel.style.zIndex = "9999";
-          panel.style.width = "min(430px, calc(100vw - 24px))";
-          panel.style.padding = "12px";
-          panel.style.borderRadius = "12px";
-          panel.style.border = "1px solid rgba(15, 23, 42, 0.14)";
-          panel.style.background = "rgba(255, 255, 255, 0.96)";
-          panel.style.boxShadow = "0 12px 28px rgba(15, 23, 42, 0.16)";
-          panel.style.backdropFilter = "blur(8px)";
+          panel.style.right = layoutMode === "desktop-panel" ? "18px" : "8px";
+          panel.style.left = layoutMode === "compact-sheet" ? "8px" : "auto";
+          panel.style.bottom = "8px";
+          panel.style.top = "auto";
+          panel.style.zIndex = "2147483647";
+          panel.style.pointerEvents = "auto";
+          panel.style.width =
+            layoutMode === "trigger"
+              ? "48px"
+              : layoutMode === "compact-sheet"
+                ? "calc(100vw - 16px)"
+                : "min(430px, calc(100vw - 24px))";
+          panel.style.maxWidth = layoutMode === "trigger" ? "48px" : "430px";
+          panel.style.margin = "0";
+          panel.style.padding = layoutMode === "trigger" ? "0" : "12px";
+          panel.style.borderRadius = layoutMode === "trigger" ? "999px" : "16px";
+          panel.style.border =
+            layoutMode === "trigger"
+              ? "none"
+              : "1px solid rgba(15, 23, 42, 0.14)";
+          panel.style.background =
+            layoutMode === "trigger"
+              ? "linear-gradient(135deg, #0f766e, #115e59)"
+              : "rgba(255, 255, 255, 0.98)";
+          panel.style.boxShadow =
+            layoutMode === "trigger"
+              ? "0 12px 24px rgba(15, 23, 42, 0.22)"
+              : "0 12px 28px rgba(15, 23, 42, 0.16)";
+          panel.style.backdropFilter = layoutMode === "trigger" ? "" : "blur(8px)";
+          panel.style.overflow = layoutMode === "trigger" ? "hidden" : "visible";
+          if (layoutMode === "compact-sheet") {
+            panel.style.maxHeight = "min(72vh, 560px)";
+            panel.style.overflowY = "auto";
+          }
           panel.style.fontFamily = "Manrope, sans-serif";
 
+          if (layoutMode === "trigger") {
+            var openButton = document.createElement("button");
+            openButton.type = "button";
+            openButton.setAttribute(
+              "aria-label",
+              collection === "jobs" ? "Open AI job extractor" : "Open AI blog extractor",
+            );
+            openButton.textContent = "AI";
+            openButton.style.display = "flex";
+            openButton.style.alignItems = "center";
+            openButton.style.justifyContent = "center";
+            openButton.style.width = "48px";
+            openButton.style.height = "48px";
+            openButton.style.border = "none";
+            openButton.style.borderRadius = "999px";
+            openButton.style.background = "transparent";
+            openButton.style.color = "#ffffff";
+            openButton.style.fontSize = "13px";
+            openButton.style.fontWeight = "800";
+            openButton.style.cursor = "pointer";
+            openButton.addEventListener("click", function () {
+              setPanelCollapsedState(false);
+              removePanel();
+              injectPanel();
+            });
+            panel.appendChild(openButton);
+
+            if (mountTarget === document.body) {
+              document.body.appendChild(panel);
+            } else if (typeof mountTarget.prepend === "function") {
+              mountTarget.prepend(panel);
+            } else {
+              mountTarget.appendChild(panel);
+            }
+            sendDebugEvent("panel_injected", {
+              status: "collapsed-trigger",
+            });
+            return;
+          }
+
           var header = document.createElement("div");
+          header.className = "jobadvice-auto-extract-header";
           header.style.display = "flex";
           header.style.alignItems = "center";
           header.style.justifyContent = "space-between";
           header.style.gap = "10px";
-          header.style.marginBottom = isCollapsed ? "0" : "10px";
+          header.style.marginBottom = "10px";
 
           var title = document.createElement("p");
           title.textContent = collection === "jobs" ? "AI Job Extractor" : "AI Blog Extractor";
           title.style.margin = "0";
-          title.style.fontSize = "13px";
+          title.style.fontSize = isCompact ? "12px" : "13px";
           title.style.fontWeight = "800";
           title.style.color = "#0f172a";
 
           var collapseToggle = document.createElement("button");
           collapseToggle.id = collapseToggleId;
           collapseToggle.type = "button";
-          collapseToggle.textContent = isCollapsed ? "Expand" : "Collapse";
+          collapseToggle.textContent = "Close";
           collapseToggle.style.padding = "6px 10px";
           collapseToggle.style.borderRadius = "8px";
           collapseToggle.style.border = "1px solid rgba(148, 163, 184, 0.85)";
@@ -1967,21 +2354,52 @@
           collapseToggle.style.cursor = "pointer";
 
           var helper = document.createElement("p");
+          helper.className = "jobadvice-auto-extract-helper";
           helper.textContent =
             collection === "jobs"
-              ? "Paste full job source text and auto-fill all fields."
-              : "Paste full blog source text and auto-fill all fields.";
+              ? "Paste full job text or use a public job URL to auto-fill the form."
+              : "Paste blog text or use a public URL to auto-fill the form.";
           helper.style.margin = "0 0 8px";
           helper.style.fontSize = "12px";
           helper.style.color = "#334155";
 
+          var statusLine = document.createElement("p");
+          statusLine.id = statusId;
+          statusLine.className = "jobadvice-auto-extract-status";
+          statusLine.textContent = "Ready";
+          statusLine.style.margin = "0 0 8px";
+          statusLine.style.fontSize = "11px";
+          statusLine.style.fontWeight = "700";
+          statusLine.style.color = "#64748b";
+
+          var sourceUrlInput = document.createElement("input");
+          sourceUrlInput.id = sourceUrlInputId;
+          sourceUrlInput.className = "jobadvice-auto-extract-url";
+          sourceUrlInput.type = "url";
+          sourceUrlInput.placeholder =
+            collection === "jobs"
+              ? "https://company.com/careers/job-posting"
+              : "https://example.com/post";
+          sourceUrlInput.autocomplete = "off";
+          sourceUrlInput.spellcheck = false;
+          sourceUrlInput.style.width = "100%";
+          sourceUrlInput.style.margin = "0 0 8px";
+          sourceUrlInput.style.padding = "8px 10px";
+          sourceUrlInput.style.borderRadius = "8px";
+          sourceUrlInput.style.border = "1px solid rgba(148, 163, 184, 0.8)";
+          sourceUrlInput.style.fontSize = "12px";
+          sourceUrlInput.style.lineHeight = "1.5";
+          sourceUrlInput.style.color = "#0f172a";
+          sourceUrlInput.style.background = "#ffffff";
+
           var sourceInput = document.createElement("textarea");
           sourceInput.id = sourceTextareaId;
-          sourceInput.rows = 6;
+          sourceInput.className = "jobadvice-auto-extract-source";
+          sourceInput.rows = isCompact ? 4 : 6;
           sourceInput.placeholder =
             collection === "jobs"
-              ? "Paste complete job details text here for accurate extraction."
-              : "Paste complete blog content/details here for accurate extraction.";
+              ? "Paste complete job details text here if you are not using a URL."
+              : "Paste complete blog content/details here if you are not using a URL.";
           sourceInput.style.width = "100%";
           sourceInput.style.minHeight = "110px";
           sourceInput.style.maxHeight = "260px";
@@ -2004,10 +2422,30 @@
             }
           }
 
+          var urlButton = document.createElement("button");
+          urlButton.id = urlButtonId;
+          urlButton.className = "jobadvice-auto-extract-url-button";
+          urlButton.type = "button";
+          urlButton.textContent = "Fetch URL + Extract";
+          urlButton.style.padding = "9px 14px";
+          urlButton.style.borderRadius = "8px";
+          urlButton.style.border = "1px solid rgba(15, 23, 42, 0.12)";
+          urlButton.style.background = "#0f172a";
+          urlButton.style.color = "#ffffff";
+          urlButton.style.fontSize = "13px";
+          urlButton.style.fontWeight = "700";
+          urlButton.style.cursor = "pointer";
+          urlButton.style.flex = "1";
+
+          urlButton.addEventListener("click", function () {
+            runAutoExtract("url");
+          });
+
           var button = document.createElement("button");
           button.id = buttonId;
+          button.className = "jobadvice-auto-extract-text-button";
           button.type = "button";
-          button.textContent = "Auto Extract with AI";
+          button.textContent = "Auto Extract Text";
           button.style.padding = "9px 14px";
           button.style.borderRadius = "8px";
           button.style.border = "none";
@@ -2019,11 +2457,12 @@
           button.style.flex = "1";
 
           button.addEventListener("click", function () {
-            runAutoExtract(button);
+            runAutoExtract("text");
           });
 
           var clearButton = document.createElement("button");
           clearButton.id = clearButtonId;
+          clearButton.className = "jobadvice-auto-extract-clear-button";
           clearButton.type = "button";
           clearButton.textContent = "Clear";
           clearButton.style.padding = "9px 12px";
@@ -2036,8 +2475,9 @@
           clearButton.style.cursor = "pointer";
 
           clearButton.addEventListener("click", function () {
+            sourceUrlInput.value = "";
             sourceInput.value = "";
-            sourceInput.focus();
+            sourceUrlInput.focus();
           });
 
           collapseToggle.addEventListener("click", function () {
@@ -2047,10 +2487,12 @@
           });
 
           var actionRow = document.createElement("div");
+          actionRow.className = "jobadvice-auto-extract-actions";
           actionRow.style.display = "flex";
           actionRow.style.gap = "8px";
           actionRow.style.marginTop = "10px";
 
+          actionRow.appendChild(urlButton);
           actionRow.appendChild(button);
           actionRow.appendChild(clearButton);
 
@@ -2058,17 +2500,46 @@
           header.appendChild(title);
           header.appendChild(collapseToggle);
 
-          if (!isCollapsed) {
-            panel.appendChild(helper);
-            panel.appendChild(sourceInput);
-            panel.appendChild(actionRow);
-          }
+          panel.appendChild(helper);
+          panel.appendChild(statusLine);
+          panel.appendChild(sourceUrlInput);
+          panel.appendChild(sourceInput);
+          panel.appendChild(actionRow);
 
-          document.body.appendChild(panel);
+          if (mountTarget === document.body) {
+            document.body.appendChild(panel);
+          } else if (typeof mountTarget.prepend === "function") {
+            mountTarget.prepend(panel);
+          } else {
+            mountTarget.appendChild(panel);
+          }
+          sendDebugEvent("panel_injected", {
+            status: "expanded-" + layoutMode,
+          });
         }
 
-        window.setInterval(injectPanel, 1200);
+        document.addEventListener(
+          "click",
+          function (event) {
+            if (!isCompactViewport() || !compactPanelExpanded) {
+              return;
+            }
+
+            var panel = document.getElementById(panelId);
+            if (!panel || panel.hidden || panel.contains(event.target)) {
+              return;
+            }
+
+            compactPanelExpanded = false;
+            removePanel();
+            injectPanel();
+          },
+          true,
+        );
+
         window.addEventListener("hashchange", injectPanel);
+        window.addEventListener("resize", injectPanel);
+        window.addEventListener("load", injectPanel);
         injectPanel();
       })();
     </script>
