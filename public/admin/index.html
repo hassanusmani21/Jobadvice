@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin/theme.css?v=20260314j" />
+    <link rel="stylesheet" href="/admin/theme.css?v=20260314k" />
   </head>
   <body>
     <div class="admin-loading" id="admin-loading">
@@ -25,7 +25,7 @@
 
     <script>
       (function ensureFreshAdminShell() {
-        var currentVersion = "20260314j";
+        var currentVersion = "20260314k";
         var params = new URLSearchParams(window.location.search || "");
         if (params.get("jobadvice_admin_v") === currentVersion) {
           return;
@@ -522,6 +522,12 @@
         }
 
         function clearResponsiveClasses(root) {
+          document.body.classList.remove(
+            "jobadvice-entry-view",
+            "jobadvice-mobile-collection-view",
+            "jobadvice-mobile-entry-view",
+          );
+
           root.classList.remove(
             "jobadvice-entry-view",
             "jobadvice-mobile-collection-view",
@@ -661,11 +667,13 @@
           }
 
           var hiddenNodes = root.querySelectorAll(
-            '[class*="PreviewPaneContainer"]:not([class*="ControlPaneContainer"]), [class*="PreviewPaneFrame"], [class*="EditorToggle"], [class*="ToolbarSectionMeta"]',
+            '[class*="PreviewPaneContainer"]:not([class*="ControlPaneContainer"]), [class*="PreviewPaneFrame"], [class*="EditorToggle"], [class*="ToolbarSectionMeta"], [class*="ViewControls"], [class*="ViewControlsButton"], [class*="AvatarDropdownButton"]',
           );
 
           for (var hiddenIndex = 0; hiddenIndex < hiddenNodes.length; hiddenIndex += 1) {
             hiddenNodes[hiddenIndex].style.display = "none";
+            hiddenNodes[hiddenIndex].style.visibility = "hidden";
+            hiddenNodes[hiddenIndex].style.pointerEvents = "none";
           }
 
           var fieldNodes = root.querySelectorAll("input, textarea, select, button");
@@ -686,6 +694,7 @@
 
           if (routeState.isEntryRoute) {
             root.classList.add("jobadvice-entry-view");
+            document.body.classList.add("jobadvice-entry-view");
             markDuplicateEntryToolbarMeta(root);
             applyEntryResponsiveFixes(root);
 
@@ -694,6 +703,7 @@
             }
 
             root.classList.add("jobadvice-mobile-entry-view");
+            document.body.classList.add("jobadvice-mobile-entry-view");
             return;
           }
 
@@ -706,6 +716,7 @@
           }
 
           root.classList.add("jobadvice-mobile-collection-view");
+          document.body.classList.add("jobadvice-mobile-collection-view");
 
           var collectionsPanel = findCollectionsPanel(root);
           var resultsContainer = findResultsContainer(root);
@@ -1388,7 +1399,7 @@
         var collapseToggleId = "jobadvice-auto-extract-collapse";
         var clearButtonId = "jobadvice-auto-extract-clear";
         var collapseStorageKey = "jobadvice_auto_extract_collapsed_v2";
-        var panelVersion = "20260314j";
+        var panelVersion = "20260314k";
         var compactPanelExpanded = false;
 
         function isCompactViewport() {

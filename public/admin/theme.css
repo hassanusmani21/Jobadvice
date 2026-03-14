@@ -254,6 +254,28 @@ body {
 }
 
 @media (max-width: 900px) {
+  body.jobadvice-mobile-entry-view [class*="AvatarDropdownButton"],
+  body.jobadvice-mobile-entry-view [class*="ToolbarSectionMeta"],
+  body.jobadvice-mobile-entry-view [class*="ViewControls"],
+  body.jobadvice-mobile-entry-view [class*="ViewControlsButton"],
+  body.jobadvice-mobile-entry-view [class*="PreviewPane"],
+  body.jobadvice-mobile-entry-view [class*="EditorToggle"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  body.jobadvice-mobile-entry-view [class*="Toolbar"],
+  body.jobadvice-mobile-entry-view [class*="TopBar"],
+  body.jobadvice-mobile-entry-view [class*="AppHeader"] {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    z-index: auto !important;
+  }
+
   .admin-loading {
     padding-top: 2.3rem;
     place-content: start center;
