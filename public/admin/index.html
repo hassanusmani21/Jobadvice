@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin/theme.css?v=20260314n" />
+    <link rel="stylesheet" href="/admin/theme.css?v=20260314o" />
   </head>
   <body>
     <div class="admin-loading" id="admin-loading">
@@ -25,7 +25,7 @@
 
     <script>
       (function ensureFreshAdminShell() {
-        var currentVersion = "20260314n";
+        var currentVersion = "20260314o";
         var params = new URLSearchParams(window.location.search || "");
         if (params.get("jobadvice_admin_v") === currentVersion) {
           return;
@@ -699,6 +699,49 @@
           }
         }
 
+        function promoteMobileEntryMenus() {
+          if (!isResponsiveViewport() || !getRouteState().isEntryRoute) {
+            var previousMenus = document.querySelectorAll(".jobadvice-mobile-sheet-menu");
+            for (var clearIndex = 0; clearIndex < previousMenus.length; clearIndex += 1) {
+              previousMenus[clearIndex].classList.remove("jobadvice-mobile-sheet-menu");
+            }
+            return;
+          }
+
+          var menuNodes = document.querySelectorAll(
+            '[role="menu"], [role="listbox"], [aria-modal="true"], [class*="DropdownMenu"], [class*="MenuList"], [class*="MenuItems"], [class*="Popover"], [class*="SelectMenu"]',
+          );
+
+          for (var index = 0; index < menuNodes.length; index += 1) {
+            var menuNode = menuNodes[index];
+            if (!(menuNode instanceof HTMLElement)) {
+              continue;
+            }
+
+            var rect = menuNode.getBoundingClientRect();
+            var styles = window.getComputedStyle(menuNode);
+            var isVisible =
+              styles.display !== "none" &&
+              styles.visibility !== "hidden" &&
+              rect.width > 0 &&
+              rect.height > 0;
+
+            if (!isVisible) {
+              menuNode.classList.remove("jobadvice-mobile-sheet-menu");
+              continue;
+            }
+
+            if (
+              menuNode.id === "jobadvice-auto-extract-panel" ||
+              menuNode.closest("#jobadvice-auto-extract-panel")
+            ) {
+              continue;
+            }
+
+            menuNode.classList.add("jobadvice-mobile-sheet-menu");
+          }
+        }
+
         function markDuplicateEntryToolbarMeta(root) {
           var toolbarMetaNodes = root.querySelectorAll('[class*="ToolbarSectionMeta"]');
 
@@ -807,6 +850,7 @@
             markDuplicateEntryToolbarMeta(root);
             applyEntryResponsiveFixes(root);
             decorateMobileEntryToolbar(root);
+            promoteMobileEntryMenus();
 
             if (!isResponsiveViewport()) {
               return;
@@ -916,6 +960,33 @@
 
         window.addEventListener("hashchange", scheduleApply);
         window.addEventListener("resize", scheduleApply);
+        document.addEventListener(
+          "pointerdown",
+          function (event) {
+            if (!isResponsiveViewport() || !getRouteState().isEntryRoute) {
+              return;
+            }
+
+            var openMenus = document.querySelectorAll(".jobadvice-mobile-sheet-menu");
+            if (openMenus.length === 0) {
+              return;
+            }
+
+            for (var index = 0; index < openMenus.length; index += 1) {
+              if (openMenus[index].contains(event.target)) {
+                return;
+              }
+            }
+
+            document.dispatchEvent(
+              new KeyboardEvent("keydown", {
+                key: "Escape",
+                bubbles: true,
+              }),
+            );
+          },
+          true,
+        );
         startScrollUnlockWatchdog();
         waitForRoot(0);
       })();
