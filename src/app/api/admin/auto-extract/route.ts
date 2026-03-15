@@ -1,5 +1,6 @@
 import { extractBlogFromText, extractJobFromText } from "@/lib/autoExtract";
 import { isAllowedAdminEmail } from "@/lib/adminAccess";
+import { fetchRemoteSourceText } from "@/lib/remoteSource";
 import { hasTrustedSameOrigin, noStoreJson } from "@/lib/requestSecurity";
 
 const maxSourceTextLength = 120_000;
@@ -34,6 +35,14 @@ const toSourceText = (body: Record<string, unknown>) => {
         : "";
 
   return rawSourceText.trim();
+};
+
+const toSourceUrl = (body: Record<string, unknown>) => {
+  if (typeof body.sourceUrl !== "string") {
+    return "";
+  }
+
+  return body.sourceUrl.trim();
 };
 
 const resolveAdminSession = async () => {
@@ -98,7 +107,8 @@ export async function POST(request: Request) {
   }
 
   const collection = toCollection(body.collection);
-  const sourceText = toSourceText(body);
+  const directSourceText = toSourceText(body);
+  const sourceUrl = toSourceUrl(body);
 
   if (!collection) {
     return noStoreJson(
@@ -110,17 +120,17 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!sourceText) {
+  if (!directSourceText && !sourceUrl) {
     return noStoreJson(
       {
         success: false,
-        error: "Source text is required",
+        error: "Source text or source URL is required",
       },
       { status: 400 },
     );
   }
 
-  if (sourceText.length > maxSourceTextLength) {
+  if (directSourceText.length > maxSourceTextLength) {
     return noStoreJson(
       {
         success: false,
@@ -131,13 +141,43 @@ export async function POST(request: Request) {
   }
 
   try {
+    const remoteSource =
+      !directSourceText && sourceUrl
+        ? await fetchRemoteSourceText(sourceUrl, {
+            maxChars: maxSourceTextLength,
+          })
+        : null;
+    const sourceText = remoteSource?.sourceText || directSourceText;
+
     if (collection === "jobs") {
+      if (remoteSource?.jobData) {
+        return noStoreJson({
+          success: true,
+          collection,
+          mode: remoteSource.sourceKind || "remote",
+          reason: "Structured remote job data was used.",
+          sourceText: remoteSource.sourceText,
+          sourceUrl: remoteSource.sourceUrl,
+          resolvedSourceUrl: remoteSource.resolvedUrl,
+          sourceContentType: remoteSource.contentType,
+          data: remoteSource.jobData,
+        });
+      }
+
       const result = await extractJobFromText(sourceText);
       return noStoreJson({
         success: true,
         collection,
         mode: result.mode,
         ...(result.reason ? { reason: result.reason } : {}),
+        ...(remoteSource
+          ? {
+              sourceText: remoteSource.sourceText,
+              sourceUrl: remoteSource.sourceUrl,
+              resolvedSourceUrl: remoteSource.resolvedUrl,
+              sourceContentType: remoteSource.contentType,
+            }
+          : {}),
         data: result.data,
       });
     }
@@ -148,6 +188,14 @@ export async function POST(request: Request) {
       collection,
       mode: result.mode,
       ...(result.reason ? { reason: result.reason } : {}),
+      ...(remoteSource
+        ? {
+            sourceText: remoteSource.sourceText,
+            sourceUrl: remoteSource.sourceUrl,
+            resolvedSourceUrl: remoteSource.resolvedUrl,
+            sourceContentType: remoteSource.contentType,
+          }
+        : {}),
       data: result.data,
     });
   } catch (error) {

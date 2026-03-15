@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin/theme.css?v=20260315a" />
+    <link rel="stylesheet" href="/admin/theme.css?v=20260315c" />
   </head>
   <body>
     <div class="admin-loading" id="admin-loading">
@@ -24,8 +24,29 @@
     </div>
 
     <script>
+      (function redirectMobileVisitorsToAdminMobile() {
+        var params = new URLSearchParams(window.location.search || "");
+        if (params.get("desktop_admin") === "1") {
+          return;
+        }
+
+        var hasMobileViewport =
+          window.matchMedia && window.matchMedia("(max-width: 1024px)").matches;
+        var userAgent = navigator.userAgent || "";
+        var isMobileDevice = /Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(userAgent);
+
+        if (!hasMobileViewport && !isMobileDevice) {
+          return;
+        }
+
+        window.location.replace(
+          "/admin-mobile" + (window.location.search || "") + (window.location.hash || ""),
+        );
+      })();
+    </script>
+    <script>
       (function ensureFreshAdminShell() {
-        var currentVersion = "20260315a";
+        var currentVersion = "20260315c";
         var params = new URLSearchParams(window.location.search || "");
         if (params.get("jobadvice_admin_v") === currentVersion) {
           return;
@@ -365,66 +386,6 @@
       } else {
         loadCmsScripts();
       }
-    </script>
-    <script>
-      (function showLocalAdminNotice() {
-        if (!isLocalHost) {
-          return;
-        }
-
-        if (window.matchMedia("(max-width: 900px)").matches) {
-          return;
-        }
-
-        var banner = document.createElement("div");
-        banner.className = "jobadvice-local-admin-banner";
-        banner.style.position = "fixed";
-        banner.style.left = "12px";
-        banner.style.right = "12px";
-        banner.style.bottom = "12px";
-        banner.style.zIndex = "9998";
-        banner.style.border = "1px solid rgba(15, 118, 110, 0.24)";
-        banner.style.borderRadius = "14px";
-        banner.style.background = "rgba(240, 253, 250, 0.96)";
-        banner.style.boxShadow = "0 16px 32px rgba(15, 23, 42, 0.14)";
-        banner.style.padding = "12px 14px";
-        banner.style.fontFamily = "Manrope, sans-serif";
-        banner.style.color = "#134e4a";
-
-        var title = document.createElement("p");
-        title.className = "jobadvice-local-admin-banner-title";
-        title.textContent = "Local Admin Mode";
-        title.style.margin = "0";
-        title.style.fontSize = "13px";
-        title.style.fontWeight = "800";
-        title.style.letterSpacing = "0.02em";
-
-        var body = document.createElement("p");
-        body.className = "jobadvice-local-admin-banner-body";
-        body.textContent =
-          "localhost admin reads your local repo only. Posts published from phone or jobadvice.in/admin appear here only after your local repo is updated. Use the live admin for shared cross-device content.";
-        body.style.margin = "6px 0 0";
-        body.style.fontSize = "12px";
-        body.style.lineHeight = "1.5";
-
-        var link = document.createElement("a");
-        link.className = "jobadvice-local-admin-banner-link";
-        link.href = "https://jobadvice.in/admin/";
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "Open live admin";
-        link.style.display = "inline-flex";
-        link.style.marginTop = "10px";
-        link.style.fontSize = "12px";
-        link.style.fontWeight = "700";
-        link.style.color = "#0f766e";
-        link.style.textDecoration = "underline";
-
-        banner.appendChild(title);
-        banner.appendChild(body);
-        banner.appendChild(link);
-        document.body.appendChild(banner);
-      })();
     </script>
     <script>
       (function enhanceResponsiveAdminLayout() {
@@ -2162,14 +2123,14 @@
           panel.style.pointerEvents = "auto";
           panel.style.width =
             layoutMode === "trigger"
-              ? "48px"
+              ? "44px"
               : layoutMode === "compact-sheet"
-                ? "calc(100vw - 16px)"
-                : "min(430px, calc(100vw - 24px))";
-          panel.style.maxWidth = layoutMode === "trigger" ? "48px" : "430px";
+                ? "min(360px, calc(100vw - 16px))"
+                : "min(360px, calc(100vw - 24px))";
+          panel.style.maxWidth = layoutMode === "trigger" ? "44px" : "360px";
           panel.style.margin = "0";
-          panel.style.padding = layoutMode === "trigger" ? "0" : "12px";
-          panel.style.borderRadius = layoutMode === "trigger" ? "999px" : "16px";
+          panel.style.padding = layoutMode === "trigger" ? "0" : "10px";
+          panel.style.borderRadius = layoutMode === "trigger" ? "999px" : "14px";
           panel.style.border =
             layoutMode === "trigger"
               ? "none"
@@ -2185,7 +2146,7 @@
           panel.style.backdropFilter = layoutMode === "trigger" ? "" : "blur(8px)";
           panel.style.overflow = layoutMode === "trigger" ? "hidden" : "visible";
           if (layoutMode === "compact-sheet") {
-            panel.style.maxHeight = "min(72vh, 560px)";
+            panel.style.maxHeight = "min(58vh, 420px)";
             panel.style.overflowY = "auto";
           }
           panel.style.fontFamily = "Manrope, sans-serif";
@@ -2201,13 +2162,13 @@
             openButton.style.display = "flex";
             openButton.style.alignItems = "center";
             openButton.style.justifyContent = "center";
-            openButton.style.width = "48px";
-            openButton.style.height = "48px";
+            openButton.style.width = "44px";
+            openButton.style.height = "44px";
             openButton.style.border = "none";
             openButton.style.borderRadius = "999px";
             openButton.style.background = "transparent";
             openButton.style.color = "#ffffff";
-            openButton.style.fontSize = "13px";
+            openButton.style.fontSize = "11px";
             openButton.style.fontWeight = "800";
             openButton.style.cursor = "pointer";
             openButton.addEventListener("click", function () {
@@ -2235,13 +2196,13 @@
           header.style.display = "flex";
           header.style.alignItems = "center";
           header.style.justifyContent = "space-between";
-          header.style.gap = "10px";
-          header.style.marginBottom = "10px";
+          header.style.gap = "8px";
+          header.style.marginBottom = "8px";
 
           var title = document.createElement("p");
           title.textContent = collection === "jobs" ? "AI Job Extractor" : "AI Blog Extractor";
           title.style.margin = "0";
-          title.style.fontSize = isCompact ? "12px" : "13px";
+          title.style.fontSize = isCompact ? "11px" : "12px";
           title.style.fontWeight = "800";
           title.style.color = "#0f172a";
 
@@ -2249,12 +2210,12 @@
           collapseToggle.id = collapseToggleId;
           collapseToggle.type = "button";
           collapseToggle.textContent = "Close";
-          collapseToggle.style.padding = "6px 10px";
+          collapseToggle.style.padding = "5px 9px";
           collapseToggle.style.borderRadius = "8px";
           collapseToggle.style.border = "1px solid rgba(148, 163, 184, 0.85)";
           collapseToggle.style.background = "#ffffff";
           collapseToggle.style.color = "#0f172a";
-          collapseToggle.style.fontSize = "11px";
+          collapseToggle.style.fontSize = "10px";
           collapseToggle.style.fontWeight = "700";
           collapseToggle.style.cursor = "pointer";
 
@@ -2262,18 +2223,19 @@
           helper.className = "jobadvice-auto-extract-helper";
           helper.textContent =
             collection === "jobs"
-              ? "Paste full job text or use a public job URL to auto-fill the form."
-              : "Paste blog text or use a public URL to auto-fill the form.";
-          helper.style.margin = "0 0 8px";
-          helper.style.fontSize = "12px";
+              ? "Paste a public URL or raw job text."
+              : "Paste a public URL or raw blog text.";
+          helper.style.margin = "0 0 6px";
+          helper.style.fontSize = "11px";
+          helper.style.lineHeight = "1.4";
           helper.style.color = "#334155";
 
           var statusLine = document.createElement("p");
           statusLine.id = statusId;
           statusLine.className = "jobadvice-auto-extract-status";
           statusLine.textContent = "Ready";
-          statusLine.style.margin = "0 0 8px";
-          statusLine.style.fontSize = "11px";
+          statusLine.style.margin = "0 0 6px";
+          statusLine.style.fontSize = "10px";
           statusLine.style.fontWeight = "700";
           statusLine.style.color = "#64748b";
 
@@ -2288,11 +2250,11 @@
           sourceUrlInput.autocomplete = "off";
           sourceUrlInput.spellcheck = false;
           sourceUrlInput.style.width = "100%";
-          sourceUrlInput.style.margin = "0 0 8px";
-          sourceUrlInput.style.padding = "8px 10px";
+          sourceUrlInput.style.margin = "0 0 6px";
+          sourceUrlInput.style.padding = "7px 9px";
           sourceUrlInput.style.borderRadius = "8px";
           sourceUrlInput.style.border = "1px solid rgba(148, 163, 184, 0.8)";
-          sourceUrlInput.style.fontSize = "12px";
+          sourceUrlInput.style.fontSize = "11px";
           sourceUrlInput.style.lineHeight = "1.5";
           sourceUrlInput.style.color = "#0f172a";
           sourceUrlInput.style.background = "#ffffff";
@@ -2300,20 +2262,20 @@
           var sourceInput = document.createElement("textarea");
           sourceInput.id = sourceTextareaId;
           sourceInput.className = "jobadvice-auto-extract-source";
-          sourceInput.rows = isCompact ? 4 : 6;
+          sourceInput.rows = isCompact ? 3 : 4;
           sourceInput.placeholder =
             collection === "jobs"
               ? "Paste complete job details text here if you are not using a URL."
               : "Paste complete blog content/details here if you are not using a URL.";
           sourceInput.style.width = "100%";
-          sourceInput.style.minHeight = "110px";
-          sourceInput.style.maxHeight = "260px";
+          sourceInput.style.minHeight = "88px";
+          sourceInput.style.maxHeight = "180px";
           sourceInput.style.resize = "vertical";
           sourceInput.style.margin = "0";
-          sourceInput.style.padding = "8px 10px";
+          sourceInput.style.padding = "7px 9px";
           sourceInput.style.borderRadius = "8px";
           sourceInput.style.border = "1px solid rgba(148, 163, 184, 0.8)";
-          sourceInput.style.fontSize = "12px";
+          sourceInput.style.fontSize = "11px";
           sourceInput.style.lineHeight = "1.5";
           sourceInput.style.color = "#0f172a";
           sourceInput.style.background = "#ffffff";
@@ -2332,12 +2294,12 @@
           urlButton.className = "jobadvice-auto-extract-url-button";
           urlButton.type = "button";
           urlButton.textContent = "Fetch URL + Extract";
-          urlButton.style.padding = "9px 14px";
+          urlButton.style.padding = "8px 10px";
           urlButton.style.borderRadius = "8px";
           urlButton.style.border = "1px solid rgba(15, 23, 42, 0.12)";
           urlButton.style.background = "#0f172a";
           urlButton.style.color = "#ffffff";
-          urlButton.style.fontSize = "13px";
+          urlButton.style.fontSize = "12px";
           urlButton.style.fontWeight = "700";
           urlButton.style.cursor = "pointer";
           urlButton.style.flex = "1";
@@ -2351,12 +2313,12 @@
           button.className = "jobadvice-auto-extract-text-button";
           button.type = "button";
           button.textContent = "Auto Extract Text";
-          button.style.padding = "9px 14px";
+          button.style.padding = "8px 10px";
           button.style.borderRadius = "8px";
           button.style.border = "none";
           button.style.background = "#0f766e";
           button.style.color = "#ffffff";
-          button.style.fontSize = "13px";
+          button.style.fontSize = "12px";
           button.style.fontWeight = "700";
           button.style.cursor = "pointer";
           button.style.flex = "1";
@@ -2370,12 +2332,12 @@
           clearButton.className = "jobadvice-auto-extract-clear-button";
           clearButton.type = "button";
           clearButton.textContent = "Clear";
-          clearButton.style.padding = "9px 12px";
+          clearButton.style.padding = "8px 10px";
           clearButton.style.borderRadius = "8px";
           clearButton.style.border = "1px solid rgba(148, 163, 184, 0.85)";
           clearButton.style.background = "#ffffff";
           clearButton.style.color = "#0f172a";
-          clearButton.style.fontSize = "12px";
+          clearButton.style.fontSize = "11px";
           clearButton.style.fontWeight = "700";
           clearButton.style.cursor = "pointer";
 
@@ -2394,8 +2356,8 @@
           var actionRow = document.createElement("div");
           actionRow.className = "jobadvice-auto-extract-actions";
           actionRow.style.display = "flex";
-          actionRow.style.gap = "8px";
-          actionRow.style.marginTop = "10px";
+          actionRow.style.gap = "6px";
+          actionRow.style.marginTop = "8px";
 
           actionRow.appendChild(urlButton);
           actionRow.appendChild(button);

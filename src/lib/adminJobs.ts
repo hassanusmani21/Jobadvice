@@ -10,6 +10,7 @@ export type AdminJobRecord = {
   applyLink: string;
   date: string;
   updatedAt: string;
+  draft: boolean;
 };
 
 export type DuplicateCheckInput = {
@@ -98,6 +99,7 @@ const toAdminRecord = (job: JobPost): AdminJobRecord => ({
   applyLink: job.applyLink || "",
   date: job.date,
   updatedAt: job.updatedAt,
+  draft: job.draft,
 });
 
 const toNormalizedRecord = (record: AdminJobRecord): NormalizedJobRecord => ({
@@ -236,6 +238,7 @@ export const findDuplicateJobs = async (input: DuplicateCheckInput) => {
         applyLink: candidate.applyLink,
         date: candidate.date,
         updatedAt: candidate.updatedAt,
+        draft: candidate.draft,
         score: 100,
         matchType: "exact",
         reasons,
@@ -274,6 +277,7 @@ export const findDuplicateJobs = async (input: DuplicateCheckInput) => {
         applyLink: candidate.applyLink,
         date: candidate.date,
         updatedAt: candidate.updatedAt,
+        draft: candidate.draft,
         score: similarityScore,
         matchType: "similar",
         reasons: similarReasons,

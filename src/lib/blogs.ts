@@ -16,6 +16,7 @@ export type BlogPost = {
   topic: string;
   tags: string[];
   isTrending: boolean;
+  draft: boolean;
   author: string;
   authorRole?: string;
   reviewedBy?: string;
@@ -330,6 +331,7 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
     ? toSortableTimestamp(explicitUpdatedAt)
     : fileStats.mtimeMs;
   const isTrending = toBoolean(data.isTrending || data.trending);
+  const draft = toBoolean(data.draft || data.isDraft);
   const postContent = normalizeMarkdownSource(content || summary);
   if (!postContent) {
     return null;
@@ -344,6 +346,7 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
     topic,
     tags,
     isTrending,
+    draft,
     author,
     ...(authorRole ? { authorRole } : {}),
     ...(reviewedBy ? { reviewedBy } : {}),
@@ -361,7 +364,7 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
   };
 };
 
-const loadBlogs = async () => {
+const loadBlogs = async (options: { includeDrafts?: boolean } = {}) => {
   let files: string[] = [];
 
   try {
@@ -378,6 +381,7 @@ const loadBlogs = async () => {
 
   return blogs
     .filter((blog): blog is BlogPost => Boolean(blog))
+    .filter((blog) => (options.includeDrafts ? true : !blog.draft))
     .sort((firstBlog, secondBlog) => {
       const firstValues = getBlogSortValues(firstBlog);
       const secondValues = getBlogSortValues(secondBlog);
@@ -391,7 +395,7 @@ const loadBlogs = async () => {
     });
 };
 
-const readBlogs = () => loadBlogs();
+const readBlogs = (options: { includeDrafts?: boolean } = {}) => loadBlogs(options);
 
 const toUtcTimestamp = (value: string) => Date.parse(`${value}T00:00:00Z`);
 
@@ -414,6 +418,8 @@ const getFreshnessWeight = (dateString: string) => {
 };
 
 export const getAllBlogs = async () => readBlogs();
+
+export const getAllBlogsForAdmin = async () => readBlogs({ includeDrafts: true });
 
 export const getLatestBlogs = async (limit = 6) => {
   const blogs = await readBlogs();

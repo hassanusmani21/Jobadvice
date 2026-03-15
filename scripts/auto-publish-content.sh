@@ -11,17 +11,42 @@ DEPLOY_BRANCH="${CONTENT_DEPLOY_BRANCH:-main}"
 
 last_signature=""
 last_detected_at=0
+last_status_error_signature=""
 
-get_content_status() {
-  git status --porcelain -- "${CONTENT_PATHS[@]}"
+read_content_status() {
+  local status_output
+
+  if ! status_output="$(git status --porcelain -- "${CONTENT_PATHS[@]}" 2>&1)"; then
+    printf "%s" "${status_output}"
+    return 1
+  fi
+
+  printf "%s" "${status_output}"
 }
 
-has_content_changes() {
-  [[ -n "$(get_content_status)" ]]
+get_status_signature() {
+  printf "%s" "$1" | sha1sum | cut -d' ' -f1
 }
 
-get_content_signature() {
-  get_content_status | sha1sum | cut -d' ' -f1
+report_status_error() {
+  local error_output="$1"
+  local error_signature
+  error_signature="$(get_status_signature "${error_output}")"
+
+  if [[ "${error_signature}" == "${last_status_error_signature}" ]]; then
+    return
+  fi
+
+  last_status_error_signature="${error_signature}"
+
+  if [[ "${error_output}" == *".git/index.lock"* ]]; then
+    echo "Auto publish paused: Git index is locked by .git/index.lock."
+    echo "If no Git process is running, remove the stale lock file and retry."
+  else
+    echo "Auto publish paused: unable to inspect content changes."
+  fi
+
+  echo "${error_output}"
 }
 
 has_staged_non_content_files() {
@@ -43,10 +68,16 @@ publish_content() {
     return 1
   fi
 
-  git add -A -- "${CONTENT_PATHS[@]}"
+  if ! git add -A -- "${CONTENT_PATHS[@]}"; then
+    echo "Unable to stage content changes."
+    return 1
+  fi
 
   if git diff --cached --quiet -- "${CONTENT_PATHS[@]}"; then
     echo "No publishable content changes found."
+    return 1
+  elif [[ $? -ne 1 ]]; then
+    echo "Unable to inspect staged content changes."
     return 1
   fi
 
@@ -72,15 +103,33 @@ publish_content() {
 echo "Watching content/ and public/uploads/ for published changes..."
 echo "Quiet period: ${QUIET_PERIOD_SECONDS}s | Poll interval: ${POLL_INTERVAL_SECONDS}s"
 
-last_signature="$(get_content_signature)"
-if has_content_changes; then
+startup_status=""
+if startup_status="$(read_content_status)"; then
+  last_status_error_signature=""
+else
+  report_status_error "${startup_status}"
+  startup_status=""
+fi
+
+last_signature="$(get_status_signature "${startup_status}")"
+if [[ -n "${startup_status}" ]]; then
+  last_detected_at="$(date +%s)"
   echo "Existing local content changes detected at startup."
-  echo "Auto publish will wait for the next content change after startup."
+  echo "Waiting for edits to settle before auto publish."
 fi
 
 while true; do
-  if has_content_changes; then
-    current_signature="$(get_content_signature)"
+  current_status=""
+  if ! current_status="$(read_content_status)"; then
+    report_status_error "${current_status}"
+    sleep "${POLL_INTERVAL_SECONDS}"
+    continue
+  fi
+
+  last_status_error_signature=""
+
+  if [[ -n "${current_status}" ]]; then
+    current_signature="$(get_status_signature "${current_status}")"
     current_time="$(date +%s)"
 
     if [[ "${current_signature}" != "${last_signature}" ]]; then

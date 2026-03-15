@@ -18,6 +18,11 @@ Open:
 
 - `http://localhost:3000/admin/`
 
+In the Jobs or Blogs editor, the AI extractor panel now supports either:
+
+- pasting raw source text
+- entering a public URL and using `Fetch URL + Extract`
+
 ## Start local admin with auto publish
 
 ```bash

@@ -1,4 +1,4 @@
-import { getAllBlogs } from "./blogs";
+import { getAllBlogsForAdmin } from "./blogs";
 import { getRemoteBlogRecords, shouldUseRemoteAdminRecords } from "./adminRepoRecords";
 
 export type AdminBlogRecord = {
@@ -7,6 +7,7 @@ export type AdminBlogRecord = {
   topic: string;
   date: string;
   updatedAt: string;
+  draft: boolean;
 };
 
 const toUtcDayTimestamp = (value: string) => Date.parse(`${value}T00:00:00Z`);
@@ -54,7 +55,7 @@ export const getAdminBlogRecords = async () => {
     }
   }
 
-  const blogs = await getAllBlogs();
+  const blogs = await getAllBlogsForAdmin();
   return blogs
     .map((blog) => ({
       slug: blog.slug,
@@ -62,6 +63,7 @@ export const getAdminBlogRecords = async () => {
       topic: blog.topic,
       date: blog.date,
       updatedAt: blog.updatedAt,
+      draft: blog.draft,
     }))
     .sort(sortByRecentDate);
 };

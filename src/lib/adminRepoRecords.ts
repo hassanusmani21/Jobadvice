@@ -221,6 +221,7 @@ type RemoteBlogRecord = {
   topic: string;
   date: string;
   updatedAt: string;
+  draft: boolean;
 };
 
 type RemoteJobRecord = {
@@ -231,6 +232,7 @@ type RemoteJobRecord = {
   applyLink: string;
   date: string;
   updatedAt: string;
+  draft: boolean;
 };
 
 export const getRemoteBlogRecords = async (): Promise<RemoteBlogRecord[]> => {
@@ -258,6 +260,7 @@ export const getRemoteBlogRecords = async (): Promise<RemoteBlogRecord[]> => {
           toDateString(data.updatedAt || data.updated || data.lastUpdated) ||
           toDateString(data.date || data.publishedAt) ||
           "",
+        draft: normalizeTextValue(data.draft).toLowerCase() === "true",
       };
     }),
   );
@@ -292,6 +295,7 @@ export const getRemoteJobRecords = async (): Promise<RemoteJobRecord[]> => {
           toDateString(data.updatedAt || data.updated || data.lastUpdated) ||
           toDateString(data.date || data.publishedAt) ||
           "",
+        draft: normalizeTextValue(data.draft).toLowerCase() === "true",
       };
     }),
   );

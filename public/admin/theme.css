@@ -220,21 +220,21 @@ body {
 }
 
 .jobadvice-auto-extract-panel {
-  width: min(100%, 430px);
+  width: min(100%, 360px);
 }
 
 .jobadvice-auto-extract-panel[data-layout="trigger"] {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
 }
 
 .jobadvice-auto-extract-panel[data-layout="compact-sheet"] {
-  width: min(430px, calc(100vw - 16px));
+  width: min(360px, calc(100vw - 16px));
   max-width: calc(100vw - 16px);
 }
 
 .jobadvice-auto-extract-actions {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 #next-auth-admin-account,

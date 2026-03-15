@@ -345,6 +345,7 @@ export type JobPost = {
   title: string;
   company: string;
   location: string;
+  draft: boolean;
   workMode?: string;
   salary?: string;
   skills: string[];
@@ -411,6 +412,18 @@ const parseQuotedValue = (value: string, quote: '"' | "'") => {
 };
 
 const toDateString = (value: unknown) => toIsoDateString(value);
+
+const toBoolean = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  return ["true", "yes", "1"].includes(value.trim().toLowerCase());
+};
 
 const normalizeTextValue = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
@@ -1065,6 +1078,7 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
     toDateString(
       data.date || data.postedDate,
     ) || fileModifiedDate;
+  const explicitUpdatedAt = toDateString(data.updatedAt || data.updated || data.lastUpdated);
   const applicationStartDate =
     toDateString(data.applicationStartDate || data.startDate) || date;
   const applicationEndDateRaw = toDateString(
@@ -1123,13 +1137,14 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
     responsibilities.join(" ") ||
     skills.join(", ") ||
     education.join(", ");
-  const updatedAt = fileModifiedDate;
+  const updatedAt = explicitUpdatedAt || fileModifiedDate;
 
   return {
     slug,
     title,
     company,
     location,
+    draft: toBoolean(data.draft || data.isDraft),
     ...(workMode ? { workMode } : {}),
     ...(salary ? { salary } : {}),
     skills,
@@ -1154,7 +1169,7 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
   };
 };
 
-const loadJobs = async (options: { includeExpired?: boolean } = {}) => {
+const loadJobs = async (options: { includeDrafts?: boolean; includeExpired?: boolean } = {}) => {
   let files: string[] = [];
 
   try {
@@ -1171,6 +1186,7 @@ const loadJobs = async (options: { includeExpired?: boolean } = {}) => {
 
   return jobs
     .filter((job): job is JobPost => Boolean(job))
+    .filter((job) => (options.includeDrafts ? true : !job.draft))
     .filter((job) => (options.includeExpired ? true : isJobStillActive(job)))
     .sort(
       (firstJob, secondJob) =>
@@ -1178,11 +1194,13 @@ const loadJobs = async (options: { includeExpired?: boolean } = {}) => {
     );
 };
 
-const readJobs = (options: { includeExpired?: boolean } = {}) => loadJobs(options);
+const readJobs = (options: { includeDrafts?: boolean; includeExpired?: boolean } = {}) =>
+  loadJobs(options);
 
 export const getAllJobs = async () => readJobs();
 
-export const getAllJobsForAdmin = async () => readJobs({ includeExpired: true });
+export const getAllJobsForAdmin = async () =>
+  readJobs({ includeDrafts: true, includeExpired: true });
 
 export const getLatestJobs = async (limit = 6) => {
   const jobs = await readJobs();

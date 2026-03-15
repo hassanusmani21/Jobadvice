@@ -52,6 +52,7 @@ const defaultOllamaBaseUrl = "http://127.0.0.1:11434";
 const defaultOllamaTimeoutMs = 60_000;
 const defaultMaxSourceChars = 10_000;
 const defaultOllamaSoftTimeoutMs = 12_000;
+const defaultOllamaNumPredict = 420;
 const extractionSignalPattern =
   /(job title|title|company name|company|location|salary|ctc|experience|skills?|education|qualification|eligibility|candidate profile|apply|employment type|work mode|working days|job timing|application start date|application end date|date|author|topic|tags?)/i;
 const genericSkillItemPattern =
@@ -152,16 +153,13 @@ const getOllamaTimeoutMs = () =>
   toEnvNumber(process.env.OLLAMA_TIMEOUT_MS, defaultOllamaTimeoutMs);
 
 const getMaxSourceChars = () =>
-  Math.max(
-    8_000,
-    toEnvNumber(process.env.OLLAMA_MAX_SOURCE_CHARS, defaultMaxSourceChars),
-  );
+  toEnvNumber(process.env.OLLAMA_MAX_SOURCE_CHARS, defaultMaxSourceChars);
 
 const getOllamaContextSize = () =>
   toEnvNumber(process.env.OLLAMA_NUM_CTX, 1024);
 
 const getOllamaNumPredict = () =>
-  Math.max(360, toEnvNumber(process.env.OLLAMA_NUM_PREDICT, 420));
+  toEnvNumber(process.env.OLLAMA_NUM_PREDICT, defaultOllamaNumPredict);
 
 const getOllamaSoftTimeoutMs = () =>
   toEnvNumber(process.env.OLLAMA_SOFT_TIMEOUT_MS, defaultOllamaSoftTimeoutMs);
