@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
 import {
   ALLOWED_ADMIN_EMAILS,
   isAllowedAdminEmail,
 } from "@/lib/adminAccess";
+import { getAdminSession } from "@/lib/adminSession";
 import { redirect } from "next/navigation";
 import GoogleAdminSignInButton from "./GoogleAdminSignInButton";
 
@@ -69,7 +68,7 @@ export default async function AdminLoginPage({
   const errorMessage = toErrorMessage(error);
   const hasConfiguredAdmins = ALLOWED_ADMIN_EMAILS.length > 0;
 
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (isAllowedAdminEmail(session?.user?.email)) {
     redirect(callbackUrl);
   }
