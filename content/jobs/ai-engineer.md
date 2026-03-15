@@ -46,4 +46,5 @@ workingDays: Monday-Friday
 jobTiming: As per company schedule
 applyLink: https://careers.adobe.com/us/en/job/R165179/AI-Engineer
 applicationStartDate: 2026-04-02
+allowFutureApplicationStartDate: true
 ---
