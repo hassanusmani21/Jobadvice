@@ -14,7 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/admin/theme.css?v=20260314o" />
+    <link rel="stylesheet" href="/admin/theme.css?v=20260315a" />
   </head>
   <body>
     <div class="admin-loading" id="admin-loading">
@@ -25,7 +25,7 @@
 
     <script>
       (function ensureFreshAdminShell() {
-        var currentVersion = "20260314o";
+        var currentVersion = "20260315a";
         var params = new URLSearchParams(window.location.search || "");
         if (params.get("jobadvice_admin_v") === currentVersion) {
           return;
@@ -429,7 +429,25 @@
     <script>
       (function enhanceResponsiveAdminLayout() {
         var observer = null;
-        var scrollUnlockTimer = null;
+        var applyTimeoutId = null;
+        var responsiveFlowProperties = [
+          "position",
+          "top",
+          "right",
+          "bottom",
+          "left",
+          "width",
+          "min-width",
+          "max-width",
+          "height",
+          "min-height",
+          "max-height",
+          "overflow",
+          "overflow-y",
+          "overflow-x",
+          "flex",
+          "transform",
+        ];
 
         function isResponsiveViewport() {
           return window.matchMedia("(max-width: 900px)").matches;
@@ -450,77 +468,6 @@
           };
         }
 
-        function findCollectionsPanel(root) {
-          var textNodes = root.querySelectorAll("h1, h2, h3, h4, p, span, div");
-          var heading = null;
-
-          for (var index = 0; index < textNodes.length; index += 1) {
-            if (normalizeText(textNodes[index].textContent) === "collections") {
-              heading = textNodes[index];
-              break;
-            }
-          }
-
-          if (!heading) {
-            return null;
-          }
-
-          var searchField =
-            root.querySelector('input[placeholder*="Search"]') ||
-            root.querySelector('input[placeholder*="search"]');
-          var current = heading;
-
-          for (var depth = 0; current && depth < 8; depth += 1) {
-            if (
-              current instanceof HTMLElement &&
-              searchField &&
-              current.contains(searchField)
-            ) {
-              return current;
-            }
-            current = current.parentElement;
-          }
-
-          return heading.parentElement;
-        }
-
-        function findResultsContainer(root) {
-          var entryLinks = root.querySelectorAll(
-            'a[href*="#/collections/"][href*="/entries/"]',
-          );
-          if (entryLinks.length === 0) {
-            return null;
-          }
-
-          var firstLink = entryLinks[0];
-          var current = firstLink.parentElement;
-
-          while (current && current !== root) {
-            if (
-              current.querySelectorAll('a[href*="#/collections/"][href*="/entries/"]').length >=
-              Math.min(2, entryLinks.length)
-            ) {
-              return current;
-            }
-            current = current.parentElement;
-          }
-
-          return firstLink.parentElement;
-        }
-
-        function findSharedContainer(root, firstNode, secondNode) {
-          var current = firstNode;
-
-          while (current && current !== root) {
-            if (current.contains(secondNode)) {
-              return current;
-            }
-            current = current.parentElement;
-          }
-
-          return null;
-        }
-
         function clearResponsiveClasses(root) {
           document.body.classList.remove(
             "jobadvice-entry-view",
@@ -534,18 +481,28 @@
             "jobadvice-mobile-entry-view",
           );
 
-          var markedNodes = root.querySelectorAll(
-            ".jobadvice-entry-toolbar-meta-duplicate, .jobadvice-mobile-collection-layout, .jobadvice-mobile-collections-panel, .jobadvice-mobile-collection-main, .jobadvice-mobile-collection-results-frame, .jobadvice-mobile-collection-results",
-          );
-          for (var index = 0; index < markedNodes.length; index += 1) {
-            markedNodes[index].classList.remove(
+          var hiddenNodes = root.querySelectorAll("[data-jobadvice-mobile-hidden]");
+          for (var hiddenIndex = 0; hiddenIndex < hiddenNodes.length; hiddenIndex += 1) {
+            hiddenNodes[hiddenIndex].removeAttribute("data-jobadvice-mobile-hidden");
+            hiddenNodes[hiddenIndex].removeAttribute("aria-hidden");
+            hiddenNodes[hiddenIndex].classList.remove(
+              "jobadvice-mobile-hidden-node",
               "jobadvice-entry-toolbar-meta-duplicate",
-              "jobadvice-mobile-collection-layout",
-              "jobadvice-mobile-collections-panel",
-              "jobadvice-mobile-collection-main",
-              "jobadvice-mobile-collection-results-frame",
-              "jobadvice-mobile-collection-results",
             );
+          }
+
+          var flowNodes = root.querySelectorAll("[data-jobadvice-mobile-flow]");
+          for (var flowIndex = 0; flowIndex < flowNodes.length; flowIndex += 1) {
+            var flowNode = flowNodes[flowIndex];
+            flowNode.removeAttribute("data-jobadvice-mobile-flow");
+
+            for (
+              var propertyIndex = 0;
+              propertyIndex < responsiveFlowProperties.length;
+              propertyIndex += 1
+            ) {
+              flowNode.style.removeProperty(responsiveFlowProperties[propertyIndex]);
+            }
           }
         }
 
@@ -569,176 +526,40 @@
           body.style.touchAction = "auto";
         }
 
-        function unlockAncestorChain(root, node) {
-          var current = node instanceof HTMLElement ? node.parentElement : null;
-
-          while (current && current !== root && current !== document.body) {
-            current.style.position = "static";
-            current.style.top = "auto";
-            current.style.right = "auto";
-            current.style.bottom = "auto";
-            current.style.left = "auto";
-            current.style.height = "auto";
-            current.style.minHeight = "0";
-            current.style.maxHeight = "none";
-            current.style.overflow = "visible";
-            current.style.overflowY = "visible";
-            current.style.overflowX = "visible";
-            current.style.transform = "none";
-            current.style.pointerEvents = "auto";
-            current = current.parentElement;
-          }
-        }
-
-        function hideNodeForMobile(node) {
+        function markFlowNode(node) {
           if (!(node instanceof HTMLElement)) {
             return;
           }
 
-          node.classList.add("jobadvice-mobile-hidden-node");
+          node.setAttribute("data-jobadvice-mobile-flow", "true");
+          node.style.setProperty("position", "static");
+          node.style.setProperty("top", "auto");
+          node.style.setProperty("right", "auto");
+          node.style.setProperty("bottom", "auto");
+          node.style.setProperty("left", "auto");
+          node.style.setProperty("width", "100%");
+          node.style.setProperty("min-width", "0");
+          node.style.setProperty("max-width", "none");
+          node.style.setProperty("height", "auto");
+          node.style.setProperty("min-height", "0");
+          node.style.setProperty("max-height", "none");
+          node.style.setProperty("overflow", "visible");
+          node.style.setProperty("overflow-y", "visible");
+          node.style.setProperty("overflow-x", "visible");
+          node.style.setProperty("flex", "none");
+          node.style.setProperty("transform", "none");
+        }
+
+        function hideNodeForMobile(node, extraClassName) {
+          if (!(node instanceof HTMLElement)) {
+            return;
+          }
+
+          node.setAttribute("data-jobadvice-mobile-hidden", "true");
           node.setAttribute("aria-hidden", "true");
-          node.style.display = "none";
-          node.style.visibility = "hidden";
-          node.style.pointerEvents = "none";
-          node.style.width = "0";
-          node.style.minWidth = "0";
-          node.style.maxWidth = "0";
-          node.style.height = "0";
-          node.style.minHeight = "0";
-          node.style.maxHeight = "0";
-          node.style.margin = "0";
-          node.style.padding = "0";
-          node.style.overflow = "hidden";
-        }
-
-        function decorateMobileEntryToolbar(root) {
-          if (!isResponsiveViewport()) {
-            return;
-          }
-
-          var appHeader = root.querySelector('[class*="AppHeader"]');
-          if (appHeader) {
-            appHeader.classList.add("jobadvice-mobile-entry-header");
-          }
-
-          var appHeaderActions = root.querySelector('[class*="AppHeaderActions"]');
-          hideNodeForMobile(appHeaderActions);
-
-          var toolbarContainer = root.querySelector('[class*="ToolbarContainer"]');
-          if (!(toolbarContainer instanceof HTMLElement)) {
-            return;
-          }
-
-          toolbarContainer.classList.add("jobadvice-mobile-entry-toolbar");
-
-          var backSection = toolbarContainer.querySelector('[class*="ToolbarSectionBackLink"]');
-          if (backSection) {
-            backSection.classList.add("jobadvice-mobile-entry-backlink");
-          }
-
-          var mainSection = toolbarContainer.querySelector('[class*="ToolbarSectionMain"]');
-          if (!(mainSection instanceof HTMLElement)) {
-            return;
-          }
-
-          mainSection.classList.add("jobadvice-mobile-entry-actions");
-
-          var actionGroups = mainSection.children;
-          for (var index = 0; index < actionGroups.length; index += 1) {
-            var actionGroup = actionGroups[index];
-            if (!(actionGroup instanceof HTMLElement)) {
-              continue;
-            }
-
-            actionGroup.classList.add("jobadvice-mobile-entry-action-group");
-
-            var normalizedGroupText = normalizeText(actionGroup.textContent);
-            if (!normalizedGroupText) {
-              hideNodeForMobile(actionGroup);
-              continue;
-            }
-
-            if (
-              normalizedGroupText.indexOf("publish") >= 0 ||
-              normalizedGroupText.indexOf("published") >= 0
-            ) {
-              actionGroup.classList.add("jobadvice-mobile-entry-publish-group");
-            }
-
-            if (normalizedGroupText.indexOf("delete") >= 0) {
-              actionGroup.classList.add("jobadvice-mobile-entry-delete-group");
-            }
-          }
-
-          var iconOnlyControls = toolbarContainer.querySelectorAll(
-            'button, [role="button"], a, span',
-          );
-
-          for (var controlIndex = 0; controlIndex < iconOnlyControls.length; controlIndex += 1) {
-            var control = iconOnlyControls[controlIndex];
-            if (!(control instanceof HTMLElement)) {
-              continue;
-            }
-
-            var controlText = normalizeText(control.textContent);
-            var labelText = normalizeText(
-              control.getAttribute("aria-label") || control.getAttribute("title"),
-            );
-            var isInsidePublishGroup = Boolean(
-              control.closest(".jobadvice-mobile-entry-publish-group"),
-            );
-            var isInsideDeleteGroup = Boolean(
-              control.closest(".jobadvice-mobile-entry-delete-group"),
-            );
-
-            if (controlText || labelText || isInsidePublishGroup || isInsideDeleteGroup) {
-              continue;
-            }
-
-            hideNodeForMobile(control);
-          }
-        }
-
-        function promoteMobileEntryMenus() {
-          if (!isResponsiveViewport() || !getRouteState().isEntryRoute) {
-            var previousMenus = document.querySelectorAll(".jobadvice-mobile-sheet-menu");
-            for (var clearIndex = 0; clearIndex < previousMenus.length; clearIndex += 1) {
-              previousMenus[clearIndex].classList.remove("jobadvice-mobile-sheet-menu");
-            }
-            return;
-          }
-
-          var menuNodes = document.querySelectorAll(
-            '[role="menu"], [role="listbox"], [aria-modal="true"], [class*="DropdownMenu"], [class*="MenuList"], [class*="MenuItems"], [class*="Popover"], [class*="SelectMenu"]',
-          );
-
-          for (var index = 0; index < menuNodes.length; index += 1) {
-            var menuNode = menuNodes[index];
-            if (!(menuNode instanceof HTMLElement)) {
-              continue;
-            }
-
-            var rect = menuNode.getBoundingClientRect();
-            var styles = window.getComputedStyle(menuNode);
-            var isVisible =
-              styles.display !== "none" &&
-              styles.visibility !== "hidden" &&
-              rect.width > 0 &&
-              rect.height > 0;
-
-            if (!isVisible) {
-              menuNode.classList.remove("jobadvice-mobile-sheet-menu");
-              continue;
-            }
-
-            if (
-              menuNode.id === "jobadvice-auto-extract-panel" ||
-              menuNode.closest("#jobadvice-auto-extract-panel")
-            ) {
-              continue;
-            }
-
-            menuNode.classList.add("jobadvice-mobile-sheet-menu");
+          node.classList.add("jobadvice-mobile-hidden-node");
+          if (extraClassName) {
+            node.classList.add(extraClassName);
           }
         }
 
@@ -748,89 +569,49 @@
           for (var index = 0; index < toolbarMetaNodes.length; index += 1) {
             var toolbarMeta = toolbarMetaNodes[index];
             var avatarButtons = toolbarMeta.querySelectorAll('[class*="AvatarDropdownButton"]');
+
             if (avatarButtons.length === 0) {
               continue;
             }
 
-            var buttonLikeNodes = toolbarMeta.querySelectorAll('button, [role="button"]');
+            var buttonLikeNodes = toolbarMeta.querySelectorAll("button, [role='button']");
             var normalizedText = normalizeText(toolbarMeta.textContent);
             var containsOnlyAvatarButtons =
               buttonLikeNodes.length === avatarButtons.length && normalizedText === "";
 
             if (containsOnlyAvatarButtons) {
-              toolbarMeta.classList.add("jobadvice-entry-toolbar-meta-duplicate");
-              toolbarMeta.setAttribute("aria-hidden", "true");
-              toolbarMeta.style.display = "none";
-              toolbarMeta.style.width = "0";
-              toolbarMeta.style.minWidth = "0";
-              toolbarMeta.style.maxWidth = "0";
-              toolbarMeta.style.margin = "0";
-              toolbarMeta.style.padding = "0";
-              toolbarMeta.style.overflow = "hidden";
-              toolbarMeta.style.pointerEvents = "none";
+              hideNodeForMobile(toolbarMeta, "jobadvice-entry-toolbar-meta-duplicate");
             }
           }
         }
 
-        function applyEntryResponsiveFixes(root) {
-          if (!isResponsiveViewport()) {
-            return;
-          }
-
-          unlockDocumentScroll();
-          root.style.height = "auto";
-          root.style.minHeight = "100vh";
-          root.style.maxHeight = "none";
-          root.style.overflow = "visible";
-          root.style.overflowY = "visible";
-
-          var layoutNodes = root.querySelectorAll(
-            '[class*="Main"], [class*="EditorContainer"], [class*="Editor"], [class*="SplitPane"], [class*="ControlPaneContainer"], [class*="AppMainContainer"], [class*="Pane"]',
+        function applyMobileEntryLayout(root) {
+          var flowNodes = root.querySelectorAll(
+            '[class*="AppMainContainer"], [class*="EditorContainer"], [class*="Editor"], [class*="SplitPane"], [class*="Pane"], [class*="Main"], [class*="ControlPaneContainer"]',
           );
 
-          for (var index = 0; index < layoutNodes.length; index += 1) {
-            var layoutNode = layoutNodes[index];
-            layoutNode.style.position = "static";
-            layoutNode.style.top = "auto";
-            layoutNode.style.right = "auto";
-            layoutNode.style.bottom = "auto";
-            layoutNode.style.left = "auto";
-            layoutNode.style.height = "auto";
-            layoutNode.style.minHeight = "0";
-            layoutNode.style.maxHeight = "none";
-            layoutNode.style.flex = "none";
-            layoutNode.style.overflow = "visible";
-            layoutNode.style.overflowY = "visible";
-            layoutNode.style.overflowX = "visible";
-          }
-
-          var toolbarNodes = root.querySelectorAll(
-            '[class*="Toolbar"], [class*="ToolbarSection"], [class*="EditorToolbar"]',
-          );
-
-          for (var toolbarIndex = 0; toolbarIndex < toolbarNodes.length; toolbarIndex += 1) {
-            var toolbarNode = toolbarNodes[toolbarIndex];
-            toolbarNode.style.position = "static";
-            toolbarNode.style.top = "auto";
-            toolbarNode.style.right = "auto";
-            toolbarNode.style.bottom = "auto";
-            toolbarNode.style.left = "auto";
-            toolbarNode.style.zIndex = "auto";
+          for (var index = 0; index < flowNodes.length; index += 1) {
+            markFlowNode(flowNodes[index]);
           }
 
           var hiddenNodes = root.querySelectorAll(
-            '[class*="PreviewPaneContainer"]:not([class*="ControlPaneContainer"]), [class*="PreviewPaneFrame"], [class*="EditorToggle"], [class*="ToolbarSectionMeta"], [class*="ViewControls"], [class*="ViewControlsButton"], [class*="AvatarDropdownButton"]',
+            '[class*="PreviewPaneContainer"]:not([class*="ControlPaneContainer"]), [class*="PreviewPaneFrame"], [class*="EditorToggle"], [class*="ViewControls"], [class*="ViewControlsButton"], [class*="ToolbarSectionMeta"], [class*="AvatarDropdownButton"]',
           );
 
           for (var hiddenIndex = 0; hiddenIndex < hiddenNodes.length; hiddenIndex += 1) {
-            hiddenNodes[hiddenIndex].style.display = "none";
-            hiddenNodes[hiddenIndex].style.visibility = "hidden";
-            hiddenNodes[hiddenIndex].style.pointerEvents = "none";
+            hideNodeForMobile(hiddenNodes[hiddenIndex]);
           }
 
-          var fieldNodes = root.querySelectorAll("input, textarea, select, button");
-          for (var fieldIndex = 0; fieldIndex < fieldNodes.length; fieldIndex += 1) {
-            unlockAncestorChain(root, fieldNodes[fieldIndex]);
+          markDuplicateEntryToolbarMeta(root);
+        }
+
+        function applyMobileCollectionLayout(root) {
+          var flowNodes = root.querySelectorAll(
+            '[class*="SplitPane"], [class*="Pane"], [class*="Main"], [class*="Sidebar"], [class*="Collection"]',
+          );
+
+          for (var index = 0; index < flowNodes.length; index += 1) {
+            markFlowNode(flowNodes[index]);
           }
         }
 
@@ -841,16 +622,13 @@
           }
 
           clearResponsiveClasses(root);
+          unlockDocumentScroll();
 
           var routeState = getRouteState();
 
           if (routeState.isEntryRoute) {
             root.classList.add("jobadvice-entry-view");
             document.body.classList.add("jobadvice-entry-view");
-            markDuplicateEntryToolbarMeta(root);
-            applyEntryResponsiveFixes(root);
-            decorateMobileEntryToolbar(root);
-            promoteMobileEntryMenus();
 
             if (!isResponsiveViewport()) {
               return;
@@ -858,6 +636,7 @@
 
             root.classList.add("jobadvice-mobile-entry-view");
             document.body.classList.add("jobadvice-mobile-entry-view");
+            applyMobileEntryLayout(root);
             return;
           }
 
@@ -871,57 +650,17 @@
 
           root.classList.add("jobadvice-mobile-collection-view");
           document.body.classList.add("jobadvice-mobile-collection-view");
-
-          var collectionsPanel = findCollectionsPanel(root);
-          var resultsContainer = findResultsContainer(root);
-          var resultsFrame = resultsContainer ? resultsContainer.parentElement : null;
-          var collectionMain = resultsContainer ? resultsContainer.closest("main") : null;
-          var layoutContainer =
-            collectionsPanel && resultsContainer
-              ? findSharedContainer(root, collectionsPanel, resultsContainer)
-              : null;
-
-          if (collectionsPanel) {
-            collectionsPanel.classList.add("jobadvice-mobile-collections-panel");
-          }
-
-          if (resultsContainer) {
-            resultsContainer.classList.add("jobadvice-mobile-collection-results");
-          }
-
-          if (resultsFrame) {
-            resultsFrame.classList.add("jobadvice-mobile-collection-results-frame");
-          }
-
-          if (collectionMain) {
-            collectionMain.classList.add("jobadvice-mobile-collection-main");
-          }
-
-          if (layoutContainer) {
-            layoutContainer.classList.add("jobadvice-mobile-collection-layout");
-          }
+          applyMobileCollectionLayout(root);
         }
 
         function scheduleApply() {
-          window.requestAnimationFrame(function () {
-            window.setTimeout(applyResponsiveClasses, 40);
-          });
-        }
-
-        function startScrollUnlockWatchdog() {
-          if (scrollUnlockTimer) {
-            return;
+          if (applyTimeoutId) {
+            window.clearTimeout(applyTimeoutId);
           }
 
-          scrollUnlockTimer = window.setInterval(function () {
-            var root = document.getElementById("nc-root");
-            var routeState = getRouteState();
-            if (!root || !routeState.isEntryRoute || !isResponsiveViewport()) {
-              return;
-            }
-
-            applyEntryResponsiveFixes(root);
-          }, 700);
+          applyTimeoutId = window.setTimeout(function () {
+            applyResponsiveClasses();
+          }, 30);
         }
 
         function startObserving(root) {
@@ -960,34 +699,8 @@
 
         window.addEventListener("hashchange", scheduleApply);
         window.addEventListener("resize", scheduleApply);
-        document.addEventListener(
-          "pointerdown",
-          function (event) {
-            if (!isResponsiveViewport() || !getRouteState().isEntryRoute) {
-              return;
-            }
-
-            var openMenus = document.querySelectorAll(".jobadvice-mobile-sheet-menu");
-            if (openMenus.length === 0) {
-              return;
-            }
-
-            for (var index = 0; index < openMenus.length; index += 1) {
-              if (openMenus[index].contains(event.target)) {
-                return;
-              }
-            }
-
-            document.dispatchEvent(
-              new KeyboardEvent("keydown", {
-                key: "Escape",
-                bubbles: true,
-              }),
-            );
-          },
-          true,
-        );
-        startScrollUnlockWatchdog();
+        window.addEventListener("load", scheduleApply);
+        document.addEventListener("focusin", scheduleApply, true);
         waitForRoot(0);
       })();
     </script>
