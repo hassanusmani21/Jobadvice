@@ -23,6 +23,15 @@ export const metadata: Metadata = {
   },
 };
 
+const hasAuthSecret = Boolean(
+  (process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "").trim(),
+);
+
+const hasGoogleOAuthCredentials = Boolean(
+  (process.env.GOOGLE_CLIENT_ID || "").trim() &&
+    (process.env.GOOGLE_CLIENT_SECRET || "").trim(),
+);
+
 const toSafeCallbackUrl = (value: string | string[] | undefined) => {
   const callbackValue = Array.isArray(value) ? value[0] : value;
 
@@ -67,6 +76,18 @@ export default async function AdminLoginPage({
     : searchParams?.error;
   const errorMessage = toErrorMessage(error);
   const hasConfiguredAdmins = ALLOWED_ADMIN_EMAILS.length > 0;
+  const missingAuthConfig: string[] = [];
+
+  if (!hasAuthSecret) {
+    missingAuthConfig.push("AUTH_SECRET");
+  }
+
+  if (!hasGoogleOAuthCredentials) {
+    missingAuthConfig.push("GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET");
+  }
+
+  const canStartGoogleSignIn =
+    hasConfiguredAdmins && missingAuthConfig.length === 0;
 
   const session = await getAdminSession();
   if (isAllowedAdminEmail(session?.user?.email)) {
@@ -103,10 +124,15 @@ export default async function AdminLoginPage({
             Continue with your Google account to enter the admin dashboard.
           </p>
 
-          {hasConfiguredAdmins ? (
+          {canStartGoogleSignIn ? (
             <div className="mt-8">
               <GoogleAdminSignInButton callbackUrl={callbackUrl} />
             </div>
+          ) : missingAuthConfig.length > 0 ? (
+            <p className="mt-8 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
+              Admin auth is not configured on this deployment. Missing:{" "}
+              <code>{missingAuthConfig.join(", ")}</code>
+            </p>
           ) : (
             <p className="mt-8 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
               Admin access is not configured correctly. Set <code>ALLOWED_ADMIN_EMAILS</code>{" "}
