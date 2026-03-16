@@ -989,123 +989,6 @@ export default function MobileAdminApp({
                 </p>
               ) : null}
 
-              <div className="mt-4 rounded-[1.25rem] border border-teal-100 bg-[linear-gradient(180deg,rgba(240,253,250,0.96)_0%,rgba(255,255,255,0.98)_100%)] p-4 shadow-sm">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
-                      AI Extractor
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Auto-fill this {collection === "jobs" ? "job" : "blog"} form from a URL or pasted source text.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setExtractorOpen((current) => !current)}
-                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                  >
-                    {extractorOpen ? "Hide panel" : "Open panel"}
-                  </button>
-                </div>
-
-                {extractorOpen ? (
-                  <div className="mt-4 space-y-4">
-                    <label className="block">
-                      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Source URL
-                      </span>
-                      <input
-                        type="url"
-                        value={extractSourceUrl}
-                        onChange={(event) => setExtractSourceUrl(event.target.value)}
-                        placeholder={
-                          collection === "jobs"
-                            ? "https://company.com/careers/job-posting"
-                            : "https://example.com/post"
-                        }
-                        className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                      />
-                    </label>
-
-                    <label className="block">
-                      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Source text
-                      </span>
-                      <textarea
-                        value={extractSourceText}
-                        onChange={(event) => setExtractSourceText(event.target.value)}
-                        rows={5}
-                        placeholder={
-                          collection === "jobs"
-                            ? "Paste complete job details text here if you are not using a URL."
-                            : "Paste complete blog content/details here if you are not using a URL."
-                        }
-                        className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                      />
-                    </label>
-
-                    {extractError ? (
-                      <p className="rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                        {extractError}
-                      </p>
-                    ) : null}
-
-                    {extractNotice ? (
-                      <p className="rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                        {extractNotice}
-                      </p>
-                    ) : null}
-
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <button
-                        type="button"
-                        disabled={extractMode !== ""}
-                        onClick={() => runAutoExtract("url")}
-                        className={cn(
-                          "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
-                          extractMode !== ""
-                            ? "cursor-not-allowed bg-slate-300"
-                            : "bg-slate-900 hover:bg-slate-800",
-                        )}
-                      >
-                        {extractMode === "url" ? "Fetching URL..." : "Fetch URL + Extract"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={extractMode !== ""}
-                        onClick={() => runAutoExtract("text")}
-                        className={cn(
-                          "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
-                          extractMode !== ""
-                            ? "cursor-not-allowed bg-teal-300"
-                            : "bg-teal-700 hover:bg-teal-800",
-                        )}
-                      >
-                        {extractMode === "text" ? "Extracting..." : "Auto Extract Text"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={extractMode !== ""}
-                        onClick={() => {
-                          setExtractSourceUrl("");
-                          setExtractSourceText("");
-                          setExtractError("");
-                          setExtractNotice("");
-                        }}
-                        className={cn(
-                          "inline-flex min-h-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition",
-                          extractMode !== ""
-                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                            : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
-                        )}
-                      >
-                        Clear
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-
               {entryLoading ? (
                 <p className="mt-4 rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
                   Loading entry...
@@ -1577,6 +1460,123 @@ export default function MobileAdminApp({
                       </label>
                     </>
                   )}
+
+                  <div className="rounded-[1.25rem] border border-teal-100 bg-[linear-gradient(180deg,rgba(240,253,250,0.96)_0%,rgba(255,255,255,0.98)_100%)] p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
+                          AI Extractor
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          Auto-fill this {collection === "jobs" ? "job" : "blog"} form from a URL or pasted source text.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExtractorOpen((current) => !current)}
+                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      >
+                        {extractorOpen ? "Hide panel" : "Open panel"}
+                      </button>
+                    </div>
+
+                    {extractorOpen ? (
+                      <div className="mt-4 space-y-4">
+                        <label className="block">
+                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Source URL
+                          </span>
+                          <input
+                            type="url"
+                            value={extractSourceUrl}
+                            onChange={(event) => setExtractSourceUrl(event.target.value)}
+                            placeholder={
+                              collection === "jobs"
+                                ? "https://company.com/careers/job-posting"
+                                : "https://example.com/post"
+                            }
+                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                            Source text
+                          </span>
+                          <textarea
+                            value={extractSourceText}
+                            onChange={(event) => setExtractSourceText(event.target.value)}
+                            rows={5}
+                            placeholder={
+                              collection === "jobs"
+                                ? "Paste complete job details text here if you are not using a URL."
+                                : "Paste complete blog content/details here if you are not using a URL."
+                            }
+                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+                          />
+                        </label>
+
+                        {extractError ? (
+                          <p className="rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                            {extractError}
+                          </p>
+                        ) : null}
+
+                        {extractNotice ? (
+                          <p className="rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                            {extractNotice}
+                          </p>
+                        ) : null}
+
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <button
+                            type="button"
+                            disabled={extractMode !== ""}
+                            onClick={() => runAutoExtract("url")}
+                            className={cn(
+                              "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
+                              extractMode !== ""
+                                ? "cursor-not-allowed bg-slate-300"
+                                : "bg-slate-900 hover:bg-slate-800",
+                            )}
+                          >
+                            {extractMode === "url" ? "Fetching URL..." : "Fetch URL + Extract"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={extractMode !== ""}
+                            onClick={() => runAutoExtract("text")}
+                            className={cn(
+                              "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
+                              extractMode !== ""
+                                ? "cursor-not-allowed bg-teal-300"
+                                : "bg-teal-700 hover:bg-teal-800",
+                            )}
+                          >
+                            {extractMode === "text" ? "Extracting..." : "Auto Extract Text"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={extractMode !== ""}
+                            onClick={() => {
+                              setExtractSourceUrl("");
+                              setExtractSourceText("");
+                              setExtractError("");
+                              setExtractNotice("");
+                            }}
+                            className={cn(
+                              "inline-flex min-h-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition",
+                              extractMode !== ""
+                                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+                            )}
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
 
                   <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-200 bg-white/96 px-4 pt-4 pb-1 backdrop-blur sm:-mx-5 sm:px-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
