@@ -19,6 +19,7 @@ tags:
   - career
 isTrending: false
 author: Hassan usmani
+coverImage: https://i.insider.com/69b42edea7a4f9df67ba4c84?width=1300&format=jpeg&auto=webp&quality=40,34
 date: 2026-03-16
 ---
 \## Introduction
