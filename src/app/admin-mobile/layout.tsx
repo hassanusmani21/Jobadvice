@@ -1,3 +1,5 @@
+import AdminMobileThemeLock from "./AdminMobileThemeLock";
+
 const adminMobileShellStyles = `
   body:has([data-admin-mobile-root]) {
     background:
@@ -31,6 +33,7 @@ export default function AdminMobileLayout({
 }>) {
   return (
     <>
+      <AdminMobileThemeLock />
       <style dangerouslySetInnerHTML={{ __html: adminMobileShellStyles }} />
       {children}
     </>
