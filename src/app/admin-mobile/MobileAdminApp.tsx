@@ -42,6 +42,8 @@ const defaultLoadingState: LoadingState = {
   blogs: false,
 };
 
+const adminReturnStorageKey = "jobadvice-admin-return-url";
+
 const parseLegacyAdminHash = (hash: string) => {
   const match = hash.match(/collections\/(jobs|blogs)(?:\/entries\/([^/?#]+)|\/new)?/i);
   if (!match) {
@@ -320,6 +322,15 @@ export default function MobileAdminApp({
       }
 
       window.history.replaceState(window.history.state, "", nextUrl.toString());
+
+      try {
+        window.localStorage.setItem(
+          adminReturnStorageKey,
+          `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`,
+        );
+      } catch {
+        // Ignore storage failures and keep the in-app route working.
+      }
     };
 
     applyRouteState(collection, originalSlug || editorEntry.slug, editorOpen);

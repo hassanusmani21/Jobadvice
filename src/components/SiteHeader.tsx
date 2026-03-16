@@ -20,6 +20,8 @@ const navigation: NavigationItem[] = [
   { href: "/privacy-policy", label: "Privacy" },
 ];
 
+const adminReturnStorageKey = "jobadvice-admin-return-url";
+
 const isActivePath = (pathname: string, href: string) => {
   if (href === "/") {
     return pathname === "/";
@@ -32,6 +34,8 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [adminReturnHref, setAdminReturnHref] = useState("/admin-mobile");
+  const [showAdminReturn, setShowAdminReturn] = useState(false);
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -69,6 +73,69 @@ export default function SiteHeader() {
 
     return () => window.removeEventListener("scroll", updateScrollState);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const updateAdminReturnState = async () => {
+      try {
+        const response = await fetch("/api/auth/session", {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+
+        if (!response.ok) {
+          if (!cancelled) {
+            setShowAdminReturn(false);
+            setAdminReturnHref("/admin-mobile");
+          }
+          return;
+        }
+
+        const result = (await response.json()) as {
+          user?: {
+            email?: string | null;
+          } | null;
+        };
+        const email = typeof result?.user?.email === "string" ? result.user.email : "";
+
+        if (!email) {
+          if (!cancelled) {
+            setShowAdminReturn(false);
+            setAdminReturnHref("/admin-mobile");
+          }
+          return;
+        }
+
+        let nextHref = "/admin-mobile";
+
+        try {
+          const storedHref = window.localStorage.getItem(adminReturnStorageKey) || "";
+          if (storedHref.startsWith("/admin-mobile")) {
+            nextHref = storedHref;
+          }
+        } catch {
+          // Ignore storage failures and use the admin root instead.
+        }
+
+        if (!cancelled) {
+          setAdminReturnHref(nextHref);
+          setShowAdminReturn(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setShowAdminReturn(false);
+          setAdminReturnHref("/admin-mobile");
+        }
+      }
+    };
+
+    updateAdminReturnState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   const shouldElevateHeader = hasScrolled || isMenuOpen;
 
@@ -126,10 +193,10 @@ export default function SiteHeader() {
           <div className="flex items-center justify-end gap-2">
             <ThemeToggle />
             <Link
-              href="/admin-mobile"
+              href={adminReturnHref}
               className="utility-button px-3 py-1.5 text-sm font-semibold"
             >
-              Admin
+              {showAdminReturn ? "Back to Admin" : "Admin"}
             </Link>
           </div>
         </div>
@@ -155,6 +222,15 @@ export default function SiteHeader() {
           </Link>
 
           <div className="flex items-center gap-1.5 min-[360px]:gap-2">
+            {showAdminReturn ? (
+              <Link
+                href={adminReturnHref}
+                aria-label="Back to admin"
+                className="utility-button h-10 px-3 text-xs font-semibold min-[360px]:h-11"
+              >
+                Admin
+              </Link>
+            ) : null}
             <Link
               href="/jobs"
               aria-label="Search jobs"
@@ -273,10 +349,10 @@ export default function SiteHeader() {
 
                 <div className="mt-4">
                   <Link
-                    href="/admin-mobile"
+                    href={adminReturnHref}
                     className="utility-button w-full px-4 py-3 text-sm font-semibold"
                   >
-                    Admin
+                    {showAdminReturn ? "Back to Admin" : "Admin"}
                   </Link>
                 </div>
 
