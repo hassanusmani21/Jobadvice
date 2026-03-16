@@ -42,8 +42,6 @@ const defaultLoadingState: LoadingState = {
   blogs: false,
 };
 
-const adminReturnStorageKey = "jobadvice-admin-return-url";
-
 const parseLegacyAdminHash = (hash: string) => {
   const match = hash.match(/collections\/(jobs|blogs)(?:\/entries\/([^/?#]+)|\/new)?/i);
   if (!match) {
@@ -322,15 +320,6 @@ export default function MobileAdminApp({
       }
 
       window.history.replaceState(window.history.state, "", nextUrl.toString());
-
-      try {
-        window.localStorage.setItem(
-          adminReturnStorageKey,
-          `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`,
-        );
-      } catch {
-        // Ignore storage failures and keep the in-app route working.
-      }
     };
 
     applyRouteState(collection, originalSlug || editorEntry.slug, editorOpen);
@@ -780,6 +769,14 @@ export default function MobileAdminApp({
                   </p>
                   <div className="mt-3 flex flex-col gap-2">
                     <a
+                      href="/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-teal-200 bg-teal-50 px-4 text-sm font-semibold text-teal-800 transition hover:bg-teal-100"
+                    >
+                      Open Live Site
+                    </a>
+                    <a
                       href="/admin/?desktop_admin=1"
                       className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                     >
@@ -933,7 +930,12 @@ export default function MobileAdminApp({
             </div>
           </aside>
 
-          <section className="min-w-0 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6 sm:py-5">
+          <section
+            className={cn(
+              "min-w-0 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6 sm:py-5",
+              editorOpen ? "block" : "hidden lg:block",
+            )}
+          >
             <div className="flex items-center justify-between gap-3 lg:hidden">
               <button
                 type="button"

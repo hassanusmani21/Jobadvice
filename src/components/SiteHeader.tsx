@@ -20,8 +20,6 @@ const navigation: NavigationItem[] = [
   { href: "/privacy-policy", label: "Privacy" },
 ];
 
-const adminReturnStorageKey = "jobadvice-admin-return-url";
-
 const isActivePath = (pathname: string, href: string) => {
   if (href === "/") {
     return pathname === "/";
@@ -34,8 +32,6 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
-  const [adminReturnHref, setAdminReturnHref] = useState("/admin-mobile");
-  const [showAdminReturn, setShowAdminReturn] = useState(false);
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -73,69 +69,6 @@ export default function SiteHeader() {
 
     return () => window.removeEventListener("scroll", updateScrollState);
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const updateAdminReturnState = async () => {
-      try {
-        const response = await fetch("/api/auth/session", {
-          cache: "no-store",
-          credentials: "same-origin",
-        });
-
-        if (!response.ok) {
-          if (!cancelled) {
-            setShowAdminReturn(false);
-            setAdminReturnHref("/admin-mobile");
-          }
-          return;
-        }
-
-        const result = (await response.json()) as {
-          user?: {
-            email?: string | null;
-          } | null;
-        };
-        const email = typeof result?.user?.email === "string" ? result.user.email : "";
-
-        if (!email) {
-          if (!cancelled) {
-            setShowAdminReturn(false);
-            setAdminReturnHref("/admin-mobile");
-          }
-          return;
-        }
-
-        let nextHref = "/admin-mobile";
-
-        try {
-          const storedHref = window.localStorage.getItem(adminReturnStorageKey) || "";
-          if (storedHref.startsWith("/admin-mobile")) {
-            nextHref = storedHref;
-          }
-        } catch {
-          // Ignore storage failures and use the admin root instead.
-        }
-
-        if (!cancelled) {
-          setAdminReturnHref(nextHref);
-          setShowAdminReturn(true);
-        }
-      } catch {
-        if (!cancelled) {
-          setShowAdminReturn(false);
-          setAdminReturnHref("/admin-mobile");
-        }
-      }
-    };
-
-    updateAdminReturnState();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [pathname]);
 
   const shouldElevateHeader = hasScrolled || isMenuOpen;
 
@@ -193,10 +126,10 @@ export default function SiteHeader() {
           <div className="flex items-center justify-end gap-2">
             <ThemeToggle />
             <Link
-              href={adminReturnHref}
+              href="/admin-mobile"
               className="utility-button px-3 py-1.5 text-sm font-semibold"
             >
-              {showAdminReturn ? "Back to Admin" : "Admin"}
+              Admin
             </Link>
           </div>
         </div>
@@ -222,15 +155,6 @@ export default function SiteHeader() {
           </Link>
 
           <div className="flex items-center gap-1.5 min-[360px]:gap-2">
-            {showAdminReturn ? (
-              <Link
-                href={adminReturnHref}
-                aria-label="Back to admin"
-                className="utility-button h-10 px-3 text-xs font-semibold min-[360px]:h-11"
-              >
-                Admin
-              </Link>
-            ) : null}
             <Link
               href="/jobs"
               aria-label="Search jobs"
@@ -285,14 +209,14 @@ export default function SiteHeader() {
             <button
               type="button"
               aria-label="Close navigation menu"
-              className="fixed inset-0 z-40 bg-slate-950/10 backdrop-blur-[1px] sm:hidden"
+              className="mobile-menu-backdrop fixed inset-0 z-40 sm:hidden"
               onClick={() => setIsMenuOpen(false)}
             />
             <div
               id="mobile-site-menu"
               className="absolute inset-x-0 top-full z-50 mt-3 sm:hidden"
             >
-              <div className="card-surface overflow-hidden rounded-2xl p-4 backdrop-blur-xl">
+              <div className="mobile-menu-surface overflow-hidden p-4">
                 <div className="flex items-center justify-between gap-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-teal-700">
                     Navigation
@@ -324,7 +248,7 @@ export default function SiteHeader() {
                         key={item.href}
                         href={item.href}
                         aria-current={isActive ? "page" : undefined}
-                        className={`interactive-tile rounded-xl border px-4 py-4 transition ${
+                        className={`interactive-tile mobile-menu-tile rounded-xl border px-4 py-4 transition ${
                           isActive
                             ? "border-teal-200 bg-teal-50 text-teal-950"
                             : "text-slate-800"
@@ -349,10 +273,10 @@ export default function SiteHeader() {
 
                 <div className="mt-4">
                   <Link
-                    href={adminReturnHref}
+                    href="/admin-mobile"
                     className="utility-button w-full px-4 py-3 text-sm font-semibold"
                   >
-                    {showAdminReturn ? "Back to Admin" : "Admin"}
+                    Admin
                   </Link>
                 </div>
 
