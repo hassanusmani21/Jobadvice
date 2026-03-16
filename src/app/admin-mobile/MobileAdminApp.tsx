@@ -6,6 +6,7 @@ import {
   type AdminCollection,
   type AdminMobileBlogEntry,
   type AdminMobileEntry,
+  type AdminMobileJobEntry,
   type AdminMobileRecord,
   createEmptyBlogEntry,
   createEmptyJobEntry,
@@ -64,6 +65,123 @@ const formatRecordMeta = (record: AdminMobileRecord) => {
 const buildEmptyEntry = (collection: AdminCollection) =>
   collection === "jobs" ? createEmptyJobEntry() : createEmptyBlogEntry();
 
+const toExtractString = (value: unknown) =>
+  typeof value === "string" ? value.trim() : "";
+
+const toExtractStringList = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => toExtractString(item))
+      .filter((item) => item.length > 0);
+  }
+
+  if (typeof value === "string") {
+    return textToList(value);
+  }
+
+  return [] as string[];
+};
+
+const jobStringFieldKeys = [
+  "title",
+  "date",
+  "company",
+  "location",
+  "workMode",
+  "employmentType",
+  "salary",
+  "experience",
+  "eligibilityCriteria",
+  "workingDays",
+  "jobTiming",
+  "applyLink",
+  "applicationStartDate",
+  "applicationEndDate",
+] as const;
+
+const jobListFieldKeys = ["education", "skills", "responsibilities"] as const;
+
+const blogStringFieldKeys = [
+  "title",
+  "slug",
+  "summary",
+  "topic",
+  "author",
+  "coverImage",
+  "date",
+  "body",
+] as const;
+
+const applyJobExtractedData = (
+  current: AdminMobileJobEntry,
+  data: Record<string, unknown>,
+) => {
+  let updatedCount = 0;
+  const nextEntry = { ...current };
+
+  for (const key of jobStringFieldKeys) {
+    const nextValue = toExtractString(data[key]);
+    if (!nextValue || nextEntry[key] === nextValue) {
+      continue;
+    }
+
+    nextEntry[key] = nextValue;
+    updatedCount += 1;
+  }
+
+  for (const key of jobListFieldKeys) {
+    const nextValue = toExtractStringList(data[key]);
+    if (
+      nextValue.length === 0 ||
+      nextEntry[key].join("\n") === nextValue.join("\n")
+    ) {
+      continue;
+    }
+
+    nextEntry[key] = nextValue;
+    updatedCount += 1;
+  }
+
+  return {
+    entry: nextEntry,
+    updatedCount,
+  };
+};
+
+const applyBlogExtractedData = (
+  current: AdminMobileBlogEntry,
+  data: Record<string, unknown>,
+) => {
+  let updatedCount = 0;
+  const nextEntry = { ...current };
+
+  for (const key of blogStringFieldKeys) {
+    const nextValue = toExtractString(data[key]);
+    if (!nextValue || nextEntry[key] === nextValue) {
+      continue;
+    }
+
+    nextEntry[key] = nextValue;
+    updatedCount += 1;
+  }
+
+  const nextTags = toExtractStringList(data.tags);
+  if (nextTags.length > 0 && nextEntry.tags.join("\n") !== nextTags.join("\n")) {
+    nextEntry.tags = nextTags;
+    updatedCount += 1;
+  }
+
+  if (data.isTrending === true && nextEntry.isTrending !== true) {
+    nextEntry.isTrending = true;
+    updatedCount += 1;
+  }
+
+  return {
+    entry: nextEntry,
+    updatedCount,
+  };
+};
+
 export default function MobileAdminApp({
   adminEmail,
   initialCollection,
@@ -86,6 +204,12 @@ export default function MobileAdminApp({
   const [uploading, setUploading] = useState(false);
   const [uploadedAssetUrl, setUploadedAssetUrl] = useState("");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [extractorOpen, setExtractorOpen] = useState(false);
+  const [extractSourceText, setExtractSourceText] = useState("");
+  const [extractSourceUrl, setExtractSourceUrl] = useState("");
+  const [extractMode, setExtractMode] = useState<"text" | "url" | "">("");
+  const [extractError, setExtractError] = useState("");
+  const [extractNotice, setExtractNotice] = useState("");
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
 
   const activeRecords = recordsByCollection[collection];
@@ -314,6 +438,8 @@ export default function MobileAdminApp({
     setOriginalSlug("");
     setFormError("");
     setFormNotice("");
+    setExtractError("");
+    setExtractNotice("");
     setUploadedAssetUrl("");
     setEditorOpen(true);
   };
@@ -324,6 +450,8 @@ export default function MobileAdminApp({
     setEditorOpen(true);
     setFormError("");
     setFormNotice("");
+    setExtractError("");
+    setExtractNotice("");
 
     try {
       const response = await fetch(
@@ -365,6 +493,105 @@ export default function MobileAdminApp({
       ...current,
       ...patch,
     }) as AdminMobileEntry);
+  };
+
+  const runAutoExtract = async (mode: "text" | "url") => {
+    const sourceText = extractSourceText.trim();
+    const sourceUrl = extractSourceUrl.trim();
+
+    if (mode === "url" && !sourceUrl) {
+      setExtractError("Paste a public URL first.");
+      setExtractNotice("");
+      setExtractorOpen(true);
+      return;
+    }
+
+    if (mode === "text" && !sourceText) {
+      setExtractError("Paste source text first.");
+      setExtractNotice("");
+      setExtractorOpen(true);
+      return;
+    }
+
+    setExtractMode(mode);
+    setExtractError("");
+    setExtractNotice("");
+    setExtractorOpen(true);
+
+    try {
+      const response = await fetch("/api/admin/auto-extract", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          collection,
+          sourceText: mode === "text" ? sourceText : "",
+          sourceUrl: mode === "url" ? sourceUrl : "",
+        }),
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        window.location.href = "/admin/login?callbackUrl=/admin-mobile";
+        return;
+      }
+
+      const result = (await response.json()) as {
+        data?: Record<string, unknown>;
+        error?: string;
+        mode?: string;
+        reason?: string;
+        resolvedSourceUrl?: string;
+        sourceText?: string;
+        success?: boolean;
+      };
+
+      if (!response.ok || result.success === false || !result.data) {
+        throw new Error(result.error || "Auto extraction failed.");
+      }
+
+      if (typeof result.sourceText === "string" && result.sourceText.trim()) {
+        setExtractSourceText(result.sourceText.trim());
+      }
+
+      if (typeof result.resolvedSourceUrl === "string" && result.resolvedSourceUrl.trim()) {
+        setExtractSourceUrl(result.resolvedSourceUrl.trim());
+      }
+
+      const appliedResult =
+        editorEntry.collection === "jobs"
+          ? applyJobExtractedData(editorEntry, result.data)
+          : applyBlogExtractedData(editorEntry, result.data);
+
+      setEditorEntry(appliedResult.entry);
+
+      const resultMode =
+        typeof result.mode === "string" && result.mode.trim()
+          ? result.mode.trim()
+          : mode === "url"
+            ? "remote"
+            : "unknown";
+
+      let nextNotice =
+        appliedResult.updatedCount > 0
+          ? `Updated ${appliedResult.updatedCount} field${
+              appliedResult.updatedCount === 1 ? "" : "s"
+            } (${resultMode}).`
+          : `No new fields were updated (${resultMode}).`;
+
+      if (resultMode === "fallback" && typeof result.reason === "string" && result.reason.trim()) {
+        nextNotice += ` ${result.reason.trim()}`;
+      }
+
+      setExtractNotice(nextNotice);
+    } catch (error) {
+      setExtractError(
+        error instanceof Error ? error.message : "Auto extraction failed.",
+      );
+    } finally {
+      setExtractMode("");
+    }
   };
 
   const saveEntry = async (draft: boolean) => {
@@ -550,7 +777,7 @@ export default function MobileAdminApp({
                     <button
                       type="button"
                       onClick={() => signOut({ callbackUrl: "/admin/login" })}
-                      className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                      className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
                     >
                       Log Out
                     </button>
@@ -599,6 +826,8 @@ export default function MobileAdminApp({
                     onClick={() => {
                       setCollection(item);
                       setSearchValue("");
+                      setExtractError("");
+                      setExtractNotice("");
                       if (editorEntry.collection !== item) {
                         setEditorEntry(buildEmptyEntry(item));
                         setOriginalSlug("");
@@ -610,7 +839,7 @@ export default function MobileAdminApp({
                     className={cn(
                       "min-h-11 flex-1 rounded-full px-4 text-sm font-semibold transition",
                       collection === item
-                        ? "bg-slate-900 text-white"
+                        ? "bg-teal-700 text-white shadow-[0_10px_24px_-18px_rgba(15,118,110,0.7)]"
                         : "text-slate-600 hover:bg-slate-100",
                     )}
                   >
@@ -711,7 +940,7 @@ export default function MobileAdminApp({
               <button
                 type="button"
                 onClick={() => openNewEntry(collection)}
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
               >
                 New
               </button>
@@ -759,6 +988,123 @@ export default function MobileAdminApp({
                   {formNotice}
                 </p>
               ) : null}
+
+              <div className="mt-4 rounded-[1.25rem] border border-teal-100 bg-[linear-gradient(180deg,rgba(240,253,250,0.96)_0%,rgba(255,255,255,0.98)_100%)] p-4 shadow-sm">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
+                      AI Extractor
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Auto-fill this {collection === "jobs" ? "job" : "blog"} form from a URL or pasted source text.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setExtractorOpen((current) => !current)}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    {extractorOpen ? "Hide panel" : "Open panel"}
+                  </button>
+                </div>
+
+                {extractorOpen ? (
+                  <div className="mt-4 space-y-4">
+                    <label className="block">
+                      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Source URL
+                      </span>
+                      <input
+                        type="url"
+                        value={extractSourceUrl}
+                        onChange={(event) => setExtractSourceUrl(event.target.value)}
+                        placeholder={
+                          collection === "jobs"
+                            ? "https://company.com/careers/job-posting"
+                            : "https://example.com/post"
+                        }
+                        className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Source text
+                      </span>
+                      <textarea
+                        value={extractSourceText}
+                        onChange={(event) => setExtractSourceText(event.target.value)}
+                        rows={5}
+                        placeholder={
+                          collection === "jobs"
+                            ? "Paste complete job details text here if you are not using a URL."
+                            : "Paste complete blog content/details here if you are not using a URL."
+                        }
+                        className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+                      />
+                    </label>
+
+                    {extractError ? (
+                      <p className="rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        {extractError}
+                      </p>
+                    ) : null}
+
+                    {extractNotice ? (
+                      <p className="rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        {extractNotice}
+                      </p>
+                    ) : null}
+
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <button
+                        type="button"
+                        disabled={extractMode !== ""}
+                        onClick={() => runAutoExtract("url")}
+                        className={cn(
+                          "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
+                          extractMode !== ""
+                            ? "cursor-not-allowed bg-slate-300"
+                            : "bg-slate-900 hover:bg-slate-800",
+                        )}
+                      >
+                        {extractMode === "url" ? "Fetching URL..." : "Fetch URL + Extract"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={extractMode !== ""}
+                        onClick={() => runAutoExtract("text")}
+                        className={cn(
+                          "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
+                          extractMode !== ""
+                            ? "cursor-not-allowed bg-teal-300"
+                            : "bg-teal-700 hover:bg-teal-800",
+                        )}
+                      >
+                        {extractMode === "text" ? "Extracting..." : "Auto Extract Text"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={extractMode !== ""}
+                        onClick={() => {
+                          setExtractSourceUrl("");
+                          setExtractSourceText("");
+                          setExtractError("");
+                          setExtractNotice("");
+                        }}
+                        className={cn(
+                          "inline-flex min-h-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition",
+                          extractMode !== ""
+                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                            : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+                        )}
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
 
               {entryLoading ? (
                 <p className="mt-4 rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
@@ -1157,7 +1503,7 @@ export default function MobileAdminApp({
                               Upload once, then use it as the cover image or insert it into the article.
                             </p>
                           </div>
-                          <label className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800">
+                          <label className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800">
                             {uploading ? "Uploading..." : "Upload image"}
                             <input
                               type="file"
