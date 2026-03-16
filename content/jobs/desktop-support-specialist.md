@@ -68,6 +68,7 @@ responsibilities:
   - Use ticketing tools to track tasks and service level agreements
   - Maintain inventory records using data management systems
 workingDays: As per company policy
+jobTiming: " "
 applyLink: https://astreya.wd5.myworkdayjobs.com/en-US/life-at-astreya-opportunities/job/Desktop-Support-Specialist-I_R0014861
 applicationStartDate: 2026-03-16
 ---
