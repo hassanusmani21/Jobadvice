@@ -26,7 +26,7 @@ export default function AdminRecoverPage() {
             Go to Admin Login
           </Link>
           <Link
-            href="/admin/"
+            href="/admin/?desktop_admin=1"
             className="inline-flex rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
           >
             Open CMS

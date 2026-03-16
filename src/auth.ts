@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
     },
     async redirect({ url, baseUrl }) {
       if (url.startsWith("/")) {
-        return url.startsWith("/admin") ? url : "/admin";
+        return url.startsWith("/admin") ? url : "/admin-mobile";
       }
 
       try {
@@ -62,7 +62,7 @@ export const authOptions: NextAuthOptions = {
         // Fall through to the default admin landing page.
       }
 
-      return `${baseUrl}/admin`;
+      return `${baseUrl}/admin-mobile`;
     },
   },
 };

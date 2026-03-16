@@ -126,7 +126,7 @@ export default function SiteHeader() {
           <div className="flex items-center justify-end gap-2">
             <ThemeToggle />
             <Link
-              href="/admin"
+              href="/admin-mobile"
               className="utility-button px-3 py-1.5 text-sm font-semibold"
             >
               Admin
@@ -273,7 +273,7 @@ export default function SiteHeader() {
 
                 <div className="mt-4">
                   <Link
-                    href="/admin"
+                    href="/admin-mobile"
                     className="utility-button w-full px-4 py-3 text-sm font-semibold"
                   >
                     Admin

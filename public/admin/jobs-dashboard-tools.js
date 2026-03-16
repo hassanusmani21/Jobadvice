@@ -463,7 +463,8 @@
     if (!response.ok || !result || !result.success) {
       var message = (result && result.error) || "Duplicate check failed.";
       if (message === "SessionRequired" || message === "EmailNotAllowed") {
-        window.location.href = "/admin/login?callbackUrl=" + encodeURIComponent("/admin");
+        window.location.href =
+          "/admin/login?callbackUrl=" + encodeURIComponent("/admin?desktop_admin=1");
         throw new Error("Session expired. Redirecting to login...");
       }
 
@@ -673,7 +674,8 @@
         var message = (result && result.error) || "Unable to sort entries.";
 
         if (message === "SessionRequired" || message === "EmailNotAllowed") {
-          window.location.href = "/admin/login?callbackUrl=" + encodeURIComponent("/admin");
+          window.location.href =
+            "/admin/login?callbackUrl=" + encodeURIComponent("/admin?desktop_admin=1");
           return false;
         }
 

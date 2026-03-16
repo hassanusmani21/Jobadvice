@@ -5,10 +5,10 @@ import { siteUrl } from "./lib/site";
 import { toContentSlug } from "./lib/slug";
 
 const toSafeCallbackUrl = (request: NextRequest) => {
-  const rawValue = request.nextUrl.searchParams.get("callbackUrl") || "/admin";
+  const rawValue = request.nextUrl.searchParams.get("callbackUrl") || "/admin-mobile";
 
   if (!rawValue.startsWith("/") || rawValue.startsWith("/admin/login")) {
-    return "/admin";
+    return "/admin-mobile";
   }
 
   return rawValue;
@@ -118,6 +118,16 @@ export async function middleware(request: NextRequest) {
     return trailingSlashRedirect;
   }
 
+  if (request.nextUrl.pathname === "/admin" || request.nextUrl.pathname === "/admin/") {
+    if (request.nextUrl.searchParams.get("desktop_admin") === "1") {
+      return NextResponse.next();
+    }
+
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/admin-mobile";
+    return NextResponse.redirect(redirectUrl);
+  }
+
   if (!request.nextUrl.pathname.startsWith("/admin/login")) {
     return NextResponse.next();
   }
@@ -139,6 +149,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/",
+    "/admin",
+    "/admin/:path*",
     "/admin/login",
     "/admin/login/:path*",
     "/about",
