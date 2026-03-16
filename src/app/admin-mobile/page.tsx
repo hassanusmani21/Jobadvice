@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import MobileAdminApp from "./MobileAdminApp";
+import { isAdminContentWriteConfigured } from "@/lib/adminContentStore";
 import { getAllowedAdminSession } from "@/lib/adminSession";
 import { isAdminCollection, type AdminCollection } from "@/lib/adminMobile";
 
@@ -38,12 +39,14 @@ export default async function AdminMobilePage({
     ? collectionValue
     : "jobs";
   const initialSlug = getSingleSearchParam(searchParams?.slug).trim();
+  const mobilePublishingReady = isAdminContentWriteConfigured();
 
   return (
     <MobileAdminApp
       adminEmail={session.user?.email || ""}
       initialCollection={initialCollection}
       initialSlug={initialSlug}
+      mobilePublishingReady={mobilePublishingReady}
     />
   );
 }

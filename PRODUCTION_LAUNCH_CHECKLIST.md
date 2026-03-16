@@ -29,6 +29,7 @@ Add these in Netlify -> Site settings -> Environment variables:
 - [ ] `GOOGLE_CLIENT_ID=<google-client-id>`
 - [ ] `GOOGLE_CLIENT_SECRET=<google-client-secret>`
 - [ ] `ALLOWED_ADMIN_EMAILS=<your-admin-email>`
+- [ ] `ADMIN_CONTENTS_TOKEN=<github-fine-grained-token-with-repo-contents-write>`
 - [ ] `NO_EXPIRY_JOB_RETENTION_DAYS=30` (optional)
 
 ## 4) Google OAuth Setup
@@ -82,6 +83,11 @@ In Netlify:
 
 - Admin CMS login works but publish fails
   - Ensure Netlify Identity + Git Gateway are enabled.
+
+- Mobile admin shows `ADMIN_CONTENTS_TOKEN is required for production admin saves`
+  - Add `ADMIN_CONTENTS_TOKEN` in production environment variables.
+  - Use a GitHub fine-grained token with repository `Contents: Read and write`.
+  - Redeploy, then retry `/admin-mobile`.
 
 ## 9) Domain Switch Later (when you buy custom domain)
 

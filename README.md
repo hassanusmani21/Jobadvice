@@ -126,4 +126,7 @@ GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 ALLOWED_ADMIN_EMAILS=admin1@example.com,admin2@example.com
 NO_EXPIRY_JOB_RETENTION_DAYS=30
+ADMIN_CONTENTS_TOKEN=your-github-fine-grained-token
 ```
+
+`ADMIN_CONTENTS_TOKEN` is required in production if you want `/admin-mobile` to save posts or upload images. The desktop `/admin` screen uses Decap CMS and follows its own GitHub auth flow.

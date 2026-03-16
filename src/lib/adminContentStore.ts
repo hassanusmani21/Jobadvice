@@ -98,8 +98,11 @@ export class AdminContentValidationError extends Error {
   }
 }
 
-const shouldUseRemoteAdminStore = () =>
+export const shouldUseRemoteAdminStore = () =>
   process.env.NODE_ENV === "production" || githubContentsToken.length > 0;
+
+export const isAdminContentWriteConfigured = () =>
+  !shouldUseRemoteAdminStore() || githubContentsToken.length > 0;
 
 const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "").trim();
 

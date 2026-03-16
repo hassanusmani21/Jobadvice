@@ -16,6 +16,7 @@ type MobileAdminAppProps = {
   adminEmail: string;
   initialCollection: AdminCollection;
   initialSlug: string;
+  mobilePublishingReady: boolean;
 };
 
 type RecordsState = Record<AdminCollection, AdminMobileRecord[]>;
@@ -186,6 +187,7 @@ export default function MobileAdminApp({
   adminEmail,
   initialCollection,
   initialSlug,
+  mobilePublishingReady,
 }: MobileAdminAppProps) {
   const [collection, setCollection] = useState<AdminCollection>(initialCollection);
   const [recordsByCollection, setRecordsByCollection] =
@@ -234,6 +236,11 @@ export default function MobileAdminApp({
 
         return haystack.includes(query);
       });
+  const mobilePublishingError = mobilePublishingReady
+    ? ""
+    : "Mobile publishing is not configured on this deployment. Set ADMIN_CONTENTS_TOKEN in production, then redeploy. Until then, use Desktop Admin.";
+  const saveDisabled = saveMode !== "" || !mobilePublishingReady;
+  const uploadDisabled = uploading || !mobilePublishingReady;
 
   useEffect(() => {
     const fetchRecords = async (nextCollection: AdminCollection) => {
@@ -595,6 +602,12 @@ export default function MobileAdminApp({
   };
 
   const saveEntry = async (draft: boolean) => {
+    if (!mobilePublishingReady) {
+      setFormError(mobilePublishingError);
+      setFormNotice("");
+      return;
+    }
+
     setSaveMode(draft ? "draft" : "publish");
     setFormError("");
     setFormNotice("");
@@ -660,6 +673,12 @@ export default function MobileAdminApp({
   };
 
   const uploadImage = async (file: File) => {
+    if (!mobilePublishingReady) {
+      setFormError(mobilePublishingError);
+      setFormNotice("");
+      return;
+    }
+
     setUploading(true);
     setFormError("");
     setFormNotice("");
@@ -994,6 +1013,22 @@ export default function MobileAdminApp({
                 <p className="mt-4 rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                   {formError}
                 </p>
+              ) : null}
+
+              {!mobilePublishingReady ? (
+                <div className="mt-4 rounded-[1rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+                  <p className="font-semibold">Mobile publish is unavailable on this deployment.</p>
+                  <p className="mt-1">
+                    Set <code>ADMIN_CONTENTS_TOKEN</code> in production and redeploy to enable
+                    save and upload from <code>/admin-mobile</code>.
+                  </p>
+                  <a
+                    href="/admin/?desktop_admin=1"
+                    className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+                  >
+                    Open Desktop Admin
+                  </a>
+                </div>
               ) : null}
 
               {formNotice ? (
@@ -1399,12 +1434,20 @@ export default function MobileAdminApp({
                               Upload once, then use it as the cover image or insert it into the article.
                             </p>
                           </div>
-                          <label className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800">
+                          <label
+                            className={cn(
+                              "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
+                              uploadDisabled
+                                ? "cursor-not-allowed bg-slate-300"
+                                : "cursor-pointer bg-teal-700 hover:bg-teal-800",
+                            )}
+                          >
                             {uploading ? "Uploading..." : "Upload image"}
                             <input
                               type="file"
                               accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
                               className="hidden"
+                              disabled={uploadDisabled}
                               onChange={(event) => {
                                 const nextFile = event.target.files?.[0];
                                 if (nextFile) {
@@ -1595,11 +1638,11 @@ export default function MobileAdminApp({
                     <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                       <button
                         type="button"
-                        disabled={saveMode !== ""}
+                        disabled={saveDisabled}
                         onClick={() => saveEntry(true)}
                         className={cn(
                           "inline-flex min-h-12 items-center justify-center rounded-full border px-5 text-sm font-semibold transition",
-                          saveMode !== ""
+                          saveDisabled
                             ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                             : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
                         )}
@@ -1608,11 +1651,11 @@ export default function MobileAdminApp({
                       </button>
                       <button
                         type="button"
-                        disabled={saveMode !== ""}
+                        disabled={saveDisabled}
                         onClick={() => saveEntry(false)}
                         className={cn(
                           "inline-flex min-h-12 items-center justify-center rounded-full px-5 text-sm font-semibold text-white shadow-[0_18px_34px_-20px_rgba(15,118,110,0.65)] transition",
-                          saveMode !== ""
+                          saveDisabled
                             ? "cursor-not-allowed bg-teal-300"
                             : "bg-teal-600 hover:bg-teal-700",
                         )}
