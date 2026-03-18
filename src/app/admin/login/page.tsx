@@ -36,12 +36,12 @@ const toSafeCallbackUrl = (value: string | string[] | undefined) => {
   const callbackValue = Array.isArray(value) ? value[0] : value;
 
   if (!callbackValue || !callbackValue.startsWith("/")) {
-    return "/admin-mobile";
+    return "/admin";
   }
 
   // Prevent redirect loops back to the sign-in page.
   if (callbackValue.startsWith("/admin/login")) {
-    return "/admin-mobile";
+    return "/admin";
   }
 
   return callbackValue;

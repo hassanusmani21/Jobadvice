@@ -1,6 +1,8 @@
 import { revalidatePath } from "next/cache";
 import {
+  AdminContentNotFoundError,
   AdminContentValidationError,
+  deleteAdminEntry,
   getAdminEntry,
   saveAdminEntry,
 } from "@/lib/adminContentStore";
@@ -142,6 +144,60 @@ export async function POST(request: Request) {
       {
         success: false,
         error: error instanceof Error ? error.message : "Unable to save entry.",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  const authError = await requireAdminApiRequest(request);
+  if (authError) {
+    return authError;
+  }
+
+  const requestUrl = new URL(request.url);
+  const collectionValue = String(requestUrl.searchParams.get("collection") || "").trim();
+  const slug = String(requestUrl.searchParams.get("slug") || "").trim();
+  const collection = isAdminCollection(collectionValue) ? collectionValue : "";
+
+  if (!collection || !slug) {
+    return noStoreJson(
+      {
+        success: false,
+        error: "Collection and slug are required.",
+      },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const result = await deleteAdminEntry({
+      collection,
+      slug,
+    });
+    revalidateCollectionPaths(collection, result.slug);
+
+    return noStoreJson({
+      success: true,
+      slug: result.slug,
+    });
+  } catch (error) {
+    if (error instanceof AdminContentNotFoundError) {
+      return noStoreJson(
+        {
+          success: false,
+          error: error.message,
+        },
+        { status: 404 },
+      );
+    }
+
+    console.error("[admin/mobile/entry] Delete failed:", error);
+    return noStoreJson(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unable to delete entry.",
       },
       { status: 500 },
     );

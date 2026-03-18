@@ -264,6 +264,12 @@ body {
     background: #f4f7fb;
   }
 
+  body.jobadvice-mobile-collection-view {
+    min-height: 100vh !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
   .admin-loading {
     padding: 1.2rem 1rem;
     place-content: center;
@@ -290,19 +296,38 @@ body {
     min-height: 44px !important;
   }
 
-  #nc-root.jobadvice-mobile-collection-view [class*="SplitPane"] {
-    display: block !important;
-    height: auto !important;
+  #nc-root.jobadvice-mobile-collection-view,
+  #nc-root.jobadvice-mobile-collection-view > * {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
   }
 
+  #nc-root.jobadvice-mobile-collection-view [class*="AppMainContainer"],
+  #nc-root.jobadvice-mobile-collection-view [class*="SplitPane"],
   #nc-root.jobadvice-mobile-collection-view [class*="Pane"],
   #nc-root.jobadvice-mobile-collection-view [class*="Main"],
   #nc-root.jobadvice-mobile-collection-view [class*="Collection"],
-  #nc-root.jobadvice-mobile-collection-view [class*="Sidebar"] {
+  #nc-root.jobadvice-mobile-collection-view [class*="Sidebar"],
+  #nc-root.jobadvice-mobile-collection-view [class*="Library"],
+  #nc-root.jobadvice-mobile-collection-view [class*="Grid"],
+  #nc-root.jobadvice-mobile-collection-view [class*="List"] {
+    position: static !important;
+    display: block !important;
     width: 100% !important;
     max-width: none !important;
     min-width: 0 !important;
     height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    inset: auto !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    transform: none !important;
+    flex: none !important;
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
   #nc-root.jobadvice-mobile-collection-view [class*="Sidebar"] {
@@ -328,8 +353,18 @@ body {
   }
 
   #nc-root.jobadvice-mobile-collection-view a[href*="#/collections/"][href*="/entries/"] {
+    display: block !important;
     width: 100% !important;
     max-width: none !important;
+  }
+
+  #nc-root.jobadvice-mobile-collection-view [role="row"],
+  #nc-root.jobadvice-mobile-collection-view [role="listitem"],
+  #nc-root.jobadvice-mobile-collection-view [class*="Card"] {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin-inline: 0 !important;
   }
 
   body.jobadvice-mobile-entry-view {

@@ -12,11 +12,12 @@ import {
   createEmptyJobEntry,
 } from "@/lib/adminMobile";
 
-type MobileAdminAppProps = {
+type AdminAppProps = {
   adminEmail: string;
   initialCollection: AdminCollection;
   initialSlug: string;
   mobilePublishingReady: boolean;
+  adminBasePath: string;
 };
 
 type RecordsState = Record<AdminCollection, AdminMobileRecord[]>;
@@ -183,12 +184,16 @@ const applyBlogExtractedData = (
   };
 };
 
+const buildAdminLoginUrl = (adminBasePath: string) =>
+  `/admin/login?callbackUrl=${encodeURIComponent(adminBasePath)}`;
+
 export default function MobileAdminApp({
   adminEmail,
   initialCollection,
   initialSlug,
   mobilePublishingReady,
-}: MobileAdminAppProps) {
+  adminBasePath,
+}: AdminAppProps) {
   const [collection, setCollection] = useState<AdminCollection>(initialCollection);
   const [recordsByCollection, setRecordsByCollection] =
     useState<RecordsState>(defaultRecordsState);
@@ -203,6 +208,7 @@ export default function MobileAdminApp({
   const [formError, setFormError] = useState("");
   const [formNotice, setFormNotice] = useState("");
   const [saveMode, setSaveMode] = useState<"draft" | "publish" | "">("");
+  const [deletePending, setDeletePending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadedAssetUrl, setUploadedAssetUrl] = useState("");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -213,6 +219,7 @@ export default function MobileAdminApp({
   const [extractError, setExtractError] = useState("");
   const [extractNotice, setExtractNotice] = useState("");
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
+  const extractorPanelRef = useRef<HTMLDivElement | null>(null);
 
   const activeRecords = recordsByCollection[collection];
   const totalDrafts =
@@ -222,6 +229,7 @@ export default function MobileAdminApp({
   const accountLabel = adminEmail.split("@")[0] || "admin";
   const accountInitial = accountLabel.charAt(0).toUpperCase() || "A";
   const query = searchValue.trim().toLowerCase();
+  const adminLoginUrl = buildAdminLoginUrl(adminBasePath);
   const filteredRecords = !query
     ? activeRecords
     : activeRecords.filter((record) => {
@@ -238,9 +246,21 @@ export default function MobileAdminApp({
       });
   const mobilePublishingError = mobilePublishingReady
     ? ""
-    : "Mobile publishing is not configured on this deployment. Set ADMIN_CONTENTS_TOKEN in production, then redeploy. Until then, use Desktop Admin.";
-  const saveDisabled = saveMode !== "" || !mobilePublishingReady;
-  const uploadDisabled = uploading || !mobilePublishingReady;
+    : "Admin publishing is not configured on this deployment. Set ADMIN_CONTENTS_TOKEN in production and redeploy to enable save, upload, and delete.";
+  const saveDisabled = saveMode !== "" || deletePending || !mobilePublishingReady;
+  const uploadDisabled = uploading || deletePending || !mobilePublishingReady;
+  const deleteDisabled = deletePending || saveMode !== "" || uploading || !mobilePublishingReady;
+  const canDeleteEntry = originalSlug.length > 0;
+  const extractorStatusLabel =
+    extractMode === "url"
+      ? "Fetching URL..."
+      : extractMode === "text"
+        ? "Extracting..."
+        : extractError
+          ? "Action required"
+          : extractNotice
+            ? "Updated"
+            : "Ready";
 
   useEffect(() => {
     const fetchRecords = async (nextCollection: AdminCollection) => {
@@ -253,7 +273,7 @@ export default function MobileAdminApp({
         });
 
         if (response.status === 401 || response.status === 403) {
-          window.location.href = "/admin/login?callbackUrl=/admin-mobile";
+          window.location.href = adminLoginUrl;
           return;
         }
 
@@ -279,7 +299,7 @@ export default function MobileAdminApp({
 
     fetchRecords("jobs");
     fetchRecords("blogs");
-  }, []);
+  }, [adminLoginUrl]);
 
   useEffect(() => {
     if (!accountMenuOpen) {
@@ -315,9 +335,46 @@ export default function MobileAdminApp({
   }, [accountMenuOpen]);
 
   useEffect(() => {
+    if (!extractorOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (typeof window === "undefined" || window.innerWidth < 1024) {
+        return;
+      }
+
+      if (!extractorPanelRef.current) {
+        return;
+      }
+
+      const eventTarget = event.target;
+      if (eventTarget instanceof Node && !extractorPanelRef.current.contains(eventTarget)) {
+        setExtractorOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setExtractorOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown, { passive: true });
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [extractorOpen]);
+
+  useEffect(() => {
     const applyRouteState = (nextCollection: AdminCollection, nextSlug: string, open: boolean) => {
       const nextUrl = new URL(window.location.href);
-      nextUrl.pathname = "/admin-mobile";
+      nextUrl.pathname = adminBasePath;
       nextUrl.searchParams.set("collection", nextCollection);
 
       if (open && nextSlug) {
@@ -330,7 +387,7 @@ export default function MobileAdminApp({
     };
 
     applyRouteState(collection, originalSlug || editorEntry.slug, editorOpen);
-  }, [collection, editorEntry.slug, editorOpen, originalSlug]);
+  }, [adminBasePath, collection, editorEntry.slug, editorOpen, originalSlug]);
 
   useEffect(() => {
     const legacyState = parseLegacyAdminHash(window.location.hash || "");
@@ -357,7 +414,7 @@ export default function MobileAdminApp({
       )
         .then(async (response) => {
           if (response.status === 401 || response.status === 403) {
-            window.location.href = "/admin/login?callbackUrl=/admin-mobile";
+            window.location.href = adminLoginUrl;
             return null;
           }
 
@@ -387,7 +444,7 @@ export default function MobileAdminApp({
           setEntryLoading(false);
         });
     }
-  }, []);
+  }, [adminLoginUrl]);
 
   useEffect(() => {
     if (!initialSlug) {
@@ -407,7 +464,7 @@ export default function MobileAdminApp({
     )
       .then(async (response) => {
         if (response.status === 401 || response.status === 403) {
-          window.location.href = "/admin/login?callbackUrl=/admin-mobile";
+          window.location.href = adminLoginUrl;
           return null;
         }
 
@@ -437,7 +494,7 @@ export default function MobileAdminApp({
       .finally(() => {
         setEntryLoading(false);
       });
-  }, [initialCollection, initialSlug]);
+  }, [adminLoginUrl, initialCollection, initialSlug]);
 
   const openNewEntry = (nextCollection: AdminCollection) => {
     setCollection(nextCollection);
@@ -470,7 +527,7 @@ export default function MobileAdminApp({
       );
 
       if (response.status === 401 || response.status === 403) {
-        window.location.href = "/admin/login?callbackUrl=/admin-mobile";
+        window.location.href = adminLoginUrl;
         return;
       }
 
@@ -540,7 +597,7 @@ export default function MobileAdminApp({
       });
 
       if (response.status === 401 || response.status === 403) {
-        window.location.href = "/admin/login?callbackUrl=/admin-mobile";
+        window.location.href = adminLoginUrl;
         return;
       }
 
@@ -632,7 +689,7 @@ export default function MobileAdminApp({
       });
 
       if (response.status === 401 || response.status === 403) {
-        window.location.href = "/admin/login?callbackUrl=/admin-mobile";
+        window.location.href = adminLoginUrl;
         return;
       }
 
@@ -695,7 +752,7 @@ export default function MobileAdminApp({
       });
 
       if (response.status === 401 || response.status === 403) {
-        window.location.href = "/admin/login?callbackUrl=/admin-mobile";
+        window.location.href = adminLoginUrl;
         return;
       }
 
@@ -718,6 +775,69 @@ export default function MobileAdminApp({
       setFormError(error instanceof Error ? error.message : "Unable to upload image.");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const deleteEntry = async () => {
+    if (!mobilePublishingReady) {
+      setFormError(mobilePublishingError);
+      setFormNotice("");
+      return;
+    }
+
+    if (!originalSlug) {
+      return;
+    }
+
+    const entryLabel = editorEntry.title.trim() || originalSlug;
+    const confirmed = window.confirm(`Delete "${entryLabel}"? This cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletePending(true);
+    setFormError("");
+    setFormNotice("");
+
+    try {
+      const response = await fetch(
+        `/api/admin/mobile/entry?collection=${collection}&slug=${encodeURIComponent(originalSlug)}`,
+        {
+          method: "DELETE",
+          credentials: "same-origin",
+        },
+      );
+
+      if (response.status === 401 || response.status === 403) {
+        window.location.href = adminLoginUrl;
+        return;
+      }
+
+      const result = (await response.json()) as {
+        error?: string;
+        slug?: string;
+        success?: boolean;
+      };
+
+      if (!response.ok || result.success === false || !result.slug) {
+        throw new Error(result.error || "Delete failed.");
+      }
+
+      setRecordsByCollection((current) => ({
+        ...current,
+        [collection]: current[collection].filter((record) => record.slug !== result.slug),
+      }));
+      setEditorEntry(buildEmptyEntry(collection));
+      setOriginalSlug("");
+      setUploadedAssetUrl("");
+      setExtractError("");
+      setExtractNotice("");
+      setFormNotice("Entry deleted.");
+      setEditorOpen(false);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Unable to delete entry.");
+    } finally {
+      setDeletePending(false);
     }
   };
 
@@ -745,21 +865,176 @@ export default function MobileAdminApp({
     setFormNotice("Image markdown inserted.");
   };
 
+  const resetExtractorInputs = () => {
+    setExtractSourceUrl("");
+    setExtractSourceText("");
+    setExtractError("");
+    setExtractNotice("");
+  };
+
   const activeTitle =
     editorEntry.collection === "jobs"
       ? editorEntry.title || "New job"
       : editorEntry.title || "New blog";
+  const extractorEntityLabel = collection === "jobs" ? "job" : "blog";
+  const renderExtractorForm = (layout: "mobile" | "desktop") => {
+    const isDesktop = layout === "desktop";
+    const fieldClassName = cn(
+      "w-full rounded-xl border border-slate-200 bg-white text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-50",
+      isDesktop ? "px-3 py-2 text-[12px]" : "px-3 py-2.5 text-[13px]",
+    );
+    const statusClassName =
+      extractError
+        ? "text-rose-700 bg-rose-50 border-rose-200"
+        : extractNotice
+          ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+          : "text-slate-600 bg-slate-50 border-slate-200";
+
+    return (
+      <div className={cn(isDesktop ? "mt-2.5 space-y-2.5" : "mt-4 space-y-4")}>
+        {isDesktop ? (
+          <p
+            className={cn(
+              "inline-flex min-h-8 items-center rounded-lg border px-2.5 text-[11px] font-semibold uppercase tracking-[0.16em]",
+              statusClassName,
+            )}
+          >
+            {extractorStatusLabel}
+          </p>
+        ) : null}
+
+        <div className={cn("grid gap-4", isDesktop ? "lg:grid-cols-1" : "")}>
+          <label className="block">
+            <span className={cn("block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500", isDesktop ? "mb-1.5" : "mb-2")}>
+              Source URL
+            </span>
+            <input
+              type="url"
+              value={extractSourceUrl}
+              onChange={(event) => setExtractSourceUrl(event.target.value)}
+              placeholder={
+                collection === "jobs"
+                  ? "https://company.com/careers/job-posting"
+                  : "https://example.com/post"
+              }
+              className={fieldClassName}
+            />
+            {!isDesktop ? (
+              <span className="mt-1.5 block text-[10px] leading-4 text-slate-500">
+                Use a public page when you want the extractor to fetch details directly.
+              </span>
+            ) : null}
+          </label>
+
+          <label className="block">
+            <span className={cn("block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500", isDesktop ? "mb-1.5" : "mb-2")}>
+              Source text
+            </span>
+            <textarea
+              value={extractSourceText}
+              onChange={(event) => setExtractSourceText(event.target.value)}
+              rows={isDesktop ? 3 : 5}
+              placeholder={
+                collection === "jobs"
+                  ? "Paste complete job details text here if you are not using a URL."
+                  : "Paste complete blog content/details here if you are not using a URL."
+              }
+              className={cn(fieldClassName, isDesktop ? "min-h-[84px] max-h-[104px]" : "min-h-[132px]")}
+            />
+            {!isDesktop ? (
+              <span className="mt-1.5 block text-[10px] leading-4 text-slate-500">
+                Best for copied job descriptions, hiring notes, or article drafts.
+              </span>
+            ) : null}
+          </label>
+        </div>
+
+        {extractError ? (
+          <p
+            className={cn(
+              "rounded-xl border border-rose-200 bg-rose-50 text-rose-700",
+              isDesktop ? "px-3 py-2 text-[13px] leading-5" : "px-3 py-2.5 text-[13px] leading-5",
+            )}
+          >
+            {extractError}
+          </p>
+        ) : null}
+
+        {extractNotice ? (
+          <p
+            className={cn(
+              "rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700",
+              isDesktop ? "px-3 py-2 text-[13px] leading-5" : "px-3 py-2.5 text-[13px] leading-5",
+            )}
+          >
+            {extractNotice}
+          </p>
+        ) : null}
+
+        <div
+          className={cn(
+            isDesktop
+              ? "flex flex-wrap gap-2"
+              : "grid grid-cols-2 gap-2",
+          )}
+        >
+          <button
+            type="button"
+            disabled={extractMode !== ""}
+            onClick={() => runAutoExtract("url")}
+            className={cn(
+              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition",
+              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-3 text-[12px]",
+              extractMode !== ""
+                ? "cursor-not-allowed bg-slate-300"
+                : "bg-slate-900 hover:bg-slate-800",
+            )}
+          >
+            {extractMode === "url" ? "Fetching URL..." : "Fetch URL + Extract"}
+          </button>
+          <button
+            type="button"
+            disabled={extractMode !== ""}
+            onClick={() => runAutoExtract("text")}
+            className={cn(
+              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition",
+              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-3 text-[12px]",
+              extractMode !== ""
+                ? "cursor-not-allowed bg-teal-300"
+                : "bg-teal-700 hover:bg-teal-800",
+            )}
+          >
+            {extractMode === "text" ? "Extracting..." : "Auto Extract Text"}
+          </button>
+          <button
+            type="button"
+            disabled={extractMode !== ""}
+            onClick={resetExtractorInputs}
+            className={cn(
+              "inline-flex items-center justify-center rounded-xl border font-semibold transition",
+              isDesktop ? "min-h-9 px-3 text-[12px]" : "col-span-2 min-h-10 px-3 text-[12px]",
+              extractMode !== ""
+                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+            )}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div data-admin-mobile-root className="min-h-[100dvh] px-3 py-3 sm:px-5 sm:py-5">
-      <section className="mx-auto overflow-hidden rounded-[2rem] border border-white/75 bg-white/90 shadow-[0_35px_80px_-44px_rgba(15,23,42,0.45)] backdrop-blur">
-        <div className="border-b border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(244,248,246,0.92)_100%)] px-4 py-3 sm:px-6">
-          <div className="flex items-start justify-between gap-3">
+    <div data-admin-mobile-root className="min-h-[100dvh] px-2 py-2 sm:px-4 sm:py-4 lg:px-6">
+      <section className="mx-auto overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.3)]">
+        <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6 lg:px-7">
+          <div className="flex items-start justify-between gap-3 lg:items-center">
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-teal-700">
-                Mobile Admin
+                Admin
               </p>
-              <h1 className="mt-1 font-serif text-2xl leading-tight text-slate-900 sm:text-[2rem]">
+              <h1 className="mt-1 text-[1.85rem] font-semibold leading-tight tracking-[-0.02em] text-slate-900">
                 {collection === "jobs" ? "Jobs workspace" : "Blogs workspace"}
               </h1>
               <p className="mt-1 text-sm text-slate-500">
@@ -773,13 +1048,13 @@ export default function MobileAdminApp({
                 aria-expanded={accountMenuOpen}
                 aria-haspopup="menu"
                 onClick={() => setAccountMenuOpen((current) => !current)}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-900 shadow-[0_16px_34px_-26px_rgba(15,23,42,0.34)] transition hover:border-teal-300 hover:text-teal-700"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-900 shadow-sm transition hover:border-teal-300 hover:text-teal-700"
               >
                 {accountInitial}
               </button>
 
               {accountMenuOpen ? (
-                <div className="absolute top-[calc(100%+0.6rem)] right-0 z-20 w-[15.5rem] rounded-[1.25rem] border border-slate-200 bg-white p-3 shadow-[0_28px_52px_-26px_rgba(15,23,42,0.35)]">
+                <div className="absolute top-[calc(100%+0.6rem)] right-0 z-20 w-[15.5rem] rounded-[1rem] border border-slate-200 bg-white p-3 shadow-[0_20px_40px_-26px_rgba(15,23,42,0.35)]">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
                     Signed In
                   </p>
@@ -791,20 +1066,20 @@ export default function MobileAdminApp({
                       href="/"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-teal-200 bg-teal-50 px-4 text-sm font-semibold text-teal-800 transition hover:bg-teal-100"
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-teal-200 bg-teal-50 px-4 text-sm font-semibold text-teal-800 transition hover:bg-teal-100"
                     >
                       Open Live Site
                     </a>
                     <a
-                      href="/admin/?desktop_admin=1"
-                      className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      href={adminBasePath}
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                     >
-                      Open Desktop Admin
+                      Open Admin Home
                     </a>
                     <button
                       type="button"
-                      onClick={() => signOut({ callbackUrl: "/admin/login" })}
-                      className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+                      onClick={() => signOut({ callbackUrl: adminLoginUrl })}
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
                     >
                       Log Out
                     </button>
@@ -815,20 +1090,22 @@ export default function MobileAdminApp({
           </div>
         </div>
 
-        <div className="grid gap-0 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="grid min-h-[calc(100dvh-7rem)] gap-0 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[344px_minmax(0,1fr)]">
           <aside
             className={cn(
-              "border-b border-slate-200/80 bg-[linear-gradient(180deg,#f4f7f5_0%,#f8fafc_100%)] p-4 lg:border-r lg:border-b-0 lg:p-5",
+              "border-b border-slate-200 bg-slate-50/90 p-4 lg:border-r lg:border-b-0 lg:p-5",
               editorOpen ? "hidden lg:block" : "block",
             )}
           >
-            <div className="rounded-[1.5rem] border border-white/75 bg-white/88 p-4 shadow-[0_22px_42px_-36px_rgba(15,23,42,0.35)]">
+            <div className="rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                     Workspace
                   </p>
-                  <h2 className="mt-1 font-serif text-2xl text-slate-900">Entries</h2>
+                  <h2 className="mt-1 text-xl font-semibold tracking-[-0.02em] text-slate-900">
+                    Entries
+                  </h2>
                 </div>
                 <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
                   {activeDraftCount} drafts
@@ -838,14 +1115,14 @@ export default function MobileAdminApp({
               <button
                 type="button"
                 onClick={() => openNewEntry(collection)}
-                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-teal-600 px-4 text-sm font-semibold text-white shadow-[0_12px_28px_-18px_rgba(13,148,136,0.8)] transition hover:bg-teal-700"
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-teal-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700"
               >
                 New {collection === "jobs" ? "Job" : "Blog"}
               </button>
             </div>
 
-            <div className="mt-4 rounded-[1.5rem] border border-white/75 bg-white/88 p-4 shadow-[0_22px_42px_-36px_rgba(15,23,42,0.35)]">
-              <div className="inline-flex w-full rounded-full border border-slate-200 bg-slate-50 p-1 shadow-sm">
+            <div className="mt-4 rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="inline-flex w-full rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
                 {(["jobs", "blogs"] as const).map((item) => (
                   <button
                     key={item}
@@ -864,9 +1141,9 @@ export default function MobileAdminApp({
                       }
                     }}
                     className={cn(
-                      "min-h-11 flex-1 rounded-full px-4 text-sm font-semibold transition",
+                      "min-h-11 flex-1 rounded-lg px-4 text-sm font-semibold transition",
                       collection === item
-                        ? "bg-teal-700 text-white shadow-[0_10px_24px_-18px_rgba(15,118,110,0.7)]"
+                        ? "bg-teal-700 text-white shadow-sm"
                         : "text-slate-600 hover:bg-slate-100",
                     )}
                   >
@@ -884,15 +1161,15 @@ export default function MobileAdminApp({
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
                   placeholder={`Search ${collection}`}
-                  className="w-full rounded-[1.1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-50"
                 />
               </label>
 
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
-                <div className="rounded-[1rem] bg-slate-100 px-3 py-2">
+                <div className="rounded-lg bg-slate-100 px-3 py-2">
                   {filteredRecords.length} shown
                 </div>
-                <div className="rounded-[1rem] bg-slate-100 px-3 py-2">
+                <div className="rounded-lg bg-slate-100 px-3 py-2">
                   {collection === "jobs" ? recordsByCollection.jobs.length : recordsByCollection.blogs.length} total
                 </div>
               </div>
@@ -904,15 +1181,15 @@ export default function MobileAdminApp({
               </p>
             ) : null}
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 space-y-2">
               {recordsLoading[collection] ? (
-                <p className="rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+                <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
                   Loading {collection}...
                 </p>
               ) : null}
 
               {!recordsLoading[collection] && filteredRecords.length === 0 ? (
-                <p className="rounded-[1rem] border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+                <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
                   No {collection} found for this filter.
                 </p>
               ) : null}
@@ -922,7 +1199,12 @@ export default function MobileAdminApp({
                   key={`${collection}-${record.slug}`}
                   type="button"
                   onClick={() => openExistingEntry(collection, record.slug)}
-                  className="block w-full rounded-[1.35rem] border border-white/85 bg-white/92 px-4 py-4 text-left shadow-[0_18px_36px_-32px_rgba(15,23,42,0.32)] transition hover:border-teal-300 hover:shadow-[0_20px_44px_-32px_rgba(13,148,136,0.3)]"
+                  className={cn(
+                    "block w-full rounded-[1rem] border px-4 py-3 text-left transition",
+                    editorOpen && originalSlug === record.slug
+                      ? "border-teal-300 bg-teal-50 shadow-sm"
+                      : "border-slate-200 bg-white shadow-[0_10px_24px_-24px_rgba(15,23,42,0.45)] hover:border-teal-200 hover:bg-slate-50",
+                  )}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -951,8 +1233,9 @@ export default function MobileAdminApp({
 
           <section
             className={cn(
-              "min-w-0 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6 sm:py-5",
+              "min-w-0 bg-slate-50/60 px-4 py-4 sm:px-6 sm:py-5 lg:px-7",
               editorOpen ? "block" : "hidden lg:block",
+              extractorOpen ? "lg:pr-[17rem] xl:pr-[18.5rem]" : "",
             )}
           >
             <div className="flex items-center justify-between gap-3 lg:hidden">
@@ -960,7 +1243,7 @@ export default function MobileAdminApp({
                 type="button"
                 onClick={() => setEditorOpen(false)}
                 className={cn(
-                  "inline-flex min-h-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition",
+                  "inline-flex min-h-11 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition",
                   editorOpen
                     ? "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
                     : "border-teal-200 bg-teal-50 text-teal-800 hover:bg-teal-100",
@@ -972,19 +1255,21 @@ export default function MobileAdminApp({
               <button
                 type="button"
                 onClick={() => openNewEntry(collection)}
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
               >
                 New
               </button>
             </div>
 
-            <div className="mt-4 rounded-[1.75rem] border border-white/80 bg-[linear-gradient(180deg,#fbfcfd_0%,#f4f7fa_100%)] p-4 shadow-[0_24px_48px_-36px_rgba(15,23,42,0.28)] sm:p-5">
+            <div className="mt-4 rounded-[1.2rem] border border-slate-200 bg-white p-4 shadow-[0_18px_38px_-34px_rgba(15,23,42,0.24)] sm:p-5 lg:p-6">
               <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
                     {collection === "jobs" ? "Job editor" : "Blog editor"}
                   </p>
-                  <h2 className="mt-1 font-serif text-2xl text-slate-900">{activeTitle}</h2>
+                  <h2 className="mt-1 text-[1.75rem] font-semibold tracking-[-0.02em] text-slate-900">
+                    {activeTitle}
+                  </h2>
                   <p className="mt-1 text-sm text-slate-500">
                     {editorEntry.collection === "jobs"
                       ? "Write the full job post once, then save draft or publish."
@@ -1017,16 +1302,16 @@ export default function MobileAdminApp({
 
               {!mobilePublishingReady ? (
                 <div className="mt-4 rounded-[1rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
-                  <p className="font-semibold">Mobile publish is unavailable on this deployment.</p>
+                  <p className="font-semibold">Publishing is unavailable on this deployment.</p>
                   <p className="mt-1">
                     Set <code>ADMIN_CONTENTS_TOKEN</code> in production and redeploy to enable
-                    save and upload from <code>/admin-mobile</code>.
+                    save, upload, and delete from <code>{adminBasePath}</code>.
                   </p>
                   <a
-                    href="/admin/?desktop_admin=1"
+                    href={adminBasePath}
                     className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
                   >
-                    Open Desktop Admin
+                    Open Admin Home
                   </a>
                 </div>
               ) : null}
@@ -1517,151 +1802,76 @@ export default function MobileAdminApp({
                     </>
                   )}
 
-                  <div className="rounded-[1.25rem] border border-teal-100 bg-[linear-gradient(180deg,rgba(240,253,250,0.96)_0%,rgba(255,255,255,0.98)_100%)] p-4 shadow-sm">
+                  <div className="rounded-[1rem] border border-slate-200 bg-slate-50/75 p-3 shadow-sm lg:hidden">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
+                      <div className="max-w-2xl">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
                           AI Extractor
                         </p>
-                        <p className="mt-1 text-sm text-slate-600">
-                          Auto-fill this {collection === "jobs" ? "job" : "blog"} form from a URL or pasted source text.
+                        <p className="mt-1 text-[12px] leading-5 text-slate-600">
+                          Auto-fill this {extractorEntityLabel} form from a URL or pasted source text.
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => setExtractorOpen((current) => !current)}
-                        className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-100"
                       >
                         {extractorOpen ? "Hide panel" : "Open panel"}
                       </button>
                     </div>
 
-                    {extractorOpen ? (
-                      <div className="mt-4 space-y-4">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Source URL
-                          </span>
-                          <input
-                            type="url"
-                            value={extractSourceUrl}
-                            onChange={(event) => setExtractSourceUrl(event.target.value)}
-                            placeholder={
-                              collection === "jobs"
-                                ? "https://company.com/careers/job-posting"
-                                : "https://example.com/post"
-                            }
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          />
-                        </label>
-
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Source text
-                          </span>
-                          <textarea
-                            value={extractSourceText}
-                            onChange={(event) => setExtractSourceText(event.target.value)}
-                            rows={5}
-                            placeholder={
-                              collection === "jobs"
-                                ? "Paste complete job details text here if you are not using a URL."
-                                : "Paste complete blog content/details here if you are not using a URL."
-                            }
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          />
-                        </label>
-
-                        {extractError ? (
-                          <p className="rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                            {extractError}
-                          </p>
-                        ) : null}
-
-                        {extractNotice ? (
-                          <p className="rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                            {extractNotice}
-                          </p>
-                        ) : null}
-
-                        <div className="flex flex-col gap-2 sm:flex-row">
-                          <button
-                            type="button"
-                            disabled={extractMode !== ""}
-                            onClick={() => runAutoExtract("url")}
-                            className={cn(
-                              "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
-                              extractMode !== ""
-                                ? "cursor-not-allowed bg-slate-300"
-                                : "bg-slate-900 hover:bg-slate-800",
-                            )}
-                          >
-                            {extractMode === "url" ? "Fetching URL..." : "Fetch URL + Extract"}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={extractMode !== ""}
-                            onClick={() => runAutoExtract("text")}
-                            className={cn(
-                              "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
-                              extractMode !== ""
-                                ? "cursor-not-allowed bg-teal-300"
-                                : "bg-teal-700 hover:bg-teal-800",
-                            )}
-                          >
-                            {extractMode === "text" ? "Extracting..." : "Auto Extract Text"}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={extractMode !== ""}
-                            onClick={() => {
-                              setExtractSourceUrl("");
-                              setExtractSourceText("");
-                              setExtractError("");
-                              setExtractNotice("");
-                            }}
-                            className={cn(
-                              "inline-flex min-h-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition",
-                              extractMode !== ""
-                                ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
-                            )}
-                          >
-                            Clear
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
+                    {extractorOpen ? renderExtractorForm("mobile") : null}
                   </div>
 
-                  <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-200 bg-white/96 px-4 pt-4 pb-1 backdrop-blur sm:-mx-5 sm:px-5">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                      <button
-                        type="button"
-                        disabled={saveDisabled}
-                        onClick={() => saveEntry(true)}
-                        className={cn(
-                          "inline-flex min-h-12 items-center justify-center rounded-full border px-5 text-sm font-semibold transition",
-                          saveDisabled
-                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
-                            : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
-                        )}
-                      >
-                        {saveMode === "draft" ? "Saving draft..." : "Save draft"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={saveDisabled}
-                        onClick={() => saveEntry(false)}
-                        className={cn(
-                          "inline-flex min-h-12 items-center justify-center rounded-full px-5 text-sm font-semibold text-white shadow-[0_18px_34px_-20px_rgba(15,118,110,0.65)] transition",
-                          saveDisabled
-                            ? "cursor-not-allowed bg-teal-300"
-                            : "bg-teal-600 hover:bg-teal-700",
-                        )}
-                      >
-                        {saveMode === "publish" ? "Publishing..." : "Publish"}
-                      </button>
+                  <div className="sticky bottom-0 z-10 -mx-4 border-t border-slate-200 bg-white px-4 pt-4 pb-2 sm:-mx-5 sm:px-5 lg:-mx-6 lg:px-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        {canDeleteEntry ? (
+                          <button
+                            type="button"
+                            disabled={deleteDisabled}
+                            onClick={deleteEntry}
+                            className={cn(
+                              "inline-flex min-h-12 w-full items-center justify-center rounded-xl border px-5 text-sm font-semibold transition sm:w-auto",
+                              deleteDisabled
+                                ? "cursor-not-allowed border-rose-100 bg-rose-50 text-rose-300"
+                                : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100",
+                            )}
+                          >
+                            {deletePending ? "Deleting..." : "Delete Entry"}
+                          </button>
+                        ) : null}
+                      </div>
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                        <button
+                          type="button"
+                          disabled={saveDisabled}
+                          onClick={() => saveEntry(true)}
+                          className={cn(
+                            "inline-flex min-h-12 items-center justify-center rounded-xl border px-5 text-sm font-semibold transition",
+                            saveDisabled
+                              ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                              : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+                          )}
+                        >
+                          {saveMode === "draft" ? "Saving draft..." : "Save draft"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={saveDisabled}
+                          onClick={() => saveEntry(false)}
+                          className={cn(
+                            "inline-flex min-h-12 items-center justify-center rounded-xl px-5 text-sm font-semibold text-white shadow-[0_18px_34px_-20px_rgba(15,118,110,0.65)] transition",
+                            saveDisabled
+                              ? "cursor-not-allowed bg-teal-300"
+                              : "bg-teal-600 hover:bg-teal-700",
+                          )}
+                        >
+                          {saveMode === "publish" ? "Publishing..." : "Publish"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1670,6 +1880,44 @@ export default function MobileAdminApp({
           </section>
         </div>
       </section>
+
+      <div className="fixed right-3 bottom-5 z-30 hidden lg:block xl:right-5">
+        {extractorOpen ? (
+          <div
+            ref={extractorPanelRef}
+            className="w-[260px] rounded-[1rem] border border-slate-300 bg-white p-2.5 shadow-[0_24px_60px_-30px_rgba(15,23,42,0.28)] xl:w-[280px]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[14px] font-semibold text-slate-900">
+                  AI {collection === "jobs" ? "Job" : "Blog"} Extractor
+                </p>
+                <p className="mt-0.5 text-[12px] text-slate-600">
+                  Paste a public URL or raw {extractorEntityLabel} text.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExtractorOpen(false)}
+                className="inline-flex min-h-8 items-center justify-center rounded-xl border border-slate-300 bg-white px-2.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-100"
+              >
+                Close
+              </button>
+            </div>
+
+            {renderExtractorForm("desktop")}
+          </div>
+        ) : (
+          <button
+            type="button"
+            aria-label="Open AI extractor"
+            onClick={() => setExtractorOpen(true)}
+            className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-teal-700 text-[12px] font-semibold text-white shadow-[0_20px_34px_-18px_rgba(15,118,110,0.6)] transition hover:bg-teal-800"
+          >
+            AI
+          </button>
+        )}
+      </div>
     </div>
   );
 }

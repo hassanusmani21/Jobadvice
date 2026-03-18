@@ -5,10 +5,10 @@ import { siteUrl } from "./lib/site";
 import { toContentSlug } from "./lib/slug";
 
 const toSafeCallbackUrl = (request: NextRequest) => {
-  const rawValue = request.nextUrl.searchParams.get("callbackUrl") || "/admin-mobile";
+  const rawValue = request.nextUrl.searchParams.get("callbackUrl") || "/admin";
 
   if (!rawValue.startsWith("/") || rawValue.startsWith("/admin/login")) {
-    return "/admin-mobile";
+    return "/admin";
   }
 
   return rawValue;
@@ -118,14 +118,39 @@ export async function middleware(request: NextRequest) {
     return trailingSlashRedirect;
   }
 
+  if (request.nextUrl.pathname === "/admin/index.html") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/admin";
+    redirectUrl.searchParams.delete("desktop_admin");
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  if (request.nextUrl.pathname === "/admin-mobile" || request.nextUrl.pathname === "/admin-mobile/") {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/admin";
+    return NextResponse.redirect(redirectUrl);
+  }
+
   if (request.nextUrl.pathname === "/admin" || request.nextUrl.pathname === "/admin/") {
     if (request.nextUrl.searchParams.get("desktop_admin") === "1") {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.searchParams.delete("desktop_admin");
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    const token = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    });
+    const email = typeof token?.email === "string" ? token.email : "";
+
+    if (isAllowedAdminEmail(email)) {
       return NextResponse.next();
     }
 
-    const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/admin-mobile";
-    return NextResponse.redirect(redirectUrl);
+    const loginUrl = new URL("/admin/login", request.nextUrl.origin);
+    loginUrl.searchParams.set("callbackUrl", "/admin");
+    return NextResponse.redirect(loginUrl);
   }
 
   if (!request.nextUrl.pathname.startsWith("/admin/login")) {
@@ -151,6 +176,8 @@ export const config = {
     "/",
     "/admin",
     "/admin/:path*",
+    "/admin-mobile",
+    "/admin-mobile/:path*",
     "/admin/login",
     "/admin/login/:path*",
     "/about",

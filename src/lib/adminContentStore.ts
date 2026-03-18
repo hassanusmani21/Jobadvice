@@ -98,6 +98,13 @@ export class AdminContentValidationError extends Error {
   }
 }
 
+export class AdminContentNotFoundError extends Error {
+  constructor(message = "Entry not found.") {
+    super(message);
+    this.name = "AdminContentNotFoundError";
+  }
+}
+
 export const shouldUseRemoteAdminStore = () =>
   process.env.NODE_ENV === "production" || githubContentsToken.length > 0;
 
@@ -583,6 +590,34 @@ const writeStoredText = async (
   }
 };
 
+const deleteStoredText = async (collection: AdminCollection, slug: string) => {
+  const relativePath = toRepoRelativePath(collection, slug);
+
+  if (shouldUseRemoteAdminStore()) {
+    if (!githubContentsToken) {
+      throw new Error("ADMIN_CONTENTS_TOKEN is required for production admin deletes.");
+    }
+
+    const payload = await fetchGithubFile(relativePath);
+    if (!payload?.sha) {
+      throw new AdminContentNotFoundError();
+    }
+
+    await deleteGithubContent(relativePath, `admin: delete ${collection}/${slug}`);
+    return;
+  }
+
+  try {
+    await fs.unlink(toLocalAbsolutePath(collection, slug));
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      throw new AdminContentNotFoundError();
+    }
+
+    throw error;
+  }
+};
+
 const formatScalar = (value: string | boolean) =>
   typeof value === "boolean" ? (value ? "true" : "false") : JSON.stringify(value);
 
@@ -998,6 +1033,26 @@ export const saveAdminEntry = async ({
       normalizedEntry.collection === "jobs"
         ? toJobRecord(normalizedEntry)
         : toBlogRecord(normalizedEntry),
+  };
+};
+
+export const deleteAdminEntry = async ({
+  collection,
+  slug,
+}: {
+  collection: AdminCollection;
+  slug: string;
+}) => {
+  const normalizedSlug = toContentSlug(String(slug || "").trim()) || "";
+
+  if (!normalizedSlug) {
+    throw new Error("Slug is required.");
+  }
+
+  await deleteStoredText(collection, normalizedSlug);
+
+  return {
+    slug: normalizedSlug,
   };
 };
 

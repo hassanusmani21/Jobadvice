@@ -11,12 +11,12 @@ export default function AdminRecoverPage() {
           Netlify password recovery has been removed
         </h1>
         <p className="mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
-          This project is being moved away from Netlify Identity. Admin access now depends on your
-          protected admin login and the CMS GitHub sign-in flow instead of a Netlify password reset.
+          This project now uses the custom admin app instead of the old CMS shell. Admin access
+          depends on the protected admin login rather than a Netlify password reset flow.
         </p>
         <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-          Finish the migration by configuring the Decap GitHub OAuth app and updating the
-          production CMS callback URL before using the editor on Vercel.
+          If publishing is disabled after login, set <code>ADMIN_CONTENTS_TOKEN</code> in
+          production and redeploy the app.
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
@@ -26,10 +26,10 @@ export default function AdminRecoverPage() {
             Go to Admin Login
           </Link>
           <Link
-            href="/admin/?desktop_admin=1"
+            href="/admin"
             className="inline-flex rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-200 hover:text-teal-900"
           >
-            Open CMS
+            Open Admin
           </Link>
         </div>
       </div>

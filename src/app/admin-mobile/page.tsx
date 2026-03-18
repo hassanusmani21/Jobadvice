@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import MobileAdminApp from "./MobileAdminApp";
-import { isAdminContentWriteConfigured } from "@/lib/adminContentStore";
-import { getAllowedAdminSession } from "@/lib/adminSession";
-import { isAdminCollection, type AdminCollection } from "@/lib/adminMobile";
 
 type AdminMobilePageProps = {
   searchParams?: {
@@ -15,7 +11,7 @@ type AdminMobilePageProps = {
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Mobile Admin",
+  title: "Admin",
   robots: {
     index: false,
     follow: false,
@@ -28,25 +24,18 @@ const getSingleSearchParam = (value: string | string[] | undefined) =>
 export default async function AdminMobilePage({
   searchParams,
 }: AdminMobilePageProps) {
-  const session = await getAllowedAdminSession();
+  const params = new URLSearchParams();
+  const collectionValue = getSingleSearchParam(searchParams?.collection).trim();
+  const slugValue = getSingleSearchParam(searchParams?.slug).trim();
 
-  if (!session) {
-    redirect("/admin/login?callbackUrl=/admin-mobile");
+  if (collectionValue) {
+    params.set("collection", collectionValue);
   }
 
-  const collectionValue = getSingleSearchParam(searchParams?.collection);
-  const initialCollection: AdminCollection = isAdminCollection(collectionValue)
-    ? collectionValue
-    : "jobs";
-  const initialSlug = getSingleSearchParam(searchParams?.slug).trim();
-  const mobilePublishingReady = isAdminContentWriteConfigured();
+  if (slugValue) {
+    params.set("slug", slugValue);
+  }
 
-  return (
-    <MobileAdminApp
-      adminEmail={session.user?.email || ""}
-      initialCollection={initialCollection}
-      initialSlug={initialSlug}
-      mobilePublishingReady={mobilePublishingReady}
-    />
-  );
+  const query = params.toString();
+  redirect(query ? `/admin?${query}` : "/admin");
 }
