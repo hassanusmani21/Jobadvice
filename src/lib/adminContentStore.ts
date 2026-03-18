@@ -49,6 +49,12 @@ type GithubWriteOptions = {
   sha?: string;
 };
 
+type GithubErrorResponse = {
+  documentation_url?: string;
+  errors?: Array<{ message?: string } | string>;
+  message?: string;
+};
+
 const jobManagedKeys = new Set([
   "applicationEndDate",
   "applicationStartDate",
@@ -430,6 +436,60 @@ const getGithubHeaders = () => ({
     : {}),
 });
 
+const extractGithubErrorDetails = (payload: GithubErrorResponse) => {
+  const detailParts: string[] = [];
+
+  if (typeof payload.message === "string" && payload.message.trim().length > 0) {
+    detailParts.push(payload.message.trim());
+  }
+
+  if (Array.isArray(payload.errors)) {
+    for (const errorItem of payload.errors) {
+      if (typeof errorItem === "string" && errorItem.trim().length > 0) {
+        detailParts.push(errorItem.trim());
+        continue;
+      }
+
+      if (
+        errorItem &&
+        typeof errorItem === "object" &&
+        typeof errorItem.message === "string" &&
+        errorItem.message.trim().length > 0
+      ) {
+        detailParts.push(errorItem.message.trim());
+      }
+    }
+  }
+
+  return detailParts.join(" ");
+};
+
+const toGithubRequestError = async (response: Response, operation: string, filePath: string) => {
+  let details = "";
+
+  try {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      details = extractGithubErrorDetails((await response.json()) as GithubErrorResponse);
+    } else {
+      details = (await response.text()).trim();
+    }
+  } catch {
+    details = "";
+  }
+
+  const scopeHint =
+    response.status === 403
+      ? ` Check that ADMIN_CONTENTS_TOKEN can access ${githubOwner}/${githubRepo} and has Contents: Read and write.`
+      : "";
+
+  return new Error(
+    `${operation} for ${filePath} on ${githubOwner}/${githubRepo}@${githubBranch}: ${response.status}${
+      details ? ` ${details}` : ""
+    }${scopeHint}`,
+  );
+};
+
 const fetchGithubFile = async (filePath: string) => {
   const response = await fetch(toGithubContentsUrl(filePath), {
     cache: "no-store",
@@ -441,7 +501,7 @@ const fetchGithubFile = async (filePath: string) => {
   }
 
   if (!response.ok) {
-    throw new Error(`GitHub file request failed for ${filePath}: ${response.status}`);
+    throw await toGithubRequestError(response, "GitHub file request failed", filePath);
   }
 
   return (await response.json()) as GithubContentsResponse;
@@ -471,7 +531,7 @@ const putGithubContent = async (
   });
 
   if (!response.ok) {
-    throw new Error(`GitHub write failed for ${filePath}: ${response.status}`);
+    throw await toGithubRequestError(response, "GitHub write failed", filePath);
   }
 };
 
@@ -492,7 +552,7 @@ const deleteGithubContent = async (filePath: string, message: string) => {
   });
 
   if (!response.ok) {
-    throw new Error(`GitHub delete failed for ${filePath}: ${response.status}`);
+    throw await toGithubRequestError(response, "GitHub delete failed", filePath);
   }
 };
 
