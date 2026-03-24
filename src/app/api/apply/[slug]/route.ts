@@ -35,12 +35,22 @@ const withTrackingParams = (urlString: string, slug: string) => {
   return url;
 };
 
+const redirectHeaders = {
+  "Cache-Control": "no-store, max-age=0",
+  "X-Robots-Tag": "noindex, nofollow, noarchive",
+};
+
+const redirectWithNoIndex = (destination: URL) =>
+  NextResponse.redirect(destination, {
+    headers: redirectHeaders,
+  });
+
 export async function GET(request: NextRequest, context: ApplyRouteContext) {
   const { slug } = context.params;
   const job = await getJobBySlug(slug);
 
   if (!job || !job.applyLink) {
-    return NextResponse.redirect(new URL(`/jobs/${slug}`, request.url));
+    return redirectWithNoIndex(new URL(`/jobs/${slug}/`, request.url));
   }
 
   try {
@@ -55,8 +65,8 @@ export async function GET(request: NextRequest, context: ApplyRouteContext) {
       }),
     );
 
-    return NextResponse.redirect(destinationUrl);
+    return redirectWithNoIndex(destinationUrl);
   } catch {
-    return NextResponse.redirect(new URL(`/jobs/${slug}`, request.url));
+    return redirectWithNoIndex(new URL(`/jobs/${slug}/`, request.url));
   }
 }

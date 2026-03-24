@@ -102,6 +102,12 @@ const noStoreHeaders = [
     value: "no-store, no-cache, must-revalidate, max-age=0",
   },
 ];
+const noIndexHeaders = [
+  {
+    key: "X-Robots-Tag",
+    value: "noindex, nofollow, noarchive",
+  },
+];
 
 const publicNoStoreSources = [
   "/",
@@ -173,23 +179,51 @@ const nextConfig = {
       })),
       {
         source: "/admin",
-        headers: [...noStoreHeaders],
+        headers: [...noStoreHeaders, ...noIndexHeaders],
       },
       {
         source: "/admin/:path*",
-        headers: [...noStoreHeaders],
+        headers: [...noStoreHeaders, ...noIndexHeaders],
+      },
+      {
+        source: "/admin-mobile",
+        headers: [...noStoreHeaders, ...noIndexHeaders],
+      },
+      {
+        source: "/admin-mobile/:path*",
+        headers: [...noStoreHeaders, ...noIndexHeaders],
+      },
+      {
+        source: "/login",
+        headers: [...noStoreHeaders, ...noIndexHeaders],
       },
       {
         source: "/api/admin/:path*",
-        headers: noStoreHeaders,
+        headers: [...noStoreHeaders, ...noIndexHeaders],
+      },
+      {
+        source: "/api/apply/:path*",
+        headers: [...noStoreHeaders, ...noIndexHeaders],
+      },
+      {
+        source: "/api/image",
+        headers: [...noStoreHeaders, ...noIndexHeaders],
       },
       {
         source: "/api/auth/:path*",
-        headers: noStoreHeaders,
+        headers: [...noStoreHeaders, ...noIndexHeaders],
       },
       {
         source: "/api/decap/:path*",
-        headers: noStoreHeaders,
+        headers: [...noStoreHeaders, ...noIndexHeaders],
+      },
+      {
+        source: "/favicon.ico",
+        headers: noIndexHeaders,
+      },
+      {
+        source: "/icon.svg",
+        headers: noIndexHeaders,
       },
       {
         source: "/(.*)",

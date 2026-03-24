@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 
 const allowedProtocols = new Set(["http:", "https:"]);
+const crawlerControlHeaders = {
+  "X-Robots-Tag": "noindex, nofollow, noarchive",
+};
 
 const badRequest = (message: string, status = 400) =>
-  NextResponse.json({ error: message }, { status });
+  NextResponse.json(
+    { error: message },
+    {
+      status,
+      headers: crawlerControlHeaders,
+    },
+  );
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -58,6 +67,7 @@ export async function GET(request: Request) {
     headers: {
       "Content-Type": contentType,
       "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+      ...crawlerControlHeaders,
     },
   });
 }
