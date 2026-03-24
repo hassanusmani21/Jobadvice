@@ -1,38 +1,38 @@
 ---
-title: "Software Engineer I"
+title: "JavaScript Engineer"
 slug: "software-engineer-i-honeywell"
 date: "2026-03-24"
 updatedAt: "2026-03-24"
 draft: false
-company: "Honeywell"
-location: "Hyderabad,  India"
+company: "CultureMonkey"
+location: "Chennai, Tamil Nadu, India"
 workMode: "On-site"
 employmentType: "Full-time"
-salary: "Not disclosed (typically competitive / high for freshers)"
-experience: "Fresher"
+salary: "Not disclosed"
+experience: "Entry-level (but requires 1+ year experience)"
 eligibilityCriteria: |-
-  Freshers / early career candidates eligible
-  Strong technical background required
-  Good programming and problem-solving skills
+  Minimum 1+ year experience in JavaScript development
+  Strong fundamentals in frontend/backend development
+  Familiarity with modern frameworks
 education:
-  - "Bachelor’s degree in STEM (Engineering"
-  - "Computer Science"
-  - "etc.)"
+  - "Not strictly specified (CS/IT or related preferred)"
 skills:
-  - "Programming: C"
-  - "C++"
-  - "Python"
-  - "Java"
-  - "or similar"
+  - "JavaScript fundamentals"
+  - "React.js"
+  - "Node.js"
+  - "jQuery"
+  - "REST APIs"
+  - "Basic database knowledge (MongoDB or similar)"
 responsibilities:
-  - "Develop and maintain software applications"
-  - "Work on build, test, and deployment pipelines"
-  - "Collaborate with engineering teams"
-  - "Debug and troubleshoot issues"
-  - "Automate processes and improve system performance"
-workingDays: "5 days/week (standard)"
-jobTiming: "Standard office hours"
-applyLink: "https://ibqbjb.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/Honeywell/job/140634"
+  - "Develop web applications using React"
+  - "Build backend APIs using Node.js"
+  - "Integrate frontend with APIs"
+  - "Debug, test, and optimize performance"
+  - "Collaborate with product and design teams"
+  - "Write clean and scalable code"
+workingDays: ""
+jobTiming: "Not specified"
+applyLink: "https://www.linkedin.com/jobs/view/4388323568/"
 applicationStartDate: "2026-03-24"
 applicationEndDate: ""
 ---
