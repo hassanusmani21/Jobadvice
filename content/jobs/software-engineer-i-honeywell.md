@@ -5,7 +5,7 @@ date: "2026-03-24"
 updatedAt: "2026-03-24"
 draft: false
 company: "Honeywell"
-location: "Bangalore India"
+location: "Hyderabad,  India"
 workMode: "On-site"
 employmentType: "Full-time"
 salary: "Not disclosed (typically competitive / high for freshers)"
