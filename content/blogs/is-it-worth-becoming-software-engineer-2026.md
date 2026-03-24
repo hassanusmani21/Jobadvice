@@ -14,7 +14,7 @@ tags:
   - "career"
 isTrending: true
 author: "JobAdvice Team"
-coverImage: ""
+coverImage: "https://miro.medium.com/v2/resize:fit:720/format:webp/1*FYuTphf2Zle1tPPvkHzJtw.png"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-03-24"
