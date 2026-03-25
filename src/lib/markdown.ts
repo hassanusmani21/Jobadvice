@@ -35,6 +35,7 @@ const tableRowPattern = /^\|(.+)\|$/;
 const tableDividerPattern = /^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|$/;
 const calloutPattern = /^(note|tip|warning):\s*(.*)$/i;
 const markdownEscapePattern = /\\([\\`*_{}[\]()#+.!|>\-])/g;
+const sourceCitationPattern = /\s*\d+(?=\s|$)/g;
 const isTableLikeLine = (line: string) =>
   tableRowPattern.test(line.trim()) || tableDividerPattern.test(line.trim());
 
@@ -42,7 +43,7 @@ export const decodeMarkdownEscapes = (value: string) =>
   value.replace(markdownEscapePattern, "$1");
 
 const normalizeMarkdownLine = (line: string) =>
-  decodeMarkdownEscapes(line);
+  decodeMarkdownEscapes(line).replace(sourceCitationPattern, "");
 
 const splitTableRow = (line: string) =>
   line
