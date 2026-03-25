@@ -14,7 +14,7 @@ tags:
   - "Future Tech"
 isTrending: false
 author: "JobAdvice Team"
-coverImage: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b"
+coverImage: "https://scaler-blog-prod-wp-content.s3.ap-south-1.amazonaws.com/wp-content/uploads/2025/11/23225635/20251123_2241_Cyber-Security-Journey_simple_compose_01karv2qybe0k95skpcc7c28v2.webp"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-03-25"
