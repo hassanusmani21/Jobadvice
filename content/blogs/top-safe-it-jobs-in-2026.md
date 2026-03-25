@@ -14,7 +14,7 @@ tags:
   - "Future Tech"
 isTrending: false
 author: "Hassan Usmani"
-coverImage: "https://images.unsplash.com/photo-1518770660439-4636190af475"
+coverImage: "https://cambridgeinfotech.io/wp-content/uploads/2025/12/ChatGPT-Image-Dec-18-2025-05_21_04-PM-600x400.png"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-03-25"
