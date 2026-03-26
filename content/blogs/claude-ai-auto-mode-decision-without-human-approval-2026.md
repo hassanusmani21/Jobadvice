@@ -1,5 +1,5 @@
 ---
-title: "Claude AI Can Now Take Decisions Without Human Approval — Should Developers Be Worried?"
+title: "Claude AI Can Now Take Decisions Without Human Approval  Should Developers Be Worried?"
 slug: "claude-ai-auto-mode-decision-without-human-approval-2026"
 summary: "Anthropic has introduced a powerful new auto mode in Claude AI that allows it to make decisions without human approval. Discover how this technology works, why it matters, and whether AI automation could impact developer jobs in 2026."
 topic: "AI"
