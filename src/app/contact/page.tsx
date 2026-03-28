@@ -1,13 +1,24 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import ActionButton from "@/components/ActionButton";
+import { siteEmail, siteName } from "@/lib/site";
 
 type ContactLink = {
   label: string;
   href: string;
   cta: string;
   handle: string;
+  description: string;
+  accentClassName: string;
   icon: ReactNode;
 };
+
+const contactReasons = [
+  "Corrections or broken application links",
+  "Partnership or business inquiries",
+  "Questions about published posts and updates",
+  "Reports about scams misusing the JobAdvice name",
+];
 
 const contactLinks: ContactLink[] = [
   {
@@ -15,6 +26,8 @@ const contactLinks: ContactLink[] = [
     href: "https://t.me/jobadvice4u",
     cta: "Open Telegram",
     handle: "@jobadvice4u",
+    description: "Best for following broadcast updates and reaching the community channel quickly.",
+    accentClassName: "bg-teal-50 text-teal-900",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
         <path
@@ -32,6 +45,8 @@ const contactLinks: ContactLink[] = [
     href: "https://www.instagram.com/jobsadvice.in?utm_source=qr&igsh=MTM0eGhud3VtNGNvcw==",
     cta: "Visit Instagram",
     handle: "@hassanusmanix",
+    description: "Useful for short-form updates, story-based announcements, and platform visibility.",
+    accentClassName: "bg-rose-100 text-slate-900",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
         <rect
@@ -54,6 +69,8 @@ const contactLinks: ContactLink[] = [
     href: "https://www.linkedin.com/in/hassan-usmani21",
     cta: "Open LinkedIn",
     handle: "hassan-usmani21",
+    description: "A better fit for professional introductions, collaborations, and credibility checks.",
+    accentClassName: "bg-sky-100 text-slate-900",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
         <path
@@ -82,6 +99,8 @@ const contactLinks: ContactLink[] = [
     href: "https://www.youtube.com/@JobAdvice4u",
     cta: "Open YouTube",
     handle: "@JobAdvice4u",
+    description: "Good for longer explainers, hiring breakdowns, and career-focused video content.",
+    accentClassName: "bg-rose-100 text-slate-900",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
         <path
@@ -97,9 +116,11 @@ const contactLinks: ContactLink[] = [
   },
   {
     label: "Email",
-    href: "mailto:hassan.usmani.career@gmail.com",
+    href: `mailto:${siteEmail}`,
     cta: "Send Email",
-    handle: "hassan.usmani.career@gmail.com",
+    handle: siteEmail,
+    description: "Best for corrections, serious support questions, partnerships, and privacy-related requests.",
+    accentClassName: "bg-amber-100 text-slate-900",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
         <path
@@ -132,42 +153,147 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className="space-y-6">
-      <section className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8">
-        <span className="page-kicker">Contact</span>
-        <h1 className="page-title">Reach JobAdvice</h1>
-        <p className="page-copy max-w-3xl">
-          For support, feedback, or partnership queries, use any of the official channels below.
-        </p>
+      <section className="fade-up hero-surface relative overflow-hidden px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-9">
+        <div
+          aria-hidden
+          className="absolute -top-14 right-[-2rem] h-36 w-36 rounded-full bg-white/55 blur-3xl sm:h-48 sm:w-48"
+        />
+        <div
+          aria-hidden
+          className="absolute -bottom-10 left-[-3rem] h-28 w-28 rounded-full bg-teal-200/45 blur-3xl sm:h-40 sm:w-40"
+        />
+
+        <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)] lg:items-stretch">
+          <div className="flex flex-col justify-between">
+            <div>
+              <span className="page-kicker">Contact {siteName}</span>
+              <h1 className="page-title">Reach us through the channel that fits your question.</h1>
+              <p className="page-copy max-w-3xl">
+                Use email for detailed support or corrections, and use our social channels to stay
+                close to daily updates, announcements, and community posts.
+              </p>
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="content-chip content-chip-accent">Corrections</span>
+              <span className="content-chip">Partnerships</span>
+              <span className="content-chip">Scam reports</span>
+              <span className="content-chip">General feedback</span>
+            </div>
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <ActionButton
+                href={`mailto:${siteEmail}`}
+                external
+                variant="primary"
+                className="sm:w-auto"
+              >
+                Email Us
+              </ActionButton>
+              <ActionButton href="/privacy-policy" variant="secondary" className="sm:w-auto">
+                Privacy Policy
+              </ActionButton>
+            </div>
+          </div>
+
+          <aside className="card-surface h-full rounded-[1.4rem] p-4 sm:p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
+              Best Reasons To Reach Out
+            </p>
+            <div className="mt-4 grid gap-3">
+              {contactReasons.map((item, index) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-slate-200 bg-white/75 px-4 py-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-teal-50 text-xs font-semibold text-teal-900">
+                      {index + 1}
+                    </span>
+                    <p className="text-sm font-semibold text-slate-900">{item}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
       </section>
 
-      <section className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {contactLinks.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="interactive-tile group px-5 py-4"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition group-hover:bg-teal-50 group-hover:text-teal-900">
-                  {item.icon}
-                </span>
-                <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  {item.cta}
-                </span>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {contactLinks.map((item, index) => (
+          <a
+            key={item.label}
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="interactive-tile group fade-up flex h-full flex-col px-5 py-5"
+            style={{ animationDelay: `${70 + index * 40}ms` }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <span
+                className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${item.accentClassName}`}
+              >
+                {item.icon}
+              </span>
+              <span className="content-chip text-[11px]">{item.cta}</span>
+            </div>
+
+            <h2 className="mt-4 text-lg font-semibold text-slate-900">{item.label}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+
+            <div className="mt-auto pt-5">
+              <p className="break-all text-sm font-medium text-slate-900">{item.handle}</p>
+              <span className="inline-action-label mt-3 w-fit">Open Channel</span>
+            </div>
+          </a>
+        ))}
+      </section>
+
+      <section className="grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <article className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8" style={{ animationDelay: "120ms" }}>
+          <h2 className="text-2xl font-serif text-slate-900">What To Contact Us About</h2>
+          <p className="mt-4 text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
+            The fastest way to get a useful response is to be clear about the page, issue, or
+            request you are referring to.
+          </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            {contactReasons.map((item) => (
+              <div key={item} className="content-list-card px-4 py-4">
+                <p className="text-sm font-semibold text-slate-900">{item}</p>
               </div>
+            ))}
+          </div>
+        </article>
 
-              <h2 className="mt-4 text-base font-semibold text-slate-900">{item.label}</h2>
-              <p className="mt-1 break-all text-sm text-slate-600">{item.handle}</p>
-            </a>
-          ))}
-        </div>
+        <aside className="fade-up soft-note px-5 py-6 sm:px-8 sm:py-8" style={{ animationDelay: "170ms" }}>
+          <h2 className="text-2xl font-serif text-slate-900">Stay Safe</h2>
+          <div className="mt-4 space-y-4 text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
+            <p>
+              {siteName} will never ask for your password, OTP, or payment to access job
+              information. If someone does, treat it as a scam.
+            </p>
+            <p>
+              For privacy-related questions, policy clarifications, or anything sensitive, use{" "}
+              <a
+                href={`mailto:${siteEmail}`}
+                className="font-medium text-slate-900 underline underline-offset-4"
+              >
+                {siteEmail}
+              </a>
+              .
+            </p>
+          </div>
 
-        <p className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          We will never ask for your password or OTP. If someone does, it&apos;s a scam.
-        </p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <ActionButton href="/about" variant="secondary" className="sm:w-auto">
+              About {siteName}
+            </ActionButton>
+            <ActionButton href="/privacy-policy" variant="muted" className="sm:w-auto">
+              Read Privacy Policy
+            </ActionButton>
+          </div>
+        </aside>
       </section>
     </div>
   );

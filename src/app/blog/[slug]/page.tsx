@@ -802,26 +802,46 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
           <h2 className="text-lg font-bold text-slate-900">Read next</h2>
           {relatedBlogs.length > 0 ? (
             <div className="mt-4 space-y-3">
-              {relatedBlogs.map((relatedBlog) => (
-                <Link
-                  key={relatedBlog.slug}
-                  href={`/blog/${relatedBlog.slug}`}
-                  className="content-list-card p-4"
-                >
-                  <p className="text-sm font-semibold leading-6 text-slate-900">
-                    {relatedBlog.title}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-600">
-                    {relatedBlog.topic ? `${relatedBlog.topic} • ` : ""}
-                    {relatedBlog.readingTimeMinutes} min read
-                  </p>
-                  {relatedBlog.excerpt ? (
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {relatedBlog.excerpt}
-                    </p>
-                  ) : null}
-                </Link>
-              ))}
+              {relatedBlogs.map((relatedBlog) => {
+                const relatedCoverImageSrc = toDisplayImageSrc(relatedBlog.coverImage);
+
+                return (
+                  <Link
+                    key={relatedBlog.slug}
+                    href={`/blog/${relatedBlog.slug}`}
+                    className="group content-list-card overflow-hidden p-0"
+                  >
+                    <div className="relative border-b border-slate-200 bg-slate-100">
+                      {relatedCoverImageSrc ? (
+                        <Image
+                          src={relatedCoverImageSrc}
+                          alt={relatedBlog.title}
+                          width={1200}
+                          height={720}
+                          className="h-36 w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                          loading="lazy"
+                          sizes="(min-width: 1024px) 20rem, 100vw"
+                        />
+                      ) : (
+                        <div className="flex h-36 items-end bg-[linear-gradient(135deg,#0f172a,#134e4a)] p-4">
+                          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/90">
+                            {relatedBlog.topic || "JobAdvice"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <p className="text-base font-semibold leading-7 text-slate-900 transition-colors group-hover:text-teal-900">
+                        {relatedBlog.title}
+                      </p>
+                      <p className="mt-2 text-xs text-slate-600">
+                        {relatedBlog.topic ? `${relatedBlog.topic} • ` : ""}
+                        {relatedBlog.readingTimeMinutes} min read
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <p className="mt-3 text-sm text-slate-600">No related articles yet.</p>
