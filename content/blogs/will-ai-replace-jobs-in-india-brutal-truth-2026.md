@@ -13,7 +13,7 @@ tags:
   - "AI Impact Jobs"
 isTrending: false
 author: "JobAdvice Team"
-coverImage: ""
+coverImage: "https://growthindia.co/wp-content/uploads/2026/01/ai-vs-humans.webp"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-03-27"
