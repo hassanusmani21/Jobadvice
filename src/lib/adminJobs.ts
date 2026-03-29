@@ -7,6 +7,10 @@ export type AdminJobRecord = {
   title: string;
   company: string;
   location: string;
+  workMode: string;
+  employmentType: string;
+  salary: string;
+  experience: string;
   applyLink: string;
   date: string;
   updatedAt: string;
@@ -96,6 +100,11 @@ const toAdminRecord = (job: JobPost): AdminJobRecord => ({
   title: job.title,
   company: job.company,
   location: job.location,
+  workMode: job.workMode || "",
+  employmentType: job.employmentType || job.jobType || "",
+  salary: job.salary || "",
+  experience:
+    job.experience || job.experienceLevel || job.experienceYears || "",
   applyLink: job.applyLink || "",
   date: job.date,
   updatedAt: job.updatedAt,
@@ -235,6 +244,10 @@ export const findDuplicateJobs = async (input: DuplicateCheckInput) => {
         title: candidate.title,
         company: candidate.company,
         location: candidate.location,
+        workMode: candidate.workMode,
+        employmentType: candidate.employmentType,
+        salary: candidate.salary,
+        experience: candidate.experience,
         applyLink: candidate.applyLink,
         date: candidate.date,
         updatedAt: candidate.updatedAt,
@@ -274,6 +287,10 @@ export const findDuplicateJobs = async (input: DuplicateCheckInput) => {
         title: candidate.title,
         company: candidate.company,
         location: candidate.location,
+        workMode: candidate.workMode,
+        employmentType: candidate.employmentType,
+        salary: candidate.salary,
+        experience: candidate.experience,
         applyLink: candidate.applyLink,
         date: candidate.date,
         updatedAt: candidate.updatedAt,

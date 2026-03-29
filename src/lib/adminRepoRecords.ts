@@ -229,6 +229,10 @@ type RemoteJobRecord = {
   title: string;
   company: string;
   location: string;
+  workMode: string;
+  employmentType: string;
+  salary: string;
+  experience: string;
   applyLink: string;
   date: string;
   updatedAt: string;
@@ -289,6 +293,14 @@ export const getRemoteJobRecords = async (): Promise<RemoteJobRecord[]> => {
         title,
         company: normalizeTextValue(data.company),
         location: normalizeTextValue(data.location),
+        workMode: normalizeTextValue(data.workMode),
+        employmentType:
+          normalizeTextValue(data.employmentType) || normalizeTextValue(data.jobType),
+        salary: normalizeTextValue(data.salary),
+        experience:
+          normalizeTextValue(data.experience) ||
+          normalizeTextValue(data.experienceLevel) ||
+          normalizeTextValue(data.experienceYears),
         applyLink: normalizeTextValue(data.applyLink),
         date: toDateString(data.date || data.publishedAt) || "",
         updatedAt:

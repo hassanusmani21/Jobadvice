@@ -54,6 +54,10 @@ export type AdminMobileJobRecord = {
   title: string;
   company: string;
   location: string;
+  workMode: string;
+  employmentType: string;
+  salary: string;
+  experience: string;
   applyLink: string;
   date: string;
   updatedAt: string;

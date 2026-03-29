@@ -33,6 +33,13 @@ type JobListSection = {
   emptyMessage: string;
   records: AdminMobileJobRecord[];
 };
+type BatchJobShareSectionId = "internships" | "freshers" | "experienced";
+type BatchJobShareSection = {
+  id: BatchJobShareSectionId;
+  title: string;
+  description: string;
+  records: AdminMobileJobRecord[];
+};
 type PublishedJobShare = {
   company: string;
   employmentType: string;
@@ -127,6 +134,162 @@ const buildJobShareSummary = (entry: {
     : "Verified job opening with direct apply details.";
 };
 
+const buildJobUrlFromSlug = (slug: string) =>
+  `${siteUrl.replace(/\/+$/, "")}/jobs/${slug}/`;
+
+const internshipSharePattern =
+  /\b(intern|internship|apprentice|apprenticeship|co[\s-]?op)\b/;
+const fresherSharePattern =
+  /\b(fresher|freshers|entry[\s-]?level|new grad|recent graduate|recent graduates|fresh graduate|fresh graduates|graduate program|graduate trainee|campus|final[\s-]?year|student(?:s)?|0\s*(?:to|-|–|—)\s*1|0\s*(?:to|-|–|—)\s*6\s*months?|0\s*years?)\b/;
+const experiencedSharePattern =
+  /\b(experienced|experience(?:d)? professionals?|mid[\s-]?level|senior|lead|principal|architect|manager|specialist|consultant)\b/;
+const juniorTitleSharePattern = /\b(junior|associate|analyst|graduate|trainee|entry)\b/;
+const seniorTitleSharePattern =
+  /\b(senior|lead|principal|architect|manager|specialist|consultant)\b/;
+
+const extractExperienceValues = (value: string) => {
+  const normalizedValue = value.toLowerCase().replace(/[–—]/g, "-");
+  const usesMonths = /\bmonth/.test(normalizedValue);
+
+  return Array.from(normalizedValue.matchAll(/\d+(?:\.\d+)?/g))
+    .map((match) => Number.parseFloat(match[0]))
+    .filter((item) => Number.isFinite(item))
+    .map((item) => (usesMonths ? item / 12 : item));
+};
+
+const classifyJobRecordForBatchShare = (
+  record: Pick<AdminMobileJobRecord, "title" | "employmentType" | "experience">,
+): BatchJobShareSectionId => {
+  const combinedValue =
+    `${record.title} ${record.employmentType} ${record.experience}`.toLowerCase();
+  if (internshipSharePattern.test(combinedValue)) {
+    return "internships";
+  }
+
+  if (fresherSharePattern.test(combinedValue)) {
+    return "freshers";
+  }
+
+  if (experiencedSharePattern.test(combinedValue)) {
+    return "experienced";
+  }
+
+  const experienceValues = extractExperienceValues(record.experience);
+  if (experienceValues.some((item) => item > 1)) {
+    return "experienced";
+  }
+
+  if (experienceValues.length > 0 && Math.max(...experienceValues) <= 1) {
+    return "freshers";
+  }
+
+  const normalizedTitle = record.title.toLowerCase();
+  if (juniorTitleSharePattern.test(normalizedTitle)) {
+    return "freshers";
+  }
+
+  if (seniorTitleSharePattern.test(normalizedTitle)) {
+    return "experienced";
+  }
+
+  return "experienced";
+};
+
+const createBatchJobShareSections = (records: AdminMobileJobRecord[]): BatchJobShareSection[] => {
+  const groupedRecords: Record<BatchJobShareSectionId, AdminMobileJobRecord[]> = {
+    internships: [],
+    freshers: [],
+    experienced: [],
+  };
+
+  for (const record of records) {
+    groupedRecords[classifyJobRecordForBatchShare(record)].push(record);
+  }
+
+  return [
+    {
+      id: "internships",
+      title: "Internships",
+      description: "Internships, apprenticeships, and student-focused roles.",
+      records: groupedRecords.internships,
+    },
+    {
+      id: "freshers",
+      title: "Freshers",
+      description: "Entry-level, graduate, trainee, and 0-1 year openings.",
+      records: groupedRecords.freshers,
+    },
+    {
+      id: "experienced",
+      title: "Experienced",
+      description: "Mid-level roles plus jobs that are not clearly fresher openings.",
+      records: groupedRecords.experienced,
+    },
+  ];
+};
+
+const buildBatchShareScopeLabel = (mode: JobListMode, searchTerm: string) => {
+  const baseLabel =
+    mode === "today"
+      ? "today's jobs"
+      : mode === "yesterday"
+        ? "yesterday's jobs"
+        : mode === "all"
+          ? "all visible jobs"
+          : "jobs from the last 2 days";
+
+  if (!searchTerm) {
+    return baseLabel;
+  }
+
+  return `${baseLabel} matching "${searchTerm}"`;
+};
+
+const buildBatchJobWhatsappText = (
+  section: BatchJobShareSection,
+  scopeLabel: string,
+  useEmojis: boolean,
+) => {
+  const heading =
+    section.id === "internships"
+      ? useEmojis
+        ? "🎓 Internship Jobs"
+        : "Internship Jobs"
+      : section.id === "freshers"
+        ? useEmojis
+          ? "🚀 Fresher Jobs"
+          : "Fresher Jobs"
+        : useEmojis
+          ? "💼 Experienced Jobs"
+          : "Experienced Jobs";
+  const introLine = `${section.records.length} openings from ${scopeLabel}.`;
+
+  const jobLines = section.records.map((record, index) => {
+    const recordMeta = [
+      record.location.trim(),
+      record.workMode.trim(),
+      (record.experience || record.employmentType).trim(),
+    ].filter((item) => item.length > 0);
+
+    return [
+      `${index + 1}. ${record.title} - ${record.company || "Company not listed"}`,
+      recordMeta.length > 0 ? `   ${recordMeta.slice(0, 3).join(" | ")}` : "",
+      `   ${buildJobUrlFromSlug(record.slug)}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  });
+
+  return [
+    heading,
+    introLine,
+    "",
+    ...jobLines,
+    "",
+    `${useEmojis ? "📢 " : ""}Shared via ${siteName}`,
+  ].join("\n");
+};
+
 const inferJobShareKind = (share: Pick<PublishedJobShare, "employmentType" | "title">) => {
   const combinedValue = `${share.title} ${share.employmentType}`.toLowerCase();
   return /\b(intern|internship|apprentice|apprenticeship|trainee)\b/.test(combinedValue)
@@ -176,14 +339,11 @@ const buildPublishedJobWhatsappText = (
 };
 
 const buildPublishedJobShare = (entry: AdminMobileJobEntry): PublishedJobShare => {
-  const normalizedSiteUrl = siteUrl.replace(/\/+$/, "");
-  const jobUrl = `${normalizedSiteUrl}/jobs/${entry.slug}/`;
-
   return {
     company: entry.company,
     employmentType: entry.employmentType,
     experience: entry.experience,
-    jobUrl,
+    jobUrl: buildJobUrlFromSlug(entry.slug),
     location: entry.location,
     salary: entry.salary,
     title: entry.title,
@@ -361,6 +521,8 @@ export default function MobileAdminApp({
   const [jobListMode, setJobListMode] = useState<JobListMode>("recent");
   const [publishedJobShare, setPublishedJobShare] = useState<PublishedJobShare | null>(null);
   const [publishedJobShareUsesEmojis, setPublishedJobShareUsesEmojis] = useState(true);
+  const [batchJobShareOpen, setBatchJobShareOpen] = useState(false);
+  const [batchJobShareUsesEmojis, setBatchJobShareUsesEmojis] = useState(true);
   const [editorEntry, setEditorEntry] = useState<AdminMobileEntry>(buildEmptyEntry(initialCollection));
   const [editorOpen, setEditorOpen] = useState(Boolean(initialSlug));
   const [entryLoading, setEntryLoading] = useState(Boolean(initialSlug));
@@ -392,7 +554,8 @@ export default function MobileAdminApp({
   const activeDraftCount = activeRecords.filter((record) => record.draft).length;
   const accountLabel = adminEmail.split("@")[0] || "admin";
   const accountInitial = accountLabel.charAt(0).toUpperCase() || "A";
-  const query = searchValue.trim().toLowerCase();
+  const searchTerm = searchValue.trim();
+  const query = searchTerm.toLowerCase();
   const adminLoginUrl = buildAdminLoginUrl(adminBasePath);
   const filteredRecords = filterRecordsByQuery(activeRecords, query);
   const filteredJobRecords =
@@ -438,6 +601,21 @@ export default function MobileAdminApp({
         : jobListMode === "recent"
           ? jobListSections
           : [];
+  const visibleJobRecordsForShare =
+    collection === "jobs"
+      ? jobListMode === "all"
+        ? filteredJobRecords
+        : visibleJobSections.flatMap((section) => section.records)
+      : [];
+  const shareableJobRecords = visibleJobRecordsForShare.filter((record) => !record.draft);
+  const batchJobShareSections =
+    collection === "jobs" ? createBatchJobShareSections(shareableJobRecords) : [];
+  const batchJobShareScopeLabel = buildBatchShareScopeLabel(jobListMode, searchTerm);
+  const batchJobShareDraftCount =
+    visibleJobRecordsForShare.length - shareableJobRecords.length;
+  const hasBatchJobShareSections = batchJobShareSections.some(
+    (section) => section.records.length > 0,
+  );
   const displayedRecordsCount =
     collection === "jobs"
       ? jobListMode === "all"
@@ -589,6 +767,14 @@ export default function MobileAdminApp({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [extractorOpen]);
+
+  useEffect(() => {
+    if (collection === "jobs" && hasBatchJobShareSections) {
+      return;
+    }
+
+    setBatchJobShareOpen(false);
+  }, [collection, hasBatchJobShareSections]);
 
   useEffect(() => {
     const applyRouteState = (nextCollection: AdminCollection, nextSlug: string, open: boolean) => {
@@ -1147,6 +1333,18 @@ export default function MobileAdminApp({
       setFormNotice("Copy failed. You can still open WhatsApp directly.");
     }
   };
+  const copyBatchJobShare = async (text: string, sectionTitle: string) => {
+    if (!text || !navigator.clipboard) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setFormNotice(`${sectionTitle} WhatsApp message copied.`);
+    } catch {
+      setFormNotice("Copy failed. You can still open WhatsApp directly.");
+    }
+  };
 
   const activeTitle =
     editorEntry.collection === "jobs"
@@ -1554,6 +1752,129 @@ export default function MobileAdminApp({
                         </span>
                       </button>
                     ))}
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Batch WhatsApp
+                        </p>
+                        <p className="mt-1 text-sm text-slate-700">
+                          {shareableJobRecords.length} live job
+                          {shareableJobRecords.length === 1 ? "" : "s"} ready from{" "}
+                          {batchJobShareScopeLabel}.
+                        </p>
+                        {batchJobShareDraftCount > 0 ? (
+                          <p className="mt-1 text-xs text-slate-500">
+                            {batchJobShareDraftCount} draft job
+                            {batchJobShareDraftCount === 1 ? "" : "s"} excluded from sharing.
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setBatchJobShareOpen((current) => !current)}
+                        disabled={!hasBatchJobShareSections}
+                        className={cn(
+                          "inline-flex min-h-10 items-center justify-center rounded-xl px-3 text-sm font-semibold transition",
+                          hasBatchJobShareSections
+                            ? "bg-teal-700 text-white hover:bg-teal-800"
+                            : "cursor-not-allowed bg-slate-200 text-slate-500",
+                        )}
+                      >
+                        {batchJobShareOpen ? "Hide" : "Prepare"}
+                      </button>
+                    </div>
+
+                    {batchJobShareOpen ? (
+                      <div className="mt-3 space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBatchJobShareUsesEmojis((current) => !current)
+                            }
+                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                          >
+                            {batchJobShareUsesEmojis ? "Emojis On" : "Emojis Off"}
+                          </button>
+                        </div>
+
+                        {batchJobShareSections
+                          .filter((section) => section.records.length > 0)
+                          .map((section) => {
+                            const sectionWhatsappText = buildBatchJobWhatsappText(
+                              section,
+                              batchJobShareScopeLabel,
+                              batchJobShareUsesEmojis,
+                            );
+                            const sectionWhatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+                              sectionWhatsappText,
+                            )}`;
+
+                            return (
+                              <div
+                                key={section.id}
+                                className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-900">
+                                      {section.title}
+                                    </p>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      {section.description}
+                                    </p>
+                                  </div>
+                                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                                    {section.records.length}
+                                  </span>
+                                </div>
+
+                                <label className="mt-3 block">
+                                  <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                    WhatsApp message
+                                  </span>
+                                  <textarea
+                                    readOnly
+                                    value={sectionWhatsappText}
+                                    rows={Math.min(
+                                      16,
+                                      Math.max(7, section.records.length * 3),
+                                    )}
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none"
+                                  />
+                                </label>
+
+                                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      copyBatchJobShare(
+                                        sectionWhatsappText,
+                                        section.title,
+                                      )
+                                    }
+                                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                                  >
+                                    Copy {section.title}
+                                  </button>
+                                  <a
+                                    href={sectionWhatsappUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+                                  >
+                                    Open WhatsApp
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
