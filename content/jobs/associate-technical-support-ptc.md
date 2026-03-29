@@ -8,7 +8,7 @@ company: "75 India"
 location: "Bangalore"
 workMode: "Hybrid"
 employmentType: "Full-time"
-salary: "rs\n5"
+salary: "rs 5"
 experience: "1–2 years of experience in iOS development"
 eligibilityCriteria: |-
   Calix provides the cloud, software platforms, systems and services required for communications service providers to simplify their businesses, excite their subscribers and grow their value.
