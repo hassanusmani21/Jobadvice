@@ -8,10 +8,11 @@ company: "GlobalLogic - GlobalLogic is looking for a detail-oriented gr"
 location: "India - Hyderabad"
 workMode: "On-site"
 employmentType: "Internship"
-salary: "rs\n5"
+salary: "rs 5"
 experience: "0-1 years"
 eligibilityCriteria: "Any Graduate (Non-Technical background)"
-education: []
+education:
+  - "[]"
 skills:
   - "Good judgment and decision-making ability"
   - "GIS"
@@ -33,7 +34,8 @@ skills:
   - "Team player with strong interpersonal and solution-oriented attitude"
   - "Ability to communicate clearly with managers and associates at all levels"
   - "Job responsibilities"
-responsibilities: []
+responsibilities:
+  - "[]"
 workingDays: ""
 jobTiming: ""
 applyLink: "https://www.globallogic.com/careers/associate-analyst-irc288181/"
