@@ -35,11 +35,13 @@ type JobListSection = {
 };
 type PublishedJobShare = {
   company: string;
+  employmentType: string;
+  experience: string;
   jobUrl: string;
-  summary: string;
+  location: string;
+  salary: string;
   title: string;
-  whatsappShareUrl: string;
-  whatsappText: string;
+  workMode: string;
 };
 
 const listToText = (items: string[]) => items.join("\n");
@@ -107,42 +109,85 @@ const filterRecordsByQuery = <T extends AdminMobileRecord>(records: T[], query: 
   });
 };
 
-const buildJobShareSummary = (entry: AdminMobileJobEntry) => {
+const buildJobShareSummary = (entry: {
+  employmentType: string;
+  location: string;
+  workMode: string;
+}) => {
   const parts = [
     entry.location,
     entry.workMode,
     entry.employmentType,
-    entry.experience,
-    entry.salary,
   ]
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
 
   return parts.length > 0
-    ? parts.slice(0, 4).join(" | ")
+    ? parts.slice(0, 3).join(" | ")
     : "Verified job opening with direct apply details.";
+};
+
+const inferJobShareKind = (share: Pick<PublishedJobShare, "employmentType" | "title">) => {
+  const combinedValue = `${share.title} ${share.employmentType}`.toLowerCase();
+  return /\b(intern|internship|apprentice|apprenticeship|trainee)\b/.test(combinedValue)
+    ? "internship"
+    : "fulltime";
+};
+
+const formatShareDetail = (label: string, value: string, fallback: string) =>
+  `- ${label}: ${value.trim() || fallback}`;
+
+const buildPublishedJobWhatsappText = (
+  share: PublishedJobShare,
+  useEmojis: boolean,
+) => {
+  const shareKind = inferJobShareKind(share);
+  const heading =
+    shareKind === "internship"
+      ? useEmojis
+        ? "🎓 Internship Alert"
+        : "Internship Alert"
+      : useEmojis
+        ? "💼 Hiring Alert"
+        : "Hiring Alert";
+  const audienceLine =
+    shareKind === "internship"
+      ? "Students and freshers can check this opening."
+      : "Candidates looking for a full-time role can check this opening.";
+  const typeFallback =
+    shareKind === "internship" ? "Internship opportunity" : "Full-time / role type not mentioned";
+  const experienceFallback =
+    shareKind === "internship"
+      ? "Freshers / students can review the full post"
+      : "Check the full post for experience details";
+
+  return [
+    heading,
+    `${share.title} at ${share.company}`,
+    audienceLine,
+    formatShareDetail("Location", share.location, "Not mentioned in the post"),
+    formatShareDetail("Work mode", share.workMode, "Not mentioned in the post"),
+    formatShareDetail("Type", share.employmentType, typeFallback),
+    formatShareDetail("Experience", share.experience, experienceFallback),
+    formatShareDetail("Salary", share.salary, "Not mentioned in the post"),
+    `${useEmojis ? "🔗 " : ""}Apply here: ${share.jobUrl}`,
+    `${useEmojis ? "📢 " : ""}Shared via ${siteName}`,
+  ].join("\n");
 };
 
 const buildPublishedJobShare = (entry: AdminMobileJobEntry): PublishedJobShare => {
   const normalizedSiteUrl = siteUrl.replace(/\/+$/, "");
   const jobUrl = `${normalizedSiteUrl}/jobs/${entry.slug}/`;
-  const summary = buildJobShareSummary(entry);
-  const whatsappText = [
-    `${entry.title} at ${entry.company}`,
-    summary,
-    `Read full details and apply here: ${jobUrl}`,
-    `Published on ${siteName}`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
 
   return {
     company: entry.company,
+    employmentType: entry.employmentType,
+    experience: entry.experience,
     jobUrl,
-    summary,
+    location: entry.location,
+    salary: entry.salary,
     title: entry.title,
-    whatsappShareUrl: `https://wa.me/?text=${encodeURIComponent(whatsappText)}`,
-    whatsappText,
+    workMode: entry.workMode,
   };
 };
 
@@ -315,6 +360,7 @@ export default function MobileAdminApp({
   const [searchValue, setSearchValue] = useState("");
   const [jobListMode, setJobListMode] = useState<JobListMode>("recent");
   const [publishedJobShare, setPublishedJobShare] = useState<PublishedJobShare | null>(null);
+  const [publishedJobShareUsesEmojis, setPublishedJobShareUsesEmojis] = useState(true);
   const [editorEntry, setEditorEntry] = useState<AdminMobileEntry>(buildEmptyEntry(initialCollection));
   const [editorOpen, setEditorOpen] = useState(Boolean(initialSlug));
   const [entryLoading, setEntryLoading] = useState(Boolean(initialSlug));
@@ -405,9 +451,18 @@ export default function MobileAdminApp({
         : jobListMode === "yesterday"
           ? "Search yesterday's jobs"
           : jobListMode === "all"
-            ? "Search all jobs"
+          ? "Search all jobs"
             : "Search jobs from the last 2 days"
       : `Search ${collection}`;
+  const publishedJobSummary = publishedJobShare
+    ? buildJobShareSummary(publishedJobShare)
+    : "";
+  const publishedJobWhatsappText = publishedJobShare
+    ? buildPublishedJobWhatsappText(publishedJobShare, publishedJobShareUsesEmojis)
+    : "";
+  const publishedJobWhatsappShareUrl = publishedJobWhatsappText
+    ? `https://wa.me/?text=${encodeURIComponent(publishedJobWhatsappText)}`
+    : "";
   const mobilePublishingError = mobilePublishingReady
     ? ""
     : "Admin publishing is not configured on this deployment. Set ADMIN_CONTENTS_TOKEN in production and redeploy to enable save, upload, and delete.";
@@ -1081,12 +1136,12 @@ export default function MobileAdminApp({
     setExtractNotice("");
   };
   const copyPublishedJobShare = async () => {
-    if (!publishedJobShare || !navigator.clipboard) {
+    if (!publishedJobWhatsappText || !navigator.clipboard) {
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(publishedJobShare.whatsappText);
+      await navigator.clipboard.writeText(publishedJobWhatsappText);
       setFormNotice("WhatsApp message copied.");
     } catch {
       setFormNotice("Copy failed. You can still open WhatsApp directly.");
@@ -1681,16 +1736,27 @@ export default function MobileAdminApp({
                       </h3>
                       <p className="mt-1 text-sm text-slate-600">{publishedJobShare.company}</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setPublishedJobShare(null)}
-                      className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                    >
-                      Close
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPublishedJobShareUsesEmojis((current) => !current)
+                        }
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      >
+                        {publishedJobShareUsesEmojis ? "Emojis On" : "Emojis Off"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPublishedJobShare(null)}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      >
+                        Close
+                      </button>
+                    </div>
                   </div>
 
-                  <p className="mt-3 text-sm text-slate-700">{publishedJobShare.summary}</p>
+                  <p className="mt-3 text-sm text-slate-700">{publishedJobSummary}</p>
 
                   <div className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
                     <p className="font-semibold text-slate-900">Job link</p>
@@ -1710,8 +1776,8 @@ export default function MobileAdminApp({
                     </span>
                     <textarea
                       readOnly
-                      value={publishedJobShare.whatsappText}
-                      rows={7}
+                      value={publishedJobWhatsappText}
+                      rows={9}
                       className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
                     />
                   </label>
@@ -1725,7 +1791,7 @@ export default function MobileAdminApp({
                       Copy Message
                     </button>
                     <a
-                      href={publishedJobShare.whatsappShareUrl}
+                      href={publishedJobWhatsappShareUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
