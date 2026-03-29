@@ -6,10 +6,12 @@ import {
   type AdminCollection,
   type AdminMobileBlogEntry,
   type AdminMobileEntry,
+  type AdminMobileJobRecord,
   type AdminMobileJobEntry,
   type AdminMobileRecord,
   createEmptyBlogEntry,
   createEmptyJobEntry,
+  getTodayDateString,
 } from "@/lib/adminMobile";
 
 type AdminAppProps = {
@@ -22,6 +24,14 @@ type AdminAppProps = {
 
 type RecordsState = Record<AdminCollection, AdminMobileRecord[]>;
 type LoadingState = Record<AdminCollection, boolean>;
+type JobListMode = "recent" | "today" | "yesterday" | "all";
+type JobListSection = {
+  id: "today" | "yesterday";
+  title: string;
+  description: string;
+  emptyMessage: string;
+  records: AdminMobileJobRecord[];
+};
 
 const listToText = (items: string[]) => items.join("\n");
 
@@ -33,6 +43,60 @@ const textToList = (value: string) =>
 
 const cn = (...parts: Array<string | false | null | undefined>) =>
   parts.filter(Boolean).join(" ");
+
+const toUtcDayTimestamp = (value: string) => {
+  const timestamp = Date.parse(`${value}T00:00:00Z`);
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const shiftIsoDateString = (value: string, dayOffset: number) => {
+  const timestamp = toUtcDayTimestamp(value);
+  if (!timestamp) {
+    return "";
+  }
+
+  const shiftedDate = new Date(timestamp);
+  shiftedDate.setUTCDate(shiftedDate.getUTCDate() + dayOffset);
+  return shiftedDate.toISOString().split("T")[0];
+};
+
+const getRecordActivityDate = (record: Pick<AdminMobileRecord, "updatedAt" | "date">) =>
+  record.updatedAt || record.date || "";
+
+const sortRecordsByRecentActivity = <T extends AdminMobileRecord>(firstRecord: T, secondRecord: T) => {
+  const firstActivityDate = toUtcDayTimestamp(getRecordActivityDate(firstRecord));
+  const secondActivityDate = toUtcDayTimestamp(getRecordActivityDate(secondRecord));
+  if (secondActivityDate !== firstActivityDate) {
+    return secondActivityDate - firstActivityDate;
+  }
+
+  const firstPublishDate = toUtcDayTimestamp(firstRecord.date);
+  const secondPublishDate = toUtcDayTimestamp(secondRecord.date);
+  if (secondPublishDate !== firstPublishDate) {
+    return secondPublishDate - firstPublishDate;
+  }
+
+  return firstRecord.slug.localeCompare(secondRecord.slug);
+};
+
+const filterRecordsByQuery = <T extends AdminMobileRecord>(records: T[], query: string) => {
+  if (!query) {
+    return records;
+  }
+
+  return records.filter((record) => {
+    const haystack = [
+      record.title,
+      record.slug,
+      "company" in record ? record.company : record.topic,
+      "location" in record ? record.location : "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(query);
+  });
+};
 
 const defaultRecordsState: RecordsState = {
   jobs: [],
@@ -201,6 +265,7 @@ export default function MobileAdminApp({
     useState<LoadingState>(defaultLoadingState);
   const [recordsError, setRecordsError] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [jobListMode, setJobListMode] = useState<JobListMode>("recent");
   const [editorEntry, setEditorEntry] = useState<AdminMobileEntry>(buildEmptyEntry(initialCollection));
   const [editorOpen, setEditorOpen] = useState(Boolean(initialSlug));
   const [entryLoading, setEntryLoading] = useState(Boolean(initialSlug));
@@ -222,6 +287,10 @@ export default function MobileAdminApp({
   const extractorPanelRef = useRef<HTMLDivElement | null>(null);
 
   const activeRecords = recordsByCollection[collection];
+  const todayDate = getTodayDateString();
+  const yesterdayDate = shiftIsoDateString(todayDate, -1);
+  const activeJobRecords =
+    collection === "jobs" ? (activeRecords as AdminMobileJobRecord[]) : [];
   const totalDrafts =
     recordsByCollection.jobs.filter((record) => record.draft).length +
     recordsByCollection.blogs.filter((record) => record.draft).length;
@@ -230,20 +299,74 @@ export default function MobileAdminApp({
   const accountInitial = accountLabel.charAt(0).toUpperCase() || "A";
   const query = searchValue.trim().toLowerCase();
   const adminLoginUrl = buildAdminLoginUrl(adminBasePath);
-  const filteredRecords = !query
-    ? activeRecords
-    : activeRecords.filter((record) => {
-        const haystack = [
-          record.title,
-          record.slug,
-          "company" in record ? record.company : record.topic,
-          "location" in record ? record.location : "",
+  const filteredRecords = filterRecordsByQuery(activeRecords, query);
+  const filteredJobRecords =
+    collection === "jobs" ? filterRecordsByQuery(activeJobRecords, query) : [];
+  const todayJobCount = recordsByCollection.jobs.filter(
+    (record) => getRecordActivityDate(record) === todayDate,
+  ).length;
+  const yesterdayJobCount = recordsByCollection.jobs.filter(
+    (record) => getRecordActivityDate(record) === yesterdayDate,
+  ).length;
+  const jobListSections: JobListSection[] =
+    collection === "jobs"
+      ? [
+          {
+            id: "today",
+            title: "Today",
+            description: "Jobs published or updated today",
+            emptyMessage: query
+              ? "No jobs from today matched your search."
+              : "No jobs have been updated today.",
+            records: filteredJobRecords
+              .filter((record) => getRecordActivityDate(record) === todayDate)
+              .sort(sortRecordsByRecentActivity),
+          },
+          {
+            id: "yesterday",
+            title: "Yesterday",
+            description: "Jobs published or updated yesterday",
+            emptyMessage: query
+              ? "No jobs from yesterday matched your search."
+              : "No jobs were updated yesterday.",
+            records: filteredJobRecords
+              .filter((record) => getRecordActivityDate(record) === yesterdayDate)
+              .sort(sortRecordsByRecentActivity),
+          },
         ]
-          .join(" ")
-          .toLowerCase();
-
-        return haystack.includes(query);
-      });
+      : [];
+  const visibleJobSections =
+    jobListMode === "today"
+      ? jobListSections.filter((section) => section.id === "today")
+      : jobListMode === "yesterday"
+        ? jobListSections.filter((section) => section.id === "yesterday")
+        : jobListMode === "recent"
+          ? jobListSections
+          : [];
+  const displayedRecordsCount =
+    collection === "jobs"
+      ? jobListMode === "all"
+        ? filteredJobRecords.length
+        : visibleJobSections.reduce((count, section) => count + section.records.length, 0)
+      : filteredRecords.length;
+  const searchPlaceholder =
+    collection === "jobs"
+      ? jobListMode === "today"
+        ? "Search today's jobs"
+        : jobListMode === "yesterday"
+          ? "Search yesterday's jobs"
+          : jobListMode === "all"
+            ? "Search all jobs"
+            : "Search jobs from the last 2 days"
+      : `Search ${collection}`;
+  const jobFilterSummary =
+    jobListMode === "today"
+      ? "Showing jobs touched today"
+      : jobListMode === "yesterday"
+        ? "Showing jobs touched yesterday"
+        : jobListMode === "all"
+          ? "Showing the full jobs archive"
+          : "Showing jobs from today and yesterday";
   const mobilePublishingError = mobilePublishingReady
     ? ""
     : "Admin publishing is not configured on this deployment. Set ADMIN_CONTENTS_TOKEN in production and redeploy to enable save, upload, and delete.";
@@ -877,6 +1000,55 @@ export default function MobileAdminApp({
       ? editorEntry.title || "New job"
       : editorEntry.title || "New blog";
   const extractorEntityLabel = collection === "jobs" ? "job" : "blog";
+  const renderRecordButton = (record: AdminMobileRecord) => {
+    const activityDate = getRecordActivityDate(record);
+    const primaryDateLabel =
+      collection === "jobs" && activityDate ? `Updated ${activityDate}` : record.date || "No date";
+    const secondaryDateLabel =
+      collection === "jobs" && activityDate && record.date && activityDate !== record.date
+        ? `Published ${record.date}`
+        : "";
+
+    return (
+      <button
+        key={`${collection}-${record.slug}`}
+        type="button"
+        onClick={() => openExistingEntry(collection, record.slug)}
+        className={cn(
+          "block w-full rounded-[1rem] border px-4 py-3 text-left transition",
+          editorOpen && originalSlug === record.slug
+            ? "border-teal-300 bg-teal-50 shadow-sm"
+            : "border-slate-200 bg-white shadow-[0_10px_24px_-24px_rgba(15,23,42,0.45)] hover:border-teal-200 hover:bg-slate-50",
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-900">{record.title || "Untitled"}</p>
+            <p className="mt-1 text-xs text-slate-500">{formatRecordMeta(record)}</p>
+          </div>
+          <span
+            className={cn(
+              "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+              record.draft
+                ? "bg-amber-100 text-amber-800"
+                : "bg-emerald-100 text-emerald-800",
+            )}
+          >
+            {record.draft ? "Draft" : "Live"}
+          </span>
+        </div>
+        <div className="mt-3 flex items-end justify-between gap-3 text-xs text-slate-500">
+          <div className="min-w-0">
+            <span className="block">{primaryDateLabel}</span>
+            {secondaryDateLabel ? (
+              <span className="mt-1 block text-[11px] text-slate-400">{secondaryDateLabel}</span>
+            ) : null}
+          </div>
+          <span className="truncate text-right">{record.slug}</span>
+        </div>
+      </button>
+    );
+  };
   const renderExtractorForm = (layout: "mobile" | "desktop") => {
     const isDesktop = layout === "desktop";
     const fieldClassName = cn(
@@ -1160,14 +1332,81 @@ export default function MobileAdminApp({
                   type="search"
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
-                  placeholder={`Search ${collection}`}
+                  placeholder={searchPlaceholder}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-50"
                 />
               </label>
 
+              {collection === "jobs" ? (
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Quick Access
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Uses the last saved date, so republished jobs come back into Today.
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 shadow-sm">
+                      {jobFilterSummary}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {[
+                      {
+                        mode: "recent" as const,
+                        label: "Last 2 days",
+                        count: todayJobCount + yesterdayJobCount,
+                      },
+                      {
+                        mode: "today" as const,
+                        label: "Today",
+                        count: todayJobCount,
+                      },
+                      {
+                        mode: "yesterday" as const,
+                        label: "Yesterday",
+                        count: yesterdayJobCount,
+                      },
+                      {
+                        mode: "all" as const,
+                        label: "All jobs",
+                        count: recordsByCollection.jobs.length,
+                      },
+                    ].map((option) => (
+                      <button
+                        key={option.mode}
+                        type="button"
+                        onClick={() => setJobListMode(option.mode)}
+                        className={cn(
+                          "flex min-h-11 items-center justify-between rounded-xl border px-3 text-sm font-semibold transition",
+                          jobListMode === option.mode
+                            ? "border-teal-300 bg-teal-50 text-teal-800"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-teal-200 hover:bg-slate-100",
+                        )}
+                      >
+                        <span>{option.label}</span>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                            jobListMode === option.mode
+                              ? "bg-white text-teal-700"
+                              : "bg-slate-100 text-slate-600",
+                          )}
+                        >
+                          {option.count}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
                 <div className="rounded-lg bg-slate-100 px-3 py-2">
-                  {filteredRecords.length} shown
+                  {displayedRecordsCount} shown
                 </div>
                 <div className="rounded-lg bg-slate-100 px-3 py-2">
                   {collection === "jobs" ? recordsByCollection.jobs.length : recordsByCollection.blogs.length} total
@@ -1188,46 +1427,55 @@ export default function MobileAdminApp({
                 </p>
               ) : null}
 
-              {!recordsLoading[collection] && filteredRecords.length === 0 ? (
+              {!recordsLoading[collection] &&
+              collection !== "jobs" &&
+              filteredRecords.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
                   No {collection} found for this filter.
                 </p>
               ) : null}
 
-              {filteredRecords.map((record) => (
-                <button
-                  key={`${collection}-${record.slug}`}
-                  type="button"
-                  onClick={() => openExistingEntry(collection, record.slug)}
-                  className={cn(
-                    "block w-full rounded-[1rem] border px-4 py-3 text-left transition",
-                    editorOpen && originalSlug === record.slug
-                      ? "border-teal-300 bg-teal-50 shadow-sm"
-                      : "border-slate-200 bg-white shadow-[0_10px_24px_-24px_rgba(15,23,42,0.45)] hover:border-teal-200 hover:bg-slate-50",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{record.title || "Untitled"}</p>
-                      <p className="mt-1 text-xs text-slate-500">{formatRecordMeta(record)}</p>
-                    </div>
-                    <span
-                      className={cn(
-                        "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
-                        record.draft
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-emerald-100 text-emerald-800",
+              {collection === "jobs" && jobListMode !== "all" ? (
+                <div className="space-y-4">
+                  {visibleJobSections.map((section) => (
+                    <div key={section.id} className="space-y-2">
+                      <div className="flex items-center justify-between gap-3 px-1">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                            {section.title}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">{section.description}</p>
+                        </div>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                          {section.records.length}
+                        </span>
+                      </div>
+
+                      {section.records.length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+                          {section.emptyMessage}
+                        </p>
+                      ) : (
+                        section.records.map((record) => renderRecordButton(record))
                       )}
-                    >
-                      {record.draft ? "Draft" : "Live"}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                    <span>{record.date || "No date"}</span>
-                    <span>{record.slug}</span>
-                  </div>
-                </button>
-              ))}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {!recordsLoading[collection] &&
+                  collection === "jobs" &&
+                  filteredJobRecords.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+                      No jobs found for this filter.
+                    </p>
+                  ) : null}
+
+                  {collection === "jobs"
+                    ? filteredJobRecords.map((record) => renderRecordButton(record))
+                    : filteredRecords.map((record) => renderRecordButton(record))}
+                </>
+              )}
             </div>
           </aside>
 
