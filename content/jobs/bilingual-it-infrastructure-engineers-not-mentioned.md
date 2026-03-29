@@ -4,7 +4,7 @@ slug: "bilingual-it-infrastructure-engineers-not-mentioned"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
 draft: false
-company: "Not Mentioned"
+company: "capgemini"
 location: "Gurgaon, Navi Mumbai, New Delhi, Coimbatore, Delhi, Mumbai, Noida, Pune, Chennai, Kolkata, Bangalore"
 workMode: ""
 employmentType: "Full-time"
