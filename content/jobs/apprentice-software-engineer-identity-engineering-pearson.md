@@ -43,7 +43,8 @@ skills:
   - "HTTP/S)"
   - "Cloud platform knowledge (Azure preferred)"
   - "Interest in cybersecurity or identity engineering"
-responsibilities: []
+responsibilities:
+  - "[]"
 workingDays: "Monday to Friday"
 jobTiming: "Approximately 40 hours per week"
 applyLink: "https://pearson.jobs/chennai-ind/apprentice-software-engineer/0FF522A30BA34BFD8F2E84CD31477F0A/job/"
