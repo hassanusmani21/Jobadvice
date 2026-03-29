@@ -359,14 +359,6 @@ export default function MobileAdminApp({
             ? "Search all jobs"
             : "Search jobs from the last 2 days"
       : `Search ${collection}`;
-  const jobFilterSummary =
-    jobListMode === "today"
-      ? "Showing jobs touched today"
-      : jobListMode === "yesterday"
-        ? "Showing jobs touched yesterday"
-        : jobListMode === "all"
-          ? "Showing the full jobs archive"
-          : "Showing jobs from today and yesterday";
   const mobilePublishingError = mobilePublishingReady
     ? ""
     : "Admin publishing is not configured on this deployment. Set ADMIN_CONTENTS_TOKEN in production and redeploy to enable save, upload, and delete.";
@@ -1386,19 +1378,9 @@ export default function MobileAdminApp({
 
               {collection === "jobs" ? (
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Quick Access
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        Uses the last saved date, so republished jobs come back into Today.
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 shadow-sm">
-                      {jobFilterSummary}
-                    </span>
-                  </div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Quick Access
+                  </p>
 
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {[
