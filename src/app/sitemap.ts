@@ -6,7 +6,18 @@ import { siteUrl } from "@/lib/site";
 export const dynamic = "force-static";
 export const revalidate = 60 * 60;
 
-const staticRoutes = ["/", "/jobs", "/blog", "/about", "/contact", "/privacy-policy"];
+const staticRoutes = [
+  "/",
+  "/jobs",
+  "/jobs/freshers",
+  "/jobs/internships",
+  "/jobs/experienced",
+  "/jobs/remote",
+  "/blog",
+  "/about",
+  "/contact",
+  "/privacy-policy",
+];
 const toAbsoluteUrl = (route: string) => {
   const normalizedRoute = route === "/" ? "/" : `${route.replace(/\/+$/, "")}/`;
   return `${siteUrl}${normalizedRoute}`;

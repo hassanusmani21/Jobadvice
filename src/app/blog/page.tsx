@@ -11,9 +11,9 @@ import {
 import { siteName, siteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Blog",
+  title: "Career Advice, Interview Tips, and Hiring News",
   description:
-    "Read career advice, hiring news, interview preparation tips, salary insights, and practical tech updates for job seekers in India.",
+    "Read career advice, interview tips, hiring news, salary insights, and practical job-search guidance for students and early-career job seekers in India.",
   alternates: {
     canonical: "/blog/",
   },

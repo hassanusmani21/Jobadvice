@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
+import Link from "@/components/AppLink";
 import JobCard from "@/components/JobCard";
 import { getAllJobs, type JobPost } from "@/lib/jobs";
+import {
+  getAllJobSegmentConfigs,
+  getJobSegmentConfig,
+  getJobsForSegment,
+  isJobSegmentSlug,
+} from "@/lib/jobSegments";
 
 export const metadata: Metadata = {
-  title: "Jobs",
+  title: "Verified Jobs, Fresher Jobs, and Internships in India",
   description:
-    "Browse all job updates on JobAdvice including company, location, and role details.",
+    "Browse verified jobs in India including fresher jobs, internships, experienced roles, and remote-friendly openings with direct apply links.",
   alternates: {
     canonical: "/jobs/",
   },
@@ -19,6 +26,7 @@ type JobsPageProps = {
     type?: string | string[];
     status?: string | string[];
     sort?: string | string[];
+    segment?: string | string[];
   };
 };
 
@@ -77,19 +85,36 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const typeFilter = toSingleValue(searchParams?.type);
   const statusFilter = toSingleValue(searchParams?.status);
   const sortFilter = toSingleValue(searchParams?.sort) || "newest";
+  const rawSegmentFilter = toSingleValue(searchParams?.segment).toLowerCase();
+  const segmentFilter = isJobSegmentSlug(rawSegmentFilter) ? rawSegmentFilter : "";
+  const jobsForCurrentSegment = segmentFilter
+    ? getJobsForSegment(jobs, segmentFilter)
+    : jobs;
+  const activeSegment = segmentFilter ? getJobSegmentConfig(segmentFilter) : null;
+  const segmentCards = getAllJobSegmentConfigs().map((segment) => ({
+    ...segment,
+    count: getJobsForSegment(jobs, segment.slug).length,
+  }));
 
-  const locationOptions = toUniqueSortedValues(jobs.map((job) => job.location));
+  const locationOptions = toUniqueSortedValues(
+    jobsForCurrentSegment.map((job) => job.location),
+  );
   const typeOptions = toUniqueSortedValues(
-    jobs.map((job) => job.employmentType || job.jobType || ""),
+    jobsForCurrentSegment.map((job) => job.employmentType || job.jobType || ""),
   );
 
-  const filteredJobs = jobs.filter((job) => {
+  const filteredJobs = jobsForCurrentSegment.filter((job) => {
     if (query && !matchesSearch(job, query)) {
       return false;
     }
 
-    if (locationFilter && job.location.toLowerCase() !== locationFilter.toLowerCase()) {
-      return false;
+    if (locationFilter) {
+      const normalizedLocation = job.location.toLowerCase();
+      const normalizedLocationFilter = locationFilter.toLowerCase();
+
+      if (!normalizedLocation.includes(normalizedLocationFilter)) {
+        return false;
+      }
     }
 
     const employmentType = (job.employmentType || job.jobType || "").toLowerCase();
@@ -127,7 +152,9 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     return new Date(secondJob.date).getTime() - new Date(firstJob.date).getTime();
   });
 
-  const hasActiveFilters = Boolean(query || locationFilter || typeFilter || statusFilter);
+  const hasActiveFilters = Boolean(
+    query || locationFilter || typeFilter || statusFilter || segmentFilter,
+  );
 
   return (
     <section className="space-y-6">
@@ -139,6 +166,21 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             Explore the latest job openings with complete role information and direct application
             links.
           </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {segmentCards.map((segment) => (
+              <Link
+                key={segment.slug}
+                href={segment.href}
+                className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 text-left shadow-sm transition hover:border-teal-200 hover:bg-teal-50/40"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  {segment.kicker}
+                </p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">{segment.label}</p>
+                <p className="mt-1 text-sm text-slate-600">{segment.count} live openings</p>
+              </Link>
+            ))}
+          </div>
           <form action="/jobs" method="get" className="filter-panel mt-4 sm:grid-cols-2 xl:grid-cols-4">
             <label htmlFor="jobs-search" className="sr-only">
               Search jobs
@@ -176,6 +218,18 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               ))}
             </select>
             <select
+              name="segment"
+              defaultValue={segmentFilter || "all"}
+              className="form-control"
+            >
+              <option value="all">All paths</option>
+              {segmentCards.map((segment) => (
+                <option key={segment.slug} value={segment.slug}>
+                  {segment.label}
+                </option>
+              ))}
+            </select>
+            <select
               name="status"
               defaultValue={statusFilter}
               className="form-control"
@@ -207,6 +261,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
         <p className="px-1 text-sm text-slate-600">
           {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
+          {activeSegment ? (
+            <>
+              {" "}
+              in <span className="font-semibold text-slate-800">{activeSegment.label}</span>
+            </>
+          ) : null}
           {query ? (
             <>
               {" "}
