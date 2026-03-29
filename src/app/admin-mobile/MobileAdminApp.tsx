@@ -13,6 +13,7 @@ import {
   createEmptyJobEntry,
   getTodayDateString,
 } from "@/lib/adminMobile";
+import { siteName, siteUrl } from "@/lib/site";
 
 type AdminAppProps = {
   adminEmail: string;
@@ -31,6 +32,14 @@ type JobListSection = {
   description: string;
   emptyMessage: string;
   records: AdminMobileJobRecord[];
+};
+type PublishedJobShare = {
+  company: string;
+  jobUrl: string;
+  summary: string;
+  title: string;
+  whatsappShareUrl: string;
+  whatsappText: string;
 };
 
 const listToText = (items: string[]) => items.join("\n");
@@ -96,6 +105,45 @@ const filterRecordsByQuery = <T extends AdminMobileRecord>(records: T[], query: 
 
     return haystack.includes(query);
   });
+};
+
+const buildJobShareSummary = (entry: AdminMobileJobEntry) => {
+  const parts = [
+    entry.location,
+    entry.workMode,
+    entry.employmentType,
+    entry.experience,
+    entry.salary,
+  ]
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  return parts.length > 0
+    ? parts.slice(0, 4).join(" | ")
+    : "Verified job opening with direct apply details.";
+};
+
+const buildPublishedJobShare = (entry: AdminMobileJobEntry): PublishedJobShare => {
+  const normalizedSiteUrl = siteUrl.replace(/\/+$/, "");
+  const jobUrl = `${normalizedSiteUrl}/jobs/${entry.slug}/`;
+  const summary = buildJobShareSummary(entry);
+  const whatsappText = [
+    `${entry.title} at ${entry.company}`,
+    summary,
+    `Read full details and apply here: ${jobUrl}`,
+    `Published on ${siteName}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return {
+    company: entry.company,
+    jobUrl,
+    summary,
+    title: entry.title,
+    whatsappShareUrl: `https://wa.me/?text=${encodeURIComponent(whatsappText)}`,
+    whatsappText,
+  };
 };
 
 const defaultRecordsState: RecordsState = {
@@ -266,6 +314,7 @@ export default function MobileAdminApp({
   const [recordsError, setRecordsError] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [jobListMode, setJobListMode] = useState<JobListMode>("recent");
+  const [publishedJobShare, setPublishedJobShare] = useState<PublishedJobShare | null>(null);
   const [editorEntry, setEditorEntry] = useState<AdminMobileEntry>(buildEmptyEntry(initialCollection));
   const [editorOpen, setEditorOpen] = useState(Boolean(initialSlug));
   const [entryLoading, setEntryLoading] = useState(Boolean(initialSlug));
@@ -616,6 +665,7 @@ export default function MobileAdminApp({
     options?: {
       notice?: string;
       clearExtractorInputs?: boolean;
+      preservePublishedJobShare?: boolean;
       resetSearch?: boolean;
       nextJobListMode?: JobListMode;
     },
@@ -630,6 +680,10 @@ export default function MobileAdminApp({
     setUploadedAssetUrl("");
     setExtractError("");
     setExtractNotice("");
+
+    if (!(options?.preservePublishedJobShare ?? false)) {
+      setPublishedJobShare(null);
+    }
 
     if (options?.clearExtractorInputs ?? false) {
       setExtractSourceUrl("");
@@ -655,6 +709,7 @@ export default function MobileAdminApp({
     setEditorOpen(true);
     setFormError("");
     setFormNotice("");
+    setPublishedJobShare(null);
     setExtractError("");
     setExtractNotice("");
 
@@ -861,10 +916,12 @@ export default function MobileAdminApp({
         };
       });
 
-      if (!draft && collection === "jobs") {
+      if (!draft && collection === "jobs" && result.entry.collection === "jobs") {
+        setPublishedJobShare(buildPublishedJobShare(result.entry));
         resetEditorForNewEntry("jobs", {
           notice: "Published successfully. New job form is ready.",
           clearExtractorInputs: true,
+          preservePublishedJobShare: true,
           resetSearch: true,
           nextJobListMode: "recent",
         });
@@ -1022,6 +1079,18 @@ export default function MobileAdminApp({
     setExtractSourceText("");
     setExtractError("");
     setExtractNotice("");
+  };
+  const copyPublishedJobShare = async () => {
+    if (!publishedJobShare || !navigator.clipboard) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(publishedJobShare.whatsappText);
+      setFormNotice("WhatsApp message copied.");
+    } catch {
+      setFormNotice("Copy failed. You can still open WhatsApp directly.");
+    }
   };
 
   const activeTitle =
@@ -1341,6 +1410,7 @@ export default function MobileAdminApp({
                     onClick={() => {
                       setCollection(item);
                       setSearchValue("");
+                      setPublishedJobShare(null);
                       setExtractError("");
                       setExtractNotice("");
                       if (editorEntry.collection !== item) {
@@ -1597,6 +1667,73 @@ export default function MobileAdminApp({
                 <p className="mt-4 rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                   {formNotice}
                 </p>
+              ) : null}
+
+              {publishedJobShare ? (
+                <div className="mt-4 rounded-[1rem] border border-teal-200 bg-teal-50/70 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
+                        WhatsApp Share
+                      </p>
+                      <h3 className="mt-1 text-base font-semibold text-slate-900">
+                        {publishedJobShare.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-600">{publishedJobShare.company}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPublishedJobShare(null)}
+                      className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  <p className="mt-3 text-sm text-slate-700">{publishedJobShare.summary}</p>
+
+                  <div className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                    <p className="font-semibold text-slate-900">Job link</p>
+                    <a
+                      href={publishedJobShare.jobUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 block break-all text-teal-700 underline underline-offset-2"
+                    >
+                      {publishedJobShare.jobUrl}
+                    </a>
+                  </div>
+
+                  <label className="mt-3 block">
+                    <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      WhatsApp message
+                    </span>
+                    <textarea
+                      readOnly
+                      value={publishedJobShare.whatsappText}
+                      rows={7}
+                      className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                    />
+                  </label>
+
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={copyPublishedJobShare}
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    >
+                      Copy Message
+                    </button>
+                    <a
+                      href={publishedJobShare.whatsappShareUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+                    >
+                      Open WhatsApp
+                    </a>
+                  </div>
+                </div>
               ) : null}
 
               {entryLoading ? (
