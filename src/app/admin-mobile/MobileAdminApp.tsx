@@ -619,16 +619,42 @@ export default function MobileAdminApp({
       });
   }, [adminLoginUrl, initialCollection, initialSlug]);
 
-  const openNewEntry = (nextCollection: AdminCollection) => {
+  const resetEditorForNewEntry = (
+    nextCollection: AdminCollection,
+    options?: {
+      notice?: string;
+      clearExtractorInputs?: boolean;
+      resetSearch?: boolean;
+      nextJobListMode?: JobListMode;
+    },
+  ) => {
     setCollection(nextCollection);
     setEditorEntry(buildEmptyEntry(nextCollection));
     setOriginalSlug("");
+    setEntryLoading(false);
+    setEditorOpen(true);
     setFormError("");
-    setFormNotice("");
+    setFormNotice(options?.notice || "");
+    setUploadedAssetUrl("");
     setExtractError("");
     setExtractNotice("");
-    setUploadedAssetUrl("");
-    setEditorOpen(true);
+
+    if (options?.clearExtractorInputs ?? false) {
+      setExtractSourceUrl("");
+      setExtractSourceText("");
+    }
+
+    if (options?.resetSearch) {
+      setSearchValue("");
+    }
+
+    if (nextCollection === "jobs" && options?.nextJobListMode) {
+      setJobListMode(options.nextJobListMode);
+    }
+  };
+
+  const openNewEntry = (nextCollection: AdminCollection) => {
+    resetEditorForNewEntry(nextCollection);
   };
 
   const openExistingEntry = async (nextCollection: AdminCollection, slug: string) => {
@@ -830,9 +856,6 @@ export default function MobileAdminApp({
       }
 
       const nextRecord = result.record;
-      setEditorEntry(result.entry);
-      setOriginalSlug(result.entry.slug);
-      setFormNotice(draft ? "Draft saved." : "Published successfully.");
       setRecordsByCollection((current) => {
         const existingRecords = current[collection].filter(
           (record) => record.slug !== originalSlug && record.slug !== nextRecord.slug,
@@ -845,6 +868,20 @@ export default function MobileAdminApp({
           ),
         };
       });
+
+      if (!draft && collection === "jobs") {
+        resetEditorForNewEntry("jobs", {
+          notice: "Published successfully. New job form is ready.",
+          clearExtractorInputs: true,
+          resetSearch: true,
+          nextJobListMode: "recent",
+        });
+        return;
+      }
+
+      setEditorEntry(result.entry);
+      setOriginalSlug(result.entry.slug);
+      setFormNotice(draft ? "Draft saved." : "Published successfully.");
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Unable to save entry.");
     } finally {
@@ -1147,7 +1184,7 @@ export default function MobileAdminApp({
           className={cn(
             isDesktop
               ? "flex flex-wrap gap-2"
-              : "grid grid-cols-2 gap-2",
+              : "grid grid-cols-3 gap-2",
           )}
         >
           <button
@@ -1155,36 +1192,46 @@ export default function MobileAdminApp({
             disabled={extractMode !== ""}
             onClick={() => runAutoExtract("url")}
             className={cn(
-              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition",
-              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-3 text-[12px]",
+              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition whitespace-nowrap",
+              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-2 text-[11px]",
               extractMode !== ""
                 ? "cursor-not-allowed bg-slate-300"
                 : "bg-slate-900 hover:bg-slate-800",
             )}
           >
-            {extractMode === "url" ? "Fetching URL..." : "Fetch URL + Extract"}
+            {extractMode === "url"
+              ? isDesktop
+                ? "Fetching URL..."
+                : "Fetching..."
+              : isDesktop
+                ? "Fetch URL + Extract"
+                : "Fetch URL"}
           </button>
           <button
             type="button"
             disabled={extractMode !== ""}
             onClick={() => runAutoExtract("text")}
             className={cn(
-              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition",
-              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-3 text-[12px]",
+              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition whitespace-nowrap",
+              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-2 text-[11px]",
               extractMode !== ""
                 ? "cursor-not-allowed bg-teal-300"
                 : "bg-teal-700 hover:bg-teal-800",
             )}
           >
-            {extractMode === "text" ? "Extracting..." : "Auto Extract Text"}
+            {extractMode === "text"
+              ? "Extracting..."
+              : isDesktop
+                ? "Auto Extract Text"
+                : "Extract Text"}
           </button>
           <button
             type="button"
             disabled={extractMode !== ""}
             onClick={resetExtractorInputs}
             className={cn(
-              "inline-flex items-center justify-center rounded-xl border font-semibold transition",
-              isDesktop ? "min-h-9 px-3 text-[12px]" : "col-span-2 min-h-10 px-3 text-[12px]",
+              "inline-flex items-center justify-center rounded-xl border font-semibold transition whitespace-nowrap",
+              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-2 text-[11px]",
               extractMode !== ""
                 ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                 : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
