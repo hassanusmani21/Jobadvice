@@ -1857,18 +1857,6 @@ export default function MobileAdminApp({
                         </label>
                       </div>
 
-                      <label className="block">
-                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Job details markdown
-                        </span>
-                        <textarea
-                          value={editorEntry.body}
-                          onChange={(event) => updateEntry({ body: event.target.value })}
-                          rows={12}
-                          className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          placeholder="Paste the full job description or notes here."
-                        />
-                      </label>
                     </>
                   ) : (
                     <>
