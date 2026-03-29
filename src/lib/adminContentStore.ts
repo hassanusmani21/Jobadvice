@@ -9,6 +9,7 @@ import {
   type AdminMobileJobRecord,
   getTodayDateString,
 } from "@/lib/adminMobile";
+import { findDuplicateJobs } from "@/lib/adminJobs";
 import { toIsoDateString } from "@/lib/dateParsing";
 import { toContentSlug } from "@/lib/slug";
 
@@ -28,6 +29,7 @@ const repoDirectories: Record<AdminCollection, string> = {
 const uploadDirectory = path.join(process.cwd(), "public", "uploads");
 const uploadRepoDirectory = "public/uploads";
 const draftFieldFallbackPrefix = "draft";
+const blockingDuplicateSimilarityScore = 88;
 
 type ParsedFrontMatterDocument = {
   body: string;
@@ -901,6 +903,79 @@ const validateBlogEntry = (entry: AdminMobileBlogEntry) => {
   return issues;
 };
 
+const formatDuplicateMatchDetails = (match: {
+  company: string;
+  date: string;
+  reasons: string[];
+  score: number;
+  slug: string;
+  title: string;
+  updatedAt: string;
+}) => {
+  const matchDate = match.updatedAt || match.date;
+  const reasonsSuffix =
+    match.reasons.length > 0 ? ` Reasons: ${match.reasons.join(", ")}.` : "";
+
+  return `"${match.title}" at ${match.company} [${match.slug}]` +
+    ` (${match.score}% match${matchDate ? `, updated ${matchDate}` : ""}).${reasonsSuffix}`;
+};
+
+const getBlockingJobDuplicateIssues = async (
+  entry: AdminMobileJobEntry,
+  originalSlug?: string,
+) => {
+  if (!entry.title && !entry.company && !entry.applyLink) {
+    return [] as string[];
+  }
+
+  const duplicateResult = await findDuplicateJobs({
+    title: entry.title,
+    company: entry.company,
+    applyLink: entry.applyLink,
+    slug: originalSlug || entry.slug,
+  });
+
+  if (duplicateResult.exactMatches.length > 0) {
+    const issues = [
+      "A job with the same title and company already exists. Open and update the existing entry instead of creating another copy.",
+    ];
+
+    for (const match of duplicateResult.exactMatches.slice(0, 3)) {
+      issues.push(`Existing job: ${formatDuplicateMatchDetails(match)}`);
+    }
+
+    const remainingCount = duplicateResult.exactMatches.length - 3;
+    if (remainingCount > 0) {
+      issues.push(`There ${remainingCount === 1 ? "is" : "are"} ${remainingCount} more matching job${remainingCount === 1 ? "" : "s"} in the archive.`);
+    }
+
+    return issues;
+  }
+
+  const blockingSimilarMatches = duplicateResult.similarMatches.filter(
+    (match) => match.score >= blockingDuplicateSimilarityScore,
+  );
+
+  if (blockingSimilarMatches.length === 0) {
+    return [] as string[];
+  }
+
+  const issues = [
+    "This job looks too similar to an existing entry. Review the matching post before saving another version.",
+  ];
+
+  for (const match of blockingSimilarMatches.slice(0, 3)) {
+    issues.push(`Possible duplicate: ${formatDuplicateMatchDetails(match)}`);
+  }
+
+  const remainingCount = blockingSimilarMatches.length - 3;
+  if (remainingCount > 0) {
+    issues.push(`There ${remainingCount === 1 ? "is" : "are"} ${remainingCount} more similar job${remainingCount === 1 ? "" : "s"} in the archive.`);
+  }
+
+  return issues;
+};
+
 const serializeJobEntry = (entry: AdminMobileJobEntry) =>
   serializeEntryDocument(
     [
@@ -1068,7 +1143,13 @@ export const saveAdminEntry = async ({
       : normalizeBlogEntry(entry, normalizedOriginalSlug);
   const issues =
     normalizedEntry.collection === "jobs"
-      ? validateJobEntry(normalizedEntry)
+      ? [
+          ...validateJobEntry(normalizedEntry),
+          ...(await getBlockingJobDuplicateIssues(
+            normalizedEntry,
+            normalizedOriginalSlug || normalizedEntry.slug,
+          )),
+        ]
       : validateBlogEntry(normalizedEntry);
 
   if (issues.length > 0) {
