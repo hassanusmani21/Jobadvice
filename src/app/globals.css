@@ -132,6 +132,159 @@ body {
   box-shadow: var(--hero-shadow);
 }
 
+.blog-hero-summary {
+  max-width: 40rem;
+  color: #526171;
+  font-size: 0.9rem;
+  line-height: 1.58;
+  letter-spacing: -0.003em;
+  text-wrap: pretty;
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.blog-hero-meta-card {
+  border-radius: 0.95rem;
+  box-shadow:
+    0 12px 24px -22px rgba(15, 23, 42, 0.14),
+    0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  backdrop-filter: blur(10px);
+  transition:
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 220ms ease;
+}
+
+.blog-hero-meta-card:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 16px 28px -22px rgba(15, 23, 42, 0.17),
+    0 4px 10px -8px rgba(15, 23, 42, 0.05);
+}
+
+.blog-hero-meta-card-author {
+  background: linear-gradient(
+    135deg,
+    rgba(244, 253, 250, 0.98),
+    rgba(238, 252, 246, 0.94) 56%,
+    rgba(242, 247, 255, 0.92)
+  );
+}
+
+.blog-hero-meta-card-date {
+  background: linear-gradient(
+    135deg,
+    rgba(249, 250, 252, 0.98),
+    rgba(242, 247, 255, 0.94)
+  );
+}
+
+.blog-hero-meta-card-action {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.98),
+    rgba(255, 252, 241, 0.94)
+  );
+}
+
+.blog-hero-meta-avatar-frame {
+  border-radius: 0.875rem;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.72), rgba(56, 189, 248, 0.66));
+  box-shadow: 0 8px 18px -16px rgba(15, 23, 42, 0.24);
+  transition:
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.blog-hero-meta-avatar-shell {
+  border-radius: 0.75rem;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.blog-hero-meta-name,
+.blog-hero-meta-date {
+  color: #0f172a;
+}
+
+.blog-hero-meta-icon-shell {
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 6px 16px -16px rgba(15, 23, 42, 0.14);
+}
+
+.blog-hero-meta-icon {
+  display: inline-flex;
+  color: #526171;
+}
+
+.blog-hero-meta-chip {
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 8px 18px -16px rgba(15, 23, 42, 0.14);
+  transition:
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 220ms ease;
+}
+
+.blog-hero-meta-chip-primary {
+  background: linear-gradient(135deg, #0f172a, #134e4a);
+  box-shadow: 0 12px 20px -16px rgba(15, 23, 42, 0.34);
+}
+
+.blog-hero-meta-chip-secondary,
+.blog-hero-meta-chip-muted {
+  color: #334155;
+}
+
+.blog-hero-meta-card:hover .blog-hero-meta-avatar-frame {
+  box-shadow: 0 12px 22px -16px rgba(15, 23, 42, 0.28);
+}
+
+.blog-hero-meta-chip-primary:hover,
+.blog-hero-meta-chip-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 22px -16px rgba(15, 23, 42, 0.22);
+}
+
+.blog-hero-thumbnail {
+  width: min(100%, 41.5rem);
+  margin-inline: auto;
+  border: 1px solid rgba(226, 232, 240, 0.72);
+  border-radius: 1.5rem;
+  background: rgba(248, 250, 252, 0.92);
+  box-shadow:
+    0 14px 30px -26px rgba(15, 23, 42, 0.16),
+    0 2px 6px -5px rgba(15, 23, 42, 0.05);
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    background 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.blog-hero-thumbnail:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 18px 34px -26px rgba(15, 23, 42, 0.18),
+    0 4px 10px -8px rgba(15, 23, 42, 0.07);
+}
+
+.blog-hero-thumbnail-image {
+  transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.blog-hero-thumbnail:hover .blog-hero-thumbnail-image {
+  transform: scale(1.006);
+}
+
 .job-card-surface,
 .job-detail-header-surface,
 .job-related-surface {
@@ -1146,6 +1299,89 @@ html[data-theme="dark"] .soft-note {
   border-color: rgba(51, 65, 85, 0.88);
   background: rgba(15, 23, 42, 0.72);
   color: #cbd5e1;
+}
+
+html[data-theme="dark"] .blog-hero-meta-card {
+  box-shadow:
+    0 14px 28px -22px rgba(2, 6, 23, 0.52),
+    0 1px 2px -1px rgba(148, 163, 184, 0.03);
+}
+
+html[data-theme="dark"] .blog-hero-summary {
+  color: #9aa9bd;
+}
+
+html[data-theme="dark"] .blog-hero-meta-card-author {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.94),
+    rgba(13, 148, 136, 0.14) 52%,
+    rgba(15, 23, 42, 0.9)
+  );
+}
+
+html[data-theme="dark"] .blog-hero-meta-card-date {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.94),
+    rgba(14, 165, 233, 0.12),
+    rgba(15, 23, 42, 0.9)
+  );
+}
+
+html[data-theme="dark"] .blog-hero-meta-card-action {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.94),
+    rgba(245, 158, 11, 0.12),
+    rgba(15, 23, 42, 0.9)
+  );
+}
+
+html[data-theme="dark"] .blog-hero-meta-avatar-shell {
+  background: rgba(15, 23, 42, 0.92);
+}
+
+html[data-theme="dark"] .blog-hero-meta-name,
+html[data-theme="dark"] .blog-hero-meta-date {
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .blog-hero-meta-icon-shell {
+  background: rgba(30, 41, 59, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 16px -14px rgba(2, 6, 23, 0.42);
+}
+
+html[data-theme="dark"] .blog-hero-meta-icon {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .blog-hero-meta-chip {
+  background: rgba(30, 41, 59, 0.88);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 18px -16px rgba(2, 6, 23, 0.44);
+}
+
+html[data-theme="dark"] .blog-hero-meta-chip-secondary,
+html[data-theme="dark"] .blog-hero-meta-chip-muted {
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .blog-hero-thumbnail {
+  border-color: rgba(51, 65, 85, 0.86);
+  background: rgba(15, 23, 42, 0.9);
+  box-shadow:
+    0 16px 32px -26px rgba(2, 6, 23, 0.42),
+    0 2px 8px -6px rgba(2, 6, 23, 0.24);
+}
+
+html[data-theme="dark"] .blog-hero-thumbnail:hover {
+  box-shadow:
+    0 20px 36px -26px rgba(2, 6, 23, 0.46),
+    0 4px 10px -8px rgba(2, 6, 23, 0.3);
 }
 
 @media (min-width: 640px) {

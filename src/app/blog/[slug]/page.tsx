@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
+import BlogHeroMetaStrip from "@/components/BlogHeroMetaStrip";
 import Image from "next/image";
 import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
@@ -17,7 +18,14 @@ import {
 } from "@/lib/markdown";
 import { toDisplayImageSrc } from "@/lib/images";
 import { toContentSlug } from "@/lib/slug";
-import { organizationId, siteLogoUrl, siteName, siteUrl } from "@/lib/site";
+import {
+  organizationId,
+  siteLogoUrl,
+  siteName,
+  siteUrl,
+  siteVerifiedPublisherName,
+  siteVerifiedPublisherRole,
+} from "@/lib/site";
 
 type BlogDetailPageProps = {
   params: {
@@ -100,7 +108,7 @@ const toBlogJsonLd = (blog: BlogPost) => ({
   dateModified: blog.updatedAt,
   ...(blog.topic ? { articleSection: blog.topic } : {}),
   keywords: [blog.topic, ...blog.tags].filter(Boolean).join(", "),
-  author: toPersonJsonLd(blog.author || siteName, blog.authorRole),
+  author: toPersonJsonLd(siteVerifiedPublisherName, siteVerifiedPublisherRole),
   ...(blog.reviewedBy
     ? {
         reviewedBy: toPersonJsonLd(blog.reviewedBy, blog.reviewerRole),
@@ -322,6 +330,101 @@ const renderInlineMarkdown = (text: string): ReactNode => {
   return nodes.length > 0 ? nodes : normalizedText;
 };
 
+const toSpeechPlainText = (value: string) =>
+  decodeMarkdownEscapes(value)
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
+    .replace(/https?:\/\/[^\s<]+/gi, "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/_([^_]+)_/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const buildArticleListenText = (
+  blog: BlogPost,
+  blocks: ArticleRenderBlock[],
+) => {
+  const sections = [blog.title, blog.summary]
+    .map((value) => toSpeechPlainText(value || ""))
+    .filter(Boolean);
+
+  for (const block of blocks) {
+    if (block.type === "rule") {
+      continue;
+    }
+
+    if (block.type === "heading") {
+      const headingText = toSpeechPlainText(block.text);
+      if (headingText) {
+        sections.push(headingText);
+      }
+      continue;
+    }
+
+    if (block.type === "paragraph") {
+      const paragraphText = toSpeechPlainText(block.text);
+      if (paragraphText) {
+        sections.push(paragraphText);
+      }
+      continue;
+    }
+
+    if (block.type === "callout") {
+      const calloutText = toSpeechPlainText(block.text);
+      if (calloutText) {
+        sections.push(`${block.tone}. ${calloutText}`);
+      }
+      continue;
+    }
+
+    if (block.type === "list") {
+      const listText = block.items
+        .map((item, itemIndex) => {
+          const itemText = toSpeechPlainText(item);
+          if (!itemText) {
+            return "";
+          }
+
+          return block.ordered ? `${itemIndex + 1}. ${itemText}` : itemText;
+        })
+        .filter(Boolean)
+        .join(" ");
+
+      if (listText) {
+        sections.push(listText);
+      }
+      continue;
+    }
+
+    const tableText = block.rows
+      .map((row) =>
+        row
+          .map((cell, cellIndex) => {
+            const label = toSpeechPlainText(block.headers[cellIndex] || "");
+            const cellText = toSpeechPlainText(cell);
+
+            if (!cellText) {
+              return "";
+            }
+
+            return label ? `${label}: ${cellText}` : cellText;
+          })
+          .filter(Boolean)
+          .join(". "),
+      )
+      .filter(Boolean)
+      .join(". ");
+
+    if (tableText) {
+      sections.push(tableText);
+    }
+  }
+
+  return sections.join("\n\n");
+};
+
 const buildArticleStructure = (blocks: MarkdownBlock[], blogTitle: string) => {
   const anchorCounts = new Map<string, number>();
   const articleBlocks: ArticleRenderBlock[] = [];
@@ -460,6 +563,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const visibleArticleBlocks = articleBlocks.filter(
     (block) => !shouldHideCtaParagraph(block, cta),
   );
+  const articleListenText = buildArticleListenText(blog, visibleArticleBlocks);
   const showTableOfContents =
     outline.length >= 3 || blog.readingTimeMinutes >= 5;
   const structuredData = [toBlogJsonLd(blog), toBreadcrumbJsonLd(blog)];
@@ -475,71 +579,36 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
       />
 
       <article className="space-y-6 lg:col-span-7">
-        <header className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-8">
-          <nav aria-label="Breadcrumb" className="overflow-hidden text-xs text-slate-500">
-            <ol className="flex min-w-0 flex-wrap items-center gap-2">
-              <li>
-                <Link href="/" className="transition hover:text-slate-900">
-                  Home
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li>
-                <Link href="/blog" className="transition hover:text-slate-900">
-                  Blog
-                </Link>
-              </li>
-              <li aria-hidden="true">/</li>
-              <li className="min-w-0 max-w-full break-words text-slate-700">{blog.title}</li>
-            </ol>
-          </nav>
+        <header className="fade-up card-surface rounded-3xl px-4 py-4 sm:px-6 sm:py-5">
+          <h1 className="break-words font-serif text-[1.28rem] leading-[1.12] tracking-[-0.02em] text-slate-900 sm:text-[1.55rem] lg:text-[1.72rem]">
+            {blog.title}
+          </h1>
+
+          {blog.summary ? (
+            <p className="blog-hero-summary mt-2">
+              {blog.summary}
+            </p>
+          ) : null}
+
+          <BlogHeroMetaStrip
+            publishedDateLabel={formatBlogDate(blog.date)}
+            articleListenText={articleListenText}
+            readingTimeMinutes={blog.readingTimeMinutes}
+          />
 
           {coverImageSrc ? (
-            <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+            <div className="blog-hero-thumbnail mt-3 overflow-hidden">
               <Image
                 src={coverImageSrc}
                 alt={blog.title}
                 width={1600}
                 height={900}
-                className="h-56 w-full object-cover sm:h-72"
+                className="blog-hero-thumbnail-image block h-auto w-full"
                 priority
                 sizes="(min-width: 1024px) 70vw, 100vw"
               />
             </div>
           ) : null}
-
-          {blog.topic ? (
-            <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-teal-700">
-              {blog.topic}
-            </p>
-          ) : null}
-
-          <h1 className="mt-2 break-words font-serif text-[1.5rem] leading-[1.2] text-slate-900 sm:text-[1.875rem]">
-            {blog.title}
-          </h1>
-
-          {blog.summary ? (
-            <p className="mt-4 text-sm leading-7 text-slate-700 sm:text-base">
-              {blog.summary}
-            </p>
-          ) : null}
-
-          <div className="mt-5 flex flex-wrap gap-2 text-[11px] text-slate-600 sm:text-xs">
-            <span className="rounded-full bg-slate-100 px-3 py-1">
-              {blog.readingTimeMinutes} min read
-            </span>
-            <span className="rounded-full bg-slate-100 px-3 py-1">
-              Published: {formatBlogDate(blog.date)}
-            </span>
-            <span className="rounded-full bg-slate-100 px-3 py-1">
-              Updated: {formatBlogDate(blog.updatedAt)}
-            </span>
-            {blog.isTrending ? (
-              <span className="rounded-full bg-amber-100 px-3 py-1 font-semibold text-amber-800">
-                Trending
-              </span>
-            ) : null}
-          </div>
 
           {blog.tags.length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-2">
@@ -731,16 +800,11 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             <div className="mt-3 flex flex-col gap-2 leading-6">
               <p>
                 <span className="font-semibold text-slate-900">By:</span>{" "}
-                {blog.author || siteName}
-                {blog.authorRole ? `, ${blog.authorRole}` : ""}
+                {siteVerifiedPublisherName}
               </p>
               <p>
                 <span className="font-semibold text-slate-900">Published:</span>{" "}
                 {formatBlogDate(blog.date)}
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">Updated:</span>{" "}
-                {formatBlogDate(blog.updatedAt)}
               </p>
               {reviewedLabel ? (
                 <p>

@@ -10,6 +10,9 @@ export const siteLogoPath = "/jobadvice-logo.svg";
 export const siteLogoUrl = `${siteUrl}${siteLogoPath}`;
 export const organizationId = `${siteUrl}#organization`;
 export const websiteId = `${siteUrl}#website`;
+export const siteVerifiedPublisherName = "Hassan Usmani";
+export const siteVerifiedPublisherRole = "Founder, JobAdvice";
+export const siteVerifiedPublisherPhotoPath = "/uploads/hassan-author-verified.jpeg";
 export const siteSocialProfiles = [
   "https://www.instagram.com/jobsadvice.in?utm_source=qr&igsh=MTM0eGhud3VtNGNvcw==",
   "https://www.linkedin.com/in/hassan-usmani21",
