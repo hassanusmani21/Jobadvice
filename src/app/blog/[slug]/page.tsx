@@ -342,13 +342,23 @@ const toSpeechPlainText = (value: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+const ensureSpeechSentence = (value: string) => {
+  const normalizedValue = toSpeechPlainText(value);
+  if (!normalizedValue) {
+    return "";
+  }
+
+  return /[.!?]$/.test(normalizedValue) ? normalizedValue : `${normalizedValue}.`;
+};
+
 const buildArticleListenText = (
   blog: BlogPost,
   blocks: ArticleRenderBlock[],
 ) => {
-  const sections = [blog.title, blog.summary]
-    .map((value) => toSpeechPlainText(value || ""))
-    .filter(Boolean);
+  const sections = [
+    ensureSpeechSentence(`Title. ${blog.title}`),
+    blog.summary ? ensureSpeechSentence(`Summary. ${blog.summary}`) : "",
+  ].filter(Boolean);
 
   for (const block of blocks) {
     if (block.type === "rule") {
@@ -356,7 +366,7 @@ const buildArticleListenText = (
     }
 
     if (block.type === "heading") {
-      const headingText = toSpeechPlainText(block.text);
+      const headingText = ensureSpeechSentence(`Next section. ${block.text}`);
       if (headingText) {
         sections.push(headingText);
       }
@@ -364,7 +374,7 @@ const buildArticleListenText = (
     }
 
     if (block.type === "paragraph") {
-      const paragraphText = toSpeechPlainText(block.text);
+      const paragraphText = ensureSpeechSentence(block.text);
       if (paragraphText) {
         sections.push(paragraphText);
       }
@@ -372,9 +382,15 @@ const buildArticleListenText = (
     }
 
     if (block.type === "callout") {
-      const calloutText = toSpeechPlainText(block.text);
+      const toneLabel =
+        block.tone === "tip"
+          ? "Helpful tip"
+          : block.tone === "warning"
+            ? "Important warning"
+            : "Quick note";
+      const calloutText = ensureSpeechSentence(`${toneLabel}. ${block.text}`);
       if (calloutText) {
-        sections.push(`${block.tone}. ${calloutText}`);
+        sections.push(calloutText);
       }
       continue;
     }
@@ -387,7 +403,9 @@ const buildArticleListenText = (
             return "";
           }
 
-          return block.ordered ? `${itemIndex + 1}. ${itemText}` : itemText;
+          return block.ordered
+            ? `Point ${itemIndex + 1}. ${ensureSpeechSentence(itemText)}`
+            : ensureSpeechSentence(itemText);
         })
         .filter(Boolean)
         .join(" ");
@@ -403,13 +421,13 @@ const buildArticleListenText = (
         row
           .map((cell, cellIndex) => {
             const label = toSpeechPlainText(block.headers[cellIndex] || "");
-            const cellText = toSpeechPlainText(cell);
+            const cellText = ensureSpeechSentence(cell);
 
             if (!cellText) {
               return "";
             }
 
-            return label ? `${label}: ${cellText}` : cellText;
+            return label ? `For ${label}, ${cellText}` : cellText;
           })
           .filter(Boolean)
           .join(". "),

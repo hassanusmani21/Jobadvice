@@ -10,7 +10,6 @@ type ListenArticleButtonProps = {
 
 type PlaybackState = "idle" | "playing" | "paused" | "unsupported";
 type ActionPillTone = "primary" | "secondary";
-type PlaybackEngine = "browser" | "ai";
 type SpeechStyle = {
   pitch: number;
   rate: number;
@@ -18,7 +17,6 @@ type SpeechStyle = {
 };
 
 const browserMaxChunkLength = 220;
-const apiMaxChunkLength = 12000;
 const sentencePattern = /[^.!?]+[.!?]+|[^.!?]+$/g;
 const premiumVoicePattern =
   /google|microsoft|neural|natural|enhanced|premium|wavenet|siri|samantha|daniel|aaron|aria|guy|jenny|libby|nisha|prabhat|heera|zira/i;
@@ -26,6 +24,27 @@ const roboticVoicePattern = /espeak|festival|compact|classic|legacy|mbrola/i;
 const devanagariPattern = /[\u0900-\u097F]/g;
 const arabicScriptPattern = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/g;
 const urduMarkerPattern = /[ٹڈڑںھہےی]/g;
+const paragraphBreakPattern = /\n\s*\n+/;
+const speechCleanupRules: Array<[RegExp, string]> = [
+  [/\bAI\/ML\b/gi, "A I and M L"],
+  [/\bAI\b/g, "A I"],
+  [/\bML\b/g, "M L"],
+  [/\bUI\/UX\b/gi, "U I and U X"],
+  [/\bUI\b/g, "U I"],
+  [/\bUX\b/g, "U X"],
+  [/\bIT\b/g, "I T"],
+  [/\bHR\b/g, "H R"],
+  [/\bWFH\b/gi, "work from home"],
+  [/\bWFO\b/gi, "work from office"],
+  [/\bB\.?\s?Tech\b/gi, "B Tech"],
+  [/\bM\.?\s?Tech\b/gi, "M Tech"],
+  [/\bvs\.?\b/gi, "versus"],
+  [/&/g, " and "],
+  [/\+/g, " plus "],
+  [/₹/g, " rupees "],
+  [/\$/g, " dollars "],
+  [/%/g, " percent "],
+];
 
 const joinClasses = (...values: Array<string | false | null | undefined>) =>
   values.filter(Boolean).join(" ");
@@ -35,16 +54,38 @@ const isSpeechSynthesisSupported = () =>
   "speechSynthesis" in window &&
   "SpeechSynthesisUtterance" in window;
 
-const isAudioPlaybackSupported = () =>
-  typeof window !== "undefined" && typeof window.Audio !== "undefined";
-
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
 const countMatches = (value: string, pattern: RegExp) =>
   value.match(pattern)?.length ?? 0;
 
-const normalizeSpeechText = (value: string) => value.replace(/\s+/g, " ").trim();
+const normalizeSpeechText = (value: string) =>
+  value
+    .replace(/\r/g, "")
+    .split(paragraphBreakPattern)
+    .map((paragraph) => paragraph.replace(/[ \t]+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n\n");
+
+const prepareSpeechText = (value: string) => {
+  let preparedValue = normalizeSpeechText(value);
+
+  for (const [pattern, replacement] of speechCleanupRules) {
+    preparedValue = preparedValue.replace(pattern, replacement);
+  }
+
+  return preparedValue
+    .replace(/([a-z])\s*[-–—]\s*([a-z])/gi, "$1, $2")
+    .replace(/:\s+/g, ". ")
+    .replace(/;\s+/g, ", ")
+    .replace(/([.!?])(?=[A-Z])/g, "$1 ")
+    .replace(/\s+,/g, ",")
+    .replace(/\s+\./g, ".")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};
 
 const detectSpeechLocale = (value: string) => {
   const normalizedValue = normalizeSpeechText(value);
@@ -60,13 +101,14 @@ const detectSpeechLocale = (value: string) => {
     return urduMarkerCount >= 3 ? "ur-PK" : "ar-SA";
   }
 
-  return "en-IN";
+  return "en-US";
 };
 
 const buildLocaleFallbacks = (locale: string) => {
   const normalizedLocale = locale.toLowerCase();
   const localeFallbacks: Record<string, string[]> = {
-    "en-in": ["en-IN", "en-GB", "en-US", "en-AU", "en"],
+    "en-us": ["en-US", "en-GB", "en-IN", "en-AU", "en"],
+    "en-in": ["en-US", "en-GB", "en-IN", "en-AU", "en"],
     "hi-in": ["hi-IN", "hi", "en-IN", "en-GB", "en-US"],
     "ur-pk": ["ur-PK", "ur-IN", "ur", "hi-IN", "en-IN", "en-GB", "en-US"],
     "ar-sa": ["ar-SA", "ar", "ur-PK", "en-IN", "en-GB", "en-US"],
@@ -157,34 +199,35 @@ const getSpeechStyle = (value: string, locale: string): SpeechStyle => {
     normalizedLocale.startsWith("hi") ||
     normalizedLocale.startsWith("ur") ||
     normalizedLocale.startsWith("ar")
-      ? 0.92
-      : 0.96;
-  let pitch = normalizedLocale.startsWith("en") ? 1.02 : 1;
+      ? 0.9
+      : 0.92;
+  let pitch = normalizedLocale.startsWith("en") ? 1.04 : 1.01;
 
   if (isLongChunk) {
-    rate -= 0.05;
+    rate -= 0.06;
   }
 
   if (isShortChunk) {
-    rate += 0.02;
+    rate += 0.03;
   }
 
   if (hasPauseCue) {
-    rate -= 0.01;
+    rate -= 0.025;
   }
 
   if (isQuestion) {
-    pitch += 0.05;
+    pitch += 0.08;
+    rate += 0.01;
   }
 
   if (isExclamation) {
-    pitch += 0.08;
-    rate += 0.02;
+    pitch += 0.12;
+    rate += 0.03;
   }
 
   return {
-    pitch: clamp(pitch, 0.95, 1.15),
-    rate: clamp(rate, 0.84, 1.04),
+    pitch: clamp(pitch, 0.96, 1.2),
+    rate: clamp(rate, 0.82, 1.02),
     volume: 1,
   };
 };
@@ -216,42 +259,45 @@ const createSpeechChunks = (
   value: string,
   maxChunkLength: number = browserMaxChunkLength,
 ) => {
-  const normalizedText = normalizeSpeechText(value);
+  const normalizedText = prepareSpeechText(value);
   if (!normalizedText) {
     return [];
   }
 
-  const rawSentences =
-    normalizedText.match(sentencePattern)?.map((sentence) => sentence.trim()) || [
-      normalizedText,
-    ];
-
   const chunks: string[] = [];
-  let currentChunk = "";
+  const paragraphs = normalizedText.split(paragraphBreakPattern).filter(Boolean);
 
-  for (const sentence of rawSentences) {
-    if (sentence.length > maxChunkLength) {
-      if (currentChunk) {
-        chunks.push(currentChunk);
-        currentChunk = "";
+  for (const paragraph of paragraphs) {
+    const rawSentences =
+      paragraph.match(sentencePattern)?.map((sentence) => sentence.trim()) || [
+        paragraph,
+      ];
+    let currentChunk = "";
+
+    for (const sentence of rawSentences) {
+      if (sentence.length > maxChunkLength) {
+        if (currentChunk) {
+          chunks.push(currentChunk);
+          currentChunk = "";
+        }
+
+        chunks.push(...chunkLongSentence(sentence, maxChunkLength));
+        continue;
       }
 
-      chunks.push(...chunkLongSentence(sentence, maxChunkLength));
-      continue;
+      const nextChunk = currentChunk ? `${currentChunk} ${sentence}` : sentence;
+      if (nextChunk.length > maxChunkLength && currentChunk) {
+        chunks.push(currentChunk);
+        currentChunk = sentence;
+        continue;
+      }
+
+      currentChunk = nextChunk;
     }
 
-    const nextChunk = currentChunk ? `${currentChunk} ${sentence}` : sentence;
-    if (nextChunk.length > maxChunkLength && currentChunk) {
+    if (currentChunk) {
       chunks.push(currentChunk);
-      currentChunk = sentence;
-      continue;
     }
-
-    currentChunk = nextChunk;
-  }
-
-  if (currentChunk) {
-    chunks.push(currentChunk);
   }
 
   return chunks;
@@ -332,17 +378,11 @@ export default function ListenArticleButton({
 }: ListenArticleButtonProps) {
   const [playbackState, setPlaybackState] = useState<PlaybackState>("idle");
   const [statusMessage, setStatusMessage] = useState("");
-  const [aiVoiceEnabled, setAiVoiceEnabled] = useState(false);
   const chunksRef = useRef<string[]>([]);
   const manuallyStoppedRef = useRef(false);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
-  const selectedLocaleRef = useRef("en-IN");
-  const playbackEngineRef = useRef<PlaybackEngine | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioUrlRef = useRef<string | null>(null);
-  const apiChunksRef = useRef<string[]>([]);
-  const apiChunkIndexRef = useRef(0);
+  const selectedLocaleRef = useRef("en-US");
 
   useEffect(() => {
     const browserSpeechSupported = isSpeechSynthesisSupported();
@@ -356,76 +396,23 @@ export default function ListenArticleButton({
       voicesRef.current = window.speechSynthesis.getVoices();
     };
 
-    const detectAiVoice = async () => {
-      try {
-        const response = await fetch("/api/tts", { cache: "no-store" });
-        const payload = (await response.json()) as { enabled?: boolean };
-        if (!isMounted) {
-          return;
-        }
-
-        const isEnabled = Boolean(response.ok && payload.enabled);
-        setAiVoiceEnabled(isEnabled);
-
-        if (!browserSpeechSupported && !isEnabled) {
-          setPlaybackState("unsupported");
-          setStatusMessage("Listening is not supported in this browser.");
-        }
-      } catch {
-        if (!isMounted || browserSpeechSupported) {
-          return;
-        }
-
-        setPlaybackState("unsupported");
-        setStatusMessage("Listening is not supported in this browser.");
-      }
-    };
-
     syncVoices();
     window.speechSynthesis?.addEventListener?.("voiceschanged", syncVoices);
-    void detectAiVoice();
+
+    if (!browserSpeechSupported && isMounted) {
+      setPlaybackState("unsupported");
+      setStatusMessage("Listening is not supported in this browser.");
+    }
 
     return () => {
       isMounted = false;
       manuallyStoppedRef.current = true;
       window.speechSynthesis?.removeEventListener?.("voiceschanged", syncVoices);
       window.speechSynthesis?.cancel();
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-        audioRef.current = null;
-      }
-      if (audioUrlRef.current) {
-        URL.revokeObjectURL(audioUrlRef.current);
-        audioUrlRef.current = null;
-      }
     };
   }, []);
 
-  const revokeAudioUrl = () => {
-    if (audioUrlRef.current) {
-      URL.revokeObjectURL(audioUrlRef.current);
-      audioUrlRef.current = null;
-    }
-  };
-
-  const resetAudioPlayback = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.onended = null;
-      audioRef.current.onerror = null;
-      audioRef.current.src = "";
-      audioRef.current = null;
-    }
-
-    revokeAudioUrl();
-    apiChunksRef.current = [];
-    apiChunkIndexRef.current = 0;
-  };
-
   const finishPlayback = () => {
-    playbackEngineRef.current = null;
-    resetAudioPlayback();
     setPlaybackState("idle");
     setStatusMessage("");
   };
@@ -444,7 +431,7 @@ export default function ListenArticleButton({
 
     const utterance = new SpeechSynthesisUtterance(chunk);
     const selectedLocale =
-      selectedVoiceRef.current?.lang || selectedLocaleRef.current || "en-IN";
+      selectedVoiceRef.current?.lang || selectedLocaleRef.current || "en-US";
     const speechStyle = getSpeechStyle(chunk, selectedLocale);
 
     utterance.lang = selectedLocale;
@@ -457,7 +444,7 @@ export default function ListenArticleButton({
     }
 
     utterance.onend = () => {
-      if (manuallyStoppedRef.current || playbackEngineRef.current !== "browser") {
+      if (manuallyStoppedRef.current) {
         return;
       }
 
@@ -482,7 +469,7 @@ export default function ListenArticleButton({
     window.speechSynthesis.speak(utterance);
   };
 
-  const startBrowserListening = (status?: string) => {
+  const startListening = () => {
     if (!isSpeechSynthesisSupported()) {
       setPlaybackState("unsupported");
       setStatusMessage("Listening is not supported in this browser.");
@@ -496,134 +483,18 @@ export default function ListenArticleButton({
     }
 
     manuallyStoppedRef.current = false;
-    playbackEngineRef.current = "browser";
     chunksRef.current = nextChunks;
     voicesRef.current = window.speechSynthesis.getVoices();
     const { lang, voice } = resolveVoiceSelection(voicesRef.current, text);
     selectedLocaleRef.current = lang;
     selectedVoiceRef.current = voice;
-    resetAudioPlayback();
     window.speechSynthesis.cancel();
     setPlaybackState("playing");
-    setStatusMessage(status ?? "");
+    setStatusMessage("");
     speakBrowserChunk(0);
   };
 
-  const playAiChunk = async (index: number) => {
-    const chunk = apiChunksRef.current[index];
-    if (!chunk || !isAudioPlaybackSupported()) {
-      finishPlayback();
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: chunk,
-          locale: selectedLocaleRef.current,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`ai_tts_${response.status}`);
-      }
-
-      const audioBlob = await response.blob();
-      if (manuallyStoppedRef.current || playbackEngineRef.current !== "ai") {
-        return;
-      }
-
-      revokeAudioUrl();
-      audioUrlRef.current = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrlRef.current);
-      audioRef.current = audio;
-      apiChunkIndexRef.current = index;
-
-      audio.onended = () => {
-        if (manuallyStoppedRef.current || playbackEngineRef.current !== "ai") {
-          return;
-        }
-
-        const nextIndex = index + 1;
-        if (nextIndex >= apiChunksRef.current.length) {
-          finishPlayback();
-          return;
-        }
-
-        void playAiChunk(nextIndex);
-      };
-
-      audio.onerror = () => {
-        if (manuallyStoppedRef.current) {
-          return;
-        }
-
-        finishPlayback();
-        setStatusMessage("AI voice could not continue.");
-      };
-
-      await audio.play();
-    } catch {
-      if (manuallyStoppedRef.current) {
-        return;
-      }
-
-      if (index === 0 && isSpeechSynthesisSupported()) {
-        startBrowserListening("Using browser voice for this article.");
-        return;
-      }
-
-      finishPlayback();
-      setStatusMessage("AI voice could not start.");
-    }
-  };
-
-  const startAiListening = async () => {
-    const nextChunks = createSpeechChunks(text, apiMaxChunkLength);
-    if (nextChunks.length === 0) {
-      setStatusMessage("There is no article text to read yet.");
-      return;
-    }
-
-    manuallyStoppedRef.current = false;
-    playbackEngineRef.current = "ai";
-    selectedLocaleRef.current = detectSpeechLocale(text);
-    selectedVoiceRef.current = null;
-    apiChunksRef.current = nextChunks;
-    apiChunkIndexRef.current = 0;
-    window.speechSynthesis?.cancel();
-    resetAudioPlayback();
-    apiChunksRef.current = nextChunks;
-    setPlaybackState("playing");
-    setStatusMessage("");
-    await playAiChunk(0);
-  };
-
-  const startListening = () => {
-    if (playbackState === "unsupported") {
-      return;
-    }
-
-    if (aiVoiceEnabled && isAudioPlaybackSupported()) {
-      void startAiListening();
-      return;
-    }
-
-    startBrowserListening();
-  };
-
   const pauseListening = () => {
-    if (playbackEngineRef.current === "ai") {
-      audioRef.current?.pause();
-      setPlaybackState("paused");
-      setStatusMessage("AI listening paused.");
-      return;
-    }
-
     if (!isSpeechSynthesisSupported()) {
       return;
     }
@@ -634,13 +505,6 @@ export default function ListenArticleButton({
   };
 
   const resumeListening = () => {
-    if (playbackEngineRef.current === "ai") {
-      void audioRef.current?.play();
-      setPlaybackState("playing");
-      setStatusMessage("AI listening resumed.");
-      return;
-    }
-
     if (!isSpeechSynthesisSupported()) {
       return;
     }
@@ -653,8 +517,6 @@ export default function ListenArticleButton({
   const stopListening = () => {
     manuallyStoppedRef.current = true;
     window.speechSynthesis?.cancel();
-    resetAudioPlayback();
-    playbackEngineRef.current = null;
     setPlaybackState("idle");
     setStatusMessage("");
   };
@@ -679,17 +541,11 @@ export default function ListenArticleButton({
 
   const buttonLabel =
     playbackState === "idle"
-      ? aiVoiceEnabled
-        ? "Listen"
-        : "Listen"
+      ? "Listen"
       : playbackState === "playing"
-        ? playbackEngineRef.current === "ai"
-          ? "Pause"
-          : "Pause"
+        ? "Pause"
         : playbackState === "paused"
-          ? playbackEngineRef.current === "ai"
-            ? "Resume"
-            : "Resume"
+          ? "Resume"
           : "Unavailable";
 
   const isListening = playbackState === "playing" || playbackState === "paused";
