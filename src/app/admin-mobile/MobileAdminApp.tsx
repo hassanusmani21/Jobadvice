@@ -13,7 +13,7 @@ import {
   createEmptyJobEntry,
   getTodayDateString,
 } from "@/lib/adminMobile";
-import { siteName, siteUrl } from "@/lib/site";
+import { siteName, siteUrl, siteWhatsappChannelUrl } from "@/lib/site";
 
 type AdminAppProps = {
   adminEmail: string;
@@ -290,51 +290,98 @@ const buildBatchJobWhatsappText = (
   ].join("\n");
 };
 
-const inferJobShareKind = (share: Pick<PublishedJobShare, "employmentType" | "title">) => {
-  const combinedValue = `${share.title} ${share.employmentType}`.toLowerCase();
-  return /\b(intern|internship|apprentice|apprenticeship|trainee)\b/.test(combinedValue)
-    ? "internship"
-    : "fulltime";
+const normalizeShareField = (value: string, fallback: string) =>
+  value.trim() || fallback;
+
+const buildShareAudienceLabel = (share: PublishedJobShare) => {
+  const combinedValue =
+    `${share.title} ${share.employmentType} ${share.experience}`.toLowerCase();
+
+  if (/\b(intern|internship|apprentice|apprenticeship|student)\b/.test(combinedValue)) {
+    return "Internship";
+  }
+
+  if (
+    /\b(fresher|freshers|graduate|trainee|entry[\s-]?level|0\s*(?:to|-|–|—)\s*1|0\s*years?)\b/.test(
+      combinedValue,
+    )
+  ) {
+    return "Freshers";
+  }
+
+  if (/\b(experienced|senior|lead|manager|specialist|consultant)\b/.test(combinedValue)) {
+    return "Experienced";
+  }
+
+  return "Job Update";
 };
 
-const formatShareDetail = (label: string, value: string, fallback: string) =>
-  `- ${label}: ${value.trim() || fallback}`;
+const buildShareExperienceLabel = (share: PublishedJobShare) => {
+  const experienceValue = share.experience.trim();
+  if (experienceValue) {
+    return experienceValue;
+  }
+
+  const audienceLabel = buildShareAudienceLabel(share);
+  if (audienceLabel === "Internship") {
+    return "Students Eligible";
+  }
+
+  if (audienceLabel === "Freshers") {
+    return "Freshers Eligible";
+  }
+
+  return "Check Full Details";
+};
+
+const buildShareModeLabel = (value: string) => {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    return "Mode Not Mentioned";
+  }
+
+  return normalizedValue;
+};
 
 const buildPublishedJobWhatsappText = (
   share: PublishedJobShare,
   useEmojis: boolean,
 ) => {
-  const shareKind = inferJobShareKind(share);
-  const heading =
-    shareKind === "internship"
-      ? useEmojis
-        ? "🎓 Internship Alert"
-        : "Internship Alert"
-      : useEmojis
-        ? "💼 Hiring Alert"
-        : "Hiring Alert";
-  const audienceLine =
-    shareKind === "internship"
-      ? "Students and freshers can check this opening."
-      : "Candidates looking for a full-time role can check this opening.";
-  const typeFallback =
-    shareKind === "internship" ? "Internship opportunity" : "Full-time / role type not mentioned";
-  const experienceFallback =
-    shareKind === "internship"
-      ? "Freshers / students can review the full post"
-      : "Check the full post for experience details";
+  const audienceLabel = buildShareAudienceLabel(share);
+  const companyPrefix = share.company.trim() || siteName;
+  const heading = `${useEmojis ? "🎓 " : ""}${companyPrefix} Hiring — ${audienceLabel}`;
+  const roleLine = `${useEmojis ? "🔥 " : ""}${share.title}`;
+  const locationLine = `${useEmojis ? "📍 " : ""}${normalizeShareField(
+    share.location,
+    "Location Not Mentioned",
+  )}`;
+  const salaryLine = `${useEmojis ? "💰 " : ""}${normalizeShareField(
+    share.salary,
+    "Salary Not Mentioned",
+  )}`;
+  const experienceLine = `${useEmojis ? "🧑‍💻 " : ""}${buildShareExperienceLabel(share)}`;
+  const workModeLine = `${useEmojis ? "🏢 " : ""}${buildShareModeLabel(share.workMode)}`;
+  const applyLabel = `${useEmojis ? "🔗 " : ""}Apply Now:`;
+  const channelLabel = `${
+    useEmojis ? "📢 " : ""
+  }Join WhatsApp Channel for Daily Jobs:`;
+  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
 
   return [
     heading,
-    `${share.title} at ${share.company}`,
-    audienceLine,
-    formatShareDetail("Location", share.location, "Not mentioned in the post"),
-    formatShareDetail("Work mode", share.workMode, "Not mentioned in the post"),
-    formatShareDetail("Type", share.employmentType, typeFallback),
-    formatShareDetail("Experience", share.experience, experienceFallback),
-    formatShareDetail("Salary", share.salary, "Not mentioned in the post"),
-    `${useEmojis ? "🔗 " : ""}Apply here: ${share.jobUrl}`,
-    `${useEmojis ? "📢 " : ""}Shared via ${siteName}`,
+    "",
+    roleLine,
+    "",
+    locationLine,
+    salaryLine,
+    experienceLine,
+    workModeLine,
+    "",
+    applyLabel,
+    share.jobUrl,
+    "",
+    channelLabel,
+    channelLink,
   ].join("\n");
 };
 
