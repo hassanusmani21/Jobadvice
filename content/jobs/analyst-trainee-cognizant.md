@@ -1,49 +1,56 @@
 ---
 title: "Analyst Trainee"
 slug: "analyst-trainee-cognizant"
-date: "2026-03-29"
-updatedAt: "2026-03-29"
+date: "2026-04-01"
+updatedAt: "2026-04-01"
 draft: false
 company: "Cognizant"
-location: "PAN India"
+location: "PAN India (Any Cognizant office location)"
 workMode: "On-site"
 employmentType: "Full-time"
-salary: "Not Mentioned (As per company standards)"
+salary: "Up to ₹4–6 LPA (Estimated)"
 experience: "Fresher"
 eligibilityCriteria: |-
-  2024 or 2025 graduates
-  Minimum 50%–60% marks (depending on role)
-  No standing arrears at the time of joining
-  Must be willing to relocate anywhere in India
-  Must be willing to work in rotational shifts
-  Must be Indian citizen or OCI residing in India
-  Candidates enrolled in full-time postgraduate programs are not eligible
+  Graduates from 2024 or 2025 batch
+  Minimum required academic percentage as per company criteria
+  No active backlogs
+  Willing to relocate anywhere in India
+  Must be ready to work in rotational shifts
+  Indian nationals eligible to apply
+  (Eligible degree types include BCA, BSc, BA, BCom, BBA and similar 3-year UG programs.)
 education:
-  - "Eligible Degrees:"
+  - "BCA"
+  - "BSc (Computer Science / IT / Mathematics / Physics / Statistics etc.)"
+  - "BA"
+  - "BCom"
+  - "BBA"
+  - "BMS"
+  - "BVoc or similar"
+  - "Graduation Year: 2024 or 2025"
+  - "No standing arrears at the time of joining."
 skills:
-  - "Basic SQL & Database knowledge"
+  - "Good communication skills"
+  - "Basic computer knowledge"
   - "Problem-solving ability"
-  - "Communication skills"
+  - "Time management skills"
+  - "Teamwork ability"
+  - "Basic IT or technical understanding"
   - "Analytical thinking"
-  - "Team collaboration"
-  - "Basic IT knowledge"
-  - "Time management"
-  - "Understanding of IT support tools (preferred)"
+  - "Adaptability to new technologies"
 responsibilities:
-  - "Perform database queries and CRUD operations"
-  - "Write stored procedures"
+  - "Write database queries and retrieve data"
+  - "Perform CRUD operations"
   - "Execute test cases"
-  - "Perform manual and automated testing"
-  - "Troubleshoot technical issues"
+  - "Monitor IT systems"
   - "Resolve service tickets"
-  - "Monitor systems and applications"
-  - "Support Windows, Network, Database, and Cloud systems"
   - "Provide technical support to users"
-  - "Maintain documentation and logs"
-  - "Follow standard operating procedures (SOPs)"
-workingDays: "Not Mentioned"
-jobTiming: "Rotational Shifts / 24×7 (depending on role)"
+  - "Troubleshoot software and hardware issues"
+  - "Maintain documentation"
+  - "Follow IT service processes"
+  - "Support cloud and infrastructure operations"
+workingDays: "5 Days / Shift-based"
+jobTiming: "Rotational Shifts (May include Night Shift)"
 applyLink: "https://app.joinsuperset.com/join/#/signup/student/jobprofiles/65ac431a-2d60-417a-b1f6-6b0f455a1d33"
-applicationStartDate: "2026-03-29"
+applicationStartDate: "2026-04-01"
 applicationEndDate: ""
 ---
