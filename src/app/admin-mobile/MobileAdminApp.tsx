@@ -1606,8 +1606,11 @@ export default function MobileAdminApp({
   };
 
   return (
-    <div data-admin-mobile-root className="min-h-[100dvh] px-2 py-2 sm:px-4 sm:py-4 lg:px-6">
-      <section className="mx-auto overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.3)]">
+    <div
+      data-admin-mobile-root
+      className="min-h-[100dvh] w-full overflow-x-clip px-2 py-2 sm:px-4 sm:py-4 lg:px-6"
+    >
+      <section className="mx-auto w-full max-w-full overflow-x-clip rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.3)]">
         <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6 lg:px-7">
           <div className="flex items-start justify-between gap-3 lg:items-center">
             <div className="min-w-0">
@@ -1670,14 +1673,14 @@ export default function MobileAdminApp({
           </div>
         </div>
 
-        <div className="grid min-h-[calc(100dvh-7rem)] gap-0 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[344px_minmax(0,1fr)]">
+        <div className="grid min-h-[calc(100dvh-7rem)] min-w-0 max-w-full gap-0 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[344px_minmax(0,1fr)]">
           <aside
             className={cn(
-              "border-b border-slate-200 bg-slate-50/90 p-4 lg:border-r lg:border-b-0 lg:p-5",
+              "min-w-0 max-w-full border-b border-slate-200 bg-slate-50/90 p-4 lg:border-r lg:border-b-0 lg:p-5",
               editorOpen ? "hidden lg:block" : "block",
             )}
           >
-            <div className="rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="w-full max-w-full rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -1701,8 +1704,8 @@ export default function MobileAdminApp({
               </button>
             </div>
 
-            <div className="mt-4 rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="inline-flex w-full rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
+            <div className="mt-4 w-full max-w-full rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
                 {(["jobs", "blogs"] as const).map((item) => (
                   <button
                     key={item}
@@ -1722,7 +1725,7 @@ export default function MobileAdminApp({
                       }
                     }}
                     className={cn(
-                      "min-h-11 flex-1 rounded-lg px-4 text-sm font-semibold transition",
+                      "min-h-11 min-w-0 flex-1 rounded-lg px-4 text-sm font-semibold transition",
                       collection === item
                         ? "bg-teal-700 text-white shadow-sm"
                         : "text-slate-600 hover:bg-slate-100",
@@ -1747,7 +1750,7 @@ export default function MobileAdminApp({
               </label>
 
               {collection === "jobs" ? (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                <div className="mt-4 w-full max-w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     Quick Access
                   </p>
@@ -1780,16 +1783,16 @@ export default function MobileAdminApp({
                         type="button"
                         onClick={() => setJobListMode(option.mode)}
                         className={cn(
-                          "flex min-h-11 items-center justify-between rounded-xl border px-3 text-sm font-semibold transition",
+                          "flex min-h-11 min-w-0 items-center justify-between rounded-xl border px-3 text-sm font-semibold transition",
                           jobListMode === option.mode
                             ? "border-teal-300 bg-teal-50 text-teal-800"
                             : "border-slate-200 bg-white text-slate-700 hover:border-teal-200 hover:bg-slate-100",
                         )}
                       >
-                        <span>{option.label}</span>
+                        <span className="min-w-0 truncate">{option.label}</span>
                         <span
                           className={cn(
-                            "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                            "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
                             jobListMode === option.mode
                               ? "bg-white text-teal-700"
                               : "bg-slate-100 text-slate-600",
