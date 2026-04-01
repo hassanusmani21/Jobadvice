@@ -50,6 +50,30 @@ type PublishedJobShare = {
   title: string;
   workMode: string;
 };
+type BulkImportCreatedItem = {
+  mode: string;
+  record: AdminMobileJobRecord;
+  resolvedSourceUrl: string;
+  sourceUrl: string;
+};
+type BulkImportSkippedItem = {
+  company: string;
+  error: string;
+  issues: string[];
+  resolvedSourceUrl: string;
+  sourceUrl: string;
+  title: string;
+};
+type BulkImportFailedItem = {
+  error: string;
+  sourceUrl: string;
+};
+type BulkImportResult = {
+  created: BulkImportCreatedItem[];
+  failed: BulkImportFailedItem[];
+  skipped: BulkImportSkippedItem[];
+  total: number;
+};
 
 const listToText = (items: string[]) => items.join("\n");
 
@@ -548,6 +572,39 @@ const applyBlogExtractedData = (
   };
 };
 
+const mergeImportedJobRecords = (
+  currentRecords: AdminMobileJobRecord[],
+  importedRecords: AdminMobileJobRecord[],
+) => {
+  const nextRecords = new Map<string, AdminMobileJobRecord>();
+
+  for (const record of currentRecords) {
+    nextRecords.set(record.slug, record);
+  }
+
+  for (const record of importedRecords) {
+    nextRecords.set(record.slug, record);
+  }
+
+  return Array.from(nextRecords.values()).sort(sortRecordsByRecentActivity);
+};
+
+const buildBulkImportNotice = (result: BulkImportResult) => {
+  const noticeParts = [
+    `Imported ${result.created.length} of ${result.total} URL${result.total === 1 ? "" : "s"}.`,
+  ];
+
+  if (result.skipped.length > 0) {
+    noticeParts.push(`${result.skipped.length} skipped.`);
+  }
+
+  if (result.failed.length > 0) {
+    noticeParts.push(`${result.failed.length} failed.`);
+  }
+
+  return noticeParts.join(" ");
+};
+
 const buildAdminLoginUrl = (adminBasePath: string) =>
   `/admin/login?callbackUrl=${encodeURIComponent(adminBasePath)}`;
 
@@ -587,6 +644,12 @@ export default function MobileAdminApp({
   const [extractMode, setExtractMode] = useState<"text" | "url" | "">("");
   const [extractError, setExtractError] = useState("");
   const [extractNotice, setExtractNotice] = useState("");
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [bulkImportInput, setBulkImportInput] = useState("");
+  const [bulkImportPending, setBulkImportPending] = useState(false);
+  const [bulkImportError, setBulkImportError] = useState("");
+  const [bulkImportNotice, setBulkImportNotice] = useState("");
+  const [bulkImportResult, setBulkImportResult] = useState<BulkImportResult | null>(null);
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const extractorPanelRef = useRef<HTMLDivElement | null>(null);
 
@@ -694,6 +757,7 @@ export default function MobileAdminApp({
   const saveDisabled = saveMode !== "" || deletePending || !mobilePublishingReady;
   const uploadDisabled = uploading || deletePending || !mobilePublishingReady;
   const deleteDisabled = deletePending || saveMode !== "" || uploading || !mobilePublishingReady;
+  const bulkImportDisabled = bulkImportPending || !mobilePublishingReady;
   const canDeleteEntry = originalSlug.length > 0;
   const extractorStatusLabel =
     extractMode === "url"
@@ -1139,6 +1203,101 @@ export default function MobileAdminApp({
       );
     } finally {
       setExtractMode("");
+    }
+  };
+
+  const resetBulkImport = () => {
+    setBulkImportInput("");
+    setBulkImportError("");
+    setBulkImportNotice("");
+    setBulkImportResult(null);
+  };
+
+  const runBulkImport = async () => {
+    if (!mobilePublishingReady) {
+      setBulkImportError(mobilePublishingError);
+      setBulkImportNotice("");
+      return;
+    }
+
+    const sourceUrls = bulkImportInput.trim();
+    if (!sourceUrls) {
+      setBulkImportError("Paste at least one public job URL first.");
+      setBulkImportNotice("");
+      setBulkImportOpen(true);
+      return;
+    }
+
+    setBulkImportPending(true);
+    setBulkImportError("");
+    setBulkImportNotice("");
+    setBulkImportResult(null);
+    setBulkImportOpen(true);
+
+    try {
+      const response = await fetch("/api/admin/mobile/jobs/bulk-import", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sourceUrls,
+        }),
+      });
+
+      if (response.status === 401 || response.status === 403) {
+        window.location.href = adminLoginUrl;
+        return;
+      }
+
+      const payload = (await response.json()) as {
+        created?: BulkImportCreatedItem[];
+        error?: string;
+        failed?: BulkImportFailedItem[];
+        skipped?: BulkImportSkippedItem[];
+        success?: boolean;
+        total?: number;
+      };
+
+      if (!response.ok || payload.success === false) {
+        throw new Error(payload.error || "Bulk import failed.");
+      }
+
+      const result: BulkImportResult = {
+        created: Array.isArray(payload.created) ? payload.created : [],
+        failed: Array.isArray(payload.failed) ? payload.failed : [],
+        skipped: Array.isArray(payload.skipped) ? payload.skipped : [],
+        total:
+          typeof payload.total === "number"
+            ? payload.total
+            : [
+                Array.isArray(payload.created) ? payload.created.length : 0,
+                Array.isArray(payload.skipped) ? payload.skipped.length : 0,
+                Array.isArray(payload.failed) ? payload.failed.length : 0,
+              ].reduce((sum, count) => sum + count, 0),
+      };
+
+      setBulkImportResult(result);
+      setBulkImportNotice(buildBulkImportNotice(result));
+
+      if (result.created.length > 0) {
+        setRecordsByCollection((current) => ({
+          ...current,
+          jobs: mergeImportedJobRecords(
+            current.jobs as AdminMobileJobRecord[],
+            result.created.map((item) => item.record),
+          ),
+        }));
+        setCollection("jobs");
+        setJobListMode("recent");
+        setSearchValue("");
+      }
+    } catch (error) {
+      setBulkImportError(error instanceof Error ? error.message : "Bulk import failed.");
+      setBulkImportResult(null);
+    } finally {
+      setBulkImportPending(false);
     }
   };
 
@@ -1605,9 +1764,191 @@ export default function MobileAdminApp({
     );
   };
 
+  const renderBulkImportPanel = () => (
+    <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white p-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Bulk Import
+          </p>
+          <p className="mt-1 text-sm text-slate-700">
+            Paste up to 10 public job URLs and create draft entries in one run.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setBulkImportOpen((current) => !current)}
+          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+        >
+          {bulkImportOpen ? "Hide" : "Open"}
+        </button>
+      </div>
+
+      {bulkImportOpen ? (
+        <div className="mt-3 space-y-3">
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Job URLs
+            </span>
+            <textarea
+              value={bulkImportInput}
+              onChange={(event) => setBulkImportInput(event.target.value)}
+              rows={5}
+              placeholder={
+                "https://company.com/careers/job-1\nhttps://boards.greenhouse.io/company/jobs/123"
+              }
+              className="min-h-[132px] w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-50"
+            />
+            <span className="mt-1.5 block text-[10px] leading-4 text-slate-500">
+              One URL per line or paste any text block that contains job links.
+            </span>
+          </label>
+
+          {bulkImportError ? (
+            <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2.5 text-[13px] leading-5 text-rose-700">
+              {bulkImportError}
+            </p>
+          ) : null}
+
+          {bulkImportNotice ? (
+            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-[13px] leading-5 text-emerald-700">
+              {bulkImportNotice}
+            </p>
+          ) : null}
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={bulkImportDisabled}
+              onClick={runBulkImport}
+              className={cn(
+                "inline-flex min-h-10 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white transition",
+                bulkImportDisabled
+                  ? "cursor-not-allowed bg-teal-300"
+                  : "bg-teal-700 hover:bg-teal-800",
+              )}
+            >
+              {bulkImportPending ? "Importing..." : "Import URLs"}
+            </button>
+            <button
+              type="button"
+              disabled={bulkImportPending}
+              onClick={resetBulkImport}
+              className={cn(
+                "inline-flex min-h-10 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition",
+                bulkImportPending
+                  ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+              )}
+            >
+              Clear
+            </button>
+          </div>
+
+          {bulkImportResult ? (
+            <div className="space-y-3">
+              {bulkImportResult.created.length > 0 ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                    Created
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {bulkImportResult.created.map((item) => (
+                      <div
+                        key={item.record.slug}
+                        className="rounded-lg border border-emerald-100 bg-white/80 p-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900">
+                              {item.record.title || item.record.slug}
+                            </p>
+                            <p className="mt-0.5 text-xs text-slate-600">
+                              {[item.record.company, item.record.location, item.mode]
+                                .filter(Boolean)
+                                .join(" • ")}
+                            </p>
+                            <p className="mt-1 break-all text-[11px] leading-5 text-slate-500">
+                              {item.resolvedSourceUrl}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => openExistingEntry("jobs", item.record.slug)}
+                            className="inline-flex min-h-9 items-center justify-center rounded-lg border border-emerald-200 bg-white px-3 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100"
+                          >
+                            Open
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {bulkImportResult.skipped.length > 0 ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">
+                    Skipped
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {bulkImportResult.skipped.map((item) => (
+                      <div
+                        key={item.sourceUrl}
+                        className="rounded-lg border border-amber-100 bg-white/80 p-3"
+                      >
+                        <p className="text-sm font-semibold text-slate-900">
+                          {item.title || item.company || "Untitled job"}
+                        </p>
+                        <p className="mt-0.5 text-xs leading-5 text-amber-800">{item.error}</p>
+                        {item.issues.length > 0 ? (
+                          <p className="mt-1 text-[11px] leading-5 text-slate-600">
+                            {item.issues.join(" ")}
+                          </p>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {bulkImportResult.failed.length > 0 ? (
+                <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
+                    Failed
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {bulkImportResult.failed.map((item) => (
+                      <div
+                        key={item.sourceUrl}
+                        className="rounded-lg border border-rose-100 bg-white/80 p-3"
+                      >
+                        <p className="break-all text-xs leading-5 text-slate-700">
+                          {item.sourceUrl}
+                        </p>
+                        <p className="mt-1 text-[11px] leading-5 text-rose-700">
+                          {item.error}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+
   return (
-    <div data-admin-mobile-root className="min-h-[100dvh] px-2 py-2 sm:px-4 sm:py-4 lg:px-6">
-      <section className="mx-auto overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.3)]">
+    <div
+      data-admin-mobile-root
+      className="min-h-[100dvh] w-full overflow-x-clip px-2 py-2 sm:px-4 sm:py-4 lg:px-6"
+    >
+      <section className="mx-auto w-full max-w-full overflow-x-clip rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.3)]">
         <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6 lg:px-7">
           <div className="flex items-start justify-between gap-3 lg:items-center">
             <div className="min-w-0">
@@ -1670,14 +2011,14 @@ export default function MobileAdminApp({
           </div>
         </div>
 
-        <div className="grid min-h-[calc(100dvh-7rem)] gap-0 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[344px_minmax(0,1fr)]">
+        <div className="grid min-h-[calc(100dvh-7rem)] min-w-0 max-w-full gap-0 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[344px_minmax(0,1fr)]">
           <aside
             className={cn(
-              "border-b border-slate-200 bg-slate-50/90 p-4 lg:border-r lg:border-b-0 lg:p-5",
+              "min-w-0 max-w-full border-b border-slate-200 bg-slate-50/90 p-4 lg:border-r lg:border-b-0 lg:p-5",
               editorOpen ? "hidden lg:block" : "block",
             )}
           >
-            <div className="rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="w-full max-w-full rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -1701,8 +2042,8 @@ export default function MobileAdminApp({
               </button>
             </div>
 
-            <div className="mt-4 rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="inline-flex w-full rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
+            <div className="mt-4 w-full max-w-full rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
                 {(["jobs", "blogs"] as const).map((item) => (
                   <button
                     key={item}
@@ -1722,7 +2063,7 @@ export default function MobileAdminApp({
                       }
                     }}
                     className={cn(
-                      "min-h-11 flex-1 rounded-lg px-4 text-sm font-semibold transition",
+                      "min-h-11 min-w-0 flex-1 rounded-lg px-4 text-sm font-semibold transition",
                       collection === item
                         ? "bg-teal-700 text-white shadow-sm"
                         : "text-slate-600 hover:bg-slate-100",
@@ -1747,7 +2088,7 @@ export default function MobileAdminApp({
               </label>
 
               {collection === "jobs" ? (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                <div className="mt-4 w-full max-w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                     Quick Access
                   </p>
@@ -1780,16 +2121,16 @@ export default function MobileAdminApp({
                         type="button"
                         onClick={() => setJobListMode(option.mode)}
                         className={cn(
-                          "flex min-h-11 items-center justify-between rounded-xl border px-3 text-sm font-semibold transition",
+                          "flex min-h-11 min-w-0 items-center justify-between rounded-xl border px-3 text-sm font-semibold transition",
                           jobListMode === option.mode
                             ? "border-teal-300 bg-teal-50 text-teal-800"
                             : "border-slate-200 bg-white text-slate-700 hover:border-teal-200 hover:bg-slate-100",
                         )}
                       >
-                        <span>{option.label}</span>
+                        <span className="min-w-0 truncate">{option.label}</span>
                         <span
                           className={cn(
-                            "rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                            "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
                             jobListMode === option.mode
                               ? "bg-white text-teal-700"
                               : "bg-slate-100 text-slate-600",
@@ -1923,6 +2264,8 @@ export default function MobileAdminApp({
                       </div>
                     ) : null}
                   </div>
+
+                  {renderBulkImportPanel()}
                 </div>
               ) : null}
 
@@ -2431,33 +2774,18 @@ export default function MobileAdminApp({
                     </>
                   ) : (
                     <>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Topic
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.topic}
-                            onChange={(event) => updateEntry({ topic: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Career Growth"
-                          />
-                        </label>
-
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Author
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.author}
-                            onChange={(event) => updateEntry({ author: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Hassan Usmani"
-                          />
-                        </label>
-                      </div>
+                      <label className="block">
+                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Topic
+                        </span>
+                        <input
+                          type="text"
+                          value={editorEntry.topic}
+                          onChange={(event) => updateEntry({ topic: event.target.value })}
+                          className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+                          placeholder="Career Growth"
+                        />
+                      </label>
 
                       <label className="block">
                         <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
