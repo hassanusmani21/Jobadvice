@@ -1,186 +1,152 @@
 ---
-title: "Your Website Isn’t Ranking? Here’s What Google Actually Does"
+title: "Oracle Layoffs 2026: 12,000 Employees in India Affected Full Details & Tech Job Impact"
 slug: "plain-text"
-summary: "Your website isn’t ranking on Google? Learn how Google finds, reads, and ranks websites and discover why your site is not showing in search results."
-topic: "SEO / Website Growth"
+summary: "Oracle lays off 12,000 employees in India amid AI and cloud shift. Learn what happened, severance details, and impact on tech jobs in 2026."
+topic: "IT"
 tags:
-  - "seo tips, google ranking, website not ranking, how google works, improve seo"
+  - "Plain text"
+  - "ai"
+  - "career"
 isTrending: false
-author: ""
-coverImage: "/uploads/56082-1775030421455.png"
+author: "Hassan Usmani"
+coverImage: "https://miro.medium.com/v2/resize:fit:1100/format:webp/1*oH-2tOqGOfw3b92tnRBzfg.jpeg"
 ctaLabel: ""
 ctaLink: ""
-date: "2026-04-01"
-updatedAt: "2026-04-01"
+date: "2026-04-02"
+updatedAt: "2026-04-02"
 draft: false
 ---
 
-# Your Website Isn’t Ranking? Here’s What Google Actually Does
+# Oracle Layoffs 2026: 12,000 Employees in India Affected – Full Details & Tech Job Impact
+
+![Oracle layoffs impact on tech jobs](https://images.unsplash.com/photo-1551288049-bebda4e38f71)
 
 ## Summary
-If your website is not showing on Google, the problem is not luck — it’s understanding how Google works. Before ranking your site, Google first finds, reads, and evaluates your content. Here’s what actually happens behind the scenes and why your site may not be ranking.
+Oracle has reportedly laid off around 12,000 employees in India as part of a large global workforce reduction. The move is linked to the company’s shift toward AI and cloud infrastructure. This article explains what happened, what employees received, and what it means for tech jobs in 2026.
 
 ---
 
-## Why Your Website Is Not Ranking
+## What Happened?
 
-You created a website.  
-You published content.  
+Oracle has carried out a major round of layoffs affecting thousands of employees.
 
-But still… nothing shows on Google.
+- Around 30,000 roles impacted globally  
+- Nearly 12,000 employees affected in India  
+- Layoff notifications reportedly sent early in the morning  
+- Access to internal systems revoked shortly after  
 
-This is one of the most common problems — and the reason is simple:
-
-👉 Google hasn’t fully processed your website yet.
-
----
-
-## What Google Actually Does (Step-by-Step)
-
-Before your website appears in search results, Google goes through a process.
-
-### 1. Google Finds Your Website
-Google discovers your site through:
-- Links from other websites  
-- Sitemap submission  
-- Previously known pages  
-
-👉 If no one links to you, Google may not find you easily.
+This sudden move has raised concerns across the tech industry.
 
 ---
 
-### 2. Google Reads Your Website
-Google uses automated systems (Googlebot) to:
-- Open your pages  
-- Read your content  
-- Check your structure  
+## Why Oracle Is Laying Off Employees
 
-👉 If your site is slow or broken, Google may skip it.
+The primary reason is a strategic shift toward:
 
----
+- Artificial Intelligence (AI)  
+- Cloud infrastructure  
+- Data center expansion  
 
-### 3. Google Understands Your Content
-Google tries to answer:
-- What is this page about?  
-- Is it useful?  
-- Does it match search intent?  
-
-👉 Weak or copied content = low ranking
+Oracle is investing heavily in these areas, and reducing workforce costs is part of restructuring.
 
 ---
 
-### 4. Google Stores Your Website
-Google saves your page in its database.
+## Severance Package Details (Reported)
 
-👉 If your page is not stored, it will never rank.
+According to employee reports, affected workers received:
 
----
+- 15 days salary per year of service  
+- 1 month notice period salary  
+- 2–3 months additional compensation (ex-gratia)  
+- Payment for unused leaves  
+- Insurance support  
 
-### 5. Google Decides Your Ranking
-This is where most websites fail.
-
-Google compares your page with others and checks:
-- Quality  
-- Relevance  
-- Trust  
-
-👉 Better content wins.
+Total compensation varies depending on experience.
 
 ---
 
-## Biggest Reasons Your Website Is Not Ranking
+## How Employees Were Affected
 
-Here are the real problems 👇
+Many employees reported:
 
-### ❌ Google Can’t Find Your Site
-- No backlinks  
-- No sitemap  
+- No prior warning  
+- Early morning termination emails  
+- Immediate system access removal  
 
----
-
-### ❌ You Are Blocking Google
-- Wrong robots.txt  
-- Restricted access  
+This created shock and uncertainty among workers.
 
 ---
 
-### ❌ Your Website Is Too Slow
-- Heavy pages  
-- Poor hosting  
+## Impact on Tech Jobs in India
+
+This is not an isolated event.
+
+### Negative Impact
+- Increased job insecurity  
+- More competition in the job market  
+- Hiring slowdowns in some roles  
 
 ---
 
-### ❌ Your Content Is Weak
-- No value  
-- Copy content  
-- Too short  
+### Positive Shift
+- Growth in AI-related roles  
+- Increased demand for cloud engineers  
+- Higher value for specialized skills  
 
 ---
 
-### ❌ Too Much Competition
-- Big websites dominate  
+## What Developers Should Learn From This
+
+The industry is changing rapidly.
+
+To stay relevant:
+
+- Learn AI tools and workflows  
+- Build strong development skills  
+- Understand cloud technologies  
+- Keep upgrading continuously  
+
+👉 The future belongs to adaptable professionals
 
 ---
 
-## Simple Fixes That Actually Work
+## The Bigger Industry Trend
 
-Do this 👇
+Tech companies are moving toward:
 
-### ✅ Help Google Find You
-- Submit sitemap  
-- Build backlinks  
+- Automation  
+- AI-driven systems  
+- Smaller, highly skilled teams  
 
----
+This means:
 
-### ✅ Make Your Website Fast
-- Optimize images  
-- Use good hosting  
-
----
-
-### ✅ Create Useful Content
-- Solve real problems  
-- Write clearly  
-
----
-
-### ✅ Don’t Block Google
-- Check robots.txt  
-- Allow indexing  
-
----
-
-### ✅ Be Consistent
-- Post regularly  
-- Update content  
-
----
-
-## Important Truth (Most People Ignore)
-
-Google doesn’t rank websites…
-
-👉 It ranks **useful content**
-
-If your content is better than others,  
-👉 You WILL rank.
+👉 Fewer low-skill roles  
+👉 More demand for high-skill talent  
 
 ---
 
 ## Final Thoughts
 
-Ranking on Google is not luck.
+Oracle layoffs are a clear signal:
 
-It’s about understanding what Google does:
+👉 The tech industry is evolving fast  
 
-👉 Find → Read → Understand → Rank
-
-If you fix your basics, your rankings will improve.
+Those who adapt to AI and modern technologies will benefit, while others may struggle to keep up.
 
 ---
 
-## What Do You Think?
+## FAQs
 
-Is your website not ranking right now?
+### Why did Oracle lay off employees?
+To shift focus toward AI and cloud infrastructure.
 
-Tell me your issue — I’ll help you fix it.
+### Are tech jobs at risk in 2026?
+Some roles are declining, but new opportunities are emerging in AI and cloud.
+
+### What skills are important now?
+AI tools, cloud computing, and advanced development skills.
+
+---
+
+## Tags
+oracle layoffs 2026, tech layoffs india, IT jobs news, AI impact jobs, cloud computing careers
