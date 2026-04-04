@@ -259,6 +259,33 @@ const cityRegionCountryMap: Record<
   pune: { locality: "Pune", region: "Maharashtra", country: "IN" },
 };
 
+const regionAliasMap: Record<string, string> = {
+  chandigarh: "Chandigarh",
+  gujarat: "Gujarat",
+  haryana: "Haryana",
+  karnataka: "Karnataka",
+  maharashtra: "Maharashtra",
+  maharastra: "Maharashtra",
+  "mahārāshtra": "Maharashtra",
+  tamilnadu: "Tamil Nadu",
+  "tamil nadu": "Tamil Nadu",
+  telangana: "Telangana",
+  "uttar pradesh": "Uttar Pradesh",
+};
+
+const countryAliasMap: Record<
+  string,
+  { code: string; name: string }
+> = {
+  india: { code: "IN", name: "India" },
+  "sri lanka": { code: "LK", name: "Sri Lanka" },
+  "united kingdom": { code: "GB", name: "United Kingdom" },
+  uk: { code: "GB", name: "United Kingdom" },
+  "united states": { code: "US", name: "United States" },
+  usa: { code: "US", name: "United States" },
+  us: { code: "US", name: "United States" },
+};
+
 const placeholderValuePattern =
   /\b(optional|experience required|work mode|job timing|education)\b/i;
 const remoteLocationPattern =
@@ -267,6 +294,8 @@ const multipleLocationPattern =
   /\b(various|multiple|campuses|centers|possible|locations?)\b/i;
 const genericSalaryPattern =
   /\b(not disclosed|not mentioned|not specified|competitive|best in (the )?industry|as per company|company standards|company policy|company norms|optional)\b/i;
+const estimatedSalaryPattern =
+  /\b(estimated|estimate|expected|approx(?:\.|imately)?|around|reported|market level|typical|from listings|based on experience|based on skills|industry estimate)\b/i;
 
 const normalizeLocationPart = (value: string) =>
   value
@@ -275,6 +304,15 @@ const normalizeLocationPart = (value: string) =>
     .replace(/\//g, ",")
     .replace(/\s+/g, " ")
     .trim();
+
+const normalizeLocationLookupValue = (value: string) =>
+  value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 
 const getCondensedLocation = (location: string | undefined) => {
   const primaryLocation = String(location || "").split("|")[0] || "";
@@ -308,35 +346,57 @@ const getCondensedLocation = (location: string | undefined) => {
   return visibleParts.slice(0, 2).join(", ");
 };
 
-const resolveJobAddress = (location: string) => {
+const resolveCountryInfo = (parts: string[]) =>
+  parts
+    .map((part) => countryAliasMap[normalizeLocationLookupValue(part)])
+    .find(Boolean) || null;
+
+const resolveRegionName = (parts: string[]) =>
+  parts
+    .map((part) => regionAliasMap[normalizeLocationLookupValue(part)])
+    .find(Boolean) || "";
+
+const resolvePostalCode = (parts: string[]) =>
+  parts
+    .map((part) => part.match(/\b\d{5,6}\b/)?.[0] || "")
+    .find(Boolean) || "";
+
+const resolveJobAddress = (location: string, workMode?: string) => {
   const normalizedLocation = normalizeLocationPart(location);
   if (!normalizedLocation || placeholderValuePattern.test(normalizedLocation)) {
     return null;
-  }
-
-  if (remoteLocationPattern.test(normalizedLocation)) {
-    return {
-      remote: true,
-      country: /india/i.test(normalizedLocation) ? "IN" : "",
-    };
   }
 
   const rawParts = normalizedLocation
     .split(",")
     .map((part) => part.trim())
     .filter(Boolean);
+  const lookupParts = rawParts.map((part) => normalizeLocationLookupValue(part));
+  const countryInfo = resolveCountryInfo(rawParts);
+  const isRemoteByMode =
+    /\b(remote\b)/i.test(workMode || "") && !/\bhybrid\b/i.test(workMode || "");
 
-  const normalizedParts = rawParts.map((part) => part.toLowerCase());
-  const hasIndia = normalizedParts.some((part) => part === "india");
-  const hasMultipleLocations =
-    multipleLocationPattern.test(normalizedLocation) || rawParts.length > 3;
+  if (remoteLocationPattern.test(normalizedLocation) || isRemoteByMode) {
+    return {
+      remote: true,
+      countryCode: countryInfo?.code || "",
+      countryName: countryInfo?.name || "",
+    };
+  }
 
-  const mappedCity = normalizedParts
+  const mappedCityEntries = lookupParts
     .map((part) => cityRegionCountryMap[part])
-    .find(Boolean);
+    .filter(Boolean);
+  const mappedCity = mappedCityEntries[0];
+  const uniqueMappedLocalities = new Set(
+    mappedCityEntries.map((entry) => entry.locality.toLowerCase()),
+  );
+  const cityIndex = lookupParts.findIndex((part) => Boolean(cityRegionCountryMap[part]));
+  const hasMultipleLocations =
+    multipleLocationPattern.test(normalizedLocation) || uniqueMappedLocalities.size > 1;
 
   const locality =
-    !hasMultipleLocations && mappedCity
+    !hasMultipleLocations && cityIndex >= 0 && mappedCity
       ? mappedCity.locality
       : !hasMultipleLocations && rawParts.length > 0
         ? rawParts[0]
@@ -344,27 +404,33 @@ const resolveJobAddress = (location: string) => {
 
   const region =
     mappedCity?.region ||
-    rawParts.find((part) =>
-      [
-        "Karnataka",
-        "Maharashtra",
-        "Tamil Nadu",
-        "Telangana",
-        "Uttar Pradesh",
-        "Haryana",
-        "Gujarat",
-        "Chandigarh",
-      ].includes(part),
-    ) ||
+    resolveRegionName(rawParts) ||
     "";
 
-  const country = mappedCity?.country || (hasIndia ? "IN" : "");
+  const countryCode = countryInfo?.code || mappedCity?.country || "";
+  const postalCode = !hasMultipleLocations ? resolvePostalCode(rawParts) : "";
+  const streetAddress =
+    !hasMultipleLocations && cityIndex > 0
+      ? rawParts
+          .slice(0, cityIndex)
+          .filter((part) => {
+            const lookupValue = normalizeLocationLookupValue(part);
+            return (
+              !countryAliasMap[lookupValue] &&
+              !regionAliasMap[lookupValue] &&
+              !/\b\d{5,6}\b/.test(part)
+            );
+          })
+          .join(", ")
+      : "";
 
   const address = {
     "@type": "PostalAddress",
+    ...(streetAddress ? { streetAddress } : {}),
     ...(locality ? { addressLocality: locality } : {}),
     ...(region ? { addressRegion: region } : {}),
-    ...(country ? { addressCountry: country } : {}),
+    ...(postalCode ? { postalCode } : {}),
+    ...(countryCode ? { addressCountry: countryCode } : {}),
   };
 
   if (Object.keys(address).length === 1) {
@@ -374,6 +440,8 @@ const resolveJobAddress = (location: string) => {
   return {
     remote: false,
     address,
+    countryCode,
+    countryName: countryInfo?.name || "",
   };
 };
 
@@ -394,7 +462,11 @@ const parseNumericSalaryPart = (value: string) => {
 
 const resolveBaseSalary = (salary: string | undefined) => {
   const normalizedSalary = (salary || "").trim();
-  if (!normalizedSalary || genericSalaryPattern.test(normalizedSalary)) {
+  if (
+    !normalizedSalary ||
+    genericSalaryPattern.test(normalizedSalary) ||
+    estimatedSalaryPattern.test(normalizedSalary)
+  ) {
     return null;
   }
 
@@ -549,7 +621,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
     job.date,
     job.applicationEndDate,
   );
-  const resolvedJobAddress = resolveJobAddress(job.location);
+  const resolvedJobAddress = resolveJobAddress(job.location, workMode);
   const baseSalary = resolveBaseSalary(job.salary);
   const applicationWindow = formatApplicationWindow(
     job.applicationStartDate,
@@ -667,11 +739,11 @@ export default async function JobDetailPage({ params }: JobPageProps) {
     ...(resolvedJobAddress?.remote
       ? {
           jobLocationType: "TELECOMMUTE",
-          ...(resolvedJobAddress.country
+          ...(resolvedJobAddress.countryCode
             ? {
                 applicantLocationRequirements: {
                   "@type": "Country",
-                  name: resolvedJobAddress.country,
+                  name: resolvedJobAddress.countryName || resolvedJobAddress.countryCode,
                 },
               }
             : {}),
