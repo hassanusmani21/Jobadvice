@@ -66,6 +66,22 @@ type HeaderInfoIconProps = {
   className?: string;
 };
 
+type JobDetailFact = {
+  key: string;
+  label: string;
+  value: string;
+  kind: HeaderInfoIconProps["kind"];
+  tone: "neutral" | "accent" | "warm";
+  span?: "wide" | "full";
+  compact?: boolean;
+};
+
+type JobDetailHighlight = {
+  key: string;
+  value: string;
+  kind: HeaderInfoIconProps["kind"];
+};
+
 const HeaderInfoIcon = ({
   kind,
   className = "h-4 w-4",
@@ -250,7 +266,7 @@ const remoteLocationPattern =
 const multipleLocationPattern =
   /\b(various|multiple|campuses|centers|possible|locations?)\b/i;
 const genericSalaryPattern =
-  /\b(not disclosed|competitive|best in (the )?industry|as per company|company standards|company policy|company norms|optional)\b/i;
+  /\b(not disclosed|not mentioned|not specified|competitive|best in (the )?industry|as per company|company standards|company policy|company norms|optional)\b/i;
 
 const normalizeLocationPart = (value: string) =>
   value
@@ -259,6 +275,38 @@ const normalizeLocationPart = (value: string) =>
     .replace(/\//g, ",")
     .replace(/\s+/g, " ")
     .trim();
+
+const getCondensedLocation = (location: string | undefined) => {
+  const primaryLocation = String(location || "").split("|")[0] || "";
+  const normalizedLocation = normalizeLocationPart(primaryLocation);
+  if (!normalizedLocation || placeholderValuePattern.test(normalizedLocation)) {
+    return "";
+  }
+
+  if (remoteLocationPattern.test(normalizedLocation)) {
+    return /india/i.test(normalizedLocation) ? "Remote, India" : "Remote";
+  }
+
+  const parts = normalizedLocation
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const visibleParts = parts.filter((part, index) => {
+    const isCountrySuffix = index === parts.length - 1 && /^india$/i.test(part);
+    return !isCountrySuffix;
+  });
+
+  if (visibleParts.length === 0) {
+    return normalizedLocation;
+  }
+
+  if (multipleLocationPattern.test(normalizedLocation)) {
+    return visibleParts[0];
+  }
+
+  return visibleParts.slice(0, 2).join(", ");
+};
 
 const resolveJobAddress = (location: string) => {
   const normalizedLocation = normalizeLocationPart(location);
@@ -476,6 +524,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   const isJobExpired = job.applicationStatus.state === "expired";
   const isApplicationUpcoming = job.applicationStatus.state === "upcoming";
   const hasApplyLink = Boolean(job.applyLink);
+  const canApplyNow = hasApplyLink && !isJobExpired && !isApplicationUpcoming;
   const relatedJobs = getRelatedJobs(job, allJobs, 5);
 
   const employmentType = job.employmentType || job.jobType;
@@ -502,6 +551,105 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   );
   const resolvedJobAddress = resolveJobAddress(job.location);
   const baseSalary = resolveBaseSalary(job.salary);
+  const applicationWindow = formatApplicationWindow(
+    job.applicationStartDate,
+    job.applicationEndDate,
+  );
+  const companySourceLabel = sourceHost ? `Apply via ${sourceHost}` : "Direct application source";
+  const condensedLocation = getCondensedLocation(job.location);
+  const shortLocation = condensedLocation.split(",")[0]?.trim() || "";
+  const shouldHighlightSalary = Boolean(job.salary && !genericSalaryPattern.test(job.salary));
+  const quickHighlights = ([
+    shortLocation
+      ? {
+          key: "location",
+          value: shortLocation,
+          kind: "location",
+        }
+      : null,
+    employmentType
+      ? {
+          key: "employmentType",
+          value: employmentType,
+          kind: "type",
+        }
+      : null,
+    experience
+      ? {
+          key: "experience",
+          value: experience,
+          kind: "experience",
+        }
+      : null,
+    workMode
+      ? {
+          key: "mode",
+          value: workMode,
+          kind: "mode",
+        }
+      : null,
+  ] as Array<JobDetailHighlight | null>).filter(
+    (item): item is JobDetailHighlight => item !== null,
+  );
+  const jobDetailFacts = ([
+    job.location
+      ? {
+          key: "location",
+          label: "Location",
+          value: condensedLocation || job.location,
+          kind: "location",
+          tone: "neutral",
+          span: "wide",
+        }
+      : null,
+    workMode
+      ? {
+          key: "mode",
+          label: "Work mode",
+          value: workMode,
+          kind: "mode",
+          tone: "neutral",
+        }
+      : null,
+    employmentType
+      ? {
+          key: "employmentType",
+          label: "Job type",
+          value: employmentType,
+          kind: "type",
+          tone: "neutral",
+        }
+      : null,
+    experience
+      ? {
+          key: "experience",
+          label: "Experience",
+          value: experience,
+          kind: "experience",
+          tone: "neutral",
+        }
+      : null,
+    job.salary
+      ? {
+          key: "salary",
+          label: "Compensation",
+          value: job.salary,
+          kind: "salary",
+          tone: shouldHighlightSalary ? "warm" : "neutral",
+        }
+      : null,
+    {
+      key: "applicationWindow",
+      label: "Application window",
+      value: applicationWindow,
+      kind: "window",
+      tone: "accent",
+      span: "full",
+      compact: true,
+    },
+  ] as Array<JobDetailFact | null>).filter(
+    (item): item is JobDetailFact => item !== null,
+  );
   const jobPostingSchema = {
     "@context": "https://schema.org",
     "@type": "JobPosting",
@@ -552,112 +700,96 @@ export default async function JobDetailPage({ params }: JobPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
       />
       <article className="space-y-6 lg:col-span-7">
-        <header className="job-detail-header-surface fade-up relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(249,251,252,0.96)_58%,rgba(242,247,246,0.94)_100%)] px-4 py-5 shadow-[0_18px_42px_-32px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.92)] sm:px-8 sm:py-8">
+        <header className="job-detail-header-surface fade-up relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(249,251,252,0.96)_58%,rgba(242,247,246,0.94)_100%)] px-4 py-4 shadow-[0_18px_42px_-32px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.92)] sm:px-7 sm:py-6">
           <div className="job-detail-header-top-line pointer-events-none absolute inset-x-4 top-0 h-px bg-white/80 sm:inset-x-8" />
           <div className="job-detail-header-accent pointer-events-none absolute -bottom-10 left-0 h-28 w-36 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.12)_0%,rgba(125,211,252,0.05)_42%,rgba(255,255,255,0)_74%)]" />
 
-          <div className="relative z-10">
-            <div className="flex flex-wrap gap-2 text-[11px] font-semibold sm:text-xs">
-              <span className="job-detail-top-badge job-detail-top-badge-neutral inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-slate-100/90 px-3.5 text-slate-600">
-                <HeaderInfoIcon kind="company" className="h-4 w-4" />
-                <span className="truncate">{job.company}</span>
-              </span>
-              <span className="job-detail-top-badge job-detail-top-badge-amber inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-amber-50 px-3.5 text-amber-900">
-                <HeaderInfoIcon kind="date" className="h-4 w-4" />
-                <span>Posted {formatPostedDate(job.date)}</span>
-              </span>
-              <span className="job-detail-top-badge job-detail-top-badge-neutral inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-slate-100/90 px-3.5 text-slate-500">
-                <HeaderInfoIcon kind="date" className="h-4 w-4 text-slate-400" />
-                <span>Updated {formatPostedDate(job.updatedAt)}</span>
-              </span>
-              {sourceHost ? (
-                <span className="job-detail-top-badge job-detail-top-badge-sky inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-sky-50 px-3.5 text-sky-900">
-                  <HeaderInfoIcon kind="source" className="h-4 w-4" />
-                  <span className="truncate">Source: {sourceHost}</span>
-                </span>
-              ) : null}
-            </div>
+          <div className="relative z-10 space-y-5">
+            <div className="job-detail-hero-layout">
+              <div className="min-w-0">
+                <div className="job-detail-title-row">
+                  <h1 className="job-detail-title text-balance font-serif text-[1.58rem] font-semibold leading-[1.04] tracking-[-0.03em] text-slate-900 sm:text-[1.95rem] sm:leading-[1.06] sm:tracking-[-0.022em]">
+                    {job.title}
+                  </h1>
 
-            <div className="mt-5">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-teal-50/90 ring-1 ring-teal-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.84)] sm:h-14 sm:w-14 sm:rounded-[1.35rem]">
-                  <HeaderInfoIcon kind="title" className="h-5 w-5 sm:h-6 sm:w-6" />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-teal-700 sm:text-[11px]">
-                    Open Role
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-                    Verified listing with direct application source
-                  </p>
+                  <div className="job-detail-top-meta flex flex-wrap gap-2 text-[11px] font-semibold sm:text-xs">
+                    <span className="job-detail-top-badge job-detail-top-badge-neutral inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-slate-100/90 px-3.5 text-slate-600">
+                      <HeaderInfoIcon kind="title" className="h-4 w-4" />
+                      <span>Verified source</span>
+                    </span>
+                    <span className="job-detail-top-badge job-detail-top-badge-amber inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-amber-50 px-3.5 text-amber-900">
+                      <HeaderInfoIcon kind="date" className="h-4 w-4" />
+                      <span>Posted {formatPostedDate(job.date)}</span>
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              <h1 className="mt-4 text-balance font-serif text-[1.68rem] font-semibold leading-[1.06] tracking-[-0.028em] text-slate-900 sm:mt-5 sm:text-[2rem] sm:leading-[1.1] sm:tracking-[-0.02em]">
-                {job.title}
-              </h1>
+                <div className="job-detail-heading-row">
+                  <div className="job-detail-company-strip flex min-w-0 items-start gap-3">
+                    <span className="job-detail-company-mark inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(186,230,253,0.95),rgba(153,246,228,0.92))] text-sm font-semibold tracking-wide text-teal-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+                      {companyInitials}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-[1rem] font-semibold leading-tight text-slate-800">
+                        {job.company}
+                      </p>
+                      <p className="job-detail-company-note mt-1 text-sm leading-5 text-slate-500">
+                        {companySourceLabel}
+                      </p>
 
-              <div className="mt-4 flex min-w-0 items-start gap-3 sm:mt-5">
-                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,rgba(186,230,253,0.95),rgba(153,246,228,0.92))] text-sm font-semibold tracking-wide text-teal-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
-                  {companyInitials}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-[1rem] font-semibold leading-tight text-slate-800">
-                    {job.company}
-                  </p>
-                  <p className="mt-1 text-sm leading-5 text-slate-500">
-                    Direct application source
-                  </p>
+                      {quickHighlights.length > 0 ? (
+                        <div className="job-detail-quick-highlights">
+                          {quickHighlights.map((highlight) => (
+                            <span key={highlight.key} className="job-detail-quick-highlight">
+                              <HeaderInfoIcon kind={highlight.kind} className="h-3.5 w-3.5" />
+                              <span>{highlight.value}</span>
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
                 </div>
+
               </div>
-
-              {summary ? (
-                <p className="mt-4 max-w-3xl text-[0.97rem] leading-7 text-slate-600">
-                  {summary}
-                </p>
-              ) : null}
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-2 text-[12px] text-slate-700 sm:mt-6 sm:flex sm:flex-wrap sm:gap-2.5 sm:text-sm">
-              {job.location ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-neutral col-span-2 inline-flex w-full items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75 sm:w-auto">
-                  <HeaderInfoIcon kind="location" className="h-4 w-4 text-slate-400" />
-                  <span>{job.location}</span>
-                </span>
-              ) : null}
-              {workMode ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex w-full items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75 sm:w-auto">
-                  <HeaderInfoIcon kind="mode" className="h-4 w-4 text-slate-400" />
-                  <span>{workMode}</span>
-                </span>
-              ) : null}
-              {employmentType ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex w-full items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75 sm:w-auto">
-                  <HeaderInfoIcon kind="type" className="h-4 w-4 text-slate-400" />
-                  <span>{employmentType}</span>
-                </span>
-              ) : null}
-              {experience ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-neutral inline-flex w-full items-center gap-2 rounded-full bg-white/82 px-3.5 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.88)] ring-1 ring-slate-200/75 sm:w-auto">
-                  <HeaderInfoIcon kind="experience" className="h-4 w-4 text-slate-400" />
-                  <span>{experience}</span>
-                </span>
-              ) : null}
-              {job.salary ? (
-                <span className="job-detail-meta-chip job-detail-meta-chip-amber inline-flex w-full items-center gap-2 rounded-full bg-amber-50 px-3.5 py-2 text-amber-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)] ring-1 ring-amber-200/80 sm:w-auto">
-                  <HeaderInfoIcon kind="salary" className="h-4 w-4" />
-                  <span>{job.salary}</span>
-                </span>
-              ) : null}
-              <span className="job-detail-meta-chip job-detail-meta-chip-sky col-span-2 inline-flex w-full items-center gap-2 rounded-full bg-sky-50/85 px-3.5 py-2 text-sky-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.86)] ring-1 ring-sky-200/75 sm:w-auto">
-                <HeaderInfoIcon kind="window" className="h-4 w-4" />
-                <span>{formatApplicationWindow(job.applicationStartDate, job.applicationEndDate)}</span>
-              </span>
-            </div>
+            <section className="job-detail-facts-panel">
+              <dl className="job-detail-facts-grid">
+                {jobDetailFacts.map((fact) => (
+                  <div
+                    key={fact.key}
+                    className={`job-detail-fact-card job-detail-fact-card-${fact.tone} ${
+                      fact.span === "wide"
+                        ? "job-detail-fact-card-wide"
+                        : fact.span === "full"
+                          ? "job-detail-fact-card-full"
+                          : ""
+                    } ${
+                      fact.compact ? "job-detail-fact-card-compact" : ""
+                    }`.trim()}
+                  >
+                    <dt className="job-detail-fact-label">
+                      <HeaderInfoIcon kind={fact.kind} className="h-4 w-4" />
+                      <span>{fact.label}</span>
+                    </dt>
+                    <dd className="job-detail-fact-value">{fact.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
 
-            <div className="mt-6 flex flex-col gap-3 border-t border-slate-200/75 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-2.5">
+            <div className="job-detail-footer mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/75 pt-4">
+              <div className="job-detail-footer-meta flex flex-col gap-2">
                 <ApplicationStatusBadge status={displayApplicationStatus} className="text-[11px]" />
+                {!hasApplyLink || isApplicationUpcoming ? (
+                  <p className="job-detail-footer-note text-sm text-slate-500">
+                    {isApplicationUpcoming
+                      ? "Link appears when applications open."
+                      : "Direct apply link not listed yet."}
+                  </p>
+                ) : null}
               </div>
 
               {isJobExpired ? (
@@ -679,7 +811,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   variant="primary"
-                  className="w-full sm:w-auto"
+                  className="job-detail-apply-button w-full sm:w-auto"
                 >
                   Apply Now
                 </JobActionButton>
@@ -687,6 +819,29 @@ export default async function JobDetailPage({ params }: JobPageProps) {
             </div>
           </div>
         </header>
+
+        {canApplyNow ? (
+          <div className="job-detail-sticky-apply-shell fade-up" style={{ animationDelay: "90ms" }}>
+            <div className="job-detail-sticky-apply-bar">
+              <div className="job-detail-sticky-apply-copy">
+                <p className="job-detail-sticky-apply-label">Official application link</p>
+                <p className="job-detail-sticky-apply-note">
+                  Keep Apply Now visible while you review the role details.
+                </p>
+              </div>
+              <JobActionButton
+                href={`/api/apply/${job.slug}`}
+                external
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                variant="primary"
+                className="job-detail-apply-button job-detail-apply-button-sticky w-full sm:w-auto"
+              >
+                Apply Now
+              </JobActionButton>
+            </div>
+          </div>
+        ) : null}
 
         {eligibilityCriteria ? (
           <section
