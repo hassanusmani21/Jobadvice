@@ -12,7 +12,7 @@ tags:
   - "IT Job Market"
 isTrending: false
 author: "JobAdvice Team"
-coverImage: "/uploads/download-1775305890155.png"
+coverImage: "/uploads/gemini-generated-image-cz46prcz46prcz46-1775306307230.png"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-04-04"
