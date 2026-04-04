@@ -49,64 +49,95 @@ export default async function HomePage() {
   const latestJobs = allJobs.slice(0, 6);
   const finderSegmentOptions = getAllJobSegmentConfigs();
   const finderLocationOptions = toTopLocations(allJobs.map((job) => job.location));
+  const directApplyCount = allJobs.filter((job) => Boolean(job.applyLink)).length;
+  const heroMetrics = [
+    { value: `${allJobs.length}+`, label: "openings" },
+    { value: `${directApplyCount}+`, label: "direct apply" },
+    { value: `${finderLocationOptions.length}+`, label: "locations" },
+  ];
+  const communityHighlights = [
+    "Verified links",
+    "Daily updates",
+    "Internships",
+  ];
 
   return (
     <div className="space-y-8">
-      <section className="fade-up hero-surface relative overflow-hidden px-5 py-5 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
+      <section className="fade-up hero-surface home-hero-shell relative overflow-hidden px-5 py-5 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
         <div
           aria-hidden
-          className="absolute -top-16 right-[-4.5rem] h-40 w-40 rounded-full bg-white/55 blur-3xl sm:h-56 sm:w-56"
+          className="absolute -top-24 right-[-5rem] h-44 w-44 rounded-full bg-white/45 blur-3xl sm:h-64 sm:w-64"
         />
         <div
           aria-hidden
-          className="absolute -bottom-14 left-[-3.5rem] h-32 w-32 rounded-full bg-teal-200/55 blur-3xl sm:h-44 sm:w-44"
+          className="absolute -bottom-20 left-[-4rem] h-36 w-36 rounded-full bg-teal-200/40 blur-3xl sm:h-52 sm:w-52"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-y-10 left-[44%] hidden w-px bg-gradient-to-b from-transparent via-white/12 to-transparent lg:block"
         />
 
-        <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1.18fr)_minmax(17.5rem,0.82fr)] lg:items-center">
-          <div className="max-w-3xl">
-            <span className="page-kicker">JobAdvice</span>
-            <h1 className="page-title max-w-3xl !text-[1.9rem] sm:!text-[2.45rem] lg:!text-[2.8rem]">
+        <div className="relative home-hero-grid grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:items-center">
+          <div className="home-hero-copy max-w-3xl">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="page-kicker home-hero-kicker">JobAdvice</span>
+              <span className="home-hero-live-pill">Updated daily</span>
+            </div>
+
+            <h1 className="page-title home-hero-title max-w-3xl !text-[1.9rem] sm:!text-[2.45rem] lg:!text-[2.85rem]">
               Find verified jobs and internships in India
             </h1>
-            <p className="page-copy max-w-2xl !mt-3 !text-[0.95rem] !leading-7">
+
+            <p className="page-copy home-hero-copy-text max-w-2xl !mt-2.5 !text-[0.95rem] !leading-6 sm:!text-[1rem]">
               Direct-apply openings, fresher-friendly details, and daily updates in one cleaner
               place.
             </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {["Verified sources", "Direct apply", "Fresh updates"].map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full border border-slate-200/80 bg-white/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600"
-                >
-                  {item}
+            <div className="home-hero-proof-row mt-4 flex flex-wrap items-center gap-2.5">
+              {heroMetrics.map((metric) => (
+                <span key={metric.label} className="home-hero-proof-chip">
+                  <span className="home-hero-proof-value">{metric.value}</span>
+                  <span className="home-hero-proof-label">{metric.label}</span>
                 </span>
               ))}
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <ActionButton href="/jobs" variant="primary" className="sm:w-auto">
+            <div className="home-hero-action-row mt-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+              <ActionButton href="/jobs" variant="primary" className="home-hero-primary-action sm:w-auto">
                 Browse Jobs
               </ActionButton>
-              <ActionButton href="/blog" variant="secondary" className="sm:w-auto">
+              <ActionButton href="/blog" variant="secondary" className="home-hero-secondary-action sm:w-auto">
                 Browse Blog
               </ActionButton>
             </div>
           </div>
 
-          <aside className="card-surface h-full rounded-[1.45rem] p-4 sm:p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
-              Community
-            </p>
-            <h2 className="mt-2 font-serif text-[1.2rem] leading-[1.08] text-slate-900 sm:text-[1.42rem]">
+          <aside className="home-community-card card-surface h-full rounded-[1.45rem] p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="home-community-kicker text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
+                Community
+              </p>
+              <span className="home-community-status">Fast lane</span>
+            </div>
+
+            <h2 className="home-community-title mt-2.5 font-serif text-[1.2rem] leading-[1.05] text-slate-900 sm:text-[1.4rem]">
               Join the WhatsApp community
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Get daily verified openings, internship updates, and direct links in one place.
+
+            <p className="home-community-copy mt-2.5 text-sm leading-6 text-slate-600">
+              Get verified openings and direct links in one faster WhatsApp feed.
             </p>
 
-            <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white/65 px-4 py-2.5 text-sm font-medium text-slate-600">
-              5k+ students • daily updates • direct links
+            <div className="home-community-signal mt-3 rounded-2xl border border-slate-200/80 bg-white/65 px-4 py-2.5 text-sm font-medium text-slate-600">
+              5k+ students • verified posts • direct links
+            </div>
+
+            <div className="home-community-chip-row mt-3 flex flex-wrap gap-2">
+              {communityHighlights.map((item) => (
+                <span key={item} className="home-community-chip">
+                  {item}
+                </span>
+              ))}
             </div>
 
             <ActionButton
@@ -115,7 +146,7 @@ export default async function HomePage() {
               target="_blank"
               rel="noopener noreferrer"
               variant="primary"
-              className="mt-3 w-full"
+              className="home-community-button mt-4 w-full"
             >
               Join WhatsApp Community
             </ActionButton>
@@ -123,36 +154,47 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="fade-up px-2 pt-0 sm:px-4 sm:pt-1">
-        <div className="home-search-surface mx-auto max-w-5xl p-2.5 sm:p-3">
+      <section className="fade-up home-search-wrap px-2 pt-0 sm:px-4">
+        <div className="home-search-surface home-search-shell mx-auto max-w-5xl p-3 sm:p-3.5">
+          <div className="home-search-heading mb-3 flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="home-search-kicker">Opportunity Finder</p>
+              <h2 className="home-search-title">Find the right opening faster</h2>
+            </div>
+            <p className="home-search-caption">Role, job type, and location in one quick search.</p>
+          </div>
+
           <form action="/jobs" method="get">
-            <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1.75fr)_minmax(11rem,0.92fr)_minmax(11rem,0.92fr)_auto] lg:items-center">
-              <label className="home-search-control flex min-h-14 min-w-0 items-center gap-3 px-4">
-                <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 shrink-0 text-slate-400">
-                  <path
-                    d="m14.5 14.5 3 3m-1.5-8a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.8"
+            <div className="home-search-grid grid gap-3 lg:grid-cols-[minmax(0,1.8fr)_minmax(11rem,0.92fr)_minmax(11rem,0.92fr)_auto] lg:items-end">
+              <label className="home-search-field block min-w-0">
+                <span className="home-search-label">Role or company</span>
+                <div className="home-search-control home-search-control-rich flex min-w-0 items-center gap-3 px-4">
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 shrink-0 text-slate-400">
+                    <path
+                      d="m14.5 14.5 3 3m-1.5-8a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.8"
+                    />
+                  </svg>
+                  <span className="sr-only">Search jobs</span>
+                  <input
+                    name="q"
+                    type="search"
+                    placeholder="Role, company, or skill"
+                    className="home-search-input min-w-0 w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                   />
-                </svg>
-                <span className="sr-only">Search jobs</span>
-                <input
-                  name="q"
-                  type="search"
-                  placeholder="Role, company, or skill"
-                  className="home-search-input min-w-0 w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
-                />
+                </div>
               </label>
 
-              <label className="block min-w-0">
-                <span className="sr-only">Choose job type</span>
+              <label className="home-search-field block min-w-0">
+                <span className="home-search-label">Job type</span>
                 <select
                   name="segment"
                   defaultValue="all"
-                  className="home-search-control min-h-14 w-full px-4 text-sm text-slate-700 outline-none"
+                  className="home-search-control home-search-control-rich w-full px-4 text-sm text-slate-700 outline-none"
                 >
                   <option value="all">Job type</option>
                   {finderSegmentOptions.map((segment) => (
@@ -163,21 +205,21 @@ export default async function HomePage() {
                 </select>
               </label>
 
-              <label className="block min-w-0">
-                <span className="sr-only">Enter location</span>
+              <label className="home-search-field block min-w-0">
+                <span className="home-search-label">Location</span>
                 <input
                   name="location"
                   type="text"
                   list="homepage-job-locations"
                   placeholder="Location"
-                  className="home-search-control min-h-14 w-full px-4 text-sm text-slate-700 outline-none placeholder:text-slate-400"
+                  className="home-search-control home-search-control-rich w-full px-4 text-sm text-slate-700 outline-none placeholder:text-slate-400"
                 />
               </label>
 
               <ActionButton
                 variant="primary"
                 buttonType="submit"
-                className="min-h-14 w-full rounded-[1.35rem] px-7 lg:w-auto"
+                className="home-search-submit w-full px-6 lg:w-auto"
               >
                 Search
               </ActionButton>
