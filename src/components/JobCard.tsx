@@ -5,6 +5,7 @@ import { formatPostedDate, type JobPost } from "@/lib/jobs";
 type JobCardProps = {
   job: JobPost;
   style?: CSSProperties;
+  compact?: boolean;
 };
 
 type HeaderIconProps = {
@@ -305,7 +306,7 @@ const resolveCardHighlight = (job: JobPost, includeExperienceInPrimaryRow: boole
   return "";
 };
 
-export default function JobCard({ job, style }: JobCardProps) {
+export default function JobCard({ job, style, compact = false }: JobCardProps) {
   const workMode = job.workMode;
   const employmentType = job.employmentType || job.jobType;
   const experience = normalizeCardText(
@@ -342,19 +343,21 @@ export default function JobCard({ job, style }: JobCardProps) {
   }>;
   return (
     <article
-      className="job-card-surface group fade-up relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.7rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,251,0.96)_58%,rgba(242,247,246,0.94)_100%)] px-5 py-5 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.14),0_18px_40px_-30px_rgba(20,184,166,0.10),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] sm:px-6"
+      className={`job-card-surface group fade-up relative flex h-full min-w-0 flex-col overflow-hidden rounded-[1.7rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,251,0.96)_58%,rgba(242,247,246,0.94)_100%)] px-5 py-5 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.14),0_18px_40px_-30px_rgba(20,184,166,0.10),inset_0_1px_0_rgba(255,255,255,0.9)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(0,0,0,0.12)] sm:px-6${
+        compact ? " job-card-compact" : ""
+      }`}
       style={style}
     >
       <div className="job-card-top-line pointer-events-none absolute inset-x-6 top-0 h-px bg-white/80" />
       <div className="job-card-accent pointer-events-none absolute -bottom-10 left-2 h-24 w-28 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.12)_0%,rgba(125,211,252,0.05)_42%,rgba(255,255,255,0)_74%)]" />
       <div className="relative z-10 flex h-full flex-col">
-        <div className="flex min-h-[4.6rem] items-start gap-2.5">
-          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-50/80 ring-1 ring-teal-100/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)]">
+        <div className="job-card-header flex min-h-[4.6rem] items-start gap-2.5">
+          <span className="job-card-icon-shell inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-50/80 ring-1 ring-teal-100/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)]">
             <HeaderIcon kind={jobIconKind} className="h-[18px] w-[18px]" />
           </span>
           <div className="min-w-0 flex-1">
             <h2
-              className="text-[1.125rem] font-semibold leading-[1.3] tracking-[-0.01em] text-slate-900 transition-colors group-hover:text-teal-900"
+              className="job-card-title-text text-[1.125rem] font-semibold leading-[1.3] tracking-[-0.01em] text-slate-900 transition-colors group-hover:text-teal-900"
               style={{
                 display: "-webkit-box",
                 WebkitBoxOrient: "vertical",
@@ -365,25 +368,25 @@ export default function JobCard({ job, style }: JobCardProps) {
               {titleParts.title}
             </h2>
             {titleParts.subtitle ? (
-              <p className="mt-1 truncate text-[0.875rem] font-medium leading-[1.35] text-slate-500">
+              <p className="job-card-subtitle mt-1 truncate text-[0.875rem] font-medium leading-[1.35] text-slate-500">
                 {titleParts.subtitle}
               </p>
             ) : null}
           </div>
         </div>
 
-        <div className="mt-3.5 min-w-0">
-          <div className="flex min-w-0 items-start gap-3 text-[0.9375rem] text-slate-600">
+        <div className="job-card-company-block mt-3.5 min-w-0">
+          <div className="job-card-company-row flex min-w-0 items-start gap-3 text-[0.9375rem] text-slate-600">
             <span
-              className={`mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold leading-none tracking-wide shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] ${companyAvatarClasses}`}
+              className={`job-card-company-avatar mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold leading-none tracking-wide shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] ${companyAvatarClasses}`}
             >
               {companyInitials}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[0.97rem] font-semibold leading-tight text-slate-800">
+              <p className="job-card-company-name truncate text-[0.97rem] font-semibold leading-tight text-slate-800">
                 {job.company}
               </p>
-              <p className="mt-1 inline-flex items-center gap-1.5 text-[0.8rem] leading-none text-slate-500">
+              <p className="job-card-date-line mt-1 inline-flex items-center gap-1.5 text-[0.8rem] leading-none text-slate-500">
                 <HeaderIcon kind="date" className="h-3.5 w-3.5 text-slate-400" />
                 <span>Posted {formatPostedDate(job.date)}</span>
               </p>
@@ -392,15 +395,15 @@ export default function JobCard({ job, style }: JobCardProps) {
         </div>
 
         {primaryMetaItems.length > 0 || cardHighlight ? (
-          <div className="mt-3 space-y-2">
+          <div className="job-card-meta-stack mt-3 space-y-2">
             {primaryMetaItems.length > 0 ? (
-              <div className="flex min-h-[2.25rem] flex-wrap gap-2">
+              <div className="job-card-meta-row flex min-h-[2.25rem] flex-wrap gap-2">
                 {primaryMetaItems.map((item) => {
                   const MetaIcon = item.icon;
                   return (
                     <span
                       key={item.label}
-                      className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/72 px-3 py-1.5 text-[0.82rem] font-medium leading-none text-slate-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
+                      className="job-card-meta-pill inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/72 px-3 py-1.5 text-[0.82rem] font-medium leading-none text-slate-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
                     >
                       <MetaIcon className="h-3.5 w-3.5 shrink-0 opacity-70" />
                       <span className="truncate">{item.label}</span>
@@ -410,10 +413,10 @@ export default function JobCard({ job, style }: JobCardProps) {
               </div>
             ) : null}
             {cardHighlight ? (
-              <div className="flex min-w-0 items-center gap-1.5 text-[0.8125rem] font-normal leading-[1.35] text-slate-500">
+              <div className="job-card-highlight-row flex min-w-0 items-center gap-1.5 text-[0.8125rem] font-normal leading-[1.35] text-slate-500">
                 <HighlightIcon className="h-3.5 w-3.5 shrink-0 opacity-70" />
                 <span
-                  className="min-w-0 flex-1 overflow-hidden"
+                  className="job-card-highlight-text min-w-0 flex-1 overflow-hidden"
                   style={{
                     display: "-webkit-box",
                     WebkitBoxOrient: "vertical",
@@ -427,9 +430,9 @@ export default function JobCard({ job, style }: JobCardProps) {
           </div>
         ) : null}
 
-        <div className="mt-4 h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
+        <div className="job-card-divider mt-4 h-px bg-gradient-to-r from-transparent via-slate-200/60 to-transparent" />
 
-        <div className="mt-auto grid gap-4 pt-4 sm:grid-cols-2">
+        <div className="job-card-actions mt-auto grid gap-4 pt-4 sm:grid-cols-2">
           {job.applyLink ? (
             <JobActionButton
               href={`/api/apply/${job.slug}`}

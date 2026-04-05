@@ -42,10 +42,9 @@ const withNormalizedHref = (href: LinkProps["href"]): LinkProps["href"] => {
 };
 
 const AppLink = forwardRef<HTMLAnchorElement, AppLinkProps>(function AppLink(
-  { prefetch = false, href, ...props },
+  { prefetch, href, ...props },
   ref,
 ) {
-  // Default prefetch is disabled to avoid stale background route chunk requests during deploy swaps.
   return <NextLink ref={ref} prefetch={prefetch} href={withNormalizedHref(href)} {...props} />;
 });
 

@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { unstable_cache } from "next/cache";
 import { toIsoDateString } from "./dateParsing";
 import { normalizeMarkdownSource } from "./markdown";
 import { toContentSlug } from "./slug";
@@ -395,7 +396,11 @@ const loadBlogs = async (options: { includeDrafts?: boolean } = {}) => {
     });
 };
 
-const readBlogs = (options: { includeDrafts?: boolean } = {}) => loadBlogs(options);
+const readBlogs = unstable_cache(async () => loadBlogs(), ["blogs:public"], {
+  revalidate: 60 * 60,
+});
+
+const readBlogsForAdmin = (options: { includeDrafts?: boolean } = {}) => loadBlogs(options);
 
 const toUtcTimestamp = (value: string) => Date.parse(`${value}T00:00:00Z`);
 
@@ -419,7 +424,7 @@ const getFreshnessWeight = (dateString: string) => {
 
 export const getAllBlogs = async () => readBlogs();
 
-export const getAllBlogsForAdmin = async () => readBlogs({ includeDrafts: true });
+export const getAllBlogsForAdmin = async () => readBlogsForAdmin({ includeDrafts: true });
 
 export const getLatestBlogs = async (limit = 6) => {
   const blogs = await readBlogs();

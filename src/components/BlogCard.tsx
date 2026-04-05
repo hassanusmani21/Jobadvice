@@ -8,66 +8,96 @@ type BlogCardProps = {
   style?: React.CSSProperties;
 };
 
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="blog-card-meta-icon">
+      <path
+        d="M6.25 2.917v2.5M13.75 2.917v2.5M3.75 7.083h12.5M5.417 4.583h9.166a1.667 1.667 0 0 1 1.667 1.667v8.333a1.667 1.667 0 0 1-1.667 1.667H5.417A1.667 1.667 0 0 1 3.75 14.583V6.25a1.667 1.667 0 0 1 1.667-1.667Z"
+        stroke="currentColor"
+        strokeWidth="1.65"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="blog-card-meta-icon">
+      <path
+        d="M10 17.083A7.083 7.083 0 1 0 10 2.917a7.083 7.083 0 0 0 0 14.166ZM10 6.667v3.125l2.083 1.458"
+        stroke="currentColor"
+        strokeWidth="1.65"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function BlogCard({ blog, style }: BlogCardProps) {
   const coverImageSrc = toDisplayImageSrc(blog.coverImage);
+  const summary = blog.summary || blog.excerpt;
+  const topicLabel = blog.topic || blog.tags[0] || "Career";
 
   return (
     <Link
       href={`/blog/${blog.slug}`}
-      className="group fade-up card-surface flex h-full flex-col overflow-hidden p-0 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_44px_-32px_rgba(15,23,42,0.2)]"
+      className="group fade-up blog-card-surface"
       aria-label={`Read ${blog.title}`}
       style={style}
     >
-      <div className="relative border-b border-slate-200 bg-slate-100">
+      <div className="blog-card-media-shell">
         {coverImageSrc ? (
           <Image
             src={coverImageSrc}
             alt={blog.title}
             width={1200}
             height={720}
-            className="h-48 w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+            className="blog-card-media-image"
             loading="lazy"
-            sizes="(min-width: 1024px) 24rem, (min-width: 768px) 50vw, 100vw"
+            sizes="(min-width: 1024px) 31vw, (min-width: 768px) 50vw, 100vw"
           />
         ) : (
-          <div className="flex h-48 items-end bg-[linear-gradient(135deg,#0f172a,#134e4a)] p-4">
-            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/90">
-              {blog.topic || "JobAdvice"}
+          <div className="blog-card-media-fallback">
+            <span className="blog-card-badge blog-card-badge-fallback">
+              {topicLabel}
             </span>
           </div>
         )}
       </div>
 
-      <div className="flex h-full flex-col p-4">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-wide">
-          {blog.topic ? <span className="text-teal-700">{blog.topic}</span> : null}
-          {blog.isTrending ? (
-            <span className="content-chip content-chip-amber">
-              Trending
-            </span>
-          ) : null}
-        </div>
-        <h2
-          className="mt-3 text-lg font-bold leading-[1.35] text-slate-900 transition-colors group-hover:text-teal-900"
-          style={{
-            display: "-webkit-box",
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {blog.title}
-        </h2>
-        <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-slate-600">
-          <span className="content-chip">
-            {formatBlogDate(blog.date)}
-          </span>
-          <span className="content-chip">
-            {blog.readingTimeMinutes} min read
+      <div className="blog-card-content">
+        <div className="blog-card-badge-row">
+          <span className={`blog-card-badge${blog.isTrending ? " blog-card-badge-trending" : ""}`}>
+            {topicLabel}
           </span>
         </div>
-        <span className="inline-action-label mt-4 w-fit">
+
+        <h2 className="blog-card-title">{blog.title}</h2>
+
+        <p className="blog-card-summary">{summary}</p>
+
+        <div className="blog-card-meta">
+          <span className="blog-card-meta-item">
+            <CalendarIcon />
+            <span>{formatBlogDate(blog.date)}</span>
+          </span>
+          <span className="blog-card-meta-separator" aria-hidden="true">
+            •
+          </span>
+          <span className="blog-card-meta-item">
+            <ClockIcon />
+            <span>{blog.readingTimeMinutes} min read</span>
+          </span>
+        </div>
+
+        <span className="blog-card-cta">
           Read Article
+          <span aria-hidden="true" className="blog-card-cta-arrow">
+            →
+          </span>
         </span>
       </div>
     </Link>

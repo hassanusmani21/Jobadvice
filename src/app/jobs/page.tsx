@@ -1,19 +1,12 @@
 import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
-import Link from "@/components/AppLink";
 import JobCard from "@/components/JobCard";
 import { getAllJobs, type JobPost } from "@/lib/jobs";
-import {
-  getAllJobSegmentConfigs,
-  getJobSegmentConfig,
-  getJobsForSegment,
-  isJobSegmentSlug,
-} from "@/lib/jobSegments";
 
 export const metadata: Metadata = {
-  title: "Verified Jobs, Fresher Jobs, and Internships in India",
+  title: "Jobs",
   description:
-    "Browse verified jobs in India including fresher jobs, internships, experienced roles, and remote-friendly openings with direct apply links.",
+    "Browse all job updates on JobAdvice including company, location, and role details.",
   alternates: {
     canonical: "/jobs/",
   },
@@ -26,7 +19,6 @@ type JobsPageProps = {
     type?: string | string[];
     status?: string | string[];
     sort?: string | string[];
-    segment?: string | string[];
   };
 };
 
@@ -85,36 +77,19 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const typeFilter = toSingleValue(searchParams?.type);
   const statusFilter = toSingleValue(searchParams?.status);
   const sortFilter = toSingleValue(searchParams?.sort) || "newest";
-  const rawSegmentFilter = toSingleValue(searchParams?.segment).toLowerCase();
-  const segmentFilter = isJobSegmentSlug(rawSegmentFilter) ? rawSegmentFilter : "";
-  const jobsForCurrentSegment = segmentFilter
-    ? getJobsForSegment(jobs, segmentFilter)
-    : jobs;
-  const activeSegment = segmentFilter ? getJobSegmentConfig(segmentFilter) : null;
-  const segmentCards = getAllJobSegmentConfigs().map((segment) => ({
-    ...segment,
-    count: getJobsForSegment(jobs, segment.slug).length,
-  }));
 
-  const locationOptions = toUniqueSortedValues(
-    jobsForCurrentSegment.map((job) => job.location),
-  );
+  const locationOptions = toUniqueSortedValues(jobs.map((job) => job.location));
   const typeOptions = toUniqueSortedValues(
-    jobsForCurrentSegment.map((job) => job.employmentType || job.jobType || ""),
+    jobs.map((job) => job.employmentType || job.jobType || ""),
   );
 
-  const filteredJobs = jobsForCurrentSegment.filter((job) => {
+  const filteredJobs = jobs.filter((job) => {
     if (query && !matchesSearch(job, query)) {
       return false;
     }
 
-    if (locationFilter) {
-      const normalizedLocation = job.location.toLowerCase();
-      const normalizedLocationFilter = locationFilter.toLowerCase();
-
-      if (!normalizedLocation.includes(normalizedLocationFilter)) {
-        return false;
-      }
+    if (locationFilter && job.location.toLowerCase() !== locationFilter.toLowerCase()) {
+      return false;
     }
 
     const employmentType = (job.employmentType || job.jobType || "").toLowerCase();
@@ -152,134 +127,102 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     return new Date(secondJob.date).getTime() - new Date(firstJob.date).getTime();
   });
 
-  const hasActiveFilters = Boolean(
-    query || locationFilter || typeFilter || statusFilter || segmentFilter,
-  );
+  const hasActiveFilters = Boolean(query || locationFilter || typeFilter || statusFilter);
+  const showClearAction = hasActiveFilters || sortFilter !== "newest";
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-4">
-        <div className="fade-up page-intro-surface px-5 py-5 sm:px-8 sm:py-6">
-          <span className="page-kicker">Jobs Directory</span>
-          <h1 className="page-title">All Jobs</h1>
-          <p className="page-copy">
-            Explore the latest job openings with complete role information and direct application
-            links.
-          </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {segmentCards.map((segment) => (
-              <Link
-                key={segment.slug}
-                href={segment.href}
-                className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 text-left shadow-sm transition hover:border-teal-200 hover:bg-teal-50/40"
-              >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  {segment.kicker}
-                </p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">{segment.label}</p>
-                <p className="mt-1 text-sm text-slate-600">{segment.count} live openings</p>
-              </Link>
-            ))}
+    <section className="space-y-8">
+      <div className="fade-up jobs-directory-toolbar">
+        <div className="jobs-directory-topbar">
+          <div className="jobs-directory-title-line">
+            <span className="jobs-directory-kicker">Jobs Directory</span>
+            <h1 className="jobs-directory-inline-title">All Jobs</h1>
           </div>
-          <form action="/jobs" method="get" className="filter-panel mt-4 sm:grid-cols-2 xl:grid-cols-4">
-            <label htmlFor="jobs-search" className="sr-only">
-              Search jobs
-            </label>
-            <input
-              id="jobs-search"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Search by title, company, location, or skill"
-              className="form-control sm:col-span-2 xl:col-span-2"
-            />
-            <select
-              name="location"
-              defaultValue={locationFilter}
-              className="form-control"
-            >
-              <option value="">All locations</option>
-              {locationOptions.map((locationOption) => (
-                <option key={locationOption} value={locationOption}>
-                  {locationOption}
-                </option>
-              ))}
-            </select>
-            <select
-              name="type"
-              defaultValue={typeFilter}
-              className="form-control"
-            >
-              <option value="">All types</option>
-              {typeOptions.map((typeOption) => (
-                <option key={typeOption} value={typeOption}>
-                  {typeOption}
-                </option>
-              ))}
-            </select>
-            <select
-              name="segment"
-              defaultValue={segmentFilter || "all"}
-              className="form-control"
-            >
-              <option value="all">All paths</option>
-              {segmentCards.map((segment) => (
-                <option key={segment.slug} value={segment.slug}>
-                  {segment.label}
-                </option>
-              ))}
-            </select>
-            <select
-              name="status"
-              defaultValue={statusFilter}
-              className="form-control"
-            >
-              <option value="">All statuses</option>
-              <option value="open">Open now</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="expired">Expired</option>
-            </select>
-            <select
-              name="sort"
-              defaultValue={sortFilter}
-              className="form-control"
-            >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="closingSoon">Closing soon</option>
-            </select>
-            <ActionButton variant="primary" buttonType="submit" className="w-full">
-              Search
-            </ActionButton>
-            {hasActiveFilters || sortFilter !== "newest" ? (
-              <ActionButton href="/jobs" variant="secondary" className="w-full">
-                Clear
-              </ActionButton>
-            ) : null}
-          </form>
+          <div className="jobs-directory-count-pill">
+            {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
+          </div>
         </div>
 
-        <p className="px-1 text-sm text-slate-600">
-          {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
-          {activeSegment ? (
-            <>
-              {" "}
-              in <span className="font-semibold text-slate-800">{activeSegment.label}</span>
-            </>
+        <form
+          action="/jobs"
+          method="get"
+          className={`jobs-directory-toolbar-form jobs-directory-filter-panel${
+            showClearAction ? " jobs-directory-filter-panel-has-clear" : ""
+          }`}
+        >
+          <label htmlFor="jobs-search" className="sr-only">
+            Search jobs
+          </label>
+          <input
+            id="jobs-search"
+            name="q"
+            type="search"
+            defaultValue={query}
+            placeholder="Search by title, company, location, or skill"
+            className="form-control jobs-directory-control"
+          />
+          <select
+            name="location"
+            defaultValue={locationFilter}
+            className="form-control jobs-directory-control"
+          >
+            <option value="">All locations</option>
+            {locationOptions.map((locationOption) => (
+              <option key={locationOption} value={locationOption}>
+                {locationOption}
+              </option>
+            ))}
+          </select>
+          <select
+            name="type"
+            defaultValue={typeFilter}
+            className="form-control jobs-directory-control"
+          >
+            <option value="">All types</option>
+            {typeOptions.map((typeOption) => (
+              <option key={typeOption} value={typeOption}>
+                {typeOption}
+              </option>
+            ))}
+          </select>
+          <select
+            name="status"
+            defaultValue={statusFilter}
+            className="form-control jobs-directory-control"
+          >
+            <option value="">All statuses</option>
+            <option value="open">Open now</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="expired">Expired</option>
+          </select>
+          <select
+            name="sort"
+            defaultValue={sortFilter}
+            className="form-control jobs-directory-control"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="closingSoon">Closing soon</option>
+          </select>
+          <ActionButton
+            variant="primary"
+            buttonType="submit"
+            className="jobs-directory-action w-full"
+          >
+            Search
+          </ActionButton>
+          {showClearAction ? (
+            <ActionButton href="/jobs" variant="secondary" className="jobs-directory-action w-full">
+              Clear
+            </ActionButton>
           ) : null}
-          {query ? (
-            <>
-              {" "}
-              for <span className="font-semibold text-slate-800">&quot;{query}&quot;</span>
-            </>
-          ) : null}
-        </p>
+        </form>
       </div>
 
-      <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-3">
+      <div className="jobs-directory-grid grid gap-x-5 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
         {sortedJobs.map((job) => (
-          <div key={job.slug} className="min-w-0">
-            <JobCard job={job} />
+          <div key={job.slug} className="min-w-0 h-full">
+            <JobCard job={job} compact />
           </div>
         ))}
       </div>

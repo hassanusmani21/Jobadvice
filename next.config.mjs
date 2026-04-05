@@ -109,25 +109,13 @@ const noIndexHeaders = [
   },
 ];
 
-const publicNoStoreSources = [
-  "/",
-  "/about",
-  "/blog",
-  "/blog/:path*",
-  "/contact",
-  "/jobs",
-  "/jobs/:path*",
-  "/login",
-  "/privacy-policy",
-];
-
 const nextConfig = {
   output: isStaticExport ? "export" : undefined,
   ...(deploymentId ? { deploymentId } : {}),
   poweredByHeader: false,
   trailingSlash: true,
   images: {
-    unoptimized: true,
+    unoptimized: isStaticExport,
     remotePatterns: [
       {
         protocol: "https",
@@ -173,10 +161,6 @@ const nextConfig = {
     }
 
     return [
-      ...publicNoStoreSources.map((source) => ({
-        source,
-        headers: noStoreHeaders,
-      })),
       {
         source: "/admin",
         headers: [...noStoreHeaders, ...noIndexHeaders],

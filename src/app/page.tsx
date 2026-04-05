@@ -62,8 +62,8 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="space-y-8">
-      <section className="fade-up hero-surface home-hero-shell relative overflow-hidden px-5 py-5 sm:px-8 sm:py-6 lg:px-10 lg:py-6">
+    <div className="space-y-6 lg:space-y-4">
+      <section className="fade-up hero-surface home-hero-shell relative overflow-hidden px-5 py-5 sm:px-7 sm:py-5 lg:px-8 lg:py-4.5">
         <div
           aria-hidden
           className="absolute -top-24 right-[-5rem] h-44 w-44 rounded-full bg-white/45 blur-3xl sm:h-64 sm:w-64"
@@ -77,14 +77,14 @@ export default async function HomePage() {
           className="absolute inset-y-10 left-[44%] hidden w-px bg-gradient-to-b from-transparent via-white/12 to-transparent lg:block"
         />
 
-        <div className="relative home-hero-grid grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:items-center">
+        <div className="relative home-hero-grid grid gap-4 lg:grid-cols-[minmax(0,1.16fr)_minmax(17rem,0.84fr)] lg:items-center">
           <div className="home-hero-copy max-w-3xl">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2.5">
               <span className="page-kicker home-hero-kicker">JobAdvice</span>
               <span className="home-hero-live-pill">Updated daily</span>
             </div>
 
-            <h1 className="page-title home-hero-title max-w-3xl !text-[1.9rem] sm:!text-[2.45rem] lg:!text-[2.85rem]">
+            <h1 className="page-title home-hero-title max-w-3xl !text-[1.9rem] sm:!text-[2.25rem] lg:!text-[2.48rem]">
               Find verified jobs and internships in India
             </h1>
 
@@ -93,7 +93,7 @@ export default async function HomePage() {
               place.
             </p>
 
-            <div className="home-hero-proof-row mt-4 flex flex-wrap items-center gap-2.5">
+            <div className="home-hero-proof-row mt-3.5 flex flex-wrap items-center gap-2">
               {heroMetrics.map((metric) => (
                 <span key={metric.label} className="home-hero-proof-chip">
                   <span className="home-hero-proof-value">{metric.value}</span>
@@ -102,7 +102,7 @@ export default async function HomePage() {
               ))}
             </div>
 
-            <div className="home-hero-action-row mt-4 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
+            <div className="home-hero-action-row mt-3.5 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap">
               <ActionButton href="/jobs" variant="primary" className="home-hero-primary-action sm:w-auto">
                 Browse Jobs
               </ActionButton>
@@ -112,7 +112,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <aside className="home-community-card card-surface h-full rounded-[1.45rem] p-4 sm:p-5">
+          <aside className="home-community-card card-surface h-full rounded-[1.45rem] p-4 sm:p-[1.125rem]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="home-community-kicker text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
                 Community
@@ -120,19 +120,19 @@ export default async function HomePage() {
               <span className="home-community-status">Fast lane</span>
             </div>
 
-            <h2 className="home-community-title mt-2.5 font-serif text-[1.2rem] leading-[1.05] text-slate-900 sm:text-[1.4rem]">
+            <h2 className="home-community-title mt-2 font-serif text-[1.16rem] leading-[1.05] text-slate-900 sm:text-[1.28rem]">
               Join the WhatsApp community
             </h2>
 
-            <p className="home-community-copy mt-2.5 text-sm leading-6 text-slate-600">
+            <p className="home-community-copy mt-2 text-sm leading-6 text-slate-600">
               Get verified openings and direct links in one faster WhatsApp feed.
             </p>
 
-            <div className="home-community-signal mt-3 rounded-2xl border border-slate-200/80 bg-white/65 px-4 py-2.5 text-sm font-medium text-slate-600">
+            <div className="home-community-signal mt-2.5 rounded-2xl border border-slate-200/80 bg-white/65 px-4 py-2.5 text-sm font-medium text-slate-600">
               5k+ students • verified posts • direct links
             </div>
 
-            <div className="home-community-chip-row mt-3 flex flex-wrap gap-2">
+            <div className="home-community-chip-row mt-2.5 flex flex-wrap gap-2">
               {communityHighlights.map((item) => (
                 <span key={item} className="home-community-chip">
                   {item}
@@ -146,7 +146,7 @@ export default async function HomePage() {
               target="_blank"
               rel="noopener noreferrer"
               variant="primary"
-              className="home-community-button mt-4 w-full"
+              className="home-community-button mt-3.5 w-full"
             >
               Join WhatsApp Community
             </ActionButton>
@@ -154,17 +154,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="fade-up home-search-wrap px-2 pt-0 sm:px-4">
-        <div className="home-search-surface home-search-shell mx-auto max-w-5xl p-3 sm:p-3.5">
-          <div className="home-search-heading mb-3 flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="home-search-kicker">Opportunity Finder</p>
-              <h2 className="home-search-title">Find the right opening faster</h2>
-            </div>
-            <p className="home-search-caption">Role, job type, and location in one quick search.</p>
-          </div>
-
-          <form action="/jobs" method="get">
+      <section className="fade-up home-search-wrap px-2 pt-0 sm:px-4 lg:-mt-1">
+        <div className="home-search-surface home-search-shell mx-auto max-w-5xl p-3 sm:p-3 lg:p-2.5">
+          <form action="/jobs" method="get" aria-label="Job search">
             <div className="home-search-grid grid gap-3 lg:grid-cols-[minmax(0,1.8fr)_minmax(11rem,0.92fr)_minmax(11rem,0.92fr)_auto] lg:items-end">
               <label className="home-search-field block min-w-0">
                 <span className="home-search-label">Role or company</span>

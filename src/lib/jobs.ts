@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { unstable_cache } from "next/cache";
 import { toIsoDateString } from "./dateParsing";
 import { toContentSlug } from "./slug";
 
@@ -1194,13 +1195,17 @@ const loadJobs = async (options: { includeDrafts?: boolean; includeExpired?: boo
     );
 };
 
-const readJobs = (options: { includeDrafts?: boolean; includeExpired?: boolean } = {}) =>
+const readJobs = unstable_cache(async () => loadJobs(), ["jobs:public"], {
+  revalidate: 60 * 60,
+});
+
+const readJobsForAdmin = (options: { includeDrafts?: boolean; includeExpired?: boolean } = {}) =>
   loadJobs(options);
 
 export const getAllJobs = async () => readJobs();
 
 export const getAllJobsForAdmin = async () =>
-  readJobs({ includeDrafts: true, includeExpired: true });
+  readJobsForAdmin({ includeDrafts: true, includeExpired: true });
 
 export const getLatestJobs = async (limit = 6) => {
   const jobs = await readJobs();

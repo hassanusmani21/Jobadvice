@@ -396,7 +396,7 @@ export default function RootLayout({
 
           <SiteHeader />
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-24 sm:px-6 sm:pt-10 sm:pb-10 lg:px-8">{children}</main>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-24 sm:px-6 sm:pt-6 sm:pb-10 lg:px-8 lg:pt-4">{children}</main>
 
           <footer className="mt-8 border-t border-slate-200 bg-slate-50">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-24 sm:px-6 sm:pb-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">

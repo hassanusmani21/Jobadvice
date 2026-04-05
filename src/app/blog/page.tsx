@@ -103,15 +103,24 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      <section className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8">
-        <span className="page-kicker">Career Articles</span>
-        <h1 className="page-title">Blog</h1>
-        <p className="page-copy">
-          Explore JobAdvice blog posts on hiring trends, interview preparation, salary insights,
-          AI shifts, and career decisions for students, freshers, and early-career professionals.
-        </p>
+      <section className="fade-up jobs-directory-toolbar blog-directory-toolbar-shell">
+        <div className="jobs-directory-topbar">
+          <div className="jobs-directory-title-line">
+            <span className="jobs-directory-kicker">Career Articles</span>
+            <h1 className="jobs-directory-inline-title">Blog</h1>
+          </div>
+          <div className="jobs-directory-count-pill">
+            {filteredBlogs.length} post{filteredBlogs.length === 1 ? "" : "s"}
+          </div>
+        </div>
 
-        <form action="/blog" method="get" className="filter-panel mt-5 sm:grid-cols-2 xl:grid-cols-4">
+        <form
+          action="/blog"
+          method="get"
+          className={`jobs-directory-toolbar-form blog-directory-toolbar-form${
+            query ? " blog-directory-search-panel-has-clear" : ""
+          }`}
+        >
           <label htmlFor="blog-search" className="sr-only">
             Search blog posts
           </label>
@@ -121,60 +130,58 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             type="search"
             defaultValue={query}
             placeholder="Search by title, topic, keyword, or tag"
-            className="form-control sm:col-span-2 xl:col-span-3"
+            className="form-control jobs-directory-control blog-directory-search-input"
           />
-          <ActionButton variant="primary" buttonType="submit" className="w-full">
+          <ActionButton
+            variant="primary"
+            buttonType="submit"
+            className="jobs-directory-action blog-directory-search-button w-full"
+          >
             Search
           </ActionButton>
           {query ? (
-            <ActionButton href="/blog" variant="secondary" className="w-full">
+            <ActionButton
+              href="/blog"
+              variant="secondary"
+              className="jobs-directory-action blog-directory-search-clear w-full"
+            >
               Clear
             </ActionButton>
           ) : null}
         </form>
 
-        <div className="mt-4 space-y-3">
-          <p className="text-sm text-slate-600">
-            {filteredBlogs.length} post{filteredBlogs.length === 1 ? "" : "s"}
-            {query ? (
-              <>
-                {" "}
-                for <span className="font-semibold text-slate-800">&quot;{query}&quot;</span>
-              </>
-            ) : null}
-          </p>
-
-          {topTopics.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {topTopics.map((item) => (
-                <Link
-                  key={item.topic}
-                  href={{
-                    pathname: "/blog",
-                    query: { q: item.topic },
-                  }}
-                  className={`content-chip text-sm transition ${
-                    query.toLowerCase() === item.topic.toLowerCase()
-                      ? "content-chip-accent"
-                      : "hover:border-teal-200 hover:text-teal-900"
-                  }`}
-                >
-                  {item.topic}
-                </Link>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        {topTopics.length > 0 ? (
+          <div className="blog-directory-topic-row">
+            {topTopics.map((item) => (
+              <Link
+                key={item.topic}
+                href={{
+                  pathname: "/blog",
+                  query: { q: item.topic },
+                }}
+                className={`content-chip blog-directory-topic-chip text-sm transition ${
+                  query.toLowerCase() === item.topic.toLowerCase()
+                    ? "content-chip-accent"
+                    : "hover:border-teal-200 hover:text-teal-900"
+                }`}
+              >
+                {item.topic}
+              </Link>
+            ))}
+          </div>
+        ) : null}
       </section>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <ul className="blog-directory-grid">
         {filteredBlogs.map((blog) => (
-          <BlogCard key={blog.slug} blog={blog} />
+          <li key={blog.slug} className="min-w-0">
+            <BlogCard blog={blog} />
+          </li>
         ))}
-      </div>
+      </ul>
 
       {filteredBlogs.length === 0 && query ? (
-        <p className="soft-note px-4 py-4 text-slate-600">
+        <p className="soft-note px-4 py-4">
           No blog posts matched your search. Try another keyword.
         </p>
       ) : null}
