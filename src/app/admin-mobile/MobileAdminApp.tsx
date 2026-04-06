@@ -263,6 +263,10 @@ const buildBatchJobWhatsappText = (
           ? "💼 Experienced Jobs"
           : "Experienced Jobs";
   const introLine = `${section.records.length} openings from ${scopeLabel}.`;
+  const brandLine = `${useEmojis ? "📢 " : ""}Shared via ${siteName}`;
+  const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
+  const channelLabel = `${useEmojis ? "📲 " : ""}Join WhatsApp Channel:`;
+  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
 
   const jobLines = section.records.map((record, index) => {
     const recordMeta = [
@@ -286,7 +290,12 @@ const buildBatchJobWhatsappText = (
     "",
     ...jobLines,
     "",
-    `${useEmojis ? "📢 " : ""}Shared via ${siteName}`,
+    brandLine,
+    websiteLabel,
+    siteUrl,
+    "",
+    channelLabel,
+    channelLink,
   ].join("\n");
 };
 
@@ -362,6 +371,7 @@ const buildPublishedJobWhatsappText = (
   const experienceLine = `${useEmojis ? "🧑‍💻 " : ""}${buildShareExperienceLabel(share)}`;
   const workModeLine = `${useEmojis ? "🏢 " : ""}${buildShareModeLabel(share.workMode)}`;
   const applyLabel = `${useEmojis ? "🔗 " : ""}Apply Now:`;
+  const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
   const channelLabel = `${
     useEmojis ? "📢 " : ""
   }Join WhatsApp Channel for Daily Jobs:`;
@@ -379,6 +389,9 @@ const buildPublishedJobWhatsappText = (
     "",
     applyLabel,
     share.jobUrl,
+    "",
+    websiteLabel,
+    siteUrl,
     "",
     channelLabel,
     channelLink,
