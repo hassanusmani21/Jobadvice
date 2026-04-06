@@ -1,5 +1,5 @@
 ---
-title: "SW Engineer (Software Engineer)"
+title: "Software Engineer"
 slug: "sw-engineer-software-engineer-kla-corporation"
 date: "2026-04-06"
 updatedAt: "2026-04-06"
