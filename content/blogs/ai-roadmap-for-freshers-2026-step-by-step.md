@@ -12,7 +12,7 @@ tags:
   - "ai"
 isTrending: true
 author: "Hassan Usmani"
-coverImage: "/uploads/gemini-generated-image-gk5kdngk5kdngk5k-1775461896258.png"
+coverImage: "/uploads/gemini-generated-image-ar623mar623mar62-1775464623023.png"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-04-06"
