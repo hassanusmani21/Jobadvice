@@ -1120,7 +1120,8 @@ body {
 
 .job-card-compact .job-card-actions {
   gap: 0.65rem;
-  padding-top: 0.8rem;
+  padding-top: 1rem;
+  padding-bottom: 0.2rem;
 }
 
 .job-card-compact .job-action-button {
