@@ -7,7 +7,7 @@ type ThemeMode = "light" | "dark";
 
 const readThemeFromDom = (): ThemeMode => {
   if (typeof document === "undefined") {
-    return "dark";
+    return "light";
   }
 
   return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
@@ -53,7 +53,7 @@ type ThemeToggleProps = {
 };
 
 export default function ThemeToggle({ compact = false }: ThemeToggleProps) {
-  const [theme, setTheme] = useState<ThemeMode>("dark");
+  const [theme, setTheme] = useState<ThemeMode>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

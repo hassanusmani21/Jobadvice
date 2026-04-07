@@ -128,108 +128,101 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   });
 
   const hasActiveFilters = Boolean(query || locationFilter || typeFilter || statusFilter);
+  const showClearAction = hasActiveFilters || sortFilter !== "newest";
 
   return (
-    <section className="space-y-7 xl:space-y-8">
-      <div className="space-y-4">
-        <section className="fade-up jobs-directory-toolbar">
-          <div className="jobs-directory-topbar">
-            <div className="jobs-directory-title-line">
-              <span className="jobs-directory-kicker">Jobs Directory</span>
-              <h1 className="jobs-directory-inline-title">All Jobs</h1>
-            </div>
-            <div className="jobs-directory-count-pill">
-              {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
-            </div>
+    <section className="space-y-8">
+      <div className="fade-up jobs-directory-toolbar">
+        <div className="jobs-directory-topbar">
+          <div className="jobs-directory-title-line">
+            <span className="jobs-directory-kicker">Jobs Directory</span>
+            <h1 className="jobs-directory-inline-title">All Jobs</h1>
           </div>
+          <div className="jobs-directory-count-pill">
+            {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
+          </div>
+        </div>
 
-          <form
-            action="/jobs"
-            method="get"
-            className={`jobs-directory-toolbar-form jobs-directory-filter-panel jobs-directory-search-layout${
-              hasActiveFilters || sortFilter !== "newest"
-                ? " jobs-directory-search-layout-has-clear"
-                : ""
-            }`}
+        <form
+          action="/jobs"
+          method="get"
+          className={`jobs-directory-toolbar-form jobs-directory-filter-panel${
+            showClearAction ? " jobs-directory-filter-panel-has-clear" : ""
+          }`}
+        >
+          <label htmlFor="jobs-search" className="sr-only">
+            Search jobs
+          </label>
+          <input
+            id="jobs-search"
+            name="q"
+            type="search"
+            defaultValue={query}
+            placeholder="Search by title, company, location, or skill"
+            className="form-control jobs-directory-control"
+          />
+          <select
+            name="location"
+            defaultValue={locationFilter}
+            className="form-control jobs-directory-control"
           >
-            <label htmlFor="jobs-search" className="sr-only">
-              Search jobs
-            </label>
-            <input
-              id="jobs-search"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Search by title, company, location, or skill"
-              className="form-control jobs-directory-control jobs-directory-search-input"
-            />
-            <select
-              name="location"
-              defaultValue={locationFilter}
-              className="form-control jobs-directory-control"
-            >
-              <option value="">All locations</option>
-              {locationOptions.map((locationOption) => (
-                <option key={locationOption} value={locationOption}>
-                  {locationOption}
-                </option>
-              ))}
-            </select>
-            <select
-              name="type"
-              defaultValue={typeFilter}
-              className="form-control jobs-directory-control"
-            >
-              <option value="">All types</option>
-              {typeOptions.map((typeOption) => (
-                <option key={typeOption} value={typeOption}>
-                  {typeOption}
-                </option>
-              ))}
-            </select>
-            <select
-              name="status"
-              defaultValue={statusFilter}
-              className="form-control jobs-directory-control"
-            >
-              <option value="">All statuses</option>
-              <option value="open">Open now</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="expired">Expired</option>
-            </select>
-            <select
-              name="sort"
-              defaultValue={sortFilter}
-              className="form-control jobs-directory-control"
-            >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="closingSoon">Closing soon</option>
-            </select>
-            <ActionButton
-              variant="primary"
-              buttonType="submit"
-              className="jobs-directory-action jobs-directory-search-button w-full"
-            >
-              Search
+            <option value="">All locations</option>
+            {locationOptions.map((locationOption) => (
+              <option key={locationOption} value={locationOption}>
+                {locationOption}
+              </option>
+            ))}
+          </select>
+          <select
+            name="type"
+            defaultValue={typeFilter}
+            className="form-control jobs-directory-control"
+          >
+            <option value="">All types</option>
+            {typeOptions.map((typeOption) => (
+              <option key={typeOption} value={typeOption}>
+                {typeOption}
+              </option>
+            ))}
+          </select>
+          <select
+            name="status"
+            defaultValue={statusFilter}
+            className="form-control jobs-directory-control"
+          >
+            <option value="">All statuses</option>
+            <option value="open">Open now</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="expired">Expired</option>
+          </select>
+          <select
+            name="sort"
+            defaultValue={sortFilter}
+            className="form-control jobs-directory-control"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="closingSoon">Closing soon</option>
+          </select>
+          <ActionButton
+            variant="primary"
+            buttonType="submit"
+            className="jobs-directory-action w-full"
+          >
+            Search
+          </ActionButton>
+          {showClearAction ? (
+            <ActionButton href="/jobs" variant="secondary" className="jobs-directory-action w-full">
+              Clear
             </ActionButton>
-            {hasActiveFilters || sortFilter !== "newest" ? (
-              <ActionButton
-                href="/jobs"
-                variant="secondary"
-                className="jobs-directory-action jobs-directory-search-clear w-full"
-              >
-                Clear
-              </ActionButton>
-            ) : null}
-          </form>
-        </section>
+          ) : null}
+        </form>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
+      <div className="jobs-directory-grid grid gap-x-5 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
         {sortedJobs.map((job) => (
-          <div key={job.slug} className="min-w-0">
-            <JobCard job={job} />
+          <div key={job.slug} className="min-w-0 h-full">
+            <JobCard job={job} compact />
           </div>
         ))}
       </div>

@@ -670,6 +670,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
           value: condensedLocation || job.location,
           kind: "location",
           tone: "neutral",
+          span: "wide",
         }
       : null,
     {
@@ -750,18 +751,20 @@ export default async function JobDetailPage({ params }: JobPageProps) {
             <div className="job-detail-hero-layout">
               <div className="min-w-0">
                 <div className="job-detail-title-row">
-                  <h1 className="job-detail-title text-balance font-serif text-[1.58rem] font-semibold leading-[1.04] tracking-[-0.03em] text-slate-900 sm:text-[1.95rem] sm:leading-[1.06] sm:tracking-[-0.022em]">
+                  <h1 className="job-detail-title break-words font-serif text-[1.4rem] font-semibold leading-[1.06] tracking-[-0.03em] text-slate-900 min-[360px]:text-[1.5rem] sm:text-[1.95rem] sm:leading-[1.06] sm:tracking-[-0.022em]">
                     {job.title}
                   </h1>
 
-                  <div className="job-detail-top-meta flex flex-wrap gap-2 text-[11px] font-semibold sm:text-xs">
+                  <div className="job-detail-top-meta flex flex-wrap gap-2 text-[11.5px] font-semibold sm:text-[12.5px]">
                     <span className="job-detail-top-badge job-detail-top-badge-neutral inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-slate-100/90 px-3.5 text-slate-600">
                       <HeaderInfoIcon kind="title" className="h-4 w-4" />
-                      <span>Verified source</span>
+                      <span className="job-detail-top-badge-text">Verified source</span>
                     </span>
                     <span className="job-detail-top-badge job-detail-top-badge-amber inline-flex h-9 max-w-full items-center gap-1.5 rounded-full bg-amber-50 px-3.5 text-amber-900">
                       <HeaderInfoIcon kind="date" className="h-4 w-4" />
-                      <span>Posted {formatPostedDate(job.date)}</span>
+                      <span className="job-detail-top-badge-text">
+                        Posted {formatPostedDate(job.date)}
+                      </span>
                     </span>
                   </div>
                 </div>
@@ -772,7 +775,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                       {companyInitials}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-[1rem] font-semibold leading-tight text-slate-800">
+                      <p className="job-detail-company-name text-[1rem] font-semibold leading-tight text-slate-800 sm:text-[1.12rem]">
                         {job.company}
                       </p>
                       <p className="job-detail-company-note mt-1 text-sm leading-5 text-slate-500">
@@ -784,7 +787,9 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                           {quickHighlights.map((highlight) => (
                             <span key={highlight.key} className="job-detail-quick-highlight">
                               <HeaderInfoIcon kind={highlight.kind} className="h-3.5 w-3.5" />
-                              <span>{highlight.value}</span>
+                              <span className="job-detail-quick-highlight-text">
+                                {highlight.value}
+                              </span>
                             </span>
                           ))}
                         </div>
