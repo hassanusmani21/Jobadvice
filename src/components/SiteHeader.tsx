@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "@/components/AppLink";
+import ThemeToggle from "@/components/ThemeToggle";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -12,7 +13,6 @@ type NavigationItem = {
 
 const navigation: NavigationItem[] = [
   { href: "/", label: "Home" },
-  { href: "/learn", label: "Learn" },
   { href: "/jobs", label: "Jobs" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
@@ -32,7 +32,6 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
-  const learnEntryHref = "/learn";
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -124,13 +123,8 @@ export default function SiteHeader() {
             })}
           </nav>
 
-          <div className="flex items-center justify-end">
-            <Link
-              href={learnEntryHref}
-              className="utility-button min-h-11 px-4 text-sm font-semibold"
-            >
-              Start Learning
-            </Link>
+          <div className="flex items-center justify-end gap-2">
+            <ThemeToggle />
           </div>
         </div>
 
@@ -175,6 +169,7 @@ export default function SiteHeader() {
                 />
               </svg>
             </Link>
+            <ThemeToggle compact />
             <button
               type="button"
               aria-expanded={isMenuOpen}
@@ -268,16 +263,6 @@ export default function SiteHeader() {
                     );
                   })}
                 </div>
-
-                <div className="mt-4 border-t border-slate-200/80 pt-4">
-                  <Link
-                    href={learnEntryHref}
-                    className="job-action-button job-action-button-primary w-full"
-                  >
-                    Start Learning
-                  </Link>
-                </div>
-
               </div>
             </div>
           </>

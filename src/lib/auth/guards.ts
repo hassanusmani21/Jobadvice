@@ -11,7 +11,7 @@ const toAdminLoginRedirectUrl = (pathname: string) =>
   `/admin/login?callbackUrl=${encodeURIComponent(pathname)}`;
 
 export const requireUserSession = async (
-  callbackUrl = "/me/learn",
+  callbackUrl = "/jobs",
 ): Promise<Session> => {
   const session = await getCurrentSession();
 
@@ -32,7 +32,7 @@ export const requireAdminSession = async (
   }
 
   if (!isAdminRole(session.user.role)) {
-    redirect("/me/learn");
+    redirect("/jobs");
   }
 
   return session;

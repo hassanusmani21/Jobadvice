@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllBlogs } from "@/lib/blogs";
 import { getAllJobs } from "@/lib/jobs";
-import { getAllLearnRoutes } from "@/lib/learn/catalog";
 import { siteUrl } from "@/lib/site";
 
 export const dynamic = "force-static";
@@ -15,10 +14,9 @@ const toAbsoluteUrl = (route: string) => {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [jobs, blogs] = await Promise.all([getAllJobs(), getAllBlogs()]);
-  const learnRoutes = getAllLearnRoutes();
   const now = new Date();
 
-  const staticEntries: MetadataRoute.Sitemap = [...staticRoutes, ...learnRoutes].map((route) => ({
+  const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
     url: toAbsoluteUrl(route),
     lastModified: now,
     changeFrequency: route === "/" ? "daily" : "weekly",

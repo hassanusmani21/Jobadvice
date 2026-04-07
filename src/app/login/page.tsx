@@ -74,12 +74,12 @@ const toErrorMessage = (error: string | string[] | undefined) => {
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getCurrentSession();
-  const callbackUrl = toSafeCallbackUrl(searchParams?.callbackUrl, "/me/learn");
+  const callbackUrl = toSafeCallbackUrl(searchParams?.callbackUrl, "/jobs");
   const errorMessage = toErrorMessage(searchParams?.error);
   const canStartGoogleSignIn = hasAuthSecret && hasGoogleOAuthCredentials && hasDatabaseUrl;
 
   if (session?.user?.id) {
-    redirect(toSafeCallbackUrl(searchParams?.callbackUrl, "/me/learn"));
+    redirect(toSafeCallbackUrl(searchParams?.callbackUrl, "/jobs"));
   }
 
   return (
@@ -87,30 +87,30 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <div className="grid w-full overflow-hidden rounded-3xl border border-white/70 bg-white/90 shadow-xl backdrop-blur-sm md:grid-cols-[1.15fr_1fr]">
         <section className="bg-slate-950 px-7 py-10 text-white sm:px-10">
           <p className="inline-flex rounded-full bg-white/12 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
-            Learn Account
+            Account Access
           </p>
           <h1 className="mt-5 font-serif text-4xl leading-tight">
-            Save your progress and continue learning later
+            Sign in to continue
           </h1>
           <p className="mt-4 max-w-md text-sm text-slate-200 sm:text-base">
-            Lessons stay public. Sign in when you want your dashboard, saved drafts, quiz history,
-            and the ability to continue exactly where you stopped.
+            Use your Google account for member access and admin tools. The learning section is
+            temporarily hidden on the live site while we stabilize the rest of the experience.
           </p>
           <ul className="mt-8 space-y-3 text-sm text-slate-200/95">
-            <li>Track completed lessons and quiz scores.</li>
-            <li>Resume assignments and saved coding drafts.</li>
-            <li>Get a personal dashboard at <code>/me/learn</code>.</li>
+            <li>Return to the page you were opening after login.</li>
+            <li>Use admin tools if your email has access.</li>
+            <li>Keep a secure session for protected site features.</li>
           </ul>
         </section>
 
         <section className="flex flex-col justify-center px-7 py-10 sm:px-10">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Continue Learning
+            Member Login
           </p>
           <h2 className="mt-2 font-serif text-3xl text-slate-900">Sign in</h2>
           <p className="mt-3 text-sm text-slate-600">
-            Use your Google account to save progress. If you were heading somewhere specific, you
-            will continue there right after login.
+            Use your Google account to continue. If you were heading somewhere specific, you will
+            continue there right after login.
           </p>
 
           {canStartGoogleSignIn ? (
@@ -119,7 +119,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
           ) : (
             <p className="mt-8 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">
-              Learner auth is not fully configured on this deployment. Missing:{" "}
+              Sign-in is not fully configured on this deployment. Missing:{" "}
               <code>
                 {[
                   !hasAuthSecret ? "AUTH_SECRET" : null,
