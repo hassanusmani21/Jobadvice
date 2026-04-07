@@ -1,14 +1,14 @@
 ---
 title: "Analyst Trainee"
 slug: "analyst-trainee-cognizant"
-date: "2026-04-06"
-updatedAt: "2026-04-06"
+date: "2026-04-01"
+updatedAt: "2026-04-01"
 draft: false
 company: "Cognizant"
 location: "PAN India"
 workMode: "On-site"
 employmentType: "Full-time"
-salary: "₹2.5 – ₹4.0 LPA (Estimated)"
+salary: "Up to ₹4–6 LPA (Estimated)"
 experience: "Fresher"
 eligibilityCriteria: |-
   Three-year full-time degree graduates eligible
@@ -48,6 +48,6 @@ responsibilities:
 workingDays: "5 Days Week"
 jobTiming: "Rotational Shift"
 applyLink: "https://app.joinsuperset.com/join/#/signup/student/jobprofiles/65ac431a-2d60-417a-b1f6-6b0f455a1d33"
-applicationStartDate: "2026-04-06"
+applicationStartDate: "2026-04-01"
 applicationEndDate: ""
 ---

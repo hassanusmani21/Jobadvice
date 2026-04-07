@@ -670,7 +670,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
           value: condensedLocation || job.location,
           kind: "location",
           tone: "neutral",
-          span: "wide",
         }
       : null,
     {
