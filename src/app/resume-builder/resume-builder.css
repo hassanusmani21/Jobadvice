@@ -1,12 +1,3 @@
-export default function ResumeBuilderStyles() {
-  return (
-    <style jsx global>{`
-.job-card-action-button {
-  min-height: 2.5rem;
-  padding: 0.65rem 1rem;
-  font-size: 0.92rem;
-}
-
 .resume-builder-page {
   display: grid;
   gap: 1rem;
@@ -1383,6 +1374,10 @@ export default function ResumeBuilderStyles() {
 }
 
 .resume-preview-structured .resume-preview-list {
+  color: #334155;
+  font-size: 0.77rem;
+  line-height: 1.52;
+}
 html[data-theme="dark"] .resume-builder-hero {
   border-color: rgba(45, 212, 191, 0.22);
   background:
@@ -1938,7 +1933,4 @@ html[data-theme="dark"] .resume-preview-modal-close {
   .resume-preview-skill-pill {
     border-color: rgba(203, 213, 225, 0.96) !important;
   }
-}
-`}</style>
-  );
 }

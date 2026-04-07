@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import ActionButton from "@/components/ActionButton";
-import ResumeBuilderStyles from "@/components/ResumeBuilderStyles";
 import { siteName, siteUrl } from "@/lib/site";
 
 type ResumeTemplateId = "classic" | "modern" | "focus" | "structured";
@@ -1038,7 +1037,6 @@ export default function ResumeBuilderClient() {
 
   return (
     <div className="resume-builder-page">
-      <ResumeBuilderStyles />
       <section className="fade-up resume-builder-hero resume-builder-hero-compact card-surface rounded-[1.6rem] px-5 py-5 sm:px-6 sm:py-5">
         <div className="resume-builder-hero-grid resume-builder-hero-grid-compact">
           <div className="resume-builder-hero-copy">
