@@ -23,6 +23,7 @@ Use this checklist in order. Do not skip steps.
 
 Add these in Netlify -> Site settings -> Environment variables:
 
+- [ ] `DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE_NAME?schema=public`
 - [ ] `AUTH_SECRET=<long-random-secret>`
 - [ ] `NEXTAUTH_URL=https://<your-netlify-site>.netlify.app`
 - [ ] `NEXT_PUBLIC_SITE_URL=https://<your-netlify-site>.netlify.app`

@@ -1,6 +1,6 @@
 import type { Session } from "next-auth";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth";
+import { getCurrentSession } from "@/lib/auth/session";
+import { isAdminRole } from "@/lib/auth/roles";
 import { isAllowedAdminEmail } from "@/lib/adminAccess";
 import { hasTrustedSameOrigin, noStoreJson } from "@/lib/requestSecurity";
 
@@ -10,19 +10,14 @@ const getSessionEmail = (session: Session | null) => {
 };
 
 export const getAdminSession = async () => {
-  try {
-    return await getServerSession(authOptions);
-  } catch (error) {
-    console.error("[adminSession] Unable to resolve admin session:", error);
-    return null;
-  }
+  return getCurrentSession();
 };
 
 export const getAllowedAdminSession = async () => {
   const session = await getAdminSession();
   const email = getSessionEmail(session);
 
-  if (!email || !isAllowedAdminEmail(email)) {
+  if (!email || !isAllowedAdminEmail(email) || !isAdminRole(session?.user?.role)) {
     return null;
   }
 
@@ -45,7 +40,7 @@ export const requireAdminApiRequest = async (
   const session = await getAdminSession();
   const email = getSessionEmail(session);
 
-  if (!email) {
+  if (!email || !session?.user?.id) {
     return noStoreJson(
       {
         success: false,
@@ -55,7 +50,7 @@ export const requireAdminApiRequest = async (
     );
   }
 
-  if (!isAllowedAdminEmail(email)) {
+  if (!isAllowedAdminEmail(email) || !isAdminRole(session.user.role)) {
     return noStoreJson(
       {
         success: false,

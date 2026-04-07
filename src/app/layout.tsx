@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Manrope, Source_Serif_4 } from "next/font/google";
 import { Suspense } from "react";
 import Link from "@/components/AppLink";
 import RouteProgressReset from "@/components/RouteProgressReset";
@@ -16,28 +17,17 @@ import {
 } from "@/lib/site";
 import "./globals.css";
 
-const themePreferenceScript = `
-  (function () {
-    if (typeof window === "undefined") return;
+const sansFont = Manrope({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-manrope",
+});
 
-    var storageKey = "jobadvice-theme";
-    var storedTheme = "";
-
-    try {
-      storedTheme = window.localStorage.getItem(storageKey) || "";
-    } catch {}
-
-    var resolvedTheme =
-      storedTheme === "dark" || storedTheme === "light"
-        ? storedTheme
-        : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
-
-    document.documentElement.dataset.theme = resolvedTheme;
-    document.documentElement.style.colorScheme = resolvedTheme;
-  })();
-`;
+const serifFont = Source_Serif_4({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-source-serif-4",
+});
 
 const assetLoadRecoveryScript = `
   (function () {
@@ -374,9 +364,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="light" suppressHydrationWarning>
+    <html
+      lang="en"
+      data-theme="light"
+      suppressHydrationWarning
+      className={`${sansFont.variable} ${serifFont.variable}`}
+    >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themePreferenceScript }} />
         <script dangerouslySetInnerHTML={{ __html: assetLoadRecoveryScript }} />
       </head>
       <body className="antialiased">
@@ -396,7 +390,7 @@ export default function RootLayout({
 
           <SiteHeader />
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-24 sm:px-6 sm:pt-6 sm:pb-10 lg:px-8 lg:pt-4">{children}</main>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-24 sm:px-6 sm:pt-10 sm:pb-10 lg:px-8">{children}</main>
 
           <footer className="mt-8 border-t border-slate-200 bg-slate-50">
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-24 sm:px-6 sm:pb-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">

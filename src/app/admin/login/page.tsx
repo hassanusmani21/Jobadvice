@@ -32,6 +32,13 @@ const hasGoogleOAuthCredentials = Boolean(
     (process.env.GOOGLE_CLIENT_SECRET || "").trim(),
 );
 
+const hasDatabaseUrl = Boolean((process.env.DATABASE_URL || "").trim());
+const nextAuthUrl = (process.env.NEXTAUTH_URL || "").trim().replace(/\/+$/, "");
+const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/+$/, "");
+const hasNextAuthUrl = Boolean(nextAuthUrl);
+const hasPublicSiteUrl = Boolean(publicSiteUrl);
+const hasAuthOriginMismatch = hasNextAuthUrl && hasPublicSiteUrl && nextAuthUrl !== publicSiteUrl;
+
 const toSafeCallbackUrl = (value: string | string[] | undefined) => {
   const callbackValue = Array.isArray(value) ? value[0] : value;
 
@@ -56,8 +63,8 @@ const toErrorMessage = (error: string | undefined) => {
     return "This Google account is not authorized for admin access.";
   }
 
-  if (error === "OAuthSignin" || error === "OAuthCallback") {
-    return "Google sign-in failed. Check OAuth client settings and callback URL.";
+  if (error === "OAuthSignin" || error === "OAuthCallback" || error === "Callback") {
+    return "Google sign-in failed during the OAuth callback. Check NEXTAUTH_URL, the Google redirect URI, and server logs.";
   }
 
   if (error === "SessionRequired") {
@@ -84,6 +91,10 @@ export default async function AdminLoginPage({
 
   if (!hasGoogleOAuthCredentials) {
     missingAuthConfig.push("GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET");
+  }
+
+  if (!hasDatabaseUrl) {
+    missingAuthConfig.push("DATABASE_URL");
   }
 
   const canStartGoogleSignIn =
@@ -139,6 +150,27 @@ export default async function AdminLoginPage({
               before using this page.
             </p>
           )}
+
+          {!hasNextAuthUrl ? (
+            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              Set <code>NEXTAUTH_URL</code> to your exact public site origin to avoid Google
+              callback failures.
+            </p>
+          ) : null}
+
+          {!hasPublicSiteUrl ? (
+            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              Set <code>NEXT_PUBLIC_SITE_URL</code> to the same public origin used by{" "}
+              <code>NEXTAUTH_URL</code> so canonical routing and auth stay aligned.
+            </p>
+          ) : null}
+
+          {hasAuthOriginMismatch ? (
+            <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <code>NEXTAUTH_URL</code> and <code>NEXT_PUBLIC_SITE_URL</code> do not match.
+              Keep both on the same exact origin, for example <code>https://jobadvice.in</code>.
+            </p>
+          ) : null}
 
           {errorMessage ? (
             <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">

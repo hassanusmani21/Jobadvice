@@ -1,14 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { isAllowedAdminEmail } from "./lib/adminAccess";
+import { isAdminRole } from "./lib/auth/roles";
 import { siteUrl } from "./lib/site";
 import { toContentSlug } from "./lib/slug";
 
-const toSafeCallbackUrl = (request: NextRequest) => {
-  const rawValue = request.nextUrl.searchParams.get("callbackUrl") || "/admin";
+const toSafeCallbackUrl = (
+  request: NextRequest,
+  defaultValue: string,
+  options?: { allowAdmin?: boolean },
+) => {
+  const rawValue = request.nextUrl.searchParams.get("callbackUrl") || defaultValue;
+  const allowAdmin = Boolean(options?.allowAdmin);
 
-  if (!rawValue.startsWith("/") || rawValue.startsWith("/admin/login")) {
-    return "/admin";
+  if (!rawValue.startsWith("/") || rawValue.startsWith("//")) {
+    return defaultValue;
+  }
+
+  if (rawValue.startsWith("/admin/login") || rawValue.startsWith("/login")) {
+    return defaultValue;
+  }
+
+  if (!allowAdmin && rawValue.startsWith("/admin")) {
+    return defaultValue;
   }
 
   return rawValue;
@@ -27,13 +40,15 @@ const canonicalTrailingSlashPaths = new Set([
   "/blog",
   "/contact",
   "/jobs",
+  "/learn",
   "/privacy-policy",
 ]);
 
 const shouldForceTrailingSlash = (pathname: string) =>
   canonicalTrailingSlashPaths.has(pathname) ||
   pathname.startsWith("/blog/") ||
-  pathname.startsWith("/jobs/");
+  pathname.startsWith("/jobs/") ||
+  pathname.startsWith("/learn/");
 
 const resolvedCanonicalSite = (() => {
   try {
@@ -102,6 +117,27 @@ const redirectMalformedJobSlug = (request: NextRequest) => {
   return NextResponse.redirect(redirectUrl);
 };
 
+const getTokenUserId = async (request: NextRequest) => {
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  });
+
+  const userId =
+    typeof token?.userId === "string"
+      ? token.userId
+      : typeof token?.sub === "string"
+        ? token.sub
+        : "";
+
+  const role = typeof token?.role === "string" ? token.role : "";
+
+  return {
+    userId,
+    role,
+  };
+};
+
 export async function middleware(request: NextRequest) {
   const canonicalHostRedirect = redirectNonCanonicalHost(request);
   if (canonicalHostRedirect) {
@@ -138,14 +174,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    const token = await getToken({
-      req: request,
-      secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-    });
-    const email = typeof token?.email === "string" ? token.email : "";
+    const { userId, role } = await getTokenUserId(request);
 
-    if (isAllowedAdminEmail(email)) {
+    if (isAdminRole(role)) {
       return NextResponse.next();
+    }
+
+    if (userId) {
+      return NextResponse.redirect(new URL("/me/learn", request.nextUrl.origin));
     }
 
     const loginUrl = new URL("/admin/login", request.nextUrl.origin);
@@ -153,22 +189,55 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (
+    request.nextUrl.pathname === "/me" ||
+    request.nextUrl.pathname === "/me/" ||
+    request.nextUrl.pathname.startsWith("/me/")
+  ) {
+    const { userId } = await getTokenUserId(request);
+
+    if (userId) {
+      return NextResponse.next();
+    }
+
+    const loginUrl = new URL("/login", request.nextUrl.origin);
+    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/login/") {
+    const { userId } = await getTokenUserId(request);
+
+    if (!userId) {
+      return NextResponse.next();
+    }
+
+    const destinationUrl = new URL(
+      toSafeCallbackUrl(request, "/me/learn"),
+      request.nextUrl.origin,
+    );
+    return NextResponse.redirect(destinationUrl);
+  }
+
   if (!request.nextUrl.pathname.startsWith("/admin/login")) {
     return NextResponse.next();
   }
 
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-  });
-  const email = typeof token?.email === "string" ? token.email : "";
+  const { userId, role } = await getTokenUserId(request);
 
-  if (isAllowedAdminEmail(email)) {
-    const destinationUrl = new URL(toSafeCallbackUrl(request), request.nextUrl.origin);
+  if (!userId) {
+    return NextResponse.next();
+  }
+
+  if (isAdminRole(role)) {
+    const destinationUrl = new URL(
+      toSafeCallbackUrl(request, "/admin", { allowAdmin: true }),
+      request.nextUrl.origin,
+    );
     return NextResponse.redirect(destinationUrl);
   }
 
-  return NextResponse.next();
+  return NextResponse.redirect(new URL("/me/learn", request.nextUrl.origin));
 }
 
 export const config = {
@@ -178,6 +247,12 @@ export const config = {
     "/admin/:path*",
     "/admin-mobile",
     "/admin-mobile/:path*",
+    "/learn",
+    "/learn/:path*",
+    "/login",
+    "/login/:path*",
+    "/me",
+    "/me/:path*",
     "/admin/login",
     "/admin/login/:path*",
     "/about",

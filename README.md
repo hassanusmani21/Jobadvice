@@ -119,6 +119,7 @@ Use this for static hosting setups.
 Set these environment variables:
 
 ```bash
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE_NAME?schema=public
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
 AUTH_SECRET=replace-with-long-random-secret
 NEXTAUTH_URL=https://your-domain.com
@@ -130,3 +131,7 @@ ADMIN_CONTENTS_TOKEN=your-github-fine-grained-token
 ```
 
 `ADMIN_CONTENTS_TOKEN` is required in production if you want the custom `/admin` app to save posts, upload images, or delete entries.
+
+If you are enabling learner auth and progress persistence, `DATABASE_URL` is required before Prisma commands or Google login will work.
+
+The Prisma npm scripts already load `.env.local` automatically, so local development does not require a duplicate `.env` file.

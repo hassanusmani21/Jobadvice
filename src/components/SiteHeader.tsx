@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "@/components/AppLink";
-import ThemeToggle from "@/components/ThemeToggle";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -13,8 +12,8 @@ type NavigationItem = {
 
 const navigation: NavigationItem[] = [
   { href: "/", label: "Home" },
+  { href: "/learn", label: "Learn" },
   { href: "/jobs", label: "Jobs" },
-  { href: "/resume-builder", label: "Resume" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
@@ -33,6 +32,7 @@ export default function SiteHeader() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const learnEntryHref = "/learn";
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -74,9 +74,9 @@ export default function SiteHeader() {
   const shouldElevateHeader = hasScrolled || isMenuOpen;
 
   return (
-    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-3 pt-2 min-[360px]:px-4 min-[360px]:pt-2.5 sm:px-6 sm:pt-3 lg:px-8">
+    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-3 pt-2.5 min-[360px]:px-4 min-[360px]:pt-3 sm:px-6 sm:pt-4 lg:px-8">
       <div
-        className={`fade-up header-shell relative rounded-2xl px-3 py-2.5 min-[360px]:px-4 min-[360px]:py-2.5 sm:px-5 sm:py-2.5 lg:px-5 lg:py-2 ${
+        className={`fade-up header-shell relative rounded-2xl px-3 py-2.5 min-[360px]:px-4 min-[360px]:py-3 sm:px-6 ${
           shouldElevateHeader ? "header-shell-scrolled" : "header-shell-top"
         }`}
       >
@@ -124,8 +124,13 @@ export default function SiteHeader() {
             })}
           </nav>
 
-          <div className="flex items-center justify-end gap-2">
-            <ThemeToggle />
+          <div className="flex items-center justify-end">
+            <Link
+              href={learnEntryHref}
+              className="utility-button min-h-11 px-4 text-sm font-semibold"
+            >
+              Start Learning
+            </Link>
           </div>
         </div>
 
@@ -170,8 +175,6 @@ export default function SiteHeader() {
                 />
               </svg>
             </Link>
-            <ThemeToggle compact />
-
             <button
               type="button"
               aria-expanded={isMenuOpen}
@@ -264,6 +267,15 @@ export default function SiteHeader() {
                       </Link>
                     );
                   })}
+                </div>
+
+                <div className="mt-4 border-t border-slate-200/80 pt-4">
+                  <Link
+                    href={learnEntryHref}
+                    className="job-action-button job-action-button-primary w-full"
+                  >
+                    Start Learning
+                  </Link>
                 </div>
 
               </div>
