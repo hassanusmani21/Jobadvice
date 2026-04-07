@@ -438,17 +438,21 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.84);
 }
 
+.home-community-chip-row {
+  gap: 0.45rem;
+}
+
 .home-community-chip {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
   border: 1px solid rgba(203, 213, 225, 0.8);
   background: rgba(255, 255, 255, 0.58);
-  padding: 0.45rem 0.82rem;
-  font-size: 0.72rem;
+  padding: 0.4rem 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #334155;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.84);
@@ -1762,6 +1766,20 @@ html[data-theme="dark"] .home-search-control-rich select {
 
 html[data-theme="dark"] .home-search-input::placeholder {
   color: #64748b;
+}
+
+@media (min-width: 1024px) {
+  .home-community-chip-row {
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+  }
+
+  .home-community-chip {
+    padding-inline: 0.68rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
 }
 
 html[data-theme="dark"] .filter-panel {
