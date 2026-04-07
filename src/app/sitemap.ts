@@ -13,6 +13,7 @@ const staticRoutes = [
   "/jobs/internships",
   "/jobs/experienced",
   "/jobs/remote",
+  "/resume-builder",
   "/blog",
   "/about",
   "/contact",
