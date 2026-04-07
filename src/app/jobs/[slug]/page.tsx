@@ -596,7 +596,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   const isJobExpired = job.applicationStatus.state === "expired";
   const isApplicationUpcoming = job.applicationStatus.state === "upcoming";
   const hasApplyLink = Boolean(job.applyLink);
-  const canApplyNow = hasApplyLink && !isJobExpired && !isApplicationUpcoming;
   const relatedJobs = getRelatedJobs(job, allJobs, 5);
 
   const employmentType = job.employmentType || job.jobType;
@@ -674,33 +673,14 @@ export default async function JobDetailPage({ params }: JobPageProps) {
           span: "wide",
         }
       : null,
-    workMode
-      ? {
-          key: "mode",
-          label: "Work mode",
-          value: workMode,
-          kind: "mode",
-          tone: "neutral",
-        }
-      : null,
-    employmentType
-      ? {
-          key: "employmentType",
-          label: "Job type",
-          value: employmentType,
-          kind: "type",
-          tone: "neutral",
-        }
-      : null,
-    experience
-      ? {
-          key: "experience",
-          label: "Experience",
-          value: experience,
-          kind: "experience",
-          tone: "neutral",
-        }
-      : null,
+    {
+      key: "applicationWindow",
+      label: "Application window",
+      value: applicationWindow,
+      kind: "window",
+      tone: "accent",
+      compact: true,
+    },
     job.salary
       ? {
           key: "salary",
@@ -710,15 +690,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
           tone: shouldHighlightSalary ? "warm" : "neutral",
         }
       : null,
-    {
-      key: "applicationWindow",
-      label: "Application window",
-      value: applicationWindow,
-      kind: "window",
-      tone: "accent",
-      span: "full",
-      compact: true,
-    },
   ] as Array<JobDetailFact | null>).filter(
     (item): item is JobDetailFact => item !== null,
   );
@@ -891,29 +862,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
             </div>
           </div>
         </header>
-
-        {canApplyNow ? (
-          <div className="job-detail-sticky-apply-shell fade-up" style={{ animationDelay: "90ms" }}>
-            <div className="job-detail-sticky-apply-bar">
-              <div className="job-detail-sticky-apply-copy">
-                <p className="job-detail-sticky-apply-label">Official application link</p>
-                <p className="job-detail-sticky-apply-note">
-                  Keep Apply Now visible while you review the role details.
-                </p>
-              </div>
-              <JobActionButton
-                href={`/api/apply/${job.slug}`}
-                external
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                variant="primary"
-                className="job-detail-apply-button job-detail-apply-button-sticky w-full sm:w-auto"
-              >
-                Apply Now
-              </JobActionButton>
-            </div>
-          </div>
-        ) : null}
 
         {eligibilityCriteria ? (
           <section
