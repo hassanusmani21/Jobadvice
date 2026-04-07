@@ -32,7 +32,6 @@ const hasGoogleOAuthCredentials = Boolean(
     (process.env.GOOGLE_CLIENT_SECRET || "").trim(),
 );
 
-const hasDatabaseUrl = Boolean((process.env.DATABASE_URL || "").trim());
 const nextAuthUrl = (process.env.NEXTAUTH_URL || "").trim().replace(/\/+$/, "");
 const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/+$/, "");
 const hasNextAuthUrl = Boolean(nextAuthUrl);
@@ -91,10 +90,6 @@ export default async function AdminLoginPage({
 
   if (!hasGoogleOAuthCredentials) {
     missingAuthConfig.push("GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET");
-  }
-
-  if (!hasDatabaseUrl) {
-    missingAuthConfig.push("DATABASE_URL");
   }
 
   const canStartGoogleSignIn =

@@ -29,7 +29,6 @@ const hasGoogleOAuthCredentials = Boolean(
     (process.env.GOOGLE_CLIENT_SECRET || "").trim(),
 );
 
-const hasDatabaseUrl = Boolean((process.env.DATABASE_URL || "").trim());
 const nextAuthUrl = (process.env.NEXTAUTH_URL || "").trim().replace(/\/+$/, "");
 const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/+$/, "");
 const hasNextAuthUrl = Boolean(nextAuthUrl);
@@ -76,7 +75,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const session = await getCurrentSession();
   const callbackUrl = toSafeCallbackUrl(searchParams?.callbackUrl, "/jobs");
   const errorMessage = toErrorMessage(searchParams?.error);
-  const canStartGoogleSignIn = hasAuthSecret && hasGoogleOAuthCredentials && hasDatabaseUrl;
+  const canStartGoogleSignIn = hasAuthSecret && hasGoogleOAuthCredentials;
 
   if (session?.user?.id) {
     redirect(toSafeCallbackUrl(searchParams?.callbackUrl, "/jobs"));
@@ -124,7 +123,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 {[
                   !hasAuthSecret ? "AUTH_SECRET" : null,
                   !hasGoogleOAuthCredentials ? "GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET" : null,
-                  !hasDatabaseUrl ? "DATABASE_URL" : null,
                 ]
                   .filter(Boolean)
                   .join(", ")}

@@ -10,6 +10,7 @@ const googleClientId = (process.env.GOOGLE_CLIENT_ID || "").trim();
 const googleClientSecret = (process.env.GOOGLE_CLIENT_SECRET || "").trim();
 const nextAuthUrl = (process.env.NEXTAUTH_URL || "").trim().replace(/\/+$/, "");
 const publicSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/+$/, "");
+const hasDatabaseUrl = Boolean((process.env.DATABASE_URL || "").trim());
 const hasGoogleOAuthCredentials = Boolean(googleClientId && googleClientSecret);
 const hasPublicSiteUrl = Boolean(publicSiteUrl);
 
@@ -37,6 +38,12 @@ if (isProduction && !hasPublicSiteUrl) {
   );
 }
 
+if (isProduction && !hasDatabaseUrl) {
+  console.warn(
+    "[auth] Missing DATABASE_URL. Falling back to JWT-only auth for sign-in; database-backed persistence stays unavailable until configured.",
+  );
+}
+
 if (isProduction && nextAuthUrl && publicSiteUrl && nextAuthUrl !== publicSiteUrl) {
   console.warn(
     `[auth] NEXTAUTH_URL (${nextAuthUrl}) does not match NEXT_PUBLIC_SITE_URL (${publicSiteUrl}). OAuth callbacks can fail when hosts differ.`,
@@ -47,6 +54,13 @@ const syncUserRoleForEmail = async (email: string | null | undefined) => {
   const normalizedEmail = email?.trim().toLowerCase();
   if (!normalizedEmail) {
     return null;
+  }
+
+  if (!hasDatabaseUrl) {
+    return {
+      id: normalizedEmail,
+      role: resolveAppRole(normalizedEmail),
+    };
   }
 
   const user = await prisma.user.findUnique({
@@ -76,7 +90,7 @@ const syncUserRoleForEmail = async (email: string | null | undefined) => {
 };
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  ...(hasDatabaseUrl ? { adapter: PrismaAdapter(prisma) } : {}),
   secret: authSecret || undefined,
   debug: !isProduction,
   session: {
@@ -129,6 +143,10 @@ export const authOptions: NextAuthOptions = {
         token.userId = user.id;
       }
 
+      if (!token.userId && email) {
+        token.userId = email.trim().toLowerCase();
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -162,7 +180,7 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user }) {
       const normalizedEmail = user.email?.trim().toLowerCase();
 
-      if (!normalizedEmail) {
+      if (!normalizedEmail || !hasDatabaseUrl) {
         return;
       }
 
