@@ -40,15 +40,13 @@ const canonicalTrailingSlashPaths = new Set([
   "/blog",
   "/contact",
   "/jobs",
-  "/learn",
   "/privacy-policy",
 ]);
 
 const shouldForceTrailingSlash = (pathname: string) =>
   canonicalTrailingSlashPaths.has(pathname) ||
   pathname.startsWith("/blog/") ||
-  pathname.startsWith("/jobs/") ||
-  pathname.startsWith("/learn/");
+  pathname.startsWith("/jobs/");
 
 const resolvedCanonicalSite = (() => {
   try {
@@ -181,7 +179,7 @@ export async function middleware(request: NextRequest) {
     }
 
     if (userId) {
-      return NextResponse.redirect(new URL("/me/learn", request.nextUrl.origin));
+      return NextResponse.redirect(new URL("/jobs", request.nextUrl.origin));
     }
 
     const loginUrl = new URL("/admin/login", request.nextUrl.origin);
@@ -194,15 +192,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === "/me/" ||
     request.nextUrl.pathname.startsWith("/me/")
   ) {
-    const { userId } = await getTokenUserId(request);
-
-    if (userId) {
-      return NextResponse.next();
-    }
-
-    const loginUrl = new URL("/login", request.nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/jobs", request.nextUrl.origin));
   }
 
   if (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/login/") {
@@ -213,7 +203,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const destinationUrl = new URL(
-      toSafeCallbackUrl(request, "/me/learn"),
+      toSafeCallbackUrl(request, "/jobs"),
       request.nextUrl.origin,
     );
     return NextResponse.redirect(destinationUrl);
@@ -237,7 +227,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(destinationUrl);
   }
 
-  return NextResponse.redirect(new URL("/me/learn", request.nextUrl.origin));
+  return NextResponse.redirect(new URL("/jobs", request.nextUrl.origin));
 }
 
 export const config = {
@@ -247,8 +237,6 @@ export const config = {
     "/admin/:path*",
     "/admin-mobile",
     "/admin-mobile/:path*",
-    "/learn",
-    "/learn/:path*",
     "/login",
     "/login/:path*",
     "/me",

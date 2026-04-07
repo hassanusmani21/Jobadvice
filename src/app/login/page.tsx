@@ -92,8 +92,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Sign in to continue
           </h1>
           <p className="mt-4 max-w-md text-sm text-slate-200 sm:text-base">
-            Use your Google account for member access and admin tools. The learning section is
-            temporarily hidden on the live site while we stabilize the rest of the experience.
+            Use your Google account for protected member access and admin tools across JobAdvice.
           </p>
           <ul className="mt-8 space-y-3 text-sm text-slate-200/95">
             <li>Return to the page you were opening after login.</li>

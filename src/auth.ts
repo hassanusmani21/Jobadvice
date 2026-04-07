@@ -170,10 +170,10 @@ export const authOptions: NextAuthOptions = {
           return targetUrl.toString();
         }
       } catch {
-        // Fall through to the default learner landing page.
+        // Fall through to the default jobs landing page.
       }
 
-      return `${baseUrl}/me/learn`;
+      return `${baseUrl}/jobs`;
     },
   },
   events: {

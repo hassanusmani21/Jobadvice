@@ -12,20 +12,6 @@ enum UserRole {
   admin
 }
 
-enum LearnProgressStatus {
-  not_started
-  in_progress
-  completed
-}
-
-enum LearnSubmissionStatus {
-  queued
-  running
-  passed
-  failed
-  error
-}
-
 model User {
   id          String            @id @default(cuid())
   name        String?
@@ -38,9 +24,6 @@ model User {
   lastSeenAt  DateTime?
   accounts    Account[]
   sessions    Session[]
-  progress    LearnProgress[]
-  drafts      LearnSavedDraft[]
-  submissions LearnSubmission[]
 }
 
 model Account {
@@ -75,52 +58,4 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
-}
-
-model LearnProgress {
-  id                  String              @id @default(cuid())
-  userId              String
-  trackSlug           String
-  courseSlug          String
-  lessonSlug          String
-  status              LearnProgressStatus @default(not_started)
-  percentComplete     Int                 @default(0)
-  bestMcqScore        Int?
-  bestAssignmentScore Int?
-  lastOpenedAt        DateTime?
-  completedAt         DateTime?
-  updatedAt           DateTime            @updatedAt
-  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, lessonSlug])
-}
-
-model LearnSavedDraft {
-  id             String   @id @default(cuid())
-  userId         String
-  assignmentSlug String
-  language       String
-  filesJson      Json
-  updatedAt      DateTime @updatedAt
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, assignmentSlug, language])
-}
-
-model LearnSubmission {
-  id             String                @id @default(cuid())
-  userId         String
-  assignmentSlug String
-  lessonSlug     String
-  language       String
-  status         LearnSubmissionStatus @default(queued)
-  score          Int                   @default(0)
-  passedCount    Int                   @default(0)
-  totalCount     Int                   @default(0)
-  runtimeMs      Int?
-  filesJson      Json
-  createdAt      DateTime              @default(now())
-  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, assignmentSlug])
 }

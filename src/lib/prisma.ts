@@ -6,7 +6,7 @@ const globalForPrisma = globalThis as typeof globalThis & {
 
 if (process.env.NODE_ENV === "production" && !(process.env.DATABASE_URL || "").trim()) {
   console.warn(
-    "[prisma] Missing DATABASE_URL. Learner auth and persistence will fail until the database is configured.",
+    "[prisma] Missing DATABASE_URL. Database-backed auth and persistence will fail until the database is configured.",
   );
 }
 
