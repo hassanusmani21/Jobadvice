@@ -130,7 +130,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const hasActiveFilters = Boolean(query || locationFilter || typeFilter || statusFilter);
 
   return (
-    <section className="space-y-5 xl:space-y-6">
+    <section className="space-y-6 xl:space-y-7">
       <div className="space-y-4">
         <section className="fade-up jobs-directory-toolbar">
           <div className="jobs-directory-topbar">
