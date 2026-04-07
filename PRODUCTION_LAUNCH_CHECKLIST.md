@@ -1,4 +1,4 @@
-# Production Launch Checklist (Netlify) - JobAdvice
+# Production Launch Checklist (Vercel) - JobAdvice
 
 Created: February 26, 2026
 
@@ -11,22 +11,22 @@ Use this checklist in order. Do not skip steps.
 - [ ] `.env.local` is not committed
 - [ ] `NEXT_OUTPUT_EXPORT` is **not** set to `true` in production
 
-## 2) Netlify Project Setup
+## 2) Vercel Project Setup
 
-- [ ] Netlify -> Add new site -> Import from GitHub
+- [ ] Vercel -> Add New Project -> Import from GitHub
 - [ ] Select repo: `hassanusmani21/Jobadvice`
 - [ ] Branch: `main`
 - [ ] Build command: `rm -rf .next out && npm run build`
-- [ ] Publish settings: default Next.js runtime (no static export mode)
+- [ ] Output settings: default Next.js runtime (no static export mode)
 
-## 3) Environment Variables (Netlify)
+## 3) Environment Variables (Vercel)
 
-Add these in Netlify -> Site settings -> Environment variables:
+Add these in Vercel -> Project settings -> Environment Variables:
 
 - [ ] `DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE_NAME?schema=public`
 - [ ] `AUTH_SECRET=<long-random-secret>`
-- [ ] `NEXTAUTH_URL=https://<your-netlify-site>.netlify.app`
-- [ ] `NEXT_PUBLIC_SITE_URL=https://<your-netlify-site>.netlify.app`
+- [ ] `NEXTAUTH_URL=https://your-domain.com`
+- [ ] `NEXT_PUBLIC_SITE_URL=https://your-domain.com`
 - [ ] `GOOGLE_CLIENT_ID=<google-client-id>`
 - [ ] `GOOGLE_CLIENT_SECRET=<google-client-secret>`
 - [ ] `ALLOWED_ADMIN_EMAILS=<your-admin-email>`
@@ -37,17 +37,15 @@ Add these in Netlify -> Site settings -> Environment variables:
 
 In Google Cloud Console (same OAuth client used by app):
 
-- [ ] Authorized JavaScript origin: `https://<your-netlify-site>.netlify.app`
-- [ ] Authorized redirect URI: `https://<your-netlify-site>.netlify.app/api/auth/callback/google`
+- [ ] Authorized JavaScript origin: `https://your-domain.com`
+- [ ] Authorized redirect URI: `https://your-domain.com/api/auth/callback/google`
 
-## 5) CMS Setup (Decap on Netlify)
+## 5) Admin App Setup
 
-In Netlify:
-
-- [ ] Identity -> Enable
-- [ ] Identity -> Registration -> `Invite only` (recommended)
-- [ ] Identity -> Services -> Enable `Git Gateway`
-- [ ] Identity -> Invite your admin email
+- [ ] `ALLOWED_ADMIN_EMAILS` includes your admin email
+- [ ] `ADMIN_CONTENTS_TOKEN` is set in Vercel
+- [ ] `/admin/login` works with your Google account
+- [ ] `/admin` opens after login and content saves create Git commits
 
 ## 6) Smoke Test (10 Minutes)
 
@@ -64,9 +62,9 @@ In Netlify:
 
 ## 7) Known Production Behavior
 
-- Auto-extract using local Ollama (`127.0.0.1`) will not run on Netlify.
+- Auto-extract using local Ollama (`127.0.0.1`) will not run on Vercel.
 - If Ollama is not hosted remotely, extractor will use fallback parsing mode.
-- CMS changes appear on public site after Netlify build/deploy finishes.
+- CMS changes appear on the public site after the Vercel deployment finishes.
 - First API request can be slower due to serverless cold start.
 
 ## 8) Quick Troubleshooting
@@ -82,15 +80,15 @@ In Netlify:
 - OAuth callback/sign-in error
   - Recheck origin + redirect URI in Google Cloud.
 
-- Admin CMS login works but publish fails
-  - Ensure Netlify Identity + Git Gateway are enabled.
+- Admin login works but publish fails
+  - Ensure `ADMIN_CONTENTS_TOKEN` is valid and has repository `Contents: Read and write`.
 
 - Mobile admin shows `ADMIN_CONTENTS_TOKEN is required for production admin saves`
   - Add `ADMIN_CONTENTS_TOKEN` in production environment variables.
   - Use a GitHub fine-grained token with repository `Contents: Read and write`.
   - Redeploy, then retry `/admin-mobile`.
 
-## 9) Domain Switch Later (when you buy custom domain)
+## 9) Domain Switch Later
 
 After custom domain is connected:
 

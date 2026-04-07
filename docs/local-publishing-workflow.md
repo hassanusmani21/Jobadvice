@@ -1,6 +1,6 @@
 # Local Publishing Workflow
 
-Use this workflow when you want Ollama locally, but the public site on Netlify.
+Use this workflow when you want Ollama locally, but the public site on Vercel.
 
 ## Start local admin
 
@@ -64,7 +64,7 @@ This command:
 4. creates a commit
 5. pushes to `main`
 
-Netlify then redeploys the public site from GitHub.
+Vercel then redeploys the public site from GitHub.
 
 ## Notes
 

@@ -22,7 +22,6 @@ if (!isDevelopment && !isStaticExport && !deploymentId) {
 
 const connectSrc = [
   "'self'",
-  "https://identity.netlify.com",
   "https://api.github.com",
   "https://github.com",
   ...(isDevelopment
@@ -30,8 +29,8 @@ const connectSrc = [
     : []),
 ].join(" ");
 const scriptSrc = isDevelopment
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com"
-  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com";
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net";
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
