@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
 import JobCard from "@/components/JobCard";
 import { getAllJobs, type JobPost } from "@/lib/jobs";
+import {
+  getAllJobSegmentConfigs,
+  getJobsForSegment,
+  isJobSegmentSlug,
+} from "@/lib/jobSegments";
 
 export const metadata: Metadata = {
   title: "Jobs",
@@ -15,6 +20,7 @@ export const metadata: Metadata = {
 type JobsPageProps = {
   searchParams?: {
     q?: string | string[];
+    segment?: string | string[];
     location?: string | string[];
     type?: string | string[];
     status?: string | string[];
@@ -73,17 +79,21 @@ const toSortableDate = (value: string | null | undefined) => {
 export default async function JobsPage({ searchParams }: JobsPageProps) {
   const jobs = await getAllJobs();
   const query = toSingleValue(searchParams?.q);
+  const rawSegmentFilter = toSingleValue(searchParams?.segment).toLowerCase();
+  const segmentFilter = isJobSegmentSlug(rawSegmentFilter) ? rawSegmentFilter : "";
   const locationFilter = toSingleValue(searchParams?.location);
   const typeFilter = toSingleValue(searchParams?.type);
   const statusFilter = toSingleValue(searchParams?.status);
   const sortFilter = toSingleValue(searchParams?.sort) || "newest";
 
+  const segmentOptions = getAllJobSegmentConfigs();
+  const jobsForSelectedSegment = segmentFilter ? getJobsForSegment(jobs, segmentFilter) : jobs;
   const locationOptions = toUniqueSortedValues(jobs.map((job) => job.location));
   const typeOptions = toUniqueSortedValues(
     jobs.map((job) => job.employmentType || job.jobType || ""),
   );
 
-  const filteredJobs = jobs.filter((job) => {
+  const filteredJobs = jobsForSelectedSegment.filter((job) => {
     if (query && !matchesSearch(job, query)) {
       return false;
     }
@@ -127,7 +137,9 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     return new Date(secondJob.date).getTime() - new Date(firstJob.date).getTime();
   });
 
-  const hasActiveFilters = Boolean(query || locationFilter || typeFilter || statusFilter);
+  const hasActiveFilters = Boolean(
+    query || segmentFilter || locationFilter || typeFilter || statusFilter,
+  );
   const showClearAction = hasActiveFilters || sortFilter !== "newest";
 
   return (
@@ -161,6 +173,18 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             placeholder="Search by title, company, location, or skill"
             className="form-control jobs-directory-control"
           />
+          <select
+            name="segment"
+            defaultValue={segmentFilter}
+            className="form-control jobs-directory-control"
+          >
+            <option value="">All categories</option>
+            {segmentOptions.map((segmentOption) => (
+              <option key={segmentOption.slug} value={segmentOption.slug}>
+                {segmentOption.label}
+              </option>
+            ))}
+          </select>
           <select
             name="location"
             defaultValue={locationFilter}

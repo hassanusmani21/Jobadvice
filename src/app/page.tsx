@@ -182,13 +182,13 @@ export default async function HomePage() {
               </label>
 
               <label className="home-search-field block min-w-0">
-                <span className="home-search-label">Job type</span>
+                <span className="home-search-label">Category</span>
                 <select
                   name="segment"
                   defaultValue="all"
                   className="home-search-control home-search-control-rich w-full px-4 text-sm text-slate-700 outline-none"
                 >
-                  <option value="all">Job type</option>
+                  <option value="all">All categories</option>
                   {finderSegmentOptions.map((segment) => (
                     <option key={segment.slug} value={segment.slug}>
                       {segment.label}
