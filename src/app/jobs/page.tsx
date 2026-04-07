@@ -130,7 +130,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const hasActiveFilters = Boolean(query || locationFilter || typeFilter || statusFilter);
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-5 xl:space-y-6">
       <div className="space-y-4">
         <section className="fade-up jobs-directory-toolbar">
           <div className="jobs-directory-topbar">
@@ -226,7 +226,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
         </section>
       </div>
 
-      <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
         {sortedJobs.map((job) => (
           <div key={job.slug} className="min-w-0">
             <JobCard job={job} />
