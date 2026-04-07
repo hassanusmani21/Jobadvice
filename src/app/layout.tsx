@@ -179,6 +179,25 @@ const assetLoadRecoveryScript = `
   })();
 `;
 
+const themeInitScript = `
+  (function () {
+    if (typeof document === "undefined") return;
+
+    var storageKey = "jobadvice-theme";
+    var theme = "dark";
+
+    try {
+      var storedTheme = window.localStorage.getItem(storageKey);
+      if (storedTheme === "light" || storedTheme === "dark") {
+        theme = storedTheme;
+      }
+    } catch {}
+
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  })();
+`;
+
 const resolvedMetadataBase = (() => {
   try {
     return new URL(siteUrl);
@@ -366,11 +385,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="light"
+      data-theme="dark"
       suppressHydrationWarning
       className={`${sansFont.variable} ${serifFont.variable}`}
     >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: assetLoadRecoveryScript }} />
       </head>
       <body className="antialiased">
