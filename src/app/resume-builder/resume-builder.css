@@ -839,6 +839,10 @@
   border-color: rgba(251, 191, 36, 0.18);
 }
 
+.resume-print-root {
+  display: none;
+}
+
 .resume-preview-toolbar {
   display: flex;
   align-items: center;
@@ -1868,6 +1872,8 @@ html[data-theme="dark"] .resume-preview-modal-close {
   body {
     background: #ffffff !important;
     color: #0f172a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .site-grid > header,
@@ -1895,20 +1901,73 @@ html[data-theme="dark"] .resume-preview-modal-close {
     margin: 0 !important;
   }
 
-  .resume-preview-card,
-  .resume-preview-sheet {
+  .resume-builder-page > *:not(.resume-print-root) {
+    display: none !important;
+  }
+
+  .resume-print-root {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .resume-preview-print-card,
+  .resume-print-root .resume-preview-sheet {
     border: 0 !important;
     border-radius: 0 !important;
     background: #ffffff !important;
     box-shadow: none !important;
     margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  .resume-preview-print-card {
+    display: block !important;
     padding: 0 !important;
   }
 
+  .resume-print-root .resume-preview-sheet {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    padding: 0.2in !important;
+  }
+
   .resume-preview-body,
+  .resume-preview-stack,
   .resume-preview-section,
   .resume-preview-entry {
-    break-inside: avoid;
+    display: block !important;
+  }
+
+  .resume-preview-section + .resume-preview-section {
+    margin-top: 0.78rem !important;
+  }
+
+  .resume-preview-entry + .resume-preview-entry {
+    margin-top: 0.62rem !important;
+  }
+
+  .resume-preview-body,
+  .resume-preview-section {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .resume-preview-entry,
+  .resume-preview-structured-table,
+  .resume-preview-structured-row,
+  .resume-preview-list,
+  .resume-preview-skill-row {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .resume-preview-section-title {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
 
   .resume-preview-copy,
@@ -1932,5 +1991,19 @@ html[data-theme="dark"] .resume-preview-modal-close {
   .resume-preview-entry,
   .resume-preview-skill-pill {
     border-color: rgba(203, 213, 225, 0.96) !important;
+  }
+
+  .resume-preview-contact {
+    display: block !important;
+  }
+
+  .resume-preview-contact span {
+    display: inline !important;
+    white-space: normal !important;
+  }
+
+  .resume-preview-contact span:not(:last-child)::after {
+    content: " • ";
+    color: #94a3b8;
   }
 }

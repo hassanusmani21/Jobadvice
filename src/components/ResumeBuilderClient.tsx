@@ -1057,6 +1057,10 @@ export default function ResumeBuilderClient() {
         </div>
       </section>
 
+      <div className={joinClasses("resume-print-root", `resume-preview-${resume.templateId}`)}>
+        <div className="resume-preview-card resume-preview-print-card">{previewSheet}</div>
+      </div>
+
       <section className="resume-builder-shell">
         <div className="resume-builder-editor">
           <div className="resume-accordion-list">
