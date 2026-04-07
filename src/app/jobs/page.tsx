@@ -132,14 +132,26 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   return (
     <section className="space-y-6">
       <div className="space-y-4">
-        <div className="fade-up page-intro-surface px-5 py-5 sm:px-8 sm:py-6">
-          <span className="page-kicker">Jobs Directory</span>
-          <h1 className="page-title">All Jobs</h1>
-          <p className="page-copy">
-            Explore the latest job openings with complete role information and direct application
-            links.
-          </p>
-          <form action="/jobs" method="get" className="filter-panel mt-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="fade-up jobs-directory-toolbar">
+          <div className="jobs-directory-topbar">
+            <div className="jobs-directory-title-line">
+              <span className="jobs-directory-kicker">Jobs Directory</span>
+              <h1 className="jobs-directory-inline-title">All Jobs</h1>
+            </div>
+            <div className="jobs-directory-count-pill">
+              {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
+            </div>
+          </div>
+
+          <form
+            action="/jobs"
+            method="get"
+            className={`jobs-directory-toolbar-form jobs-directory-filter-panel jobs-directory-search-layout${
+              hasActiveFilters || sortFilter !== "newest"
+                ? " jobs-directory-search-layout-has-clear"
+                : ""
+            }`}
+          >
             <label htmlFor="jobs-search" className="sr-only">
               Search jobs
             </label>
@@ -149,12 +161,12 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
               type="search"
               defaultValue={query}
               placeholder="Search by title, company, location, or skill"
-              className="form-control sm:col-span-2 xl:col-span-2"
+              className="form-control jobs-directory-control jobs-directory-search-input"
             />
             <select
               name="location"
               defaultValue={locationFilter}
-              className="form-control"
+              className="form-control jobs-directory-control"
             >
               <option value="">All locations</option>
               {locationOptions.map((locationOption) => (
@@ -166,7 +178,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             <select
               name="type"
               defaultValue={typeFilter}
-              className="form-control"
+              className="form-control jobs-directory-control"
             >
               <option value="">All types</option>
               {typeOptions.map((typeOption) => (
@@ -178,7 +190,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             <select
               name="status"
               defaultValue={statusFilter}
-              className="form-control"
+              className="form-control jobs-directory-control"
             >
               <option value="">All statuses</option>
               <option value="open">Open now</option>
@@ -188,32 +200,30 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             <select
               name="sort"
               defaultValue={sortFilter}
-              className="form-control"
+              className="form-control jobs-directory-control"
             >
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
               <option value="closingSoon">Closing soon</option>
             </select>
-            <ActionButton variant="primary" buttonType="submit" className="w-full">
+            <ActionButton
+              variant="primary"
+              buttonType="submit"
+              className="jobs-directory-action jobs-directory-search-button w-full"
+            >
               Search
             </ActionButton>
             {hasActiveFilters || sortFilter !== "newest" ? (
-              <ActionButton href="/jobs" variant="secondary" className="w-full">
+              <ActionButton
+                href="/jobs"
+                variant="secondary"
+                className="jobs-directory-action jobs-directory-search-clear w-full"
+              >
                 Clear
               </ActionButton>
             ) : null}
           </form>
-        </div>
-
-        <p className="px-1 text-sm text-slate-600">
-          {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
-          {query ? (
-            <>
-              {" "}
-              for <span className="font-semibold text-slate-800">&quot;{query}&quot;</span>
-            </>
-          ) : null}
-        </p>
+        </section>
       </div>
 
       <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-3">
