@@ -13,6 +13,7 @@ import {
   createEmptyJobEntry,
 } from "@/lib/adminMobile";
 import { toDisplayImageSrc } from "@/lib/images";
+import { siteName, siteUrl, siteWhatsappChannelUrl } from "@/lib/site";
 
 type AdminAppProps = {
   adminEmail: string;
@@ -24,6 +25,16 @@ type AdminAppProps = {
 
 type RecordsState = Record<AdminCollection, AdminMobileRecord[]>;
 type LoadingState = Record<AdminCollection, boolean>;
+type PublishedJobShare = {
+  company: string;
+  employmentType: string;
+  experience: string;
+  jobUrl: string;
+  location: string;
+  salary: string;
+  title: string;
+  workMode: string;
+};
 
 const listToText = (items: string[]) => items.join("\n");
 
@@ -68,7 +79,6 @@ const formatRecordMeta = (record: AdminMobileRecord) => {
 
 const buildEmptyEntry = (collection: AdminCollection) =>
   collection === "jobs" ? createEmptyJobEntry() : createEmptyBlogEntry();
-
 const toExtractString = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 
@@ -189,6 +199,138 @@ const applyBlogExtractedData = (
 const buildAdminLoginUrl = (adminBasePath: string) =>
   `/admin/login?callbackUrl=${encodeURIComponent(adminBasePath)}`;
 
+const buildJobUrlFromSlug = (slug: string) =>
+  `${siteUrl.replace(/\/+$/, "")}/jobs/${slug}/`;
+
+const buildJobShareSummary = (entry: {
+  employmentType: string;
+  location: string;
+  workMode: string;
+}) => {
+  const parts = [entry.location, entry.workMode, entry.employmentType]
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  return parts.length > 0
+    ? parts.slice(0, 3).join(" | ")
+    : "Verified job opening with direct apply details.";
+};
+
+const normalizeShareField = (value: string, fallback: string) =>
+  value.trim() || fallback;
+
+const buildShareAudienceLabel = (share: PublishedJobShare) => {
+  const combinedValue =
+    `${share.title} ${share.employmentType} ${share.experience}`.toLowerCase();
+
+  if (/\b(intern|internship|apprentice|apprenticeship|student)\b/.test(combinedValue)) {
+    return "Internship";
+  }
+
+  if (
+    /\b(fresher|freshers|graduate|trainee|entry[\s-]?level|0\s*(?:to|-|–|—)\s*1|0\s*years?)\b/.test(
+      combinedValue,
+    )
+  ) {
+    return "Freshers";
+  }
+
+  if (/\b(experienced|senior|lead|manager|specialist|consultant)\b/.test(combinedValue)) {
+    return "Experienced";
+  }
+
+  return "Job Update";
+};
+
+const buildShareExperienceLabel = (share: PublishedJobShare) => {
+  const experienceValue = share.experience.trim();
+  if (experienceValue) {
+    return experienceValue;
+  }
+
+  const audienceLabel = buildShareAudienceLabel(share);
+  if (audienceLabel === "Internship") {
+    return "Students Eligible";
+  }
+
+  if (audienceLabel === "Freshers") {
+    return "Freshers Eligible";
+  }
+
+  return "Check Full Details";
+};
+
+const buildShareModeLabel = (value: string) => {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    return "Mode Not Mentioned";
+  }
+
+  return normalizedValue;
+};
+
+const buildPublishedJobWhatsappText = (
+  share: PublishedJobShare,
+  useEmojis: boolean,
+) => {
+  const audienceLabel = buildShareAudienceLabel(share);
+  const companyPrefix = share.company.trim() || siteName;
+  const heading = `${useEmojis ? "🎓 " : ""}${companyPrefix} Hiring — ${audienceLabel}`;
+  const roleLine = `${useEmojis ? "🔥 " : ""}${share.title}`;
+  const locationLine = `${useEmojis ? "📍 " : ""}${normalizeShareField(
+    share.location,
+    "Location Not Mentioned",
+  )}`;
+  const salaryLine = `${useEmojis ? "💰 " : ""}${normalizeShareField(
+    share.salary,
+    "Salary Not Mentioned",
+  )}`;
+  const experienceLine = `${useEmojis ? "🧑‍💻 " : ""}${buildShareExperienceLabel(share)}`;
+  const workModeLine = `${useEmojis ? "🏢 " : ""}${buildShareModeLabel(share.workMode)}`;
+  const applyLabel = `${useEmojis ? "🔗 " : ""}Apply Now:`;
+  const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
+  const channelLabel = `${
+    useEmojis ? "📢 " : ""
+  }Join WhatsApp Channel for Daily Jobs:`;
+  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
+
+  return [
+    heading,
+    "",
+    roleLine,
+    "",
+    locationLine,
+    salaryLine,
+    experienceLine,
+    workModeLine,
+    "",
+    applyLabel,
+    share.jobUrl,
+    "",
+    websiteLabel,
+    siteUrl,
+    "",
+    channelLabel,
+    channelLink,
+  ].join("\n");
+};
+
+const buildPublishedJobShare = (entry: AdminMobileJobEntry): PublishedJobShare => {
+  return {
+    company: entry.company,
+    employmentType: entry.employmentType,
+    experience: entry.experience,
+    jobUrl: buildJobUrlFromSlug(entry.slug),
+    location: entry.location,
+    salary: entry.salary,
+    title: entry.title,
+    workMode: entry.workMode,
+  };
+};
+
+const getPublishedJobShareForEntry = (entry: AdminMobileEntry) =>
+  entry.collection === "jobs" && !entry.draft ? buildPublishedJobShare(entry) : null;
+
 export default function MobileAdminApp({
   adminEmail,
   initialCollection,
@@ -207,6 +349,8 @@ export default function MobileAdminApp({
   const [editorOpen, setEditorOpen] = useState(Boolean(initialSlug));
   const [entryLoading, setEntryLoading] = useState(Boolean(initialSlug));
   const [originalSlug, setOriginalSlug] = useState(initialSlug);
+  const [publishedJobShare, setPublishedJobShare] = useState<PublishedJobShare | null>(null);
+  const [publishedJobShareUsesEmojis, setPublishedJobShareUsesEmojis] = useState(true);
   const [formError, setFormError] = useState("");
   const [formNotice, setFormNotice] = useState("");
   const [saveMode, setSaveMode] = useState<"draft" | "publish" | "">("");
@@ -234,6 +378,15 @@ export default function MobileAdminApp({
   const accountInitial = accountLabel.charAt(0).toUpperCase() || "A";
   const query = searchValue.trim().toLowerCase();
   const adminLoginUrl = buildAdminLoginUrl(adminBasePath);
+  const publishedJobSummary = publishedJobShare
+    ? buildJobShareSummary(publishedJobShare)
+    : "";
+  const publishedJobWhatsappText = publishedJobShare
+    ? buildPublishedJobWhatsappText(publishedJobShare, publishedJobShareUsesEmojis)
+    : "";
+  const publishedJobWhatsappShareUrl = publishedJobWhatsappText
+    ? `https://wa.me/?text=${encodeURIComponent(publishedJobWhatsappText)}`
+    : "";
   const filteredRecords = !query
     ? activeRecords
     : activeRecords.filter((record) => {
@@ -498,6 +651,7 @@ export default function MobileAdminApp({
 
           setEditorEntry(entry);
           setOriginalSlug(entry.slug);
+          setPublishedJobShare(getPublishedJobShareForEntry(entry));
         })
         .catch((error) => {
           setFormError(error instanceof Error ? error.message : "Unable to open entry.");
@@ -549,6 +703,7 @@ export default function MobileAdminApp({
         setEditorEntry(entry);
         setOriginalSlug(entry.slug);
         setEditorOpen(true);
+        setPublishedJobShare(getPublishedJobShareForEntry(entry));
       })
       .catch((error) => {
         setFormError(error instanceof Error ? error.message : "Unable to open entry.");
@@ -562,6 +717,7 @@ export default function MobileAdminApp({
     setCollection(nextCollection);
     setEditorEntry(buildEmptyEntry(nextCollection));
     setOriginalSlug("");
+    setPublishedJobShare(null);
     setFormError("");
     setFormNotice("");
     setExtractError("");
@@ -579,6 +735,7 @@ export default function MobileAdminApp({
     setExtractError("");
     setExtractNotice("");
     resetUploadedAssetState();
+    setPublishedJobShare(null);
 
     try {
       const response = await fetch(
@@ -605,6 +762,7 @@ export default function MobileAdminApp({
 
       setEditorEntry(result.entry);
       setOriginalSlug(result.entry.slug);
+      setPublishedJobShare(getPublishedJobShareForEntry(result.entry));
     } catch (error) {
       setFormError(
         error instanceof Error ? error.message : "Unable to load the selected entry.",
@@ -771,6 +929,7 @@ export default function MobileAdminApp({
       const nextRecord = result.record;
       setEditorEntry(result.entry);
       setOriginalSlug(result.entry.slug);
+      setPublishedJobShare(getPublishedJobShareForEntry(result.entry));
       setFormNotice(draft ? "Draft saved." : "Published successfully.");
       setRecordsByCollection((current) => {
         const existingRecords = current[collection].filter(
@@ -941,6 +1100,19 @@ export default function MobileAdminApp({
     setExtractSourceText("");
     setExtractError("");
     setExtractNotice("");
+  };
+
+  const copyPublishedJobShare = async () => {
+    if (!publishedJobWhatsappText || !navigator.clipboard) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(publishedJobWhatsappText);
+      setFormNotice("WhatsApp message copied.");
+    } catch {
+      setFormNotice("Copy failed. You can still open WhatsApp directly.");
+    }
   };
 
   const activeTitle =
@@ -1203,6 +1375,7 @@ export default function MobileAdminApp({
                       setSearchValue("");
                       setExtractError("");
                       setExtractNotice("");
+                      setPublishedJobShare(null);
                       if (editorEntry.collection !== item) {
                         setEditorEntry(buildEmptyEntry(item));
                         setOriginalSlug("");
@@ -1391,6 +1564,84 @@ export default function MobileAdminApp({
                 <p className="mt-4 rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                   {formNotice}
                 </p>
+              ) : null}
+
+              {publishedJobShare ? (
+                <div className="mt-4 rounded-[1rem] border border-teal-200 bg-teal-50/70 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
+                        WhatsApp Share
+                      </p>
+                      <h3 className="mt-1 text-base font-semibold text-slate-900">
+                        {publishedJobShare.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-600">{publishedJobShare.company}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPublishedJobShareUsesEmojis((current) => !current)
+                        }
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      >
+                        {publishedJobShareUsesEmojis ? "Emojis On" : "Emojis Off"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPublishedJobShare(null)}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-sm text-slate-700">{publishedJobSummary}</p>
+
+                  <div className="mt-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                    <p className="font-semibold text-slate-900">Job link</p>
+                    <a
+                      href={publishedJobShare.jobUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 block break-all text-teal-700 underline underline-offset-2"
+                    >
+                      {publishedJobShare.jobUrl}
+                    </a>
+                  </div>
+
+                  <label className="mt-3 block">
+                    <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                      WhatsApp message
+                    </span>
+                    <textarea
+                      readOnly
+                      value={publishedJobWhatsappText}
+                      rows={9}
+                      className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none"
+                    />
+                  </label>
+
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={copyPublishedJobShare}
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                    >
+                      Copy Message
+                    </button>
+                    <a
+                      href={publishedJobWhatsappShareUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+                    >
+                      Open WhatsApp
+                    </a>
+                  </div>
+                </div>
               ) : null}
 
               {entryLoading ? (
