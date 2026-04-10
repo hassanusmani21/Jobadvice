@@ -1,0 +1,489 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { unstable_cache } from "next/cache";
+import { toIsoDateString } from "./dateParsing";
+import { normalizeMarkdownSource } from "./markdown";
+import { toContentSlug } from "./slug";
+
+const blogsDirectory = path.join(process.cwd(), "content", "blogs");
+const frontMatterPattern = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/;
+const placeholderSlugPattern = /^\{\{.+\}\}$/;
+const millisecondsInDay = 24 * 60 * 60 * 1000;
+
+export type BlogPost = {
+  slug: string;
+  title: string;
+  summary: string;
+  topic: string;
+  tags: string[];
+  isTrending: boolean;
+  draft: boolean;
+  author: string;
+  authorRole?: string;
+  reviewedBy?: string;
+  reviewerRole?: string;
+  reviewedAt?: string;
+  coverImage?: string;
+  date: string;
+  updatedAt: string;
+  excerpt: string;
+  content: string;
+  readingTimeMinutes: number;
+  ctaLabel?: string;
+  ctaLink?: string;
+  sortTimestamp: number;
+};
+
+export type TrendingTopic = {
+  topic: string;
+  score: number;
+};
+
+const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "").trim();
+
+const normalizeTextValue = (value: unknown) =>
+  typeof value === "string" ? value.trim() : "";
+
+const normalizeExternalUrl = (value: unknown) => {
+  const rawValue = normalizeTextValue(value);
+  if (!rawValue) {
+    return "";
+  }
+
+  try {
+    const parsedUrl = new URL(rawValue);
+    if (parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:") {
+      return parsedUrl.toString();
+    }
+  } catch {
+    return "";
+  }
+
+  return "";
+};
+
+const hasClosingQuote = (value: string, quote: '"' | "'") => {
+  const trimmedValue = value.trimEnd();
+  if (!trimmedValue.endsWith(quote)) {
+    return false;
+  }
+
+  let trailingBackslashCount = 0;
+  for (
+    let index = trimmedValue.length - 2;
+    index >= 0 && trimmedValue[index] === "\\";
+    index -= 1
+  ) {
+    trailingBackslashCount += 1;
+  }
+
+  return trailingBackslashCount % 2 === 0;
+};
+
+const parseQuotedValue = (value: string, quote: '"' | "'") => {
+  const trimmedValue = value.trim();
+  if (!(trimmedValue.startsWith(quote) && hasClosingQuote(trimmedValue, quote))) {
+    return stripWrappingQuotes(value);
+  }
+
+  const innerValue = trimmedValue.slice(1, -1);
+  if (quote === "'") {
+    return innerValue.replace(/''/g, "'").replace(/\r?\n\s*/g, " ").trim();
+  }
+
+  return innerValue
+    .replace(/\\\r?\n\s*/g, "")
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, "\\")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\r?\n\s*/g, " ")
+    .trim();
+};
+
+const toDateString = (value: unknown) => toIsoDateString(value);
+
+const toBoolean = (value: unknown) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  return ["true", "yes", "1"].includes(value.trim().toLowerCase());
+};
+
+const normalizeList = (value: unknown) => {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => normalizeTextValue(item))
+      .filter((item) => item.length > 0);
+  }
+
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map((item) => item.replace(/^['"\s]+|['"\s]+$/g, "").trim())
+      .filter((item) => item.length > 0);
+  }
+
+  return [] as string[];
+};
+
+const createExcerpt = (value: string) => {
+  const plainText = normalizeMarkdownSource(value)
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
+    .replace(/\|/g, " ")
+    .replace(/[#>*_[\]-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (plainText.length <= 170) {
+    return plainText;
+  }
+
+  return `${plainText.slice(0, 167).trimEnd()}...`;
+};
+
+const estimateReadingTime = (value: string) => {
+  const wordCount = normalizeMarkdownSource(value)
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\|/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean).length;
+
+  return Math.max(1, Math.round(wordCount / 220));
+};
+
+const resolveBlogSlug = (frontMatterSlug: unknown, fileName: string) => {
+  const candidate = normalizeTextValue(frontMatterSlug);
+  const fallbackSlug = fileName.replace(/\.md$/i, "");
+  const slugSource =
+    !candidate || placeholderSlugPattern.test(candidate) ? fallbackSlug : candidate;
+
+  return toContentSlug(slugSource) || fallbackSlug;
+};
+
+const parseFrontMatter = (rawFile: string) => {
+  const match = rawFile.match(frontMatterPattern);
+  if (!match) {
+    return {
+      data: {} as Record<string, unknown>,
+      content: rawFile.trim(),
+    };
+  }
+
+  const [, frontMatterBlock, markdownContent] = match;
+  const lines = frontMatterBlock.split(/\r?\n/);
+  const data: Record<string, unknown> = {};
+  let activeListKey: string | null = null;
+
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex];
+    const keyValueMatch = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (keyValueMatch) {
+      const [, key, rawValue] = keyValueMatch;
+      const value = rawValue.trim();
+      if (value.length === 0) {
+        data[key] = [];
+        activeListKey = key;
+      } else {
+        const quotedMarker = value[0];
+
+        if (quotedMarker === '"' || quotedMarker === "'") {
+          const quote = quotedMarker as '"' | "'";
+          let quotedValue = value;
+
+          while (!hasClosingQuote(quotedValue, quote) && lineIndex + 1 < lines.length) {
+            const nextLine = lines[lineIndex + 1];
+            if (!/^\s+/.test(nextLine)) {
+              break;
+            }
+
+            lineIndex += 1;
+            quotedValue += `\n${nextLine.trimStart()}`;
+          }
+
+          data[key] = parseQuotedValue(quotedValue, quote);
+          activeListKey = null;
+          continue;
+        }
+
+        if (/^[>|][+-]?$/.test(value)) {
+          const blockLines: string[] = [];
+
+          while (lineIndex + 1 < lines.length && /^\s+/.test(lines[lineIndex + 1])) {
+            lineIndex += 1;
+            blockLines.push(lines[lineIndex].trimStart());
+          }
+
+          data[key] = value.startsWith(">") ? blockLines.join(" ").trim() : blockLines.join("\n");
+          activeListKey = null;
+          continue;
+        }
+
+        const continuationLines: string[] = [];
+        while (lineIndex + 1 < lines.length && /^\s+/.test(lines[lineIndex + 1])) {
+          lineIndex += 1;
+          continuationLines.push(lines[lineIndex].trimStart());
+        }
+
+        const combinedValue =
+          continuationLines.length > 0
+            ? `${value} ${continuationLines.join(" ")}`
+            : value;
+
+        data[key] = stripWrappingQuotes(combinedValue);
+        activeListKey = null;
+      }
+      continue;
+    }
+
+    const listItemMatch = line.match(/^\s*-\s*(.+)$/);
+    if (listItemMatch && activeListKey) {
+      const currentItems = Array.isArray(data[activeListKey])
+        ? (data[activeListKey] as string[])
+        : [];
+      data[activeListKey] = [...currentItems, stripWrappingQuotes(listItemMatch[1])];
+      continue;
+    }
+
+    if (activeListKey && /^\s+/.test(line)) {
+      const continuationValue = line.trim();
+      const currentItems = Array.isArray(data[activeListKey])
+        ? [...(data[activeListKey] as string[])]
+        : [];
+
+      if (continuationValue && currentItems.length > 0) {
+        const lastIndex = currentItems.length - 1;
+        currentItems[lastIndex] = `${currentItems[lastIndex]} ${continuationValue}`
+          .replace(/\s+/g, " ")
+          .trim();
+        data[activeListKey] = currentItems;
+      }
+    }
+  }
+
+  return {
+    data,
+    content: markdownContent.trim(),
+  };
+};
+
+const getTodayDateString = () => new Date().toISOString().split("T")[0];
+const getTodayTimestamp = () => Date.parse(`${getTodayDateString()}T23:59:59.999Z`);
+const toSortableTimestamp = (value: string) => Date.parse(`${value}T00:00:00Z`);
+
+const getBlogSortValues = (blog: BlogPost) => {
+  const todayTimestamp = getTodayTimestamp();
+  const publishedTimestamp = toSortableTimestamp(blog.date);
+  const publishedInFuture = publishedTimestamp > todayTimestamp;
+
+  return {
+    futureRank: publishedInFuture ? 1 : 0,
+    primaryTimestamp: publishedInFuture ? 0 : publishedTimestamp,
+    secondaryTimestamp: publishedInFuture ? 0 : blog.sortTimestamp,
+  };
+};
+
+const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
+  const filePath = path.join(blogsDirectory, fileName);
+  const [rawFile, fileStats] = await Promise.all([
+    fs.readFile(filePath, "utf8"),
+    fs.stat(filePath),
+  ]);
+
+  const { data, content } = parseFrontMatter(rawFile);
+  const slug = resolveBlogSlug(data.slug, fileName);
+  const title = normalizeTextValue(data.title);
+  if (!title) {
+    return null;
+  }
+
+  const topic = normalizeTextValue(data.topic);
+  const tags = normalizeList(data.tags);
+  const summary = normalizeTextValue(data.summary || data.excerpt).replace(/\s+/g, " ").trim();
+  const author = normalizeTextValue(data.author);
+  const authorRole = normalizeTextValue(data.authorRole);
+  const reviewedBy = normalizeTextValue(data.reviewedBy);
+  const reviewerRole = normalizeTextValue(data.reviewerRole);
+  const reviewedAt = toDateString(data.reviewedAt);
+  const coverImage = normalizeTextValue(data.coverImage || data.image || data.thumbnail);
+  const ctaLabel = normalizeTextValue(
+    data.ctaLabel || data.registrationLabel || data.applyLabel || data.joinLabel,
+  );
+  const ctaLink = normalizeExternalUrl(
+    data.ctaLink || data.registrationLink || data.applyLink || data.joinLink,
+  );
+  const date = toDateString(data.date || data.publishedAt) || getTodayDateString();
+  const explicitUpdatedAt = toDateString(data.updatedAt || data.updated || data.lastUpdated);
+  const updatedAt =
+    explicitUpdatedAt ||
+    toDateString(fileStats.mtime.toISOString()) || getTodayDateString();
+  const sortTimestamp = explicitUpdatedAt
+    ? toSortableTimestamp(explicitUpdatedAt)
+    : fileStats.mtimeMs;
+  const isTrending = toBoolean(data.isTrending || data.trending);
+  const draft = toBoolean(data.draft || data.isDraft);
+  const postContent = normalizeMarkdownSource(content || summary);
+  if (!postContent) {
+    return null;
+  }
+  const excerpt = createExcerpt(summary || postContent);
+  const readingTimeMinutes = estimateReadingTime(postContent);
+
+  return {
+    slug,
+    title,
+    summary,
+    topic,
+    tags,
+    isTrending,
+    draft,
+    author,
+    ...(authorRole ? { authorRole } : {}),
+    ...(reviewedBy ? { reviewedBy } : {}),
+    ...(reviewerRole ? { reviewerRole } : {}),
+    ...(reviewedAt ? { reviewedAt } : {}),
+    ...(coverImage ? { coverImage } : {}),
+    date,
+    updatedAt,
+    excerpt,
+    content: postContent,
+    readingTimeMinutes,
+    ...(ctaLabel ? { ctaLabel } : {}),
+    ...(ctaLink ? { ctaLink } : {}),
+    sortTimestamp,
+  };
+};
+
+const loadBlogs = async (options: { includeDrafts?: boolean } = {}) => {
+  let files: string[] = [];
+
+  try {
+    files = await fs.readdir(blogsDirectory);
+  } catch {
+    return [] as BlogPost[];
+  }
+
+  const blogs = await Promise.all(
+    files
+      .filter((fileName) => fileName.toLowerCase().endsWith(".md"))
+      .map((fileName) => loadBlogFromFile(fileName)),
+  );
+
+  return blogs
+    .filter((blog): blog is BlogPost => Boolean(blog))
+    .filter((blog) => (options.includeDrafts ? true : !blog.draft))
+    .sort((firstBlog, secondBlog) => {
+      const firstValues = getBlogSortValues(firstBlog);
+      const secondValues = getBlogSortValues(secondBlog);
+
+      return (
+        firstValues.futureRank - secondValues.futureRank ||
+        secondValues.primaryTimestamp - firstValues.primaryTimestamp ||
+        secondValues.secondaryTimestamp - firstValues.secondaryTimestamp ||
+        firstBlog.title.localeCompare(secondBlog.title)
+      );
+    });
+};
+
+const readBlogs = unstable_cache(async () => loadBlogs(), ["blogs:public"], {
+  revalidate: 60 * 60,
+});
+
+const readBlogsForAdmin = (options: { includeDrafts?: boolean } = {}) => loadBlogs(options);
+
+const toUtcTimestamp = (value: string) => Date.parse(`${value}T00:00:00Z`);
+
+const getFreshnessWeight = (dateString: string) => {
+  const today = getTodayDateString();
+  const ageInDays = Math.max(
+    0,
+    Math.floor((toUtcTimestamp(today) - toUtcTimestamp(dateString)) / millisecondsInDay),
+  );
+
+  if (ageInDays <= 14) {
+    return 3;
+  }
+
+  if (ageInDays <= 60) {
+    return 2;
+  }
+
+  return 1;
+};
+
+export const getAllBlogs = async () => readBlogs();
+
+export const getAllBlogsForAdmin = async () => readBlogsForAdmin({ includeDrafts: true });
+
+export const getLatestBlogs = async (limit = 6) => {
+  const blogs = await readBlogs();
+  return blogs.slice(0, limit);
+};
+
+export const getBlogBySlug = async (slug: string) => {
+  const blogs = await readBlogs();
+  return blogs.find((blog) => blog.slug === slug) ?? null;
+};
+
+export const getTrendingBlogs = async (limit = 5) => {
+  const blogs = await readBlogs();
+  const explicitTrending = blogs.filter((blog) => blog.isTrending);
+
+  if (explicitTrending.length >= limit) {
+    return explicitTrending.slice(0, limit);
+  }
+
+  const existingSlugs = new Set(explicitTrending.map((blog) => blog.slug));
+  const fallbackBlogs = blogs.filter((blog) => !existingSlugs.has(blog.slug));
+  return [...explicitTrending, ...fallbackBlogs].slice(0, limit);
+};
+
+export const getTopBlogTopics = async (limit = 6): Promise<TrendingTopic[]> => {
+  const blogs = await readBlogs();
+  const scoreMap = new Map<string, number>();
+
+  for (const blog of blogs) {
+    const freshnessWeight = getFreshnessWeight(blog.date);
+    const allTopics = [blog.topic, ...blog.tags].filter(Boolean);
+
+    for (const rawTopic of allTopics) {
+      const normalizedTopic = rawTopic.trim();
+      if (!normalizedTopic) {
+        continue;
+      }
+
+      const currentScore = scoreMap.get(normalizedTopic) || 0;
+      const trendingBonus = blog.isTrending ? 1 : 0;
+      scoreMap.set(normalizedTopic, currentScore + freshnessWeight + trendingBonus);
+    }
+  }
+
+  return Array.from(scoreMap.entries())
+    .map(([topic, score]) => ({ topic, score }))
+    .sort((firstTopic, secondTopic) => secondTopic.score - firstTopic.score)
+    .slice(0, limit);
+};
+
+export const formatBlogDate = (dateString: string) => {
+  const parsedDate = new Date(dateString);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return dateString;
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(parsedDate);
+};
