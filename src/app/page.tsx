@@ -68,7 +68,7 @@ export default async function HomePage() {
           WhatsApp
         </p>
 
-      <div className="mx-auto mt-2 max-w-[17rem] space-y-1.5 sm:max-w-[20rem] lg:mx-0 lg:max-w-none">
+      <div className="home-community-copy-block mx-auto max-w-[17rem] sm:max-w-[20rem] lg:mx-0 lg:max-w-none">
         <h2 className="home-community-title mx-auto font-serif text-[1.05rem] leading-[1.08] text-slate-900 sm:text-[1.18rem] lg:mx-0">
           Get faster job updates
         </h2>
@@ -106,7 +106,7 @@ export default async function HomePage() {
         target="_blank"
         rel="noopener noreferrer"
         variant="primary"
-        className="home-community-button mt-3 w-full max-w-[17rem] self-center lg:mt-3.5 lg:max-w-none lg:self-auto"
+        className="home-community-button w-full max-w-[17rem] self-center lg:max-w-none lg:self-auto"
       >
         Join WhatsApp Updates
       </ActionButton>
@@ -125,11 +125,11 @@ export default async function HomePage() {
   );
 
   return (
-    <div className="min-h-screen space-y-5 lg:space-y-3">
+    <div className="space-y-5 lg:space-y-6">
       <ResumeBuilderPromoPopup delayMs={1500} storageKey={resumePromoStorageKey} />
 
       <div className="home-first-fold">
-        <section className="fade-up hero-surface home-hero-shell relative overflow-visible rounded-2xl px-4 py-5 sm:px-7 sm:py-7 md:py-8 lg:flex lg:min-h-[62vh] lg:items-center lg:px-8 lg:py-8">
+        <section className="fade-up hero-surface home-hero-shell relative overflow-visible rounded-2xl px-4 py-5 sm:px-6 sm:py-6 lg:flex lg:items-center lg:px-8">
           <div
             aria-hidden
             className="absolute -top-24 right-[-5rem] h-44 w-44 rounded-full bg-white/45 blur-3xl sm:h-64 sm:w-64"
@@ -147,19 +147,19 @@ export default async function HomePage() {
             className="absolute inset-y-10 left-[61%] hidden w-px bg-gradient-to-b from-transparent via-white/12 to-transparent lg:block"
           />
 
-          <div className="relative z-[1] home-hero-grid grid content-start gap-3.5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center lg:gap-4">
-            <div className="home-hero-copy mx-auto max-w-3xl space-y-2.5 text-center sm:space-y-3.5 lg:mx-0 lg:max-w-[36rem] lg:space-y-2 lg:text-left">
-              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 lg:justify-start">
+          <div className="relative z-[1] home-hero-grid grid content-start gap-3.5 lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)] lg:items-center">
+            <div className="home-hero-copy mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-[36rem] lg:text-left">
+              <div className="home-hero-badge-row flex flex-wrap items-center justify-center lg:justify-start">
                 <span className="page-kicker home-hero-kicker">Fresh jobs updated daily</span>
                 <span className="home-hero-live-pill hidden lg:inline-flex">Verified listings</span>
               </div>
 
-              <div className="space-y-2 sm:space-y-2.5 lg:space-y-1">
-                <h1 className="page-title home-hero-title mx-auto max-w-xs !mt-0 !text-2xl !leading-[1.2] sm:max-w-3xl sm:!text-3xl sm:!leading-[1.02] lg:mx-0 lg:!text-[2.75rem] lg:!leading-[1.08] lg:!tracking-[-0.024em] lg:!font-semibold xl:!text-[2.9rem]">
+              <div className="home-hero-heading-block mx-auto max-w-xs sm:max-w-3xl lg:mx-0 lg:max-w-[34rem]">
+                <h1 className="page-title home-hero-title mx-auto max-w-xs !text-2xl sm:max-w-3xl sm:!text-3xl lg:mx-0 lg:max-w-[34rem] lg:!text-[2.75rem] xl:!text-[2.95rem]">
                   Find Verified Jobs in India
                 </h1>
 
-                <p className="page-copy home-hero-copy-text mx-auto max-w-[17rem] !mt-0 !text-[0.95rem] !leading-[1.55] sm:max-w-[24rem] sm:!text-[1rem] lg:mx-0 lg:!mt-1 lg:!mb-2 lg:max-w-[31rem] lg:!text-[1rem] lg:!leading-[1.5]">
+                <p className="page-copy home-hero-copy-text mx-auto max-w-[18rem] !text-[0.95rem] sm:max-w-[26rem] sm:!text-[1rem] lg:mx-0 lg:max-w-[31rem] lg:!text-[1rem]">
                   <span className="sm:hidden">Direct apply. No spam.</span>
                   <span className="hidden sm:inline">Direct apply. No spam. Updated daily.</span>
                 </p>
@@ -167,7 +167,7 @@ export default async function HomePage() {
 
               <p className="home-hero-compact-stats mx-auto mt-0 sm:hidden">{heroStatsSummary}</p>
 
-              <div className="home-hero-proof-row mx-auto mt-0 hidden max-w-[24rem] flex-wrap items-center justify-center gap-2 sm:flex sm:max-w-none lg:mx-0 lg:justify-start">
+              <div className="home-hero-proof-row mx-auto hidden max-w-[24rem] flex-wrap items-center justify-center sm:flex sm:max-w-none lg:mx-0 lg:justify-start">
                 {heroMetrics.map((metric) => (
                   <span key={metric.label} className="home-hero-proof-chip">
                     <span className="home-hero-proof-value">{metric.value}</span>
@@ -176,7 +176,7 @@ export default async function HomePage() {
                 ))}
               </div>
 
-              <div className="home-hero-action-row mx-auto mt-0 flex max-w-[17rem] flex-col items-stretch gap-2 sm:max-w-[16rem] lg:mx-0 lg:max-w-none lg:flex-row lg:flex-wrap lg:items-center lg:gap-2">
+              <div className="home-hero-action-row mx-auto flex max-w-[17rem] flex-col items-stretch sm:max-w-[16rem] lg:mx-0 lg:max-w-none lg:flex-row lg:flex-wrap lg:items-center">
                 <ActionButton
                   href="/jobs"
                   variant="primary"
@@ -205,63 +205,33 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="fade-up home-search-wrap relative mt-4 px-2 sm:px-4 md:mt-5 lg:-mt-12 lg:px-0">
-          <div className="home-search-surface home-search-shell mx-auto max-w-5xl p-2.5 sm:p-3 lg:max-w-none lg:p-1.5">
-            <div className="home-mobile-filter-panel lg:hidden">
-              <form action="/jobs" method="get" aria-label="Search jobs" className="home-mobile-filter-form">
-                <div className="home-mobile-filter-search-row">
-                  <label className="home-mobile-filter-search-field">
-                    <span className="sr-only">Search jobs, companies, or skills</span>
-                    <input
-                      name="q"
-                      type="search"
-                      placeholder="Search jobs, companies, or skills"
-                      className="home-mobile-filter-search-input"
-                    />
-                  </label>
-
-                  <button
-                    type="submit"
-                    aria-label="Search jobs"
-                    className="home-mobile-filter-search-button"
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
-                      <path
-                        d="m14.5 14.5 3 3m-1.5-8a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.8"
-                      />
-                    </svg>
-                  </button>
+        <section className="fade-up home-search-wrap relative mt-4 px-2 sm:px-4 lg:px-0">
+          <div className="home-search-surface home-search-shell mx-auto max-w-5xl lg:max-w-none">
+            <div className="home-mobile-filter-panel">
+              <div className="home-mobile-filter-quick-row">
+                <span className="home-mobile-filter-label">Popular paths</span>
+                <div className="home-mobile-filter-chip-row" aria-label="Popular job categories">
+                  <Link href="/jobs/freshers" className="home-mobile-filter-chip home-mobile-filter-chip-accent">
+                    Freshers
+                  </Link>
+                  <Link href="/jobs/internships" className="home-mobile-filter-chip">
+                    Internships
+                  </Link>
+                  <Link href="/jobs/remote" className="home-mobile-filter-chip">
+                    Remote
+                  </Link>
+                  <Link href="/jobs" className="home-mobile-filter-chip">
+                    All jobs
+                  </Link>
                 </div>
-              </form>
-
-              <div className="home-mobile-filter-grid" aria-label="Job filters">
-                <Link href="/jobs?segment=freshers" className="home-mobile-filter-chip home-mobile-filter-chip-accent">
-                  Student
-                </Link>
-                <Link href="/jobs#jobs-search" className="home-mobile-filter-chip">
-                  Location
-                </Link>
-                <Link href="/jobs?segment=remote" className="home-mobile-filter-chip">
-                  Remote
-                </Link>
-                <Link href="/jobs" className="home-mobile-filter-chip">
-                  All Types
-                </Link>
               </div>
             </div>
 
-            <div className="hidden lg:block">
-              <form action="/jobs" method="get" aria-label="Job search">
-                <div className="home-search-grid grid gap-3 lg:grid-cols-[minmax(0,1.8fr)_minmax(11rem,0.92fr)_minmax(11rem,0.92fr)_auto] lg:items-end">
+            <div className="home-search-panel">
+              <form action="/jobs" method="get" aria-label="Job search" className="home-search-form">
+                <div className="home-search-grid grid gap-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(12.75rem,0.92fr)_minmax(12.75rem,0.92fr)_8.25rem] lg:items-stretch">
                   <label className="home-search-field block min-w-0">
-                    <span className="home-search-label sr-only sm:not-sr-only sm:inline-block">
-                      Role or company
-                    </span>
+                    <span className="sr-only">Role or company</span>
                     <div className="home-search-control home-search-control-rich flex min-w-0 items-center gap-3 px-4">
                       <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 shrink-0 text-slate-400">
                         <path
@@ -284,15 +254,13 @@ export default async function HomePage() {
                   </label>
 
                   <label className="home-search-field block min-w-0">
-                    <span className="home-search-label sr-only sm:not-sr-only sm:inline-block">
-                      Job type
-                    </span>
+                    <span className="sr-only">Job type</span>
                     <select
                       name="segment"
-                      defaultValue="all"
+                      defaultValue=""
                       className="home-search-control home-search-control-rich w-full px-4 text-sm text-slate-700 outline-none"
                     >
-                      <option value="all">Job type</option>
+                      <option value="">All categories</option>
                       {finderSegmentOptions.map((segment) => (
                         <option key={segment.slug} value={segment.slug}>
                           {segment.label}
@@ -302,9 +270,7 @@ export default async function HomePage() {
                   </label>
 
                   <label className="home-search-field block min-w-0">
-                    <span className="home-search-label sr-only sm:not-sr-only sm:inline-block">
-                      Location
-                    </span>
+                    <span className="sr-only">Location</span>
                     <input
                       name="location"
                       type="text"
@@ -317,18 +283,18 @@ export default async function HomePage() {
                   <ActionButton
                     variant="primary"
                     buttonType="submit"
-                    className="home-search-submit w-full px-6 lg:w-auto"
+                    className="home-search-submit w-full px-6"
                   >
                     Search
                   </ActionButton>
                 </div>
-                <datalist id="homepage-job-locations">
-                  {finderLocationOptions.map((location) => (
-                    <option key={location} value={location} />
-                  ))}
-                </datalist>
               </form>
             </div>
+            <datalist id="homepage-job-locations">
+              {finderLocationOptions.map((location) => (
+                <option key={location} value={location} />
+              ))}
+            </datalist>
           </div>
         </section>
       </div>

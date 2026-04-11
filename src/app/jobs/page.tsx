@@ -146,15 +146,99 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             <span className="jobs-directory-kicker">Jobs Directory</span>
             <h1 className="jobs-directory-inline-title">All Jobs</h1>
           </div>
-          <div className="jobs-directory-count-pill">
+          <div className="jobs-directory-count-pill jobs-directory-count-pill-desktop">
             {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
           </div>
         </div>
 
+        <form action="/jobs" method="get" className="jobs-directory-mobile-form">
+          {segmentFilter ? <input type="hidden" name="segment" value={segmentFilter} /> : null}
+          <div className="jobs-directory-mobile-select-row">
+            <label htmlFor="jobs-mobile-location" className="sr-only">
+              Filter by location
+            </label>
+            <select
+              id="jobs-mobile-location"
+              name="location"
+              defaultValue={locationFilter}
+              className="form-control jobs-directory-control jobs-directory-mobile-control"
+            >
+              <option value="">Location</option>
+              {locationOptions.map((locationOption) => (
+                <option key={locationOption} value={locationOption}>
+                  {locationOption}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="jobs-mobile-type" className="sr-only">
+              Filter by type
+            </label>
+            <select
+              id="jobs-mobile-type"
+              name="type"
+              defaultValue={typeFilter}
+              className="form-control jobs-directory-control jobs-directory-mobile-control"
+            >
+              <option value="">Type</option>
+              {typeOptions.map((typeOption) => (
+                <option key={typeOption} value={typeOption}>
+                  {typeOption}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="jobs-mobile-sort" className="sr-only">
+              Sort jobs
+            </label>
+            <select
+              id="jobs-mobile-sort"
+              name="sort"
+              defaultValue={sortFilter}
+              className="form-control jobs-directory-control jobs-directory-mobile-control"
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="closingSoon">Closing soon</option>
+            </select>
+          </div>
+
+          <div className="jobs-directory-mobile-search-row">
+            <label htmlFor="jobs-mobile-search" className="sr-only">
+              Search jobs
+            </label>
+            <input
+              id="jobs-mobile-search"
+              name="q"
+              type="search"
+              defaultValue={query}
+              placeholder="Search jobs"
+              className="form-control jobs-directory-control jobs-directory-mobile-search-input"
+            />
+
+            <button
+              type="submit"
+              className="jobs-directory-mobile-search-button"
+              aria-label="Search jobs"
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+                <path
+                  d="m14.5 14.5 3 3m-1.5-8a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                />
+              </svg>
+            </button>
+          </div>
+        </form>
+
         <form
           action="/jobs"
           method="get"
-          className={`jobs-directory-toolbar-form jobs-directory-filter-panel${
+          className={`jobs-directory-desktop-form jobs-directory-toolbar-form jobs-directory-filter-panel${
             showClearAction ? " jobs-directory-filter-panel-has-clear" : ""
           }`}
         >

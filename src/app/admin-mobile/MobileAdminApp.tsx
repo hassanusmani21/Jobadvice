@@ -25,9 +25,9 @@ type AdminAppProps = {
 
 type RecordsState = Record<AdminCollection, AdminMobileRecord[]>;
 type LoadingState = Record<AdminCollection, boolean>;
-type JobListMode = "recent" | "today" | "yesterday" | "all";
+type JobListMode = "recent" | "threeDays" | "today" | "yesterday" | "all";
 type JobListSection = {
-  id: "today" | "yesterday";
+  id: "today" | "yesterday" | "twoDaysAgo";
   title: string;
   description: string;
   emptyMessage: string;
@@ -267,6 +267,8 @@ const buildBatchShareScopeLabel = (mode: JobListMode, searchTerm: string) => {
       ? "today's jobs"
       : mode === "yesterday"
         ? "yesterday's jobs"
+        : mode === "threeDays"
+          ? "jobs from the last 3 days"
         : mode === "all"
           ? "all visible jobs"
           : "jobs from the last 2 days";
@@ -648,6 +650,7 @@ export default function MobileAdminApp({
   const activeRecords = recordsByCollection[collection];
   const todayDate = getTodayDateString();
   const yesterdayDate = shiftIsoDateString(todayDate, -1);
+  const twoDaysAgoDate = shiftIsoDateString(todayDate, -2);
   const activeJobRecords =
     collection === "jobs" ? (activeRecords as AdminMobileJobRecord[]) : [];
   const totalDrafts =
@@ -670,6 +673,14 @@ export default function MobileAdminApp({
   const yesterdayJobCount = recordsByCollection.jobs.filter(
     (record) => getRecordActivityDate(record) === yesterdayDate,
   ).length;
+  const threeDayJobCount = recordsByCollection.jobs.filter((record) => {
+    const activityDate = getRecordActivityDate(record);
+    return (
+      activityDate === todayDate ||
+      activityDate === yesterdayDate ||
+      activityDate === twoDaysAgoDate
+    );
+  }).length;
   const jobListSections: JobListSection[] =
     collection === "jobs"
       ? [
@@ -695,6 +706,17 @@ export default function MobileAdminApp({
               .filter((record) => getRecordActivityDate(record) === yesterdayDate)
               .sort(sortRecordsByRecentActivity),
           },
+          {
+            id: "twoDaysAgo",
+            title: "2 Days Ago",
+            description: "Jobs published or updated 2 days ago",
+            emptyMessage: query
+              ? "No jobs from 2 days ago matched your search."
+              : "No jobs were updated 2 days ago.",
+            records: filteredJobRecords
+              .filter((record) => getRecordActivityDate(record) === twoDaysAgoDate)
+              .sort(sortRecordsByRecentActivity),
+          },
         ]
       : [];
   const visibleJobSections =
@@ -702,8 +724,10 @@ export default function MobileAdminApp({
       ? jobListSections.filter((section) => section.id === "today")
       : jobListMode === "yesterday"
         ? jobListSections.filter((section) => section.id === "yesterday")
-        : jobListMode === "recent"
+        : jobListMode === "threeDays"
           ? jobListSections
+        : jobListMode === "recent"
+          ? jobListSections.filter((section) => section.id !== "twoDaysAgo")
           : [];
   const visibleJobRecords =
     collection === "jobs"
@@ -761,8 +785,10 @@ export default function MobileAdminApp({
         ? "Search today's jobs"
         : jobListMode === "yesterday"
           ? "Search yesterday's jobs"
+          : jobListMode === "threeDays"
+            ? "Search jobs from the last 3 days"
           : jobListMode === "all"
-          ? "Search all jobs"
+            ? "Search all jobs"
             : "Search jobs from the last 2 days"
       : `Search ${collection}`;
   const publishedJobSummary = publishedJobShare
@@ -1860,6 +1886,11 @@ export default function MobileAdminApp({
                         count: todayJobCount + yesterdayJobCount,
                       },
                       {
+                        mode: "threeDays" as const,
+                        label: "Last 3 days",
+                        count: threeDayJobCount,
+                      },
+                      {
                         mode: "today" as const,
                         label: "Today",
                         count: todayJobCount,
@@ -1881,6 +1912,7 @@ export default function MobileAdminApp({
                         onClick={() => setJobListMode(option.mode)}
                         className={cn(
                           "flex min-h-11 min-w-0 items-center justify-between rounded-xl border px-3 text-sm font-semibold transition",
+                          option.mode === "all" && "col-span-2",
                           jobListMode === option.mode
                             ? "border-teal-300 bg-teal-50 text-teal-800"
                             : "border-slate-200 bg-white text-slate-700 hover:border-teal-200 hover:bg-slate-100",
@@ -1917,7 +1949,7 @@ export default function MobileAdminApp({
                       ) : null}
                     </div>
 
-                    <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="mt-3 grid grid-cols-2 gap-2">
                       {[
                         {
                           id: "all" as const,
