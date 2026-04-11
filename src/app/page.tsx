@@ -4,7 +4,6 @@ import Link from "@/components/AppLink";
 import BlogCard from "@/components/BlogCard";
 import EmptyStateCard from "@/components/EmptyStateCard";
 import JobCard from "@/components/JobCard";
-import ResumeBuilderPromoPopup from "@/components/ResumeBuilderPromoPopup";
 import { getLatestBlogs } from "@/lib/blogs";
 import { getAllJobs } from "@/lib/jobs";
 import { getAllJobSegmentConfigs } from "@/lib/jobSegments";
@@ -17,8 +16,6 @@ export const metadata: Metadata = {
 
 export const revalidate = 60 * 60;
 const whatsappChannelUrl = "https://whatsapp.com/channel/0029Vb7MyM0BPzjaKwa1cr1f";
-const resumePromoStorageKey = "resume_popup_homepage_v3";
-
 const joinClasses = (...parts: Array<string | false | null | undefined>) =>
   parts.filter(Boolean).join(" ");
 
@@ -126,8 +123,6 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-5 lg:space-y-6">
-      <ResumeBuilderPromoPopup delayMs={1500} storageKey={resumePromoStorageKey} />
-
       <div className="home-first-fold">
         <section className="fade-up hero-surface home-hero-shell relative overflow-visible rounded-2xl px-4 py-5 sm:px-6 sm:py-6 lg:flex lg:items-center lg:px-8">
           <div
