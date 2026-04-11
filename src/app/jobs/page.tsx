@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
 import JobCard from "@/components/JobCard";
 import { getAllJobs, type JobPost } from "@/lib/jobs";
+import { getJobsForSegment, isJobSegmentSlug } from "@/lib/jobSegments";
 
 export const metadata: Metadata = {
   title: "Jobs",
@@ -16,6 +17,7 @@ type JobsPageProps = {
   searchParams?: {
     q?: string | string[];
     location?: string | string[];
+    segment?: string | string[];
     type?: string | string[];
     status?: string | string[];
     sort?: string | string[];
@@ -74,6 +76,8 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const jobs = await getAllJobs();
   const query = toSingleValue(searchParams?.q);
   const locationFilter = toSingleValue(searchParams?.location);
+  const rawSegmentFilter = toSingleValue(searchParams?.segment).toLowerCase();
+  const segmentFilter = isJobSegmentSlug(rawSegmentFilter) ? rawSegmentFilter : "";
   const typeFilter = toSingleValue(searchParams?.type);
   const statusFilter = toSingleValue(searchParams?.status);
   const sortFilter = toSingleValue(searchParams?.sort) || "newest";
@@ -85,6 +89,10 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
 
   const filteredJobs = jobs.filter((job) => {
     if (query && !matchesSearch(job, query)) {
+      return false;
+    }
+
+    if (segmentFilter && !getJobsForSegment([job], segmentFilter).length) {
       return false;
     }
 
@@ -127,7 +135,7 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
     return new Date(secondJob.date).getTime() - new Date(firstJob.date).getTime();
   });
 
-  const hasActiveFilters = Boolean(query || locationFilter || typeFilter || statusFilter);
+  const hasActiveFilters = Boolean(query || locationFilter || segmentFilter || typeFilter || statusFilter);
   const showClearAction = hasActiveFilters || sortFilter !== "newest";
 
   return (
@@ -138,18 +146,103 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
             <span className="jobs-directory-kicker">Jobs Directory</span>
             <h1 className="jobs-directory-inline-title">All Jobs</h1>
           </div>
-          <div className="jobs-directory-count-pill">
+          <div className="jobs-directory-count-pill jobs-directory-count-pill-desktop">
             {sortedJobs.length} result{sortedJobs.length === 1 ? "" : "s"}
           </div>
         </div>
 
+        <form action="/jobs" method="get" className="jobs-directory-mobile-form">
+          {segmentFilter ? <input type="hidden" name="segment" value={segmentFilter} /> : null}
+          <div className="jobs-directory-mobile-select-row">
+            <label htmlFor="jobs-mobile-location" className="sr-only">
+              Filter by location
+            </label>
+            <select
+              id="jobs-mobile-location"
+              name="location"
+              defaultValue={locationFilter}
+              className="form-control jobs-directory-control jobs-directory-mobile-control"
+            >
+              <option value="">Location</option>
+              {locationOptions.map((locationOption) => (
+                <option key={locationOption} value={locationOption}>
+                  {locationOption}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="jobs-mobile-type" className="sr-only">
+              Filter by type
+            </label>
+            <select
+              id="jobs-mobile-type"
+              name="type"
+              defaultValue={typeFilter}
+              className="form-control jobs-directory-control jobs-directory-mobile-control"
+            >
+              <option value="">Type</option>
+              {typeOptions.map((typeOption) => (
+                <option key={typeOption} value={typeOption}>
+                  {typeOption}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="jobs-mobile-sort" className="sr-only">
+              Sort jobs
+            </label>
+            <select
+              id="jobs-mobile-sort"
+              name="sort"
+              defaultValue={sortFilter}
+              className="form-control jobs-directory-control jobs-directory-mobile-control"
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+              <option value="closingSoon">Closing soon</option>
+            </select>
+          </div>
+
+          <div className="jobs-directory-mobile-search-row">
+            <label htmlFor="jobs-mobile-search" className="sr-only">
+              Search jobs
+            </label>
+            <input
+              id="jobs-mobile-search"
+              name="q"
+              type="search"
+              defaultValue={query}
+              placeholder="Search jobs"
+              className="form-control jobs-directory-control jobs-directory-mobile-search-input"
+            />
+
+            <button
+              type="submit"
+              className="jobs-directory-mobile-search-button"
+              aria-label="Search jobs"
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+                <path
+                  d="m14.5 14.5 3 3m-1.5-8a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                />
+              </svg>
+            </button>
+          </div>
+        </form>
+
         <form
           action="/jobs"
           method="get"
-          className={`jobs-directory-toolbar-form jobs-directory-filter-panel${
+          className={`jobs-directory-desktop-form jobs-directory-toolbar-form jobs-directory-filter-panel${
             showClearAction ? " jobs-directory-filter-panel-has-clear" : ""
           }`}
         >
+          {segmentFilter ? <input type="hidden" name="segment" value={segmentFilter} /> : null}
           <label htmlFor="jobs-search" className="sr-only">
             Search jobs
           </label>

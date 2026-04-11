@@ -119,6 +119,10 @@ const toNormalizedRecord = (record: AdminJobRecord): NormalizedJobRecord => ({
   titleTokens: toTokenSet(record.title),
 });
 
+export const getAdminJobRecordActivityDate = (
+  record: Pick<AdminJobRecord, "updatedAt" | "date">,
+) => record.updatedAt || record.date || "";
+
 const toUtcDayTimestamp = (value: string) => Date.parse(`${value}T00:00:00Z`);
 
 const isValidIsoDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
@@ -137,16 +141,18 @@ const toDateTimestampOrNull = (value: string) => {
 };
 
 const sortByRecentDate = (firstRecord: AdminJobRecord, secondRecord: AdminJobRecord) => {
+  const firstActivityDate =
+    toDateTimestampOrNull(getAdminJobRecordActivityDate(firstRecord)) || 0;
+  const secondActivityDate =
+    toDateTimestampOrNull(getAdminJobRecordActivityDate(secondRecord)) || 0;
+  if (secondActivityDate !== firstActivityDate) {
+    return secondActivityDate - firstActivityDate;
+  }
+
   const firstDate = toDateTimestampOrNull(firstRecord.date) || 0;
   const secondDate = toDateTimestampOrNull(secondRecord.date) || 0;
   if (secondDate !== firstDate) {
     return secondDate - firstDate;
-  }
-
-  const firstUpdatedAt = toDateTimestampOrNull(firstRecord.updatedAt) || 0;
-  const secondUpdatedAt = toDateTimestampOrNull(secondRecord.updatedAt) || 0;
-  if (secondUpdatedAt !== firstUpdatedAt) {
-    return secondUpdatedAt - firstUpdatedAt;
   }
 
   return firstRecord.slug.localeCompare(secondRecord.slug);
@@ -184,7 +190,9 @@ export const filterAdminJobRecordsByDate = (
   const normalizedToTimestamp = Math.max(fromTimestamp, toTimestamp);
 
   return records.filter((record) => {
-    const recordTimestamp = toDateTimestampOrNull(record.date);
+    const recordTimestamp = toDateTimestampOrNull(
+      getAdminJobRecordActivityDate(record),
+    );
     if (recordTimestamp === null) {
       return false;
     }

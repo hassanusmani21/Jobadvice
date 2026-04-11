@@ -1,18 +1,18 @@
 "use client";
 
 import { startTransition, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { signOut } from "next-auth/react";
 import {
   type AdminCollection,
   type AdminMobileBlogEntry,
   type AdminMobileEntry,
+  type AdminMobileJobRecord,
   type AdminMobileJobEntry,
   type AdminMobileRecord,
   createEmptyBlogEntry,
   createEmptyJobEntry,
+  getTodayDateString,
 } from "@/lib/adminMobile";
-import { toDisplayImageSrc } from "@/lib/images";
 import { siteName, siteUrl, siteWhatsappChannelUrl } from "@/lib/site";
 
 type AdminAppProps = {
@@ -25,6 +25,23 @@ type AdminAppProps = {
 
 type RecordsState = Record<AdminCollection, AdminMobileRecord[]>;
 type LoadingState = Record<AdminCollection, boolean>;
+type JobListMode = "recent" | "threeDays" | "today" | "yesterday" | "all";
+type JobListSection = {
+  id: "today" | "yesterday" | "twoDaysAgo";
+  title: string;
+  description: string;
+  emptyMessage: string;
+  records: AdminMobileJobRecord[];
+};
+type BatchJobShareSectionId = "internships" | "freshers" | "experienced";
+type JobCategoryFilter = "all" | BatchJobShareSectionId;
+type BatchJobShareSection = {
+  id: BatchJobShareSectionId;
+  title: string;
+  description: string;
+  records: AdminMobileJobRecord[];
+  totalRecords: number;
+};
 type PublishedJobShare = {
   company: string;
   employmentType: string;
@@ -37,6 +54,7 @@ type PublishedJobShare = {
 };
 
 const listToText = (items: string[]) => items.join("\n");
+const maxBatchJobShareRecords = 20;
 
 const textToList = (value: string) =>
   value
@@ -46,6 +64,395 @@ const textToList = (value: string) =>
 
 const cn = (...parts: Array<string | false | null | undefined>) =>
   parts.filter(Boolean).join(" ");
+
+const toUtcDayTimestamp = (value: string) => {
+  const timestamp = Date.parse(`${value}T00:00:00Z`);
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+};
+
+const shiftIsoDateString = (value: string, dayOffset: number) => {
+  const timestamp = toUtcDayTimestamp(value);
+  if (!timestamp) {
+    return "";
+  }
+
+  const shiftedDate = new Date(timestamp);
+  shiftedDate.setUTCDate(shiftedDate.getUTCDate() + dayOffset);
+  return shiftedDate.toISOString().split("T")[0];
+};
+
+const getRecordActivityDate = (record: Pick<AdminMobileRecord, "updatedAt" | "date">) =>
+  record.updatedAt || record.date || "";
+
+const sortRecordsByRecentActivity = <T extends AdminMobileRecord>(firstRecord: T, secondRecord: T) => {
+  const firstActivityDate = toUtcDayTimestamp(getRecordActivityDate(firstRecord));
+  const secondActivityDate = toUtcDayTimestamp(getRecordActivityDate(secondRecord));
+  if (secondActivityDate !== firstActivityDate) {
+    return secondActivityDate - firstActivityDate;
+  }
+
+  const firstPublishDate = toUtcDayTimestamp(firstRecord.date);
+  const secondPublishDate = toUtcDayTimestamp(secondRecord.date);
+  if (secondPublishDate !== firstPublishDate) {
+    return secondPublishDate - firstPublishDate;
+  }
+
+  return firstRecord.slug.localeCompare(secondRecord.slug);
+};
+
+const filterRecordsByQuery = <T extends AdminMobileRecord>(records: T[], query: string) => {
+  if (!query) {
+    return records;
+  }
+
+  return records.filter((record) => {
+    const haystack = [
+      record.title,
+      record.slug,
+      "company" in record ? record.company : record.topic,
+      "location" in record ? record.location : "",
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(query);
+  });
+};
+
+const buildJobShareSummary = (entry: {
+  employmentType: string;
+  location: string;
+  workMode: string;
+}) => {
+  const parts = [
+    entry.location,
+    entry.workMode,
+    entry.employmentType,
+  ]
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+
+  return parts.length > 0
+    ? parts.slice(0, 3).join(" | ")
+    : "Verified job opening with direct apply details.";
+};
+
+const buildJobUrlFromSlug = (slug: string) =>
+  `${siteUrl.replace(/\/+$/, "")}/jobs/${slug}/`;
+
+const internshipSharePattern =
+  /\b(intern|internship|apprentice|apprenticeship|co[\s-]?op)\b/;
+const fresherSharePattern =
+  /\b(fresher|freshers|entry[\s-]?level|new grad|recent graduate|recent graduates|fresh graduate|fresh graduates|graduate program|graduate trainee|campus|final[\s-]?year|student(?:s)?|0\s*(?:to|-|–|—)\s*1|0\s*(?:to|-|–|—)\s*6\s*months?|0\s*years?)\b/;
+const experiencedSharePattern =
+  /\b(experienced|experience(?:d)? professionals?|mid[\s-]?level|senior|lead|principal|architect|manager|specialist|consultant)\b/;
+const juniorTitleSharePattern = /\b(junior|associate|analyst|graduate|trainee|entry)\b/;
+const seniorTitleSharePattern =
+  /\b(senior|lead|principal|architect|manager|specialist|consultant)\b/;
+
+const extractExperienceValues = (value: string) => {
+  const normalizedValue = value.toLowerCase().replace(/[–—]/g, "-");
+  const usesMonths = /\bmonth/.test(normalizedValue);
+
+  return Array.from(normalizedValue.matchAll(/\d+(?:\.\d+)?/g))
+    .map((match) => Number.parseFloat(match[0]))
+    .filter((item) => Number.isFinite(item))
+    .map((item) => (usesMonths ? item / 12 : item));
+};
+
+const classifyJobRecordForBatchShare = (
+  record: Pick<AdminMobileJobRecord, "title" | "employmentType" | "experience">,
+): BatchJobShareSectionId => {
+  const combinedValue =
+    `${record.title} ${record.employmentType} ${record.experience}`.toLowerCase();
+  if (internshipSharePattern.test(combinedValue)) {
+    return "internships";
+  }
+
+  if (fresherSharePattern.test(combinedValue)) {
+    return "freshers";
+  }
+
+  if (experiencedSharePattern.test(combinedValue)) {
+    return "experienced";
+  }
+
+  const experienceValues = extractExperienceValues(record.experience);
+  if (experienceValues.some((item) => item > 1)) {
+    return "experienced";
+  }
+
+  if (experienceValues.length > 0 && Math.max(...experienceValues) <= 1) {
+    return "freshers";
+  }
+
+  const normalizedTitle = record.title.toLowerCase();
+  if (juniorTitleSharePattern.test(normalizedTitle)) {
+    return "freshers";
+  }
+
+  if (seniorTitleSharePattern.test(normalizedTitle)) {
+    return "experienced";
+  }
+
+  return "experienced";
+};
+
+const createBatchJobShareSections = (records: AdminMobileJobRecord[]): BatchJobShareSection[] => {
+  const groupedRecords: Record<BatchJobShareSectionId, AdminMobileJobRecord[]> = {
+    internships: [],
+    freshers: [],
+    experienced: [],
+  };
+
+  for (const record of records) {
+    groupedRecords[classifyJobRecordForBatchShare(record)].push(record);
+  }
+
+  return [
+    {
+      id: "internships",
+      title: "Internships",
+      description: "Internships, apprenticeships, and student-focused roles.",
+      totalRecords: groupedRecords.internships.length,
+      records: groupedRecords.internships.slice(0, maxBatchJobShareRecords),
+    },
+    {
+      id: "freshers",
+      title: "Freshers",
+      description: "Entry-level, graduate, trainee, and 0-1 year openings.",
+      totalRecords: groupedRecords.freshers.length,
+      records: groupedRecords.freshers.slice(0, maxBatchJobShareRecords),
+    },
+    {
+      id: "experienced",
+      title: "Experienced",
+      description: "Mid-level roles plus jobs that are not clearly fresher openings.",
+      totalRecords: groupedRecords.experienced.length,
+      records: groupedRecords.experienced.slice(0, maxBatchJobShareRecords),
+    },
+  ];
+};
+
+const filterJobRecordsByCategory = (
+  records: AdminMobileJobRecord[],
+  category: JobCategoryFilter,
+) => {
+  if (category === "all") {
+    return records;
+  }
+
+  return records.filter((record) => classifyJobRecordForBatchShare(record) === category);
+};
+
+const getJobCategoryFilterLabel = (category: JobCategoryFilter) => {
+  if (category === "internships") {
+    return "Internships";
+  }
+
+  if (category === "freshers") {
+    return "Freshers";
+  }
+
+  if (category === "experienced") {
+    return "Experienced";
+  }
+
+  return "All jobs";
+};
+
+const buildBatchShareScopeLabel = (mode: JobListMode, searchTerm: string) => {
+  const baseLabel =
+    mode === "today"
+      ? "today's jobs"
+      : mode === "yesterday"
+        ? "yesterday's jobs"
+        : mode === "threeDays"
+          ? "jobs from the last 3 days"
+        : mode === "all"
+          ? "all visible jobs"
+          : "jobs from the last 2 days";
+
+  if (!searchTerm) {
+    return baseLabel;
+  }
+
+  return `${baseLabel} matching "${searchTerm}"`;
+};
+
+const buildBatchJobWhatsappText = (
+  section: BatchJobShareSection,
+  scopeLabel: string,
+  useEmojis: boolean,
+) => {
+  const heading =
+    section.id === "internships"
+      ? useEmojis
+        ? "🎓 Internship Jobs"
+        : "Internship Jobs"
+      : section.id === "freshers"
+        ? useEmojis
+          ? "🚀 Fresher Jobs"
+          : "Fresher Jobs"
+        : useEmojis
+          ? "💼 Experienced Jobs"
+          : "Experienced Jobs";
+  const introLine = `${section.totalRecords} openings from ${scopeLabel}.`;
+  const limitLine =
+    section.totalRecords > section.records.length
+      ? `Showing the latest ${section.records.length} jobs in this message.`
+      : "";
+  const brandLine = `${useEmojis ? "📢 " : ""}Shared via ${siteName}`;
+  const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
+  const channelLabel = `${useEmojis ? "📲 " : ""}Join WhatsApp Channel:`;
+  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
+
+  const jobLines = section.records.map((record, index) => {
+    const recordMeta = [
+      record.location.trim(),
+      record.workMode.trim(),
+      (record.experience || record.employmentType).trim(),
+    ].filter((item) => item.length > 0);
+
+    return [
+      `${index + 1}. ${record.title} - ${record.company || "Company not listed"}`,
+      recordMeta.length > 0 ? `   ${recordMeta.slice(0, 3).join(" | ")}` : "",
+      `   ${buildJobUrlFromSlug(record.slug)}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  });
+
+  return [
+    heading,
+    introLine,
+    ...(limitLine ? [limitLine] : []),
+    "",
+    ...jobLines,
+    "",
+    brandLine,
+    websiteLabel,
+    siteUrl,
+    "",
+    channelLabel,
+    channelLink,
+  ].join("\n");
+};
+
+const normalizeShareField = (value: string, fallback: string) =>
+  value.trim() || fallback;
+
+const buildShareAudienceLabel = (share: PublishedJobShare) => {
+  const combinedValue =
+    `${share.title} ${share.employmentType} ${share.experience}`.toLowerCase();
+
+  if (/\b(intern|internship|apprentice|apprenticeship|student)\b/.test(combinedValue)) {
+    return "Internship";
+  }
+
+  if (
+    /\b(fresher|freshers|graduate|trainee|entry[\s-]?level|0\s*(?:to|-|–|—)\s*1|0\s*years?)\b/.test(
+      combinedValue,
+    )
+  ) {
+    return "Freshers";
+  }
+
+  if (/\b(experienced|senior|lead|manager|specialist|consultant)\b/.test(combinedValue)) {
+    return "Experienced";
+  }
+
+  return "Job Update";
+};
+
+const buildShareExperienceLabel = (share: PublishedJobShare) => {
+  const experienceValue = share.experience.trim();
+  if (experienceValue) {
+    return experienceValue;
+  }
+
+  const audienceLabel = buildShareAudienceLabel(share);
+  if (audienceLabel === "Internship") {
+    return "Students Eligible";
+  }
+
+  if (audienceLabel === "Freshers") {
+    return "Freshers Eligible";
+  }
+
+  return "Check Full Details";
+};
+
+const buildShareModeLabel = (value: string) => {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) {
+    return "Mode Not Mentioned";
+  }
+
+  return normalizedValue;
+};
+
+const buildPublishedJobWhatsappText = (
+  share: PublishedJobShare,
+  useEmojis: boolean,
+) => {
+  const audienceLabel = buildShareAudienceLabel(share);
+  const companyPrefix = share.company.trim() || siteName;
+  const heading = `${useEmojis ? "🎓 " : ""}${companyPrefix} Hiring — ${audienceLabel}`;
+  const roleLine = `${useEmojis ? "🔥 " : ""}${share.title}`;
+  const locationLine = `${useEmojis ? "📍 " : ""}${normalizeShareField(
+    share.location,
+    "Location Not Mentioned",
+  )}`;
+  const salaryLine = `${useEmojis ? "💰 " : ""}${normalizeShareField(
+    share.salary,
+    "Salary Not Mentioned",
+  )}`;
+  const experienceLine = `${useEmojis ? "🧑‍💻 " : ""}${buildShareExperienceLabel(share)}`;
+  const workModeLine = `${useEmojis ? "🏢 " : ""}${buildShareModeLabel(share.workMode)}`;
+  const applyLabel = `${useEmojis ? "🔗 " : ""}Apply Now:`;
+  const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
+  const channelLabel = `${
+    useEmojis ? "📢 " : ""
+  }Join WhatsApp Channel for Daily Jobs:`;
+  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
+
+  return [
+    heading,
+    "",
+    roleLine,
+    "",
+    locationLine,
+    salaryLine,
+    experienceLine,
+    workModeLine,
+    "",
+    applyLabel,
+    share.jobUrl,
+    "",
+    websiteLabel,
+    siteUrl,
+    "",
+    channelLabel,
+    channelLink,
+  ].join("\n");
+};
+
+const buildPublishedJobShare = (entry: AdminMobileJobEntry): PublishedJobShare => {
+  return {
+    company: entry.company,
+    employmentType: entry.employmentType,
+    experience: entry.experience,
+    jobUrl: buildJobUrlFromSlug(entry.slug),
+    location: entry.location,
+    salary: entry.salary,
+    title: entry.title,
+    workMode: entry.workMode,
+  };
+};
+
+const getPublishedJobShareForEntry = (entry: AdminMobileEntry) =>
+  entry.collection === "jobs" && !entry.draft ? buildPublishedJobShare(entry) : null;
 
 const defaultRecordsState: RecordsState = {
   jobs: [],
@@ -79,6 +486,7 @@ const formatRecordMeta = (record: AdminMobileRecord) => {
 
 const buildEmptyEntry = (collection: AdminCollection) =>
   collection === "jobs" ? createEmptyJobEntry() : createEmptyBlogEntry();
+
 const toExtractString = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 
@@ -199,138 +607,6 @@ const applyBlogExtractedData = (
 const buildAdminLoginUrl = (adminBasePath: string) =>
   `/admin/login?callbackUrl=${encodeURIComponent(adminBasePath)}`;
 
-const buildJobUrlFromSlug = (slug: string) =>
-  `${siteUrl.replace(/\/+$/, "")}/jobs/${slug}/`;
-
-const buildJobShareSummary = (entry: {
-  employmentType: string;
-  location: string;
-  workMode: string;
-}) => {
-  const parts = [entry.location, entry.workMode, entry.employmentType]
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-
-  return parts.length > 0
-    ? parts.slice(0, 3).join(" | ")
-    : "Verified job opening with direct apply details.";
-};
-
-const normalizeShareField = (value: string, fallback: string) =>
-  value.trim() || fallback;
-
-const buildShareAudienceLabel = (share: PublishedJobShare) => {
-  const combinedValue =
-    `${share.title} ${share.employmentType} ${share.experience}`.toLowerCase();
-
-  if (/\b(intern|internship|apprentice|apprenticeship|student)\b/.test(combinedValue)) {
-    return "Internship";
-  }
-
-  if (
-    /\b(fresher|freshers|graduate|trainee|entry[\s-]?level|0\s*(?:to|-|–|—)\s*1|0\s*years?)\b/.test(
-      combinedValue,
-    )
-  ) {
-    return "Freshers";
-  }
-
-  if (/\b(experienced|senior|lead|manager|specialist|consultant)\b/.test(combinedValue)) {
-    return "Experienced";
-  }
-
-  return "Job Update";
-};
-
-const buildShareExperienceLabel = (share: PublishedJobShare) => {
-  const experienceValue = share.experience.trim();
-  if (experienceValue) {
-    return experienceValue;
-  }
-
-  const audienceLabel = buildShareAudienceLabel(share);
-  if (audienceLabel === "Internship") {
-    return "Students Eligible";
-  }
-
-  if (audienceLabel === "Freshers") {
-    return "Freshers Eligible";
-  }
-
-  return "Check Full Details";
-};
-
-const buildShareModeLabel = (value: string) => {
-  const normalizedValue = value.trim();
-  if (!normalizedValue) {
-    return "Mode Not Mentioned";
-  }
-
-  return normalizedValue;
-};
-
-const buildPublishedJobWhatsappText = (
-  share: PublishedJobShare,
-  useEmojis: boolean,
-) => {
-  const audienceLabel = buildShareAudienceLabel(share);
-  const companyPrefix = share.company.trim() || siteName;
-  const heading = `${useEmojis ? "🎓 " : ""}${companyPrefix} Hiring — ${audienceLabel}`;
-  const roleLine = `${useEmojis ? "🔥 " : ""}${share.title}`;
-  const locationLine = `${useEmojis ? "📍 " : ""}${normalizeShareField(
-    share.location,
-    "Location Not Mentioned",
-  )}`;
-  const salaryLine = `${useEmojis ? "💰 " : ""}${normalizeShareField(
-    share.salary,
-    "Salary Not Mentioned",
-  )}`;
-  const experienceLine = `${useEmojis ? "🧑‍💻 " : ""}${buildShareExperienceLabel(share)}`;
-  const workModeLine = `${useEmojis ? "🏢 " : ""}${buildShareModeLabel(share.workMode)}`;
-  const applyLabel = `${useEmojis ? "🔗 " : ""}Apply Now:`;
-  const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
-  const channelLabel = `${
-    useEmojis ? "📢 " : ""
-  }Join WhatsApp Channel for Daily Jobs:`;
-  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
-
-  return [
-    heading,
-    "",
-    roleLine,
-    "",
-    locationLine,
-    salaryLine,
-    experienceLine,
-    workModeLine,
-    "",
-    applyLabel,
-    share.jobUrl,
-    "",
-    websiteLabel,
-    siteUrl,
-    "",
-    channelLabel,
-    channelLink,
-  ].join("\n");
-};
-
-const buildPublishedJobShare = (entry: AdminMobileJobEntry): PublishedJobShare => {
-  return {
-    company: entry.company,
-    employmentType: entry.employmentType,
-    experience: entry.experience,
-    jobUrl: buildJobUrlFromSlug(entry.slug),
-    location: entry.location,
-    salary: entry.salary,
-    title: entry.title,
-    workMode: entry.workMode,
-  };
-};
-
-const getPublishedJobShareForEntry = (entry: AdminMobileEntry) =>
-  entry.collection === "jobs" && !entry.draft ? buildPublishedJobShare(entry) : null;
-
 export default function MobileAdminApp({
   adminEmail,
   initialCollection,
@@ -345,19 +621,22 @@ export default function MobileAdminApp({
     useState<LoadingState>(defaultLoadingState);
   const [recordsError, setRecordsError] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [jobListMode, setJobListMode] = useState<JobListMode>("recent");
+  const [jobCategoryFilter, setJobCategoryFilter] = useState<JobCategoryFilter>("all");
+  const [publishedJobShare, setPublishedJobShare] = useState<PublishedJobShare | null>(null);
+  const [publishedJobShareUsesEmojis, setPublishedJobShareUsesEmojis] = useState(true);
+  const [batchJobShareOpen, setBatchJobShareOpen] = useState(false);
+  const [batchJobShareUsesEmojis, setBatchJobShareUsesEmojis] = useState(true);
   const [editorEntry, setEditorEntry] = useState<AdminMobileEntry>(buildEmptyEntry(initialCollection));
   const [editorOpen, setEditorOpen] = useState(Boolean(initialSlug));
   const [entryLoading, setEntryLoading] = useState(Boolean(initialSlug));
   const [originalSlug, setOriginalSlug] = useState(initialSlug);
-  const [publishedJobShare, setPublishedJobShare] = useState<PublishedJobShare | null>(null);
-  const [publishedJobShareUsesEmojis, setPublishedJobShareUsesEmojis] = useState(true);
   const [formError, setFormError] = useState("");
   const [formNotice, setFormNotice] = useState("");
   const [saveMode, setSaveMode] = useState<"draft" | "publish" | "">("");
   const [deletePending, setDeletePending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadedAssetUrl, setUploadedAssetUrl] = useState("");
-  const [uploadedAssetPreviews, setUploadedAssetPreviews] = useState<Record<string, string>>({});
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [extractorOpen, setExtractorOpen] = useState(false);
   const [extractSourceText, setExtractSourceText] = useState("");
@@ -367,17 +646,151 @@ export default function MobileAdminApp({
   const [extractNotice, setExtractNotice] = useState("");
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const extractorPanelRef = useRef<HTMLDivElement | null>(null);
-  const uploadedAssetPreviewsRef = useRef<Record<string, string>>({});
 
   const activeRecords = recordsByCollection[collection];
+  const todayDate = getTodayDateString();
+  const yesterdayDate = shiftIsoDateString(todayDate, -1);
+  const twoDaysAgoDate = shiftIsoDateString(todayDate, -2);
+  const activeJobRecords =
+    collection === "jobs" ? (activeRecords as AdminMobileJobRecord[]) : [];
   const totalDrafts =
     recordsByCollection.jobs.filter((record) => record.draft).length +
     recordsByCollection.blogs.filter((record) => record.draft).length;
   const activeDraftCount = activeRecords.filter((record) => record.draft).length;
   const accountLabel = adminEmail.split("@")[0] || "admin";
   const accountInitial = accountLabel.charAt(0).toUpperCase() || "A";
-  const query = searchValue.trim().toLowerCase();
+  const searchTerm = searchValue.trim();
+  const query = searchTerm.toLowerCase();
   const adminLoginUrl = buildAdminLoginUrl(adminBasePath);
+  const filteredRecords = filterRecordsByQuery(activeRecords, query);
+  const filteredJobRecords =
+    collection === "jobs"
+      ? [...filterRecordsByQuery(activeJobRecords, query)].sort(sortRecordsByRecentActivity)
+      : [];
+  const todayJobCount = recordsByCollection.jobs.filter(
+    (record) => getRecordActivityDate(record) === todayDate,
+  ).length;
+  const yesterdayJobCount = recordsByCollection.jobs.filter(
+    (record) => getRecordActivityDate(record) === yesterdayDate,
+  ).length;
+  const threeDayJobCount = recordsByCollection.jobs.filter((record) => {
+    const activityDate = getRecordActivityDate(record);
+    return (
+      activityDate === todayDate ||
+      activityDate === yesterdayDate ||
+      activityDate === twoDaysAgoDate
+    );
+  }).length;
+  const jobListSections: JobListSection[] =
+    collection === "jobs"
+      ? [
+          {
+            id: "today",
+            title: "Today",
+            description: "Jobs published or updated today",
+            emptyMessage: query
+              ? "No jobs from today matched your search."
+              : "No jobs have been updated today.",
+            records: filteredJobRecords
+              .filter((record) => getRecordActivityDate(record) === todayDate)
+              .sort(sortRecordsByRecentActivity),
+          },
+          {
+            id: "yesterday",
+            title: "Yesterday",
+            description: "Jobs published or updated yesterday",
+            emptyMessage: query
+              ? "No jobs from yesterday matched your search."
+              : "No jobs were updated yesterday.",
+            records: filteredJobRecords
+              .filter((record) => getRecordActivityDate(record) === yesterdayDate)
+              .sort(sortRecordsByRecentActivity),
+          },
+          {
+            id: "twoDaysAgo",
+            title: "2 Days Ago",
+            description: "Jobs published or updated 2 days ago",
+            emptyMessage: query
+              ? "No jobs from 2 days ago matched your search."
+              : "No jobs were updated 2 days ago.",
+            records: filteredJobRecords
+              .filter((record) => getRecordActivityDate(record) === twoDaysAgoDate)
+              .sort(sortRecordsByRecentActivity),
+          },
+        ]
+      : [];
+  const visibleJobSections =
+    jobListMode === "today"
+      ? jobListSections.filter((section) => section.id === "today")
+      : jobListMode === "yesterday"
+        ? jobListSections.filter((section) => section.id === "yesterday")
+        : jobListMode === "threeDays"
+          ? jobListSections
+        : jobListMode === "recent"
+          ? jobListSections.filter((section) => section.id !== "twoDaysAgo")
+          : [];
+  const visibleJobRecords =
+    collection === "jobs"
+      ? jobListMode === "all"
+        ? filteredJobRecords
+        : visibleJobSections.flatMap((section) => section.records)
+      : [];
+  const jobCategoryCounts =
+    collection === "jobs"
+      ? {
+          all: visibleJobRecords.length,
+          internships: filterJobRecordsByCategory(visibleJobRecords, "internships").length,
+          freshers: filterJobRecordsByCategory(visibleJobRecords, "freshers").length,
+          experienced: filterJobRecordsByCategory(visibleJobRecords, "experienced").length,
+        }
+      : {
+          all: 0,
+          internships: 0,
+          freshers: 0,
+          experienced: 0,
+        };
+  const filteredVisibleJobSections =
+    collection === "jobs"
+      ? visibleJobSections.map((section) => ({
+          ...section,
+          emptyMessage:
+            jobCategoryFilter === "all"
+              ? section.emptyMessage
+              : query
+                ? `No ${getJobCategoryFilterLabel(jobCategoryFilter).toLowerCase()} jobs from ${section.title.toLowerCase()} matched your search.`
+                : `No ${getJobCategoryFilterLabel(jobCategoryFilter).toLowerCase()} jobs were found in ${section.title.toLowerCase()}.`,
+          records: filterJobRecordsByCategory(section.records, jobCategoryFilter),
+        }))
+      : [];
+  const filteredJobRecordsByCategory =
+    collection === "jobs" ? filterJobRecordsByCategory(filteredJobRecords, jobCategoryFilter) : [];
+  const shareableJobRecords = visibleJobRecords.filter((record) => !record.draft);
+  const batchJobShareSections =
+    collection === "jobs" ? createBatchJobShareSections(shareableJobRecords) : [];
+  const batchJobShareScopeLabel = buildBatchShareScopeLabel(jobListMode, searchTerm);
+  const batchJobShareDraftCount =
+    visibleJobRecords.length - shareableJobRecords.length;
+  const hasBatchJobShareSections = batchJobShareSections.some(
+    (section) => section.records.length > 0,
+  );
+  const displayedRecordsCount =
+    collection === "jobs"
+      ? jobListMode === "all"
+        ? filteredJobRecordsByCategory.length
+        : filteredVisibleJobSections.reduce((count, section) => count + section.records.length, 0)
+      : filteredRecords.length;
+  const searchPlaceholder =
+    collection === "jobs"
+      ? jobListMode === "today"
+        ? "Search today's jobs"
+        : jobListMode === "yesterday"
+          ? "Search yesterday's jobs"
+          : jobListMode === "threeDays"
+            ? "Search jobs from the last 3 days"
+          : jobListMode === "all"
+            ? "Search all jobs"
+            : "Search jobs from the last 2 days"
+      : `Search ${collection}`;
   const publishedJobSummary = publishedJobShare
     ? buildJobShareSummary(publishedJobShare)
     : "";
@@ -387,20 +800,6 @@ export default function MobileAdminApp({
   const publishedJobWhatsappShareUrl = publishedJobWhatsappText
     ? `https://wa.me/?text=${encodeURIComponent(publishedJobWhatsappText)}`
     : "";
-  const filteredRecords = !query
-    ? activeRecords
-    : activeRecords.filter((record) => {
-        const haystack = [
-          record.title,
-          record.slug,
-          "company" in record ? record.company : record.topic,
-          "location" in record ? record.location : "",
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        return haystack.includes(query);
-      });
   const mobilePublishingError = mobilePublishingReady
     ? ""
     : "Admin publishing is not configured on this deployment. Set ADMIN_CONTENTS_TOKEN in production and redeploy to enable save, upload, and delete.";
@@ -418,52 +817,6 @@ export default function MobileAdminApp({
           : extractNotice
             ? "Updated"
             : "Ready";
-  const coverImageValue = editorEntry.collection === "blogs" ? editorEntry.coverImage : "";
-  const coverImagePreviewUrl = coverImageValue
-    ? uploadedAssetPreviews[coverImageValue] || toDisplayImageSrc(coverImageValue)
-    : "";
-  const uploadedAssetPreviewUrl = uploadedAssetUrl
-    ? uploadedAssetPreviews[uploadedAssetUrl] || toDisplayImageSrc(uploadedAssetUrl)
-    : "";
-
-  const revokeObjectUrl = (value: string) => {
-    if (value && typeof URL !== "undefined" && typeof URL.revokeObjectURL === "function") {
-      URL.revokeObjectURL(value);
-    }
-  };
-
-  const setUploadedAssetPreview = (assetUrl: string, previewUrl: string) => {
-    if (!assetUrl || !previewUrl) {
-      return;
-    }
-
-    setUploadedAssetPreviews((current) => {
-      const existingPreviewUrl = current[assetUrl];
-      if (existingPreviewUrl && existingPreviewUrl !== previewUrl) {
-        revokeObjectUrl(existingPreviewUrl);
-      }
-
-      const nextState = { ...current, [assetUrl]: previewUrl };
-      uploadedAssetPreviewsRef.current = nextState;
-      return nextState;
-    });
-  };
-
-  const clearUploadedAssetPreviews = () => {
-    setUploadedAssetPreviews((current) => {
-      for (const previewUrl of Object.values(current)) {
-        revokeObjectUrl(previewUrl);
-      }
-
-      uploadedAssetPreviewsRef.current = {};
-      return {};
-    });
-  };
-
-  const resetUploadedAssetState = () => {
-    setUploadedAssetUrl("");
-    clearUploadedAssetPreviews();
-  };
 
   useEffect(() => {
     const fetchRecords = async (nextCollection: AdminCollection) => {
@@ -503,18 +856,6 @@ export default function MobileAdminApp({
     fetchRecords("jobs");
     fetchRecords("blogs");
   }, [adminLoginUrl]);
-
-  useEffect(() => {
-    uploadedAssetPreviewsRef.current = uploadedAssetPreviews;
-  }, [uploadedAssetPreviews]);
-
-  useEffect(() => {
-    return () => {
-      for (const previewUrl of Object.values(uploadedAssetPreviewsRef.current)) {
-        revokeObjectUrl(previewUrl);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (!accountMenuOpen) {
@@ -585,6 +926,22 @@ export default function MobileAdminApp({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [extractorOpen]);
+
+  useEffect(() => {
+    if (collection === "jobs" && hasBatchJobShareSections) {
+      return;
+    }
+
+    setBatchJobShareOpen(false);
+  }, [collection, hasBatchJobShareSections]);
+
+  useEffect(() => {
+    if (collection === "jobs") {
+      return;
+    }
+
+    setJobCategoryFilter("all");
+  }, [collection]);
 
   useEffect(() => {
     const applyRouteState = (nextCollection: AdminCollection, nextSlug: string, open: boolean) => {
@@ -713,17 +1070,47 @@ export default function MobileAdminApp({
       });
   }, [adminLoginUrl, initialCollection, initialSlug]);
 
-  const openNewEntry = (nextCollection: AdminCollection) => {
+  const resetEditorForNewEntry = (
+    nextCollection: AdminCollection,
+    options?: {
+      notice?: string;
+      clearExtractorInputs?: boolean;
+      preservePublishedJobShare?: boolean;
+      resetSearch?: boolean;
+      nextJobListMode?: JobListMode;
+    },
+  ) => {
     setCollection(nextCollection);
     setEditorEntry(buildEmptyEntry(nextCollection));
     setOriginalSlug("");
-    setPublishedJobShare(null);
+    setEntryLoading(false);
+    setEditorOpen(true);
     setFormError("");
-    setFormNotice("");
+    setFormNotice(options?.notice || "");
+    setUploadedAssetUrl("");
     setExtractError("");
     setExtractNotice("");
-    resetUploadedAssetState();
-    setEditorOpen(true);
+
+    if (!(options?.preservePublishedJobShare ?? false)) {
+      setPublishedJobShare(null);
+    }
+
+    if (options?.clearExtractorInputs ?? false) {
+      setExtractSourceUrl("");
+      setExtractSourceText("");
+    }
+
+    if (options?.resetSearch) {
+      setSearchValue("");
+    }
+
+    if (nextCollection === "jobs" && options?.nextJobListMode) {
+      setJobListMode(options.nextJobListMode);
+    }
+  };
+
+  const openNewEntry = (nextCollection: AdminCollection) => {
+    resetEditorForNewEntry(nextCollection);
   };
 
   const openExistingEntry = async (nextCollection: AdminCollection, slug: string) => {
@@ -732,10 +1119,9 @@ export default function MobileAdminApp({
     setEditorOpen(true);
     setFormError("");
     setFormNotice("");
+    setPublishedJobShare(null);
     setExtractError("");
     setExtractNotice("");
-    resetUploadedAssetState();
-    setPublishedJobShare(null);
 
     try {
       const response = await fetch(
@@ -763,6 +1149,7 @@ export default function MobileAdminApp({
       setEditorEntry(result.entry);
       setOriginalSlug(result.entry.slug);
       setPublishedJobShare(getPublishedJobShareForEntry(result.entry));
+      setUploadedAssetUrl("");
     } catch (error) {
       setFormError(
         error instanceof Error ? error.message : "Unable to load the selected entry.",
@@ -927,10 +1314,6 @@ export default function MobileAdminApp({
       }
 
       const nextRecord = result.record;
-      setEditorEntry(result.entry);
-      setOriginalSlug(result.entry.slug);
-      setPublishedJobShare(getPublishedJobShareForEntry(result.entry));
-      setFormNotice(draft ? "Draft saved." : "Published successfully.");
       setRecordsByCollection((current) => {
         const existingRecords = current[collection].filter(
           (record) => record.slug !== originalSlug && record.slug !== nextRecord.slug,
@@ -943,6 +1326,22 @@ export default function MobileAdminApp({
           ),
         };
       });
+
+      if (!draft && collection === "jobs" && result.entry.collection === "jobs") {
+        setPublishedJobShare(buildPublishedJobShare(result.entry));
+        resetEditorForNewEntry("jobs", {
+          notice: "Published successfully. New job form is ready.",
+          clearExtractorInputs: true,
+          preservePublishedJobShare: true,
+          resetSearch: true,
+          nextJobListMode: "recent",
+        });
+        return;
+      }
+
+      setEditorEntry(result.entry);
+      setOriginalSlug(result.entry.slug);
+      setFormNotice(draft ? "Draft saved." : "Published successfully.");
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Unable to save entry.");
     } finally {
@@ -960,11 +1359,6 @@ export default function MobileAdminApp({
     setUploading(true);
     setFormError("");
     setFormNotice("");
-
-    const localPreviewUrl =
-      typeof URL !== "undefined" && typeof URL.createObjectURL === "function"
-        ? URL.createObjectURL(file)
-        : "";
 
     try {
       const formData = new FormData();
@@ -993,15 +1387,11 @@ export default function MobileAdminApp({
       }
 
       setUploadedAssetUrl(result.url);
-      if (localPreviewUrl) {
-        setUploadedAssetPreview(result.url, localPreviewUrl);
-      }
       setFormNotice("Image uploaded.");
       if (editorEntry.collection === "blogs" && !editorEntry.coverImage) {
         updateEntry({ coverImage: result.url } as Partial<AdminMobileBlogEntry>);
       }
     } catch (error) {
-      revokeObjectUrl(localPreviewUrl);
       setFormError(error instanceof Error ? error.message : "Unable to upload image.");
     } finally {
       setUploading(false);
@@ -1059,7 +1449,7 @@ export default function MobileAdminApp({
       }));
       setEditorEntry(buildEmptyEntry(collection));
       setOriginalSlug("");
-      resetUploadedAssetState();
+      setUploadedAssetUrl("");
       setExtractError("");
       setExtractNotice("");
       setFormNotice("Entry deleted.");
@@ -1101,7 +1491,6 @@ export default function MobileAdminApp({
     setExtractError("");
     setExtractNotice("");
   };
-
   const copyPublishedJobShare = async () => {
     if (!publishedJobWhatsappText || !navigator.clipboard) {
       return;
@@ -1114,12 +1503,73 @@ export default function MobileAdminApp({
       setFormNotice("Copy failed. You can still open WhatsApp directly.");
     }
   };
+  const copyBatchJobShare = async (text: string, sectionTitle: string) => {
+    if (!text || !navigator.clipboard) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setFormNotice(`${sectionTitle} WhatsApp message copied.`);
+    } catch {
+      setFormNotice("Copy failed. You can still open WhatsApp directly.");
+    }
+  };
 
   const activeTitle =
     editorEntry.collection === "jobs"
       ? editorEntry.title || "New job"
       : editorEntry.title || "New blog";
   const extractorEntityLabel = collection === "jobs" ? "job" : "blog";
+  const renderRecordButton = (record: AdminMobileRecord) => {
+    const activityDate = getRecordActivityDate(record);
+    const primaryDateLabel =
+      collection === "jobs" && activityDate ? `Updated ${activityDate}` : record.date || "No date";
+    const secondaryDateLabel =
+      collection === "jobs" && activityDate && record.date && activityDate !== record.date
+        ? `Published ${record.date}`
+        : "";
+
+    return (
+      <button
+        key={`${collection}-${record.slug}`}
+        type="button"
+        onClick={() => openExistingEntry(collection, record.slug)}
+        className={cn(
+          "block w-full rounded-[1rem] border px-4 py-3 text-left transition",
+          editorOpen && originalSlug === record.slug
+            ? "border-teal-300 bg-teal-50 shadow-sm"
+            : "border-slate-200 bg-white shadow-[0_10px_24px_-24px_rgba(15,23,42,0.45)] hover:border-teal-200 hover:bg-slate-50",
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-900">{record.title || "Untitled"}</p>
+            <p className="mt-1 text-xs text-slate-500">{formatRecordMeta(record)}</p>
+          </div>
+          <span
+            className={cn(
+              "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+              record.draft
+                ? "bg-amber-100 text-amber-800"
+                : "bg-emerald-100 text-emerald-800",
+            )}
+          >
+            {record.draft ? "Draft" : "Live"}
+          </span>
+        </div>
+        <div className="mt-3 flex items-end justify-between gap-3 text-xs text-slate-500">
+          <div className="min-w-0">
+            <span className="block">{primaryDateLabel}</span>
+            {secondaryDateLabel ? (
+              <span className="mt-1 block text-[11px] text-slate-400">{secondaryDateLabel}</span>
+            ) : null}
+          </div>
+          <span className="truncate text-right">{record.slug}</span>
+        </div>
+      </button>
+    );
+  };
   const renderExtractorForm = (layout: "mobile" | "desktop") => {
     const isDesktop = layout === "desktop";
     const fieldClassName = cn(
@@ -1218,7 +1668,7 @@ export default function MobileAdminApp({
           className={cn(
             isDesktop
               ? "flex flex-wrap gap-2"
-              : "grid grid-cols-2 gap-2",
+              : "grid grid-cols-3 gap-2",
           )}
         >
           <button
@@ -1226,36 +1676,46 @@ export default function MobileAdminApp({
             disabled={extractMode !== ""}
             onClick={() => runAutoExtract("url")}
             className={cn(
-              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition",
-              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-3 text-[12px]",
+              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition whitespace-nowrap",
+              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-2 text-[11px]",
               extractMode !== ""
                 ? "cursor-not-allowed bg-slate-300"
                 : "bg-slate-900 hover:bg-slate-800",
             )}
           >
-            {extractMode === "url" ? "Fetching URL..." : "Fetch URL + Extract"}
+            {extractMode === "url"
+              ? isDesktop
+                ? "Fetching URL..."
+                : "Fetching..."
+              : isDesktop
+                ? "Fetch URL + Extract"
+                : "Fetch URL"}
           </button>
           <button
             type="button"
             disabled={extractMode !== ""}
             onClick={() => runAutoExtract("text")}
             className={cn(
-              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition",
-              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-3 text-[12px]",
+              "inline-flex items-center justify-center rounded-xl font-semibold text-white transition whitespace-nowrap",
+              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-2 text-[11px]",
               extractMode !== ""
                 ? "cursor-not-allowed bg-teal-300"
                 : "bg-teal-700 hover:bg-teal-800",
             )}
           >
-            {extractMode === "text" ? "Extracting..." : "Auto Extract Text"}
+            {extractMode === "text"
+              ? "Extracting..."
+              : isDesktop
+                ? "Auto Extract Text"
+                : "Extract Text"}
           </button>
           <button
             type="button"
             disabled={extractMode !== ""}
             onClick={resetExtractorInputs}
             className={cn(
-              "inline-flex items-center justify-center rounded-xl border font-semibold transition",
-              isDesktop ? "min-h-9 px-3 text-[12px]" : "col-span-2 min-h-10 px-3 text-[12px]",
+              "inline-flex items-center justify-center rounded-xl border font-semibold transition whitespace-nowrap",
+              isDesktop ? "min-h-9 px-3 text-[12px]" : "min-h-10 px-2 text-[11px]",
               extractMode !== ""
                 ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
                 : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
@@ -1269,8 +1729,11 @@ export default function MobileAdminApp({
   };
 
   return (
-    <div data-admin-mobile-root className="min-h-[100dvh] px-2 py-2 sm:px-4 sm:py-4 lg:px-6">
-      <section className="mx-auto overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.3)]">
+    <div
+      data-admin-mobile-root
+      className="min-h-[100dvh] w-full overflow-x-clip px-2 py-2 sm:px-4 sm:py-4 lg:px-6"
+    >
+      <section className="mx-auto w-full max-w-full overflow-x-clip rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_24px_60px_-36px_rgba(15,23,42,0.3)]">
         <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6 lg:px-7">
           <div className="flex items-start justify-between gap-3 lg:items-center">
             <div className="min-w-0">
@@ -1333,14 +1796,14 @@ export default function MobileAdminApp({
           </div>
         </div>
 
-        <div className="grid min-h-[calc(100dvh-7rem)] gap-0 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[344px_minmax(0,1fr)]">
+        <div className="grid min-h-[calc(100dvh-7rem)] min-w-0 max-w-full gap-0 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[344px_minmax(0,1fr)]">
           <aside
             className={cn(
-              "border-b border-slate-200 bg-slate-50/90 p-4 lg:border-r lg:border-b-0 lg:p-5",
+              "min-w-0 max-w-full border-b border-slate-200 bg-slate-50/90 p-4 lg:border-r lg:border-b-0 lg:p-5",
               editorOpen ? "hidden lg:block" : "block",
             )}
           >
-            <div className="rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="w-full max-w-full rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -1364,8 +1827,8 @@ export default function MobileAdminApp({
               </button>
             </div>
 
-            <div className="mt-4 rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="inline-flex w-full rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
+            <div className="mt-4 w-full max-w-full rounded-[1rem] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-1 shadow-sm">
                 {(["jobs", "blogs"] as const).map((item) => (
                   <button
                     key={item}
@@ -1373,19 +1836,19 @@ export default function MobileAdminApp({
                     onClick={() => {
                       setCollection(item);
                       setSearchValue("");
+                      setPublishedJobShare(null);
                       setExtractError("");
                       setExtractNotice("");
-                      setPublishedJobShare(null);
                       if (editorEntry.collection !== item) {
                         setEditorEntry(buildEmptyEntry(item));
                         setOriginalSlug("");
-                        resetUploadedAssetState();
+                        setUploadedAssetUrl("");
                         setFormError("");
                         setFormNotice("");
                       }
                     }}
                     className={cn(
-                      "min-h-11 flex-1 rounded-lg px-4 text-sm font-semibold transition",
+                      "min-h-11 min-w-0 flex-1 rounded-lg px-4 text-sm font-semibold transition",
                       collection === item
                         ? "bg-teal-700 text-white shadow-sm"
                         : "text-slate-600 hover:bg-slate-100",
@@ -1404,14 +1867,299 @@ export default function MobileAdminApp({
                   type="search"
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
-                  placeholder={`Search ${collection}`}
+                  placeholder={searchPlaceholder}
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-50"
                 />
               </label>
 
+              {collection === "jobs" ? (
+                <div className="mt-4 w-full max-w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                    Quick Access
+                  </p>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {[
+                      {
+                        mode: "recent" as const,
+                        label: "Last 2 days",
+                        count: todayJobCount + yesterdayJobCount,
+                      },
+                      {
+                        mode: "threeDays" as const,
+                        label: "Last 3 days",
+                        count: threeDayJobCount,
+                      },
+                      {
+                        mode: "today" as const,
+                        label: "Today",
+                        count: todayJobCount,
+                      },
+                      {
+                        mode: "yesterday" as const,
+                        label: "Yesterday",
+                        count: yesterdayJobCount,
+                      },
+                      {
+                        mode: "all" as const,
+                        label: "All jobs",
+                        count: recordsByCollection.jobs.length,
+                      },
+                    ].map((option) => (
+                      <button
+                        key={option.mode}
+                        type="button"
+                        onClick={() => setJobListMode(option.mode)}
+                        className={cn(
+                          "flex min-h-11 min-w-0 items-center justify-between rounded-xl border px-3 text-sm font-semibold transition",
+                          option.mode === "all" && "col-span-2",
+                          jobListMode === option.mode
+                            ? "border-teal-300 bg-teal-50 text-teal-800"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-teal-200 hover:bg-slate-100",
+                        )}
+                      >
+                        <span className="min-w-0 truncate">{option.label}</span>
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                            jobListMode === option.mode
+                              ? "bg-white text-teal-700"
+                              : "bg-slate-100 text-slate-600",
+                          )}
+                        >
+                          {option.count}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                        Category Filter
+                      </p>
+                      {jobCategoryFilter !== "all" ? (
+                        <button
+                          type="button"
+                          onClick={() => setJobCategoryFilter("all")}
+                          className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-700 transition hover:text-teal-800"
+                        >
+                          Clear
+                        </button>
+                      ) : null}
+                    </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                      {[
+                        {
+                          id: "all" as const,
+                          label: "All",
+                          count: jobCategoryCounts.all,
+                        },
+                        {
+                          id: "internships" as const,
+                          label: "Internships",
+                          count: jobCategoryCounts.internships,
+                        },
+                        {
+                          id: "freshers" as const,
+                          label: "Freshers",
+                          count: jobCategoryCounts.freshers,
+                        },
+                        {
+                          id: "experienced" as const,
+                          label: "Experienced",
+                          count: jobCategoryCounts.experienced,
+                        },
+                      ].map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => setJobCategoryFilter(option.id)}
+                          className={cn(
+                            "flex min-h-11 min-w-0 items-center justify-between rounded-xl border px-3 text-sm font-semibold transition",
+                            jobCategoryFilter === option.id
+                              ? "border-teal-300 bg-teal-50 text-teal-800"
+                              : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-200 hover:bg-slate-100",
+                          )}
+                        >
+                          <span className="min-w-0 truncate">{option.label}</span>
+                          <span
+                            className={cn(
+                              "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              jobCategoryFilter === option.id
+                                ? "bg-white text-teal-700"
+                                : "bg-white text-slate-600",
+                            )}
+                          >
+                            {option.count}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-white p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Batch WhatsApp
+                        </p>
+                        <p className="mt-1 text-sm text-slate-700">
+                          {shareableJobRecords.length} live job
+                          {shareableJobRecords.length === 1 ? "" : "s"} ready from{" "}
+                          {batchJobShareScopeLabel}.
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Each bulk WhatsApp message uses the latest {maxBatchJobShareRecords} jobs
+                          per section.
+                        </p>
+                        {batchJobShareDraftCount > 0 ? (
+                          <p className="mt-1 text-xs text-slate-500">
+                            {batchJobShareDraftCount} draft job
+                            {batchJobShareDraftCount === 1 ? "" : "s"} excluded from sharing.
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setBatchJobShareOpen((current) => !current)}
+                        disabled={!hasBatchJobShareSections}
+                        className={cn(
+                          "inline-flex min-h-10 items-center justify-center rounded-xl px-3 text-sm font-semibold transition",
+                          hasBatchJobShareSections
+                            ? "bg-teal-700 text-white hover:bg-teal-800"
+                            : "cursor-not-allowed bg-slate-200 text-slate-500",
+                        )}
+                      >
+                        {batchJobShareOpen ? "Hide" : "Prepare"}
+                      </button>
+                    </div>
+
+                    {batchJobShareOpen ? (
+                      <div className="mt-3 space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBatchJobShareUsesEmojis((current) => !current)
+                            }
+                            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                          >
+                            {batchJobShareUsesEmojis ? "Emojis On" : "Emojis Off"}
+                          </button>
+                        </div>
+
+                        {batchJobShareSections
+                          .filter((section) => section.records.length > 0)
+                          .map((section) => {
+                            const sectionWhatsappText = buildBatchJobWhatsappText(
+                              section,
+                              batchJobShareScopeLabel,
+                              batchJobShareUsesEmojis,
+                            );
+                            const sectionWhatsappUrl = `https://wa.me/?text=${encodeURIComponent(
+                              sectionWhatsappText,
+                            )}`;
+
+                            return (
+                              <div
+                                key={section.id}
+                                className={cn(
+                                  "rounded-xl border bg-slate-50 p-3 transition",
+                                  jobCategoryFilter === section.id
+                                    ? "border-teal-300 bg-teal-50/60"
+                                    : "border-slate-200",
+                                )}
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p className="text-sm font-semibold text-slate-900">
+                                      {section.title}
+                                    </p>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      {section.description}
+                                    </p>
+                                    {section.totalRecords > section.records.length ? (
+                                      <p className="mt-1 text-[11px] text-slate-500">
+                                        Showing the latest {section.records.length} jobs in this
+                                        message.
+                                      </p>
+                                    ) : null}
+                                  </div>
+                                  <div className="flex shrink-0 items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setJobCategoryFilter((current) =>
+                                          current === section.id ? "all" : section.id,
+                                        )
+                                      }
+                                      className={cn(
+                                        "inline-flex min-h-9 items-center justify-center rounded-lg border px-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition",
+                                        jobCategoryFilter === section.id
+                                          ? "border-teal-300 bg-white text-teal-700"
+                                          : "border-slate-200 bg-white text-slate-600 hover:border-teal-200 hover:text-teal-700",
+                                      )}
+                                    >
+                                      {jobCategoryFilter === section.id ? "Showing" : "Show in list"}
+                                    </button>
+                                    <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                                      {section.totalRecords}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <label className="mt-3 block">
+                                  <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                    WhatsApp message
+                                  </span>
+                                  <textarea
+                                    readOnly
+                                    value={sectionWhatsappText}
+                                    rows={Math.min(
+                                      16,
+                                      Math.max(7, section.records.length * 3),
+                                    )}
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none"
+                                  />
+                                </label>
+
+                                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      copyBatchJobShare(
+                                        sectionWhatsappText,
+                                        section.title,
+                                      )
+                                    }
+                                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                                  >
+                                    Copy {section.title}
+                                  </button>
+                                  <a
+                                    href={sectionWhatsappUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-teal-700 px-4 text-sm font-semibold text-white transition hover:bg-teal-800"
+                                  >
+                                    Open WhatsApp
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
                 <div className="rounded-lg bg-slate-100 px-3 py-2">
-                  {filteredRecords.length} shown
+                  {displayedRecordsCount} shown
                 </div>
                 <div className="rounded-lg bg-slate-100 px-3 py-2">
                   {collection === "jobs" ? recordsByCollection.jobs.length : recordsByCollection.blogs.length} total
@@ -1426,52 +2174,79 @@ export default function MobileAdminApp({
             ) : null}
 
             <div className="mt-4 space-y-2">
+              {collection === "jobs" && jobCategoryFilter !== "all" ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+                  <p>
+                    Showing <span className="font-semibold">{getJobCategoryFilterLabel(jobCategoryFilter)}</span>{" "}
+                    jobs from the current date filter.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setJobCategoryFilter("all")}
+                    className="shrink-0 text-xs font-semibold uppercase tracking-[0.16em] text-teal-700 transition hover:text-teal-800"
+                  >
+                    Clear
+                  </button>
+                </div>
+              ) : null}
+
               {recordsLoading[collection] ? (
                 <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
                   Loading {collection}...
                 </p>
               ) : null}
 
-              {!recordsLoading[collection] && filteredRecords.length === 0 ? (
+              {!recordsLoading[collection] &&
+              collection !== "jobs" &&
+              filteredRecords.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
                   No {collection} found for this filter.
                 </p>
               ) : null}
 
-              {filteredRecords.map((record) => (
-                <button
-                  key={`${collection}-${record.slug}`}
-                  type="button"
-                  onClick={() => openExistingEntry(collection, record.slug)}
-                  className={cn(
-                    "block w-full rounded-[1rem] border px-4 py-3 text-left transition",
-                    editorOpen && originalSlug === record.slug
-                      ? "border-teal-300 bg-teal-50 shadow-sm"
-                      : "border-slate-200 bg-white shadow-[0_10px_24px_-24px_rgba(15,23,42,0.45)] hover:border-teal-200 hover:bg-slate-50",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">{record.title || "Untitled"}</p>
-                      <p className="mt-1 text-xs text-slate-500">{formatRecordMeta(record)}</p>
-                    </div>
-                    <span
-                      className={cn(
-                        "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
-                        record.draft
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-emerald-100 text-emerald-800",
+              {collection === "jobs" && jobListMode !== "all" ? (
+                <div className="space-y-4">
+                  {filteredVisibleJobSections.map((section) => (
+                    <div key={section.id} className="space-y-2">
+                      <div className="flex items-center justify-between gap-3 px-1">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                            {section.title}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">{section.description}</p>
+                        </div>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                          {section.records.length}
+                        </span>
+                      </div>
+
+                      {section.records.length === 0 ? (
+                        <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+                          {section.emptyMessage}
+                        </p>
+                      ) : (
+                        section.records.map((record) => renderRecordButton(record))
                       )}
-                    >
-                      {record.draft ? "Draft" : "Live"}
-                    </span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                    <span>{record.date || "No date"}</span>
-                    <span>{record.slug}</span>
-                  </div>
-                </button>
-              ))}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {!recordsLoading[collection] &&
+                  collection === "jobs" &&
+                  filteredJobRecordsByCategory.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+                      {jobCategoryFilter === "all"
+                        ? "No jobs found for this filter."
+                        : `No ${getJobCategoryFilterLabel(jobCategoryFilter).toLowerCase()} jobs found for this filter.`}
+                    </p>
+                  ) : null}
+
+                  {collection === "jobs"
+                    ? filteredJobRecordsByCategory.map((record) => renderRecordButton(record))
+                    : filteredRecords.map((record) => renderRecordButton(record))}
+                </>
+              )}
             </div>
           </aside>
 
@@ -1902,18 +2677,6 @@ export default function MobileAdminApp({
                         </label>
                       </div>
 
-                      <label className="block">
-                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Job details markdown
-                        </span>
-                        <textarea
-                          value={editorEntry.body}
-                          onChange={(event) => updateEntry({ body: event.target.value })}
-                          rows={12}
-                          className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          placeholder="Paste the full job description or notes here."
-                        />
-                      </label>
                     </>
                   ) : (
                     <>
@@ -2067,33 +2830,18 @@ export default function MobileAdminApp({
                           </label>
                         </div>
 
-                        {coverImagePreviewUrl ? (
+                        {editorEntry.coverImage ? (
                           <div className="mt-4 overflow-hidden rounded-[1rem] border border-slate-200 bg-slate-50">
-                            <Image
-                              src={coverImagePreviewUrl}
-                              alt=""
-                              width={1200}
-                              height={675}
-                              unoptimized
-                              className="h-48 w-full object-cover"
+                            <div
+                              aria-hidden="true"
+                              className="h-48 w-full bg-cover bg-center"
+                              style={{ backgroundImage: `url("${editorEntry.coverImage}")` }}
                             />
                           </div>
                         ) : null}
 
                         {uploadedAssetUrl ? (
                           <div className="mt-4 rounded-[1rem] border border-emerald-200 bg-emerald-50 p-4">
-                            {uploadedAssetPreviewUrl ? (
-                              <div className="mb-3 overflow-hidden rounded-[0.875rem] border border-emerald-200 bg-white">
-                                <Image
-                                  src={uploadedAssetPreviewUrl}
-                                  alt=""
-                                  width={1200}
-                                  height={675}
-                                  unoptimized
-                                  className="h-40 w-full object-cover"
-                                />
-                              </div>
-                            ) : null}
                             <p className="text-sm font-medium break-all text-emerald-800">
                               {uploadedAssetUrl}
                             </p>
