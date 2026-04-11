@@ -149,7 +149,7 @@ export default function WhatsAppCta() {
   const bubbleClasses = useMemo(
     () =>
       [
-        "absolute right-0 bottom-[calc(100%+0.75rem)] w-[200px] max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left shadow-[0_12px_28px_rgba(15,23,42,0.08)] transition-all duration-300 sm:bottom-1/2 sm:right-[calc(100%+1rem)] sm:w-[240px] sm:max-w-none sm:translate-y-1/2",
+        "absolute right-0 bottom-[calc(100%+0.75rem)] w-[200px] max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent px-4 py-3 text-left shadow-[0_20px_60px_rgba(0,0,0,0.45)] relative overflow-hidden transition-all duration-300 before:content-[''] before:absolute before:inset-0 before:rounded-2xl before:border before:border-white/5",
         isBubbleVisible
           ? "pointer-events-auto translate-y-0 opacity-100 sm:translate-y-1/2"
           : "pointer-events-none translate-y-2 opacity-0 sm:translate-y-[calc(50%+6px)]",
@@ -165,7 +165,7 @@ export default function WhatsAppCta() {
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Join the JobAdvice WhatsApp channel"
-          className="pointer-events-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_10px_24px_rgba(37,211,102,0.24)] transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 sm:h-14 sm:w-14"
+          className="pointer-events-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_10px_35px_rgba(16,185,129,0.35)] hover:shadow-[0_14px_45px_rgba(16,185,129,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 sm:h-14 sm:w-14"
         >
           <WhatsAppIcon />
         </a>
@@ -176,7 +176,8 @@ export default function WhatsAppCta() {
   return (
     <div className="pointer-events-none fixed right-4 bottom-4 z-[70] hidden sm:block sm:right-6 sm:bottom-6">
       <div className={bubbleClasses} aria-hidden={!isBubbleVisible}>
-        <div className="flex items-start gap-3">
+        <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none rounded-2xl" />
+        <div className="relative z-10 flex items-start gap-3">
           <p className="flex-1 text-[13px] font-medium leading-5 text-slate-700">
             Join WhatsApp • Daily Jobs
           </p>
