@@ -7,6 +7,7 @@ import JobCard from "@/components/JobCard";
 import { getLatestBlogs } from "@/lib/blogs";
 import { getAllJobs } from "@/lib/jobs";
 import { getAllJobSegmentConfigs } from "@/lib/jobSegments";
+import { siteWhatsappGroupUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Fresher Jobs, Internships, and Verified Openings in India",
@@ -15,7 +16,6 @@ export const metadata: Metadata = {
 };
 
 export const revalidate = 60 * 60;
-const whatsappChannelUrl = "https://whatsapp.com/channel/0029Vb7MyM0BPzjaKwa1cr1f";
 const joinClasses = (...parts: Array<string | false | null | undefined>) =>
   parts.filter(Boolean).join(" ");
 
@@ -98,14 +98,14 @@ export default async function HomePage() {
       </div>
 
       <ActionButton
-        href={whatsappChannelUrl}
+        href={siteWhatsappGroupUrl}
         external
         target="_blank"
         rel="noopener noreferrer"
         variant="primary"
         className="home-community-button w-full max-w-[17rem] self-center lg:max-w-none lg:self-auto"
       >
-        Join WhatsApp Updates
+        Join WhatsApp Group
       </ActionButton>
     </div>
   );

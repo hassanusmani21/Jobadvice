@@ -13,7 +13,7 @@ import {
   createEmptyJobEntry,
   getTodayDateString,
 } from "@/lib/adminMobile";
-import { siteName, siteUrl, siteWhatsappChannelUrl } from "@/lib/site";
+import { siteName, siteUrl, siteWhatsappGroupUrl } from "@/lib/site";
 
 type AdminAppProps = {
   adminEmail: string;
@@ -304,8 +304,8 @@ const buildBatchJobWhatsappText = (
       : "";
   const brandLine = `${useEmojis ? "📢 " : ""}Shared via ${siteName}`;
   const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
-  const channelLabel = `${useEmojis ? "📲 " : ""}Join WhatsApp Channel:`;
-  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
+  const groupLabel = `${useEmojis ? "📲 " : ""}Join WhatsApp Group:`;
+  const groupLink = `${useEmojis ? "👉 " : ""}${siteWhatsappGroupUrl}`;
 
   const jobLines = section.records.map((record, index) => {
     const recordMeta = [
@@ -334,8 +334,8 @@ const buildBatchJobWhatsappText = (
     websiteLabel,
     siteUrl,
     "",
-    channelLabel,
-    channelLink,
+    groupLabel,
+    groupLink,
   ].join("\n");
 };
 
@@ -412,10 +412,10 @@ const buildPublishedJobWhatsappText = (
   const workModeLine = `${useEmojis ? "🏢 " : ""}${buildShareModeLabel(share.workMode)}`;
   const applyLabel = `${useEmojis ? "🔗 " : ""}Apply Now:`;
   const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
-  const channelLabel = `${
+  const groupLabel = `${
     useEmojis ? "📢 " : ""
-  }Join WhatsApp Channel for Daily Jobs:`;
-  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
+  }Join WhatsApp Group for Daily Jobs:`;
+  const groupLink = `${useEmojis ? "👉 " : ""}${siteWhatsappGroupUrl}`;
 
   return [
     heading,
@@ -433,8 +433,8 @@ const buildPublishedJobWhatsappText = (
     websiteLabel,
     siteUrl,
     "",
-    channelLabel,
-    channelLink,
+    groupLabel,
+    groupLink,
   ].join("\n");
 };
 
