@@ -1052,7 +1052,7 @@ export default function ResumeBuilderClient() {
             variant="secondary"
             buttonType="button"
             onClick={() => setResume(sampleResumeState)}
-            className="sm:w-auto"
+            className="resume-builder-hero-button"
           >
             Use Example
           </ActionButton>

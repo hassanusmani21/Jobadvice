@@ -9,7 +9,7 @@ export default function ResumeBuilderStyles() {
 
 .resume-builder-page {
   display: grid;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .resume-builder-hero {
@@ -44,29 +44,29 @@ export default function ResumeBuilderStyles() {
 .resume-builder-hero-grid {
   position: relative;
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .resume-builder-hero-copy {
-  max-width: 42rem;
+  max-width: 38rem;
 }
 
 .resume-builder-hero-title {
-  margin-top: 0.72rem;
+  margin-top: 0.5rem;
   font-family: var(--font-serif);
-  font-size: clamp(1.9rem, 3vw, 2.65rem);
-  line-height: 0.98;
+  font-size: clamp(1.72rem, 2.55vw, 2.3rem);
+  line-height: 1.02;
   letter-spacing: -0.05em;
   color: #0f172a;
   text-wrap: balance;
 }
 
 .resume-builder-hero-text {
-  margin-top: 0.72rem;
-  max-width: 36rem;
+  margin-top: 0.52rem;
+  max-width: 32rem;
   color: #526171;
-  font-size: 0.96rem;
-  line-height: 1.72;
+  font-size: 0.92rem;
+  line-height: 1.58;
 }
 
 .resume-builder-hero-chips {
@@ -106,12 +106,21 @@ export default function ResumeBuilderStyles() {
 }
 
 .resume-builder-hero-compact {
-  padding-block: 1.05rem;
+  padding-block: 0.82rem;
 }
 
 .resume-builder-hero-grid-compact {
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
+}
+
+.resume-builder-hero-button {
+  justify-self: start;
+  width: fit-content;
+  min-height: 2.5rem;
+  padding: 0.62rem 1rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .resume-accordion-list {
@@ -1710,6 +1719,10 @@ html[data-theme="dark"] .resume-preview-modal-close {
 
   .resume-builder-hero-grid-compact {
     grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .resume-builder-hero-button {
+    justify-self: end;
   }
 
   .resume-builder-hero-actions {
