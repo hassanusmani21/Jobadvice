@@ -8,15 +8,3 @@
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
   NETLIFY_NEXT_SKEW_PROTECTION = "true"
-
-[[redirects]]
-  from = "/admin"
-  to = "/admin/index.html"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "/admin/"
-  to = "/admin/index.html"
-  status = 301
-  force = true

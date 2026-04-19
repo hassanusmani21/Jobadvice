@@ -218,22 +218,6 @@ const nextConfig = {
       },
     ];
   },
-  async rewrites() {
-    if (isStaticExport) {
-      return [];
-    }
-
-    return [
-      {
-        source: "/admin",
-        destination: "/admin/index.html",
-      },
-      {
-        source: "/admin/",
-        destination: "/admin/index.html",
-      },
-    ];
-  },
 };
 
 export default nextConfig;

@@ -1,7 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { getStore } from "@netlify/blobs";
+import { getStore, type Store } from "@netlify/blobs";
+import { get as getVercelBlob, list as listVercelBlobs, put as putVercelBlob } from "@vercel/blob";
 import {
   buildJobAlertSearchParams,
   buildJobAlertSummary,
@@ -24,10 +25,28 @@ const localAlertsFilePath = path.join(
   "subscriptions.json",
 );
 const maxTrackedSentJobSlugs = 500;
+const isProduction = process.env.NODE_ENV === "production";
+const configuredJobAlertsStorage = (process.env.JOB_ALERTS_STORAGE || "").trim().toLowerCase();
+const configuredNetlifySiteID = (
+  process.env.NETLIFY_BLOBS_SITE_ID ||
+  process.env.NETLIFY_SITE_ID ||
+  process.env.SITE_ID ||
+  ""
+).trim();
+const configuredNetlifyToken = (
+  process.env.NETLIFY_BLOBS_TOKEN ||
+  process.env.NETLIFY_BLOBS_READ_WRITE_TOKEN ||
+  ""
+).trim();
+const hasNetlifyBlobConfig = Boolean(configuredNetlifySiteID && configuredNetlifyToken);
+const hasVercelBlobConfig = Boolean((process.env.BLOB_READ_WRITE_TOKEN || "").trim());
+const isVercelRuntime = ["1", "true"].includes((process.env.VERCEL || "").trim().toLowerCase());
+const isNetlifyRuntime = ["1", "true"].includes((process.env.NETLIFY || "").trim().toLowerCase());
 
 type JobAlertDeliveryChannel = "email";
 type JobAlertDeliveryFrequency = "daily";
 type JobAlertUpsertStatus = "created" | "reactivated" | "already_subscribed";
+type JobAlertsStorageProvider = "local" | "vercel-blob" | "netlify-blobs" | "unconfigured";
 
 type JobAlertTokenRecord = {
   signature: string;
@@ -74,7 +93,77 @@ export type JobAlertRunSummary = {
   skippedAlerts: number;
 };
 
-const isNetlifyRuntime = process.env.NETLIFY === "true";
+export class JobAlertValidationError extends Error {}
+export class JobAlertConfigurationError extends Error {}
+
+const configuredStorageProvider = (() => {
+  if (configuredJobAlertsStorage === "local") {
+    return "local" satisfies JobAlertsStorageProvider;
+  }
+
+  if (["vercel", "vercel-blob"].includes(configuredJobAlertsStorage)) {
+    return "vercel-blob" satisfies JobAlertsStorageProvider;
+  }
+
+  if (["netlify", "netlify-blobs"].includes(configuredJobAlertsStorage)) {
+    return "netlify-blobs" satisfies JobAlertsStorageProvider;
+  }
+
+  if (!isProduction) {
+    return "local" satisfies JobAlertsStorageProvider;
+  }
+
+  if (hasVercelBlobConfig || isVercelRuntime) {
+    return "vercel-blob" satisfies JobAlertsStorageProvider;
+  }
+
+  if (hasNetlifyBlobConfig || isNetlifyRuntime) {
+    return "netlify-blobs" satisfies JobAlertsStorageProvider;
+  }
+
+  return "unconfigured" satisfies JobAlertsStorageProvider;
+})();
+
+const shouldUseLocalAlertsFileStore = configuredStorageProvider === "local";
+
+let alertsStoreInstance: Store | null = null;
+
+const getAlertsStore = () => {
+  if (alertsStoreInstance) {
+    return alertsStoreInstance;
+  }
+
+  if (!hasNetlifyBlobConfig) {
+    throw new JobAlertConfigurationError(
+      "Netlify Blobs is not configured for this production deployment.",
+    );
+  }
+
+  try {
+    alertsStoreInstance = getStore({
+      name: alertsStoreName,
+      siteID: configuredNetlifySiteID,
+      token: configuredNetlifyToken,
+    });
+  } catch (error) {
+    throw new JobAlertConfigurationError(
+      "Job alerts storage is not configured for this production deployment.",
+      {
+        cause: error,
+      },
+    );
+  }
+
+  return alertsStoreInstance;
+};
+
+const assertConfiguredProductionStorage = () => {
+  if (configuredStorageProvider === "unconfigured") {
+    throw new JobAlertConfigurationError(
+      "Job alerts storage is not configured for this production deployment.",
+    );
+  }
+};
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 const normalizeSubscriberName = (name: string) => name.trim().replace(/\s+/g, " ").slice(0, 80);
@@ -138,13 +227,85 @@ const writeLocalAlertsState = async (state: JobAlertLocalState) => {
   await fs.writeFile(localAlertsFilePath, JSON.stringify(state, null, 2), "utf8");
 };
 
+const assertVercelBlobConfigured = () => {
+  if (!hasVercelBlobConfig) {
+    throw new JobAlertConfigurationError(
+      "Vercel Blob is not configured for this production deployment.",
+    );
+  }
+};
+
+const readVercelBlobJson = async <Value>(pathname: string): Promise<Value | null> => {
+  assertVercelBlobConfigured();
+
+  const blob = await getVercelBlob(pathname, {
+    access: "private",
+  });
+
+  if (!blob || blob.statusCode !== 200 || !blob.stream) {
+    return null;
+  }
+
+  const rawValue = await new Response(blob.stream).text();
+  if (!rawValue) {
+    return null;
+  }
+
+  return JSON.parse(rawValue) as Value;
+};
+
+const writeVercelBlobJson = async (pathname: string, value: unknown) => {
+  assertVercelBlobConfigured();
+
+  await putVercelBlob(pathname, JSON.stringify(value), {
+    access: "private",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: "application/json",
+  });
+};
+
+const listVercelBlobJson = async <Value>(prefix: string) => {
+  assertVercelBlobConfigured();
+
+  const values: Value[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const page = await listVercelBlobs({
+      cursor,
+      limit: 1000,
+      prefix,
+    });
+
+    const pageValues = await Promise.all(
+      page.blobs.map((entry) => readVercelBlobJson<Value>(entry.pathname)),
+    );
+
+    for (const value of pageValues) {
+      if (value !== null) {
+        values.push(value);
+      }
+    }
+    cursor = page.hasMore ? page.cursor : undefined;
+  } while (cursor);
+
+  return values;
+};
+
 const listStoredSubscriptions = async () => {
-  if (!isNetlifyRuntime) {
+  if (shouldUseLocalAlertsFileStore) {
     const state = await readLocalAlertsState();
     return Object.values(state.subscriptions);
   }
 
-  const store = getStore(alertsStoreName);
+  assertConfiguredProductionStorage();
+
+  if (configuredStorageProvider === "vercel-blob") {
+    return listVercelBlobJson<JobAlertSubscription>(subscriptionPrefix);
+  }
+
+  const store = getAlertsStore();
   const subscriptions: JobAlertSubscription[] = [];
 
   for await (const page of store.list({ prefix: subscriptionPrefix, paginate: true })) {
@@ -173,18 +334,24 @@ export const listJobAlertSubscriptions = async () =>
   );
 
 const getStoredSubscriptionBySignature = async (signature: string) => {
-  if (!isNetlifyRuntime) {
+  if (shouldUseLocalAlertsFileStore) {
     const state = await readLocalAlertsState();
     return state.subscriptions[signature] || null;
   }
 
-  const store = getStore(alertsStoreName);
+  assertConfiguredProductionStorage();
+
+  if (configuredStorageProvider === "vercel-blob") {
+    return readVercelBlobJson<JobAlertSubscription>(toSubscriptionKey(signature));
+  }
+
+  const store = getAlertsStore();
   const value = await store.get(toSubscriptionKey(signature), { type: "json" });
   return (value as JobAlertSubscription | null) || null;
 };
 
 const persistSubscription = async (subscription: JobAlertSubscription) => {
-  if (!isNetlifyRuntime) {
+  if (shouldUseLocalAlertsFileStore) {
     const state = await readLocalAlertsState();
     state.subscriptions[subscription.signature] = subscription;
     state.tokenToSignature[subscription.unsubscribeToken] = subscription.signature;
@@ -192,7 +359,19 @@ const persistSubscription = async (subscription: JobAlertSubscription) => {
     return;
   }
 
-  const store = getStore(alertsStoreName);
+  assertConfiguredProductionStorage();
+
+  if (configuredStorageProvider === "vercel-blob") {
+    await Promise.all([
+      writeVercelBlobJson(toSubscriptionKey(subscription.signature), subscription),
+      writeVercelBlobJson(toTokenKey(subscription.unsubscribeToken), {
+        signature: subscription.signature,
+      } satisfies JobAlertTokenRecord),
+    ]);
+    return;
+  }
+
+  const store = getAlertsStore();
   await Promise.all([
     store.setJSON(toSubscriptionKey(subscription.signature), subscription),
     store.setJSON(toTokenKey(subscription.unsubscribeToken), {
@@ -206,7 +385,7 @@ const getStoredSubscriptionByUnsubscribeToken = async (token: string) => {
     return null;
   }
 
-  if (!isNetlifyRuntime) {
+  if (shouldUseLocalAlertsFileStore) {
     const state = await readLocalAlertsState();
     const signature = state.tokenToSignature[token];
     if (!signature) {
@@ -216,7 +395,19 @@ const getStoredSubscriptionByUnsubscribeToken = async (token: string) => {
     return state.subscriptions[signature] || null;
   }
 
-  const store = getStore(alertsStoreName);
+  assertConfiguredProductionStorage();
+
+  if (configuredStorageProvider === "vercel-blob") {
+    const tokenRecord = await readVercelBlobJson<JobAlertTokenRecord>(toTokenKey(token));
+
+    if (!tokenRecord?.signature) {
+      return null;
+    }
+
+    return getStoredSubscriptionBySignature(tokenRecord.signature);
+  }
+
+  const store = getAlertsStore();
   const tokenRecord = (await store.get(toTokenKey(token), {
     type: "json",
   })) as JobAlertTokenRecord | null;
@@ -439,7 +630,7 @@ const sendEmail = async ({ to, subject, html, text }: SendEmailInput) => {
     (process.env.JOB_ALERTS_FROM_EMAIL || process.env.EMAIL_FROM || "").trim();
 
   if (!resendApiKey || !fromEmail) {
-    throw new Error(
+    throw new JobAlertConfigurationError(
       "Missing RESEND_API_KEY or JOB_ALERTS_FROM_EMAIL. Configure both to send job alert emails.",
     );
   }
@@ -475,15 +666,15 @@ export const createJobAlertSubscription = async (
   const filters = normalizeJobAlertFilters(rawFilters);
 
   if (!isValidEmail(normalizedEmail)) {
-    throw new Error("Please enter a valid email address.");
+    throw new JobAlertValidationError("Please enter a valid email address.");
   }
 
   if (!normalizedName) {
-    throw new Error("Please enter your name.");
+    throw new JobAlertValidationError("Please enter your name.");
   }
 
   if (!hasActiveJobAlertFilters(filters)) {
-    throw new Error("Choose at least one filter before creating an alert.");
+    throw new JobAlertValidationError("Choose at least one filter before creating an alert.");
   }
 
   const signature = createAlertSignature(normalizedEmail, filters);

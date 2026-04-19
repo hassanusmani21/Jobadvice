@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   buildJobAlertSuccessMessage,
+  JobAlertConfigurationError,
+  JobAlertValidationError,
   createJobAlertSubscription,
   sendJobAlertWelcomeEmail,
 } from "@/lib/jobAlerts";
@@ -45,12 +47,36 @@ export async function POST(request: Request) {
       },
     );
   } catch (error) {
+    if (error instanceof JobAlertValidationError) {
+      return NextResponse.json(
+        {
+          message: error.message,
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    console.error("[job-alerts] Failed to create alert", error);
+
+    if (error instanceof JobAlertConfigurationError) {
+      return NextResponse.json(
+        {
+          message: "Job alerts are temporarily unavailable. Please try again shortly.",
+        },
+        {
+          status: 503,
+        },
+      );
+    }
+
     return NextResponse.json(
       {
-        message: error instanceof Error ? error.message : "Unable to create the alert.",
+        message: "Unable to create the alert right now. Please try again shortly.",
       },
       {
-        status: 400,
+        status: 500,
       },
     );
   }
