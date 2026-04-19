@@ -15,6 +15,8 @@ export const siteVerifiedPublisherRole = "Founder, JobAdvice";
 export const siteVerifiedPublisherPhotoPath = "/uploads/hassan-author-verified.jpeg";
 export const siteWhatsappChannelUrl =
   "https://whatsapp.com/channel/0029Vb7MyM0BPzjaKwa1cr1f";
+export const siteWhatsappGroupUrl =
+  "https://chat.whatsapp.com/L6Qh1hBedLZ3vfL3kQMB4r";
 export const siteSocialProfiles = [
   "https://www.instagram.com/jobsadvice.in?utm_source=qr&igsh=MTM0eGhud3VtNGNvcw==",
   "https://www.linkedin.com/in/hassan-usmani21",

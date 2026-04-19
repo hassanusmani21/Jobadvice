@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 import JobActionButton from "@/components/JobActionButton";
-import { formatPostedDate, type JobPost } from "@/lib/jobs";
+import SaveJobButton from "@/components/SaveJobButton";
+import { formatPostedDate } from "@/lib/formatDate";
+import type { JobPost } from "@/lib/jobs";
 
 type JobCardProps = {
   job: JobPost;
@@ -321,23 +323,27 @@ export default function JobCard({ job, style, compact = false }: JobCardProps) {
   const primaryMetaItems = [
     job.location
       ? {
+          key: "location",
           icon: LocationIcon,
           label: cropCardText(compactLocationLabel(job.location), 24),
         }
       : null,
     includeExperienceInPrimaryRow
       ? {
+          key: "experience",
           icon: ExperienceIcon,
           label: cropCardText(experience, 18),
         }
       : null,
     workMode || employmentType
       ? {
+          key: "work-mode",
           icon: WorkModeIcon,
           label: workMode || employmentType || "",
         }
       : null,
   ].filter(Boolean) as Array<{
+    key: string;
     icon: typeof LocationIcon;
     label: string;
   }>;
@@ -351,7 +357,7 @@ export default function JobCard({ job, style, compact = false }: JobCardProps) {
       <div className="job-card-top-line pointer-events-none absolute inset-x-6 top-0 h-px bg-white/80" />
       <div className="job-card-accent pointer-events-none absolute -bottom-10 left-2 h-24 w-28 rounded-full bg-[radial-gradient(circle,rgba(20,184,166,0.12)_0%,rgba(125,211,252,0.05)_42%,rgba(255,255,255,0)_74%)]" />
       <div className="relative z-10 flex h-full flex-col">
-        <div className="job-card-header flex min-h-[4.6rem] items-start gap-2.5">
+        <div className="job-card-header flex min-h-[4.2rem] items-center gap-2.5">
           <span className="job-card-icon-shell inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-teal-50/80 ring-1 ring-teal-100/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.82)]">
             <HeaderIcon kind={jobIconKind} className="h-[18px] w-[18px]" />
           </span>
@@ -373,9 +379,16 @@ export default function JobCard({ job, style, compact = false }: JobCardProps) {
               </p>
             ) : null}
           </div>
+          <SaveJobButton
+            slug={job.slug}
+            title={job.title}
+            company={job.company}
+            variant="icon"
+            className=""
+          />
         </div>
 
-        <div className="job-card-company-block mt-3.5 min-w-0">
+        <div className="job-card-company-block mt-2.5 min-w-0">
           <div className="job-card-company-row flex min-w-0 items-start gap-3 text-[0.9375rem] text-slate-600">
             <span
               className={`job-card-company-avatar mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold leading-none tracking-wide shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] ${companyAvatarClasses}`}
@@ -402,7 +415,7 @@ export default function JobCard({ job, style, compact = false }: JobCardProps) {
                   const MetaIcon = item.icon;
                   return (
                     <span
-                      key={item.label}
+                      key={item.key}
                       className="job-card-meta-pill inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/72 px-3 py-1.5 text-[0.82rem] font-medium leading-none text-slate-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]"
                     >
                       <MetaIcon className="h-3.5 w-3.5 shrink-0 opacity-70" />
@@ -440,6 +453,12 @@ export default function JobCard({ job, style, compact = false }: JobCardProps) {
               target="_blank"
               rel="noopener noreferrer nofollow"
               variant="primary"
+              analyticsEvent="job_apply_click"
+              analyticsProperties={{
+                company: job.company,
+                job_slug: job.slug,
+                source: "job_card",
+              }}
               className="w-full"
               ariaLabel={`Apply for ${job.title} at ${job.company}`}
             >

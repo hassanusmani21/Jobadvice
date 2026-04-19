@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "@/components/AppLink";
+import SavedJobsHeaderLink from "@/components/SavedJobsHeaderLink";
 import ThemeToggle from "@/components/ThemeToggle";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,7 +15,6 @@ type NavigationItem = {
 const navigation: NavigationItem[] = [
   { href: "/", label: "Home" },
   { href: "/jobs", label: "Jobs" },
-  { href: "/resume-builder", label: "Resume" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
@@ -29,10 +29,78 @@ const isActivePath = (pathname: string, href: string) => {
   return pathname === href || pathname.startsWith(`${href}/`);
 };
 
+function ResumeIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 shrink-0">
+      <path
+        d="M6.25 3.75h5.9l2.6 2.6v9.4a.5.5 0 0 1-.5.5h-8.5a.5.5 0 0 1-.5-.5v-12a.5.5 0 0 1 .5-.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M12.15 3.75v2.6h2.6M7.7 9h4.6M7.7 11.6h4.6"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
+function MenuIcon({
+  open,
+  className = "h-4 w-4 shrink-0",
+}: {
+  open: boolean;
+  className?: string;
+}) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className={className}>
+      {open ? (
+        <path
+          d="M5.5 5.5 14.5 14.5M14.5 5.5 5.5 14.5"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="1.9"
+        />
+      ) : (
+        <path
+          d="M4.75 6h10.5M4.75 10h10.5M4.75 14h10.5"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeWidth="1.9"
+        />
+      )}
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className = "h-4 w-4 shrink-0" }: { className?: string }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 20 20" className={className}>
+      <path
+        d="M8 5.75 12.75 10 8 14.25"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.9"
+      />
+    </svg>
+  );
+}
+
 export default function SiteHeader() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const isResumeActive = isActivePath(pathname, "/resume-builder");
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -74,9 +142,9 @@ export default function SiteHeader() {
   const shouldElevateHeader = hasScrolled || isMenuOpen;
 
   return (
-    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-3 pt-2 min-[360px]:px-4 min-[360px]:pt-2.5 sm:px-6 sm:pt-3 lg:px-8">
+    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-3 pt-1.5 min-[360px]:px-4 min-[360px]:pt-2 sm:px-6 sm:pt-3 lg:px-8 lg:pt-2">
       <div
-        className={`fade-up header-shell relative rounded-2xl px-3 py-2.5 min-[360px]:px-4 min-[360px]:py-2.5 sm:px-5 sm:py-2.5 lg:px-5 lg:py-2 ${
+        className={`fade-up header-shell relative rounded-[1.15rem] px-3 py-2.5 min-[360px]:px-3.5 sm:rounded-2xl sm:px-5 sm:py-2.5 lg:px-4 ${
           shouldElevateHeader ? "header-shell-scrolled" : "header-shell-top"
         }`}
       >
@@ -101,7 +169,7 @@ export default function SiteHeader() {
           </Link>
 
           <nav
-            className="mx-auto flex flex-wrap items-center justify-center gap-1 text-sm font-semibold text-slate-600"
+            className="mx-auto flex flex-wrap items-center justify-center gap-1 text-sm font-semibold text-slate-600 lg:gap-0.5"
             aria-label="Primary"
           >
             {navigation.map((item) => {
@@ -112,7 +180,7 @@ export default function SiteHeader() {
                   key={item.href}
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  className={`rounded-xl px-3 py-1.5 transition-colors ${
+                  className={`rounded-xl px-3 py-1.5 transition-colors lg:px-2.5 lg:py-1 ${
                     isActive
                       ? "bg-teal-50 text-teal-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
                       : "hover:bg-teal-50/80 hover:text-teal-900"
@@ -124,7 +192,20 @@ export default function SiteHeader() {
             })}
           </nav>
 
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-[14px]">
+            <Link
+              href="/resume-builder"
+              aria-current={isResumeActive ? "page" : undefined}
+              className={`inline-flex h-10 items-center justify-center gap-2 rounded-[12px] px-[18px] text-[0.88rem] font-semibold transition ${
+                isResumeActive
+                  ? "bg-[linear-gradient(135deg,#0f8f77_0%,#16a085_55%,#1abc9c_100%)] text-white shadow-[0_4px_14px_rgba(26,188,156,0.35)]"
+                  : "bg-[linear-gradient(135deg,#16a085_0%,#1abc9c_100%)] text-white shadow-[0_4px_14px_rgba(26,188,156,0.35)] hover:-translate-y-px hover:shadow-[0_8px_18px_rgba(26,188,156,0.4)]"
+              }`}
+            >
+              <ResumeIcon />
+              Build Resume
+            </Link>
+            <SavedJobsHeaderLink />
             <ThemeToggle />
           </div>
         </div>
@@ -137,7 +218,7 @@ export default function SiteHeader() {
               width={220}
               height={76}
               priority
-              className="jobadvice-logo-light h-auto max-w-full w-[108px] min-[360px]:w-[120px]"
+              className="jobadvice-logo-light h-auto max-w-full w-[100px] min-[360px]:w-[112px]"
             />
             <Image
               src="/jobadvice-logo-dark.svg"
@@ -145,31 +226,12 @@ export default function SiteHeader() {
               width={220}
               height={76}
               priority
-              className="jobadvice-logo-dark h-auto max-w-full w-[108px] min-[360px]:w-[120px]"
+              className="jobadvice-logo-dark h-auto max-w-full w-[100px] min-[360px]:w-[112px]"
             />
           </Link>
 
-          <div className="flex items-center gap-1.5 min-[360px]:gap-2">
-            <Link
-              href="/jobs"
-              aria-label="Search jobs"
-              className="utility-button h-10 w-10 px-0 min-[360px]:h-11 min-[360px]:w-11"
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 20 20"
-                className="h-4 w-4"
-              >
-                <path
-                  d="m14.5 14.5 3 3m-1.5-8a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.8"
-                />
-              </svg>
-            </Link>
+          <div className="flex shrink-0 items-center gap-1.5 min-[360px]:gap-2">
+            <SavedJobsHeaderLink mobile />
             <ThemeToggle compact />
 
             <button
@@ -178,99 +240,105 @@ export default function SiteHeader() {
               aria-controls="mobile-site-menu"
               aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
               onClick={() => setIsMenuOpen((open) => !open)}
-              className={`utility-button header-menu-toggle h-10 w-10 px-0 min-[360px]:h-11 min-[360px]:w-11 ${
+              className={`utility-button header-menu-toggle h-9 w-9 px-0 min-[360px]:h-10 min-[360px]:w-10 ${
                 isMenuOpen ? "header-menu-toggle-active" : ""
               }`}
             >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 20 20"
-                className={`h-[18px] w-[18px] transition-transform min-[360px]:h-5 min-[360px]:w-5 ${isMenuOpen ? "rotate-90" : ""}`}
-              >
-                <path
-                  d={isMenuOpen ? "M5 5 15 15M15 5 5 15" : "M3 5h14M3 10h14M3 15h14"}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeWidth="1.8"
-                />
-              </svg>
+              <MenuIcon
+                open={isMenuOpen}
+                className={`h-[17px] w-[17px] shrink-0 transition-transform min-[360px]:h-[18px] min-[360px]:w-[18px] ${isMenuOpen ? "rotate-90" : ""}`}
+              />
             </button>
           </div>
         </div>
+      </div>
 
-        {isMenuOpen ? (
-          <>
-            <button
-              type="button"
-              aria-label="Close navigation menu"
-              className="mobile-menu-backdrop fixed inset-0 z-40 sm:hidden"
-              onClick={() => setIsMenuOpen(false)}
-            />
-            <div
-              id="mobile-site-menu"
-              className="absolute inset-x-0 top-full z-50 mt-3 sm:hidden"
-            >
-              <div className="mobile-menu-surface overflow-hidden p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-teal-700">
-                    Navigation
+      {isMenuOpen ? (
+        <>
+          <button
+            type="button"
+            aria-label="Close navigation menu"
+            className="mobile-menu-backdrop fixed inset-0 z-40 sm:hidden"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          <div
+            id="mobile-site-menu"
+            className="fixed inset-x-4 bottom-4 top-[4.75rem] z-50 mx-auto w-auto max-w-[22rem] sm:hidden"
+          >
+            <div className="mobile-menu-surface flex h-full flex-col overflow-hidden p-4">
+              <div className="flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
+                <div className="space-y-1">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-teal-700">
+                    Menu
                   </p>
-                  <button
-                    type="button"
-                    aria-label="Close navigation menu"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="utility-button h-10 w-10 rounded-full px-0"
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
-                      <path
-                        d="M5 5 15 15M15 5 5 15"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeWidth="1.8"
-                      />
-                    </svg>
-                  </button>
+                  <p className="text-sm font-medium text-slate-500">
+                    Quick navigation
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  aria-label="Close navigation menu"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:border-slate-300 hover:bg-white hover:text-slate-900"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+                    <path
+                      d="M5 5 15 15M15 5 5 15"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeWidth="1.8"
+                    />
+                  </svg>
+                </button>
+              </div>
 
-                <div className="mt-5 grid gap-3">
-                  {navigation.map((item) => {
-                    const isActive = isActivePath(pathname, item.href);
+                <Link
+                  href="/resume-builder"
+                  aria-current={isResumeActive ? "page" : undefined}
+                  className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[1rem] px-4 text-sm font-semibold transition ${
+                    isResumeActive
+                      ? "bg-[linear-gradient(135deg,#0f8f77_0%,#16a085_55%,#1abc9c_100%)] text-white shadow-[0_4px_14px_rgba(26,188,156,0.35)]"
+                      : "bg-[linear-gradient(135deg,#16a085_0%,#1abc9c_100%)] text-white shadow-[0_4px_14px_rgba(26,188,156,0.35)] hover:-translate-y-px hover:shadow-[0_8px_18px_rgba(26,188,156,0.4)]"
+                }`}
+              >
+                <ResumeIcon />
+                Build Resume
+                </Link>
 
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        aria-current={isActive ? "page" : undefined}
-                        className={`interactive-tile mobile-menu-tile rounded-xl border px-4 py-4 transition ${
-                          isActive
-                            ? "border-teal-200 bg-teal-50 text-teal-950"
-                            : "text-slate-800"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-base font-semibold">{item.label}</p>
-                          <span
-                            className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                              isActive
-                                ? "bg-teal-900 text-white"
-                                : "bg-slate-100 text-slate-500"
-                            }`}
-                          >
-                            {isActive ? "Current" : "Open"}
-                          </span>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+              <div className="mt-4 grid flex-1 content-start gap-2.5 overflow-y-auto pr-1">
+                {navigation.map((item) => {
+                  const isActive = isActivePath(pathname, item.href);
 
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`interactive-tile mobile-menu-tile rounded-[1rem] border px-4 py-3.5 transition ${
+                        isActive
+                          ? "border-teal-200 bg-teal-50 text-teal-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_28px_-24px_rgba(13,148,136,0.24)]"
+                          : "text-slate-800 hover:border-slate-300 hover:bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-base font-semibold">{item.label}</p>
+                        <span
+                          className={`inline-flex items-center justify-center rounded-full ${
+                            isActive ? "bg-teal-900 text-white" : "bg-slate-100 text-slate-400"
+                          } h-8 w-8`}
+                        >
+                          <ChevronRightIcon className="h-4 w-4 shrink-0" />
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
-          </>
-        ) : null}
-      </div>
+          </div>
+        </>
+      ) : null}
     </header>
   );
 }

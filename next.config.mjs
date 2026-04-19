@@ -22,15 +22,19 @@ if (!isDevelopment && !isStaticExport && !deploymentId) {
 
 const connectSrc = [
   "'self'",
+  "https://identity.netlify.com",
   "https://api.github.com",
   "https://github.com",
+  "https://www.google-analytics.com",
+  "https://region1.google-analytics.com",
+  "https://www.googletagmanager.com",
   ...(isDevelopment
     ? ["http://localhost:8081", "http://127.0.0.1:8081"]
     : []),
 ].join(" ");
 const scriptSrc = isDevelopment
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net"
-  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net";
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com https://www.googletagmanager.com"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com https://www.googletagmanager.com";
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -39,7 +43,7 @@ const contentSecurityPolicy = [
   scriptSrc,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob: https:",
+  "img-src 'self' data: blob: https: https://www.google-analytics.com",
   `connect-src ${connectSrc}`,
   "frame-src https://accounts.google.com",
   "form-action 'self' https://accounts.google.com",

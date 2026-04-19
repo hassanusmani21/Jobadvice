@@ -87,6 +87,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     <>
       <AdminMobileThemeLock />
       <style dangerouslySetInnerHTML={{ __html: adminShellStyles }} />
+      <div className="fixed right-4 top-4 z-50">
+        <a
+          href="/admin/alerts"
+          className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/92 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.45)] backdrop-blur transition hover:border-slate-300 hover:text-slate-950"
+        >
+          View alerts
+        </a>
+      </div>
       <MobileAdminApp
         adminEmail={session.user?.email || ""}
         initialCollection={initialCollection}

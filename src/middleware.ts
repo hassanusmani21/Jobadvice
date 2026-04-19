@@ -1,27 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { isAdminRole } from "./lib/auth/roles";
+import { isAllowedAdminEmail } from "./lib/adminAccess";
 import { siteUrl } from "./lib/site";
 import { toContentSlug } from "./lib/slug";
 
-const toSafeCallbackUrl = (
-  request: NextRequest,
-  defaultValue: string,
-  options?: { allowAdmin?: boolean },
-) => {
-  const rawValue = request.nextUrl.searchParams.get("callbackUrl") || defaultValue;
-  const allowAdmin = Boolean(options?.allowAdmin);
+const toSafeCallbackUrl = (request: NextRequest) => {
+  const rawValue = request.nextUrl.searchParams.get("callbackUrl") || "/admin";
 
-  if (!rawValue.startsWith("/") || rawValue.startsWith("//")) {
-    return defaultValue;
-  }
-
-  if (rawValue.startsWith("/admin/login") || rawValue.startsWith("/login")) {
-    return defaultValue;
-  }
-
-  if (!allowAdmin && rawValue.startsWith("/admin")) {
-    return defaultValue;
+  if (!rawValue.startsWith("/") || rawValue.startsWith("/admin/login")) {
+    return "/admin";
   }
 
   return rawValue;
@@ -115,27 +102,6 @@ const redirectMalformedJobSlug = (request: NextRequest) => {
   return NextResponse.redirect(redirectUrl);
 };
 
-const getTokenUserId = async (request: NextRequest) => {
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-  });
-
-  const userId =
-    typeof token?.userId === "string"
-      ? token.userId
-      : typeof token?.sub === "string"
-        ? token.sub
-        : "";
-
-  const role = typeof token?.role === "string" ? token.role : "";
-
-  return {
-    userId,
-    role,
-  };
-};
-
 export async function middleware(request: NextRequest) {
   const canonicalHostRedirect = redirectNonCanonicalHost(request);
   if (canonicalHostRedirect) {
@@ -172,14 +138,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    const { userId, role } = await getTokenUserId(request);
+    const token = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+    });
+    const email = typeof token?.email === "string" ? token.email : "";
 
-    if (isAdminRole(role)) {
+    if (isAllowedAdminEmail(email)) {
       return NextResponse.next();
-    }
-
-    if (userId) {
-      return NextResponse.redirect(new URL("/jobs", request.nextUrl.origin));
     }
 
     const loginUrl = new URL("/admin/login", request.nextUrl.origin);
@@ -187,47 +153,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (
-    request.nextUrl.pathname === "/me" ||
-    request.nextUrl.pathname === "/me/" ||
-    request.nextUrl.pathname.startsWith("/me/")
-  ) {
-    return NextResponse.redirect(new URL("/jobs", request.nextUrl.origin));
-  }
-
-  if (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/login/") {
-    const { userId } = await getTokenUserId(request);
-
-    if (!userId) {
-      return NextResponse.next();
-    }
-
-    const destinationUrl = new URL(
-      toSafeCallbackUrl(request, "/jobs"),
-      request.nextUrl.origin,
-    );
-    return NextResponse.redirect(destinationUrl);
-  }
-
   if (!request.nextUrl.pathname.startsWith("/admin/login")) {
     return NextResponse.next();
   }
 
-  const { userId, role } = await getTokenUserId(request);
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  });
+  const email = typeof token?.email === "string" ? token.email : "";
 
-  if (!userId) {
-    return NextResponse.next();
-  }
-
-  if (isAdminRole(role)) {
-    const destinationUrl = new URL(
-      toSafeCallbackUrl(request, "/admin", { allowAdmin: true }),
-      request.nextUrl.origin,
-    );
+  if (isAllowedAdminEmail(email)) {
+    const destinationUrl = new URL(toSafeCallbackUrl(request), request.nextUrl.origin);
     return NextResponse.redirect(destinationUrl);
   }
 
-  return NextResponse.redirect(new URL("/jobs", request.nextUrl.origin));
+  return NextResponse.next();
 }
 
 export const config = {
@@ -237,10 +178,6 @@ export const config = {
     "/admin/:path*",
     "/admin-mobile",
     "/admin-mobile/:path*",
-    "/login",
-    "/login/:path*",
-    "/me",
-    "/me/:path*",
     "/admin/login",
     "/admin/login/:path*",
     "/about",

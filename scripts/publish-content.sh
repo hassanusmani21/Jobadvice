@@ -77,4 +77,4 @@ fi
 echo "Sending Google job indexing notifications..."
 notify_google_indexing_api "${PREVIOUS_COMMIT}" "${CURRENT_COMMIT}"
 
-echo "Content pushed. Vercel will deploy from ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}."
+echo "Content pushed. Netlify will deploy from ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}."

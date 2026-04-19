@@ -96,7 +96,7 @@ publish_content() {
   fi
 
   notify_google_indexing_api "${previous_commit}" "${current_commit}"
-  echo "Auto publish complete. Vercel will deploy from ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}."
+  echo "Auto publish complete. Netlify will deploy from ${DEPLOY_REMOTE}/${DEPLOY_BRANCH}."
   return 0
 }
 

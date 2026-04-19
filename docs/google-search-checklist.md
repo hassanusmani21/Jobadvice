@@ -4,9 +4,9 @@ Use this checklist before expecting sustained Google traffic for JobAdvice.
 
 ## 1. Use One Canonical Domain
 
-- Connect your custom domain in Vercel.
-- Set that domain as the primary production domain in Vercel.
-- Redirect any old preview or fallback domains to the custom domain.
+- Buy or connect a custom domain in Netlify.
+- Set that domain as the primary domain in Netlify.
+- Redirect `jobadvice.netlify.app` to the custom domain.
 - Set `NEXT_PUBLIC_SITE_URL` to the final canonical domain.
 
 Example:
@@ -98,7 +98,7 @@ Use:
 After content pushes or SEO changes:
 
 1. confirm the GitHub push completed
-2. confirm Vercel deployed the latest commit
+2. confirm Netlify deployed the latest commit
 3. inspect one job URL live
 4. inspect `sitemap.xml`
 5. inspect Search Console coverage after recrawl
@@ -107,5 +107,5 @@ After content pushes or SEO changes:
 
 - Use local admin for drafting and review
 - Push content through GitHub
-- Let Vercel deploy
+- Let Netlify deploy
 - Use the Indexing API to accelerate recrawls of changed job URLs

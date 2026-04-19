@@ -5,8 +5,8 @@ JobAdvice is a production-ready job update website built with:
 - Next.js 14 (App Router in `src/app`)
 - Tailwind CSS
 - Markdown-based job content in `content/jobs`
-- Decap CMS admin panel at `/admin`
-- Vercel-ready deployment setup with optional static export mode for other hosts
+- Netlify CMS admin panel at `/admin`
+- Optional static export mode for Netlify deployment
 
 ## Features
 
@@ -29,11 +29,12 @@ JobAdvice is a production-ready job update website built with:
 ```text
 content/jobs/               # Markdown job posts
 content/blogs/              # Markdown blog posts
-public/admin/               # Decap CMS files
+public/admin/               # Netlify CMS files
 src/app/                    # App Router pages
 src/lib/jobs.ts             # Markdown loader + sorting + formatting
 src/lib/blogs.ts            # Blog loader + trending + search helpers
 src/lib/markdown.ts         # Lightweight markdown block parser
+netlify.toml                # Netlify build config
 ```
 
 ## Run Locally
@@ -50,14 +51,15 @@ Visit:
 - Admin: `http://localhost:3000/admin`
   If your browser caches old assets, use `http://localhost:3000/admin/index.html`.
 
-## Admin CMS Setup
+## Netlify CMS Setup
 
-1. Deploy the repository to Vercel.
-2. Set the environment variables listed below in the Vercel project.
-3. Ensure `ADMIN_CONTENTS_TOKEN` has repository contents write access.
-4. Open `/admin` and sign in with an allowed Google account.
+1. Deploy the repository to Netlify.
+2. In Netlify dashboard, enable `Identity`.
+3. Under `Identity > Services`, enable `Git Gateway`.
+4. Invite your admin user from Netlify Identity.
+5. Open `/admin` and log in.
 
-Admin can then create, update, and delete markdown files in `content/jobs/` and each save triggers a Git commit, which triggers a fresh Vercel deploy.
+Admin can then create/update/delete markdown files in `content/jobs/` and each save triggers a Git commit, which triggers Netlify auto-deploy.
 
 ## Job Post Frontmatter
 
@@ -117,7 +119,6 @@ Use this for static hosting setups.
 Set these environment variables:
 
 ```bash
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DATABASE_NAME?schema=public
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
 AUTH_SECRET=replace-with-long-random-secret
 NEXTAUTH_URL=https://your-domain.com
@@ -126,10 +127,11 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 ALLOWED_ADMIN_EMAILS=admin1@example.com,admin2@example.com
 NO_EXPIRY_JOB_RETENTION_DAYS=30
 ADMIN_CONTENTS_TOKEN=your-github-fine-grained-token
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxx
+JOB_ALERTS_FROM_EMAIL=alerts@your-domain.com
+JOB_ALERTS_CRON_SECRET=replace-with-long-random-secret
 ```
 
 `ADMIN_CONTENTS_TOKEN` is required in production if you want the custom `/admin` app to save posts, upload images, or delete entries.
 
-If you are enabling database-backed auth and persistence, `DATABASE_URL` is required before Prisma commands or Google login will work.
-
-The Prisma npm scripts already load `.env.local` automatically, so local development does not require a duplicate `.env` file.
+`RESEND_API_KEY`, `JOB_ALERTS_FROM_EMAIL`, and `JOB_ALERTS_CRON_SECRET` are required if you want the daily filtered job alert emails to run in production.

@@ -5,48 +5,51 @@ date: "2026-04-01"
 updatedAt: "2026-04-01"
 draft: false
 company: "Cognizant"
-location: "PAN India"
+location: "PAN India (Any Cognizant office location)"
 workMode: "On-site"
 employmentType: "Full-time"
 salary: "Up to ₹4–6 LPA (Estimated)"
 experience: "Fresher"
 eligibilityCriteria: |-
-  Three-year full-time degree graduates eligible
-  Strong communication skills
-  Basic computer knowledge
-  Ability to work in team environments
-  Willingness to work in rotational shifts
-  Basic problem-solving ability
-  Ability to handle IT or business support tasks
+  Graduates from 2024 or 2025 batch
+  Minimum required academic percentage as per company criteria
+  No active backlogs
+  Willing to relocate anywhere in India
+  Must be ready to work in rotational shifts
+  Indian nationals eligible to apply
+  (Eligible degree types include BCA, BSc, BA, BCom, BBA and similar 3-year UG programs.)
 education:
   - "BCA"
-  - "B.Sc"
-  - "B.Com"
+  - "BSc (Computer Science / IT / Mathematics / Physics / Statistics etc.)"
   - "BA"
-  - "BBA or equivalent 3-year degree"
+  - "BCom"
+  - "BBA"
+  - "BMS"
+  - "BVoc or similar"
+  - "Graduation Year: 2024 or 2025"
+  - "No standing arrears at the time of joining."
 skills:
+  - "Good communication skills"
   - "Basic computer knowledge"
-  - "Basic computer skills"
-  - "Communication skills"
-  - "Problem-solving"
-  - "MS Office tools"
-  - "Team collaboration"
-  - "Documentation skills"
-  - "Customer handling"
-  - "Technical support basics (preferred)"
+  - "Problem-solving ability"
+  - "Time management skills"
+  - "Teamwork ability"
+  - "Basic IT or technical understanding"
+  - "Analytical thinking"
+  - "Adaptability to new technologies"
 responsibilities:
-  - "Support business or IT operations teams"
-  - "Handle basic technical or operational tasks"
-  - "Assist in troubleshooting issues"
-  - "Maintain documentation and reports"
-  - "Work with internal teams to complete assigned tasks"
-  - "Support project execution and delivery"
-  - "Ensure timely completion of assigned activities"
-  - "Job details markdown"
-  - "Cognizant is a global IT services and consulting company that provides digital transformation, IT services, and business solutions to organizations worldwide. The Analyst Trainee role is an entry-level position designed for fresh graduates to start their careers in IT services, operations, and support roles."
-  - "This role typically involves supporting business operations, handling documentation, assisting in troubleshooting tasks, and collaborating with teams across different departments. Cognizant frequently recruits three-year degree graduates through campus and off-campus hiring programs using platforms like Superset, which connects students with employers and placement opportunities."
-workingDays: "5 Days Week"
-jobTiming: "Rotational Shift"
+  - "Write database queries and retrieve data"
+  - "Perform CRUD operations"
+  - "Execute test cases"
+  - "Monitor IT systems"
+  - "Resolve service tickets"
+  - "Provide technical support to users"
+  - "Troubleshoot software and hardware issues"
+  - "Maintain documentation"
+  - "Follow IT service processes"
+  - "Support cloud and infrastructure operations"
+workingDays: "5 Days / Shift-based"
+jobTiming: "Rotational Shifts (May include Night Shift)"
 applyLink: "https://app.joinsuperset.com/join/#/signup/student/jobprofiles/65ac431a-2d60-417a-b1f6-6b0f455a1d33"
 applicationStartDate: "2026-04-01"
 applicationEndDate: ""

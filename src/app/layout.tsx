@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Suspense } from "react";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 import Link from "@/components/AppLink";
+import GlobalEngagementPopups from "@/components/GlobalEngagementPopups";
 import RouteProgressReset from "@/components/RouteProgressReset";
 import SiteHeader from "@/components/SiteHeader";
+import ToastContainer from "@/components/Toast";
+import {
+  analyticsMeasurementId,
+} from "@/lib/analytics";
 import {
   organizationId,
   siteDescription,
@@ -12,6 +19,9 @@ import {
   siteName,
   siteSocialProfiles,
   siteUrl,
+  siteVerifiedPublisherName,
+  siteVerifiedPublisherRole,
+  siteWhatsappGroupUrl,
   websiteId,
 } from "@/lib/site";
 import "./globals.css";
@@ -205,11 +215,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
     ],
-    shortcut: "/favicon.ico",
-    apple: "/icon.svg",
+    shortcut: "/favicon.svg",
   },
   description: siteDescription,
   applicationName: siteName,
@@ -261,8 +269,22 @@ export const viewport: Viewport = {
 
 const footerLinks = [
   { href: "/about", label: "About" },
+  { href: "/how-we-verify-jobs", label: "How We Verify Jobs" },
   { href: "/contact", label: "Contact" },
   { href: "/privacy-policy", label: "Privacy Policy" },
+];
+
+const footerResourceLinks = [
+  { href: "/jobs", label: "Latest Jobs" },
+  { href: "/blog", label: "Career Guides" },
+  { href: "/resume-builder", label: "Resume Builder" },
+  { href: "/saved-jobs", label: "Saved Jobs" },
+];
+
+const footerTrustItems = [
+  "Direct apply links when the original source is available.",
+  "No pay-to-access job information.",
+  "Independent platform. Not a recruiter or placement agency.",
 ];
 
 const socialLinks = [
@@ -378,10 +400,33 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themePreferenceScript }} />
         <script dangerouslySetInnerHTML={{ __html: assetLoadRecoveryScript }} />
+        {analyticsMeasurementId ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${analyticsMeasurementId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                window.gtag = gtag;
+                gtag('js', new Date());
+                gtag('config', '${analyticsMeasurementId}', {
+                  anonymize_ip: true,
+                  send_page_view: false
+                });
+              `}
+            </Script>
+          </>
+        ) : null}
       </head>
       <body className="antialiased">
         <Suspense fallback={null}>
           <RouteProgressReset />
+        </Suspense>
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
         </Suspense>
         <div aria-hidden className="route-progress-indicator" />
         <script
@@ -396,42 +441,138 @@ export default function RootLayout({
 
           <SiteHeader />
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-5 pb-24 sm:px-6 sm:pt-6 sm:pb-10 lg:px-8 lg:pt-4">{children}</main>
+          <ToastContainer />
 
-          <footer className="mt-8 border-t border-slate-200 bg-slate-50">
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 pt-6 pb-24 sm:px-6 sm:pb-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-              <p className="text-center text-[13px] font-medium leading-6 text-slate-500 lg:text-left">
-                © 2026 JobAdvice. All rights reserved.
-              </p>
+          <Suspense fallback={null}>
+            <GlobalEngagementPopups />
+          </Suspense>
 
-              <nav
-                className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
-                aria-label="Footer"
-              >
-                {footerLinks.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="text-[14px] font-medium text-slate-700 underline-offset-4 transition hover:text-slate-900 hover:underline"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-20 sm:px-6 sm:pt-5 sm:pb-10 lg:px-8 lg:pt-2">{children}</main>
 
-              <div className="flex items-center justify-center gap-2 lg:justify-end">
-                {socialLinks.map((item) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    aria-label={item.label}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                  >
-                    {item.icon}
-                  </a>
-                ))}
+          <footer className="mt-8 border-t border-slate-200 bg-slate-50/90 sm:mt-10">
+            <div className="mx-auto w-full max-w-6xl px-4 pt-7 pb-20 sm:px-6 sm:pt-8 sm:pb-8 lg:px-8">
+              <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.35)] backdrop-blur sm:rounded-[1.75rem] sm:p-6">
+                <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)]">
+                  <section className="space-y-4">
+                    <div>
+                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-teal-700">
+                        JobAdvice
+                      </p>
+                      <h2 className="mt-3 font-serif text-[1.8rem] leading-[1.05] text-slate-900 sm:text-[2rem]">
+                        Verified job discovery with clearer trust signals.
+                      </h2>
+                      <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
+                        {siteDescription} We focus on cleaner listings, easier source-checking, and
+                        direct-apply clarity for students, freshers, and early-career job seekers.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                      {footerTrustItems.map((item) => (
+                        <div
+                          key={item}
+                          className="rounded-2xl border border-emerald-100 bg-emerald-50/75 px-4 py-4"
+                        >
+                          <p className="text-sm leading-6 text-slate-700">{item}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                        Curated by
+                      </p>
+                      <p className="mt-2 text-base font-semibold text-slate-900">
+                        {siteVerifiedPublisherName}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">{siteVerifiedPublisherRole}</p>
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Explore
+                    </h3>
+                    <nav className="mt-4 grid gap-3" aria-label="Footer resources">
+                      {footerResourceLinks.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className="text-sm font-medium text-slate-700 underline-offset-4 transition hover:text-slate-900 hover:underline"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </nav>
+
+                    <h3 className="mt-7 text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Trust & Info
+                    </h3>
+                    <nav className="mt-4 grid gap-3" aria-label="Footer information">
+                      {footerLinks.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className="text-sm font-medium text-slate-700 underline-offset-4 transition hover:text-slate-900 hover:underline"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </nav>
+                  </section>
+
+                  <section>
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Community
+                    </h3>
+                    <p className="mt-4 text-sm leading-7 text-slate-600">
+                      Questions, corrections, and partnerships are welcome. For important issues,
+                      email is the best route.
+                    </p>
+                    <p className="mt-4 break-all text-sm font-semibold text-slate-900">
+                      {siteEmail}
+                    </p>
+
+                    <div className="mt-5 flex flex-col gap-3">
+                      <Link
+                        href="/how-we-verify-jobs"
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-teal-200 hover:text-teal-900"
+                      >
+                        Read How We Verify Jobs
+                      </Link>
+                      <a
+                        href={siteWhatsappGroupUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                      >
+                        Join WhatsApp Updates
+                      </a>
+                    </div>
+
+                    <div className="mt-5 flex items-center gap-2">
+                      {socialLinks.map((item) => (
+                        <a
+                          key={item.label}
+                          href={item.href}
+                          aria-label={item.label}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                        >
+                          {item.icon}
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+
+                <div className="mt-6 border-t border-slate-200/80 pt-5">
+                  <p className="text-center text-[13px] font-medium leading-6 text-slate-500 lg:text-left">
+                    © 2026 {siteName}. Independent job information platform. External employer and
+                    portal pages may update or remove listings at any time.
+                  </p>
+                </div>
               </div>
             </div>
           </footer>

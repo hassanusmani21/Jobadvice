@@ -8,11 +8,11 @@ export default function AdminRecoverPage() {
       <div className="w-full rounded-3xl border border-white/70 bg-white/90 p-7 shadow-xl backdrop-blur-sm sm:p-10">
         <p className="inline-flex rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-teal-900">Admin Sign-In</p>
         <h1 className="mt-4 font-serif text-4xl leading-tight text-slate-900">
-          Legacy password recovery has been removed
+          Netlify password recovery has been removed
         </h1>
         <p className="mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
           This project now uses the custom admin app instead of the old CMS shell. Admin access
-          depends on the protected admin login rather than a legacy password reset flow.
+          depends on the protected admin login rather than a Netlify password reset flow.
         </p>
         <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
           If publishing is disabled after login, set <code>ADMIN_CONTENTS_TOKEN</code> in

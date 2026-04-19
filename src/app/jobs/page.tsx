@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
+import Link from "@/components/AppLink";
+import JobAlertSignupCard from "@/components/JobAlertSignupCard";
 import JobCard from "@/components/JobCard";
-import { getAllJobs, type JobPost } from "@/lib/jobs";
-import { getJobsForSegment, isJobSegmentSlug } from "@/lib/jobSegments";
+import {
+  filterJobsByAlertFilters,
+  hasActiveJobAlertFilters,
+  normalizeJobFilters,
+  sortJobsByFilters,
+  toJobAlertFilters,
+  type JobFilters,
+} from "@/lib/jobFilters";
+import { getAllJobs } from "@/lib/jobs";
+import { getAllJobLocationLandings } from "@/lib/taxonomies";
 
 export const metadata: Metadata = {
   title: "Jobs",
@@ -21,32 +31,8 @@ type JobsPageProps = {
     type?: string | string[];
     status?: string | string[];
     sort?: string | string[];
+    alert?: string | string[];
   };
-};
-
-const toSingleValue = (rawValue: string | string[] | undefined) => {
-  const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
-  return typeof value === "string" ? value.trim() : "";
-};
-
-const matchesSearch = (job: JobPost, query: string) => {
-  const haystack = [
-    job.title,
-    job.company,
-    job.location,
-    job.summary || "",
-    job.experience || "",
-    job.experienceLevel || "",
-    job.eligibilityCriteria || "",
-    job.employmentType || job.jobType || "",
-    job.skills.join(" "),
-    job.responsibilities.join(" "),
-    job.education.join(" "),
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  return haystack.includes(query.toLowerCase());
 };
 
 const toUniqueSortedValues = (values: string[]) =>
@@ -58,84 +44,40 @@ const toUniqueSortedValues = (values: string[]) =>
     ),
   ).sort((first, second) => first.localeCompare(second));
 
-const isOpenStatus = (job: JobPost) =>
-  ["open", "expiring_soon", "expires_today", "no_expiry"].includes(
-    job.applicationStatus.state,
-  );
-
-const toSortableDate = (value: string | null | undefined) => {
-  if (!value) {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  const parsed = Date.parse(`${value}T00:00:00Z`);
-  return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed;
-};
-
 export default async function JobsPage({ searchParams }: JobsPageProps) {
   const jobs = await getAllJobs();
-  const query = toSingleValue(searchParams?.q);
-  const locationFilter = toSingleValue(searchParams?.location);
-  const rawSegmentFilter = toSingleValue(searchParams?.segment).toLowerCase();
-  const segmentFilter = isJobSegmentSlug(rawSegmentFilter) ? rawSegmentFilter : "";
-  const typeFilter = toSingleValue(searchParams?.type);
-  const statusFilter = toSingleValue(searchParams?.status);
-  const sortFilter = toSingleValue(searchParams?.sort) || "newest";
+  const toSingleValue = (rawValue: string | string[] | undefined) => {
+    const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;
+    return typeof value === "string" ? value.trim() : "";
+  };
+  const filters: JobFilters = normalizeJobFilters({
+    q: toSingleValue(searchParams?.q),
+    location: toSingleValue(searchParams?.location),
+    segment: toSingleValue(searchParams?.segment),
+    type: toSingleValue(searchParams?.type),
+    status: toSingleValue(searchParams?.status),
+    sort: toSingleValue(searchParams?.sort),
+  });
+  const alertParam = toSingleValue(searchParams?.alert);
+  const query = filters.query;
+  const locationFilter = filters.location;
+  const segmentFilter = filters.segment;
+  const typeFilter = filters.type;
+  const statusFilter = filters.status;
+  const sortFilter = filters.sort;
+  const alertFilters = toJobAlertFilters(filters);
 
   const locationOptions = toUniqueSortedValues(jobs.map((job) => job.location));
+  const locationLandingPages = getAllJobLocationLandings(jobs).slice(0, 8);
   const typeOptions = toUniqueSortedValues(
     jobs.map((job) => job.employmentType || job.jobType || ""),
   );
 
-  const filteredJobs = jobs.filter((job) => {
-    if (query && !matchesSearch(job, query)) {
-      return false;
-    }
+  const filteredJobs = filterJobsByAlertFilters(jobs, alertFilters);
 
-    if (segmentFilter && !getJobsForSegment([job], segmentFilter).length) {
-      return false;
-    }
+  const sortedJobs = sortJobsByFilters(filteredJobs, sortFilter);
 
-    if (locationFilter && job.location.toLowerCase() !== locationFilter.toLowerCase()) {
-      return false;
-    }
-
-    const employmentType = (job.employmentType || job.jobType || "").toLowerCase();
-    if (typeFilter && employmentType !== typeFilter.toLowerCase()) {
-      return false;
-    }
-
-    if (statusFilter === "open" && !isOpenStatus(job)) {
-      return false;
-    }
-
-    if (statusFilter === "upcoming" && job.applicationStatus.state !== "upcoming") {
-      return false;
-    }
-
-    if (statusFilter === "expired" && job.applicationStatus.state !== "expired") {
-      return false;
-    }
-
-    return true;
-  });
-
-  const sortedJobs = [...filteredJobs].sort((firstJob, secondJob) => {
-    if (sortFilter === "oldest") {
-      return new Date(firstJob.date).getTime() - new Date(secondJob.date).getTime();
-    }
-
-    if (sortFilter === "closingSoon") {
-      return (
-        toSortableDate(firstJob.applicationEndDate) -
-        toSortableDate(secondJob.applicationEndDate)
-      );
-    }
-
-    return new Date(secondJob.date).getTime() - new Date(firstJob.date).getTime();
-  });
-
-  const hasActiveFilters = Boolean(query || locationFilter || segmentFilter || typeFilter || statusFilter);
+  const hasActiveFilters = hasActiveJobAlertFilters(alertFilters);
   const showClearAction = hasActiveFilters || sortFilter !== "newest";
 
   return (
@@ -311,6 +253,40 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
           ) : null}
         </form>
       </div>
+
+      {alertParam === "unsubscribed" ? (
+        <p className="soft-note px-4 py-4 text-slate-600">
+          Daily alert unsubscribed. You will not receive more emails for that saved filter.
+        </p>
+      ) : null}
+
+      {alertParam === "unsubscribe-missing" ? (
+        <p className="soft-note px-4 py-4 text-slate-600">
+          That alert link is no longer valid. If you still want updates, create a fresh alert from
+          the current filters.
+        </p>
+      ) : null}
+
+      {locationLandingPages.length > 0 ? (
+        <div className="fade-up hidden space-y-3 lg:block" style={{ animationDelay: "70ms" }}>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Popular cities
+            </span>
+            {locationLandingPages.map((item) => (
+              <Link
+                key={item.slug}
+                href={`/jobs/location/${item.slug}`}
+                className="content-chip text-sm transition hover:border-teal-200 hover:text-teal-900"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {hasActiveFilters ? <JobAlertSignupCard filters={alertFilters} /> : null}
 
       <div className="jobs-directory-grid grid gap-x-5 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
         {sortedJobs.map((job) => (

@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ApplicationStatusBadge from "@/components/ApplicationStatusBadge";
+import JobDetailSections from "@/components/JobDetailSections";
 import JobActionButton from "@/components/JobActionButton";
 import RecommendedJobs from "@/components/RecommendedJobs";
+import SaveJobButton from "@/components/SaveJobButton";
 import {
   formatApplicationWindow,
-  formatPostedDate,
   getAllJobs,
   getRelatedJobs,
   resolveStructuredValidThrough,
 } from "@/lib/jobs";
+import { formatPostedDate } from "@/lib/formatDate";
 import { siteUrl } from "@/lib/site";
 
 type JobPageProps = {
@@ -839,95 +841,93 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                 ) : null}
               </div>
 
-              {isJobExpired ? (
-                <JobActionButton variant="danger" className="w-full sm:w-auto">
-                  Job Expired
-                </JobActionButton>
-              ) : isApplicationUpcoming ? (
-                <JobActionButton variant="info" className="w-full sm:w-auto">
-                  Applications Open Soon
-                </JobActionButton>
-              ) : !hasApplyLink ? (
-                <JobActionButton variant="muted" className="w-full sm:w-auto">
-                  Apply Link Not Available
-                </JobActionButton>
-              ) : (
-                <JobActionButton
-                  href={`/api/apply/${job.slug}`}
-                  external
-                  target="_blank"
-                  rel="noopener noreferrer nofollow"
-                  variant="primary"
-                  className="job-detail-apply-button w-full sm:w-auto"
-                >
-                  Apply Now
-                </JobActionButton>
-              )}
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+                {isJobExpired ? (
+                  <JobActionButton variant="danger" className="w-full sm:w-auto">
+                    Job Expired
+                  </JobActionButton>
+                ) : isApplicationUpcoming ? (
+                  <JobActionButton variant="info" className="w-full sm:w-auto">
+                    Applications Open Soon
+                  </JobActionButton>
+                ) : !hasApplyLink ? (
+                  <JobActionButton variant="muted" className="w-full sm:w-auto">
+                    Apply Link Not Available
+                  </JobActionButton>
+                ) : (
+                  <JobActionButton
+                    href={`/api/apply/${job.slug}`}
+                    external
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    variant="primary"
+                    analyticsEvent="job_apply_click"
+                    analyticsProperties={{
+                      company: job.company,
+                      job_slug: job.slug,
+                      source: "job_detail",
+                    }}
+                    className="job-detail-apply-button w-full sm:w-auto"
+                  >
+                    Apply Now
+                  </JobActionButton>
+                )}
+
+                <SaveJobButton
+                  slug={job.slug}
+                  title={job.title}
+                  company={job.company}
+                  variant="detail"
+                  className="w-full sm:w-auto"
+                />
+              </div>
             </div>
           </div>
         </header>
 
-        {eligibilityCriteria ? (
-          <section
-            className="fade-up card-surface rounded-3xl px-6 py-6 sm:px-8"
-            style={{ animationDelay: "105ms" }}
-          >
-            <h2 className="font-serif text-2xl text-slate-900">Eligibility Criteria</h2>
-            <p className="mt-4 whitespace-pre-line leading-7 text-slate-700">{eligibilityCriteria}</p>
-          </section>
-        ) : null}
-
-        {responsibilities.length > 0 ? (
-          <section
-            className="fade-up card-surface rounded-3xl px-6 py-6 sm:px-8"
-            style={{ animationDelay: "125ms" }}
-          >
-            <h2 className="font-serif text-2xl text-slate-900">Responsibilities</h2>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-slate-700">
-              {responsibilities.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {skills.length > 0 ? (
-          <section
-            className="fade-up card-surface rounded-3xl px-6 py-6 sm:px-8"
-            style={{ animationDelay: "150ms" }}
-          >
-            <h2 className="font-serif text-2xl text-slate-900">Skills</h2>
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {skills.map((skill) => (
-                <li
-                  key={skill}
-                  className="rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-sm font-medium text-teal-900"
-                >
-                  {skill}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        {education.length > 0 ? (
-          <section
-            className="fade-up card-surface rounded-3xl px-6 py-6 sm:px-8"
-            style={{ animationDelay: "180ms" }}
-          >
-            <h2 className="font-serif text-2xl text-slate-900">Education</h2>
-            <ul className="mt-4 flex flex-wrap gap-2">
-              {education.map((item) => (
-                <li
-                  key={item}
-                  className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-sm font-medium text-slate-800"
-                >
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+        <JobDetailSections
+          sections={[
+            {
+              id: "eligibility",
+              title: "Eligibility Criteria",
+              content: {
+                kind: "text",
+                value: eligibilityCriteria,
+              },
+              animationDelayMs: 105,
+            },
+            {
+              id: "responsibilities",
+              title: "Responsibilities",
+              content: {
+                kind: "list",
+                items: responsibilities,
+                bullet: true,
+              },
+              animationDelayMs: 125,
+            },
+            {
+              id: "skills",
+              title: "Skills",
+              content: {
+                kind: "chips",
+                items: skills,
+                tone: "teal",
+              },
+              animationDelayMs: 150,
+            },
+            {
+              id: "education",
+              title: "Education",
+              content: {
+                kind: "chips",
+                items: education,
+                tone: "slate",
+              },
+              animationDelayMs: 180,
+            },
+          ]}
+        />
 
         <div className="fade-up" style={{ animationDelay: "230ms" }}>
           <JobActionButton href="/jobs" variant="secondary" className="sm:w-auto">

@@ -7,6 +7,7 @@ import JobCard from "@/components/JobCard";
 import { getLatestBlogs } from "@/lib/blogs";
 import { getAllJobs } from "@/lib/jobs";
 import { getAllJobSegmentConfigs } from "@/lib/jobSegments";
+import { siteWhatsappGroupUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Fresher Jobs, Internships, and Verified Openings in India",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 export const revalidate = 60 * 60;
-const whatsappChannelUrl = "https://whatsapp.com/channel/0029Vb7MyM0BPzjaKwa1cr1f";
+
 const joinClasses = (...parts: Array<string | false | null | undefined>) =>
   parts.filter(Boolean).join(" ");
 
@@ -60,52 +61,58 @@ export default async function HomePage() {
   ];
   const communityTrustItems = ["Verified links", "No spam", "Daily updates"];
   const communityContent = (
-      <div className="home-community-body items-center text-center lg:items-start lg:text-left">
-        <p className="home-community-kicker text-sm font-medium uppercase tracking-[0.12em] text-emerald-700 lg:text-[11px] lg:font-semibold lg:tracking-[0.22em]">
+    <div className="home-community-body items-center text-center lg:items-start lg:text-left">
+      <div className="home-community-top w-full">
+        <p className="home-community-kicker text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-emerald-700 sm:text-[0.76rem] lg:text-[0.74rem]">
           WhatsApp
         </p>
 
-      <div className="home-community-copy-block mx-auto max-w-[17rem] sm:max-w-[20rem] lg:mx-0 lg:max-w-none">
-        <h2 className="home-community-title mx-auto font-serif text-[1.05rem] leading-[1.08] text-slate-900 sm:text-[1.18rem] lg:mx-0">
-          Get faster job updates
-        </h2>
+        <div className="home-community-copy-block mx-auto max-w-[17rem] sm:max-w-[20rem] lg:mx-0 lg:max-w-none">
+          <h2 className="home-community-title mx-auto font-serif text-[1.26rem] leading-[1.08] text-slate-900 sm:text-[1.38rem] lg:mx-0">
+            Get faster job updates
+          </h2>
 
-        <p className="home-community-proof mx-auto text-[0.84rem] font-medium text-slate-600 sm:text-[0.94rem] lg:mx-0">
-          5k+ members • daily updates
-        </p>
+          <p className="home-community-proof mx-auto text-[0.95rem] font-medium text-slate-600 sm:text-[1rem] lg:mx-0">
+            5k+ members • daily updates
+          </p>
 
-        <div
-          className="home-community-trust-row justify-center lg:justify-start"
-          aria-label="WhatsApp update highlights"
-        >
-          {communityTrustItems.map((item) => (
-            <span key={item} className="home-community-trust-item">
-              <span aria-hidden="true" className="home-community-trust-icon">
-                <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none">
-                  <path
-                    d="M4 8.2 6.5 10.7 12 5.3"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+          <div
+            className="home-community-trust-row justify-center lg:justify-start"
+            aria-label="WhatsApp update highlights"
+          >
+            {communityTrustItems.map((item) => (
+              <span key={item} className="home-community-trust-item">
+                <span aria-hidden="true" className="home-community-trust-icon">
+                  <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none">
+                    <path
+                      d="M4 8.2 6.5 10.7 12 5.3"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+                <span>{item}</span>
               </span>
-              <span>{item}</span>
-            </span>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       <ActionButton
-        href={whatsappChannelUrl}
+        href={siteWhatsappGroupUrl}
         external
         target="_blank"
         rel="noopener noreferrer"
         variant="primary"
+        analyticsEvent="whatsapp_group_click"
+        analyticsProperties={{
+          source: "homepage_hero",
+        }}
         className="home-community-button w-full max-w-[17rem] self-center lg:max-w-none lg:self-auto"
       >
-        Join WhatsApp Updates
+        Join WhatsApp Group
       </ActionButton>
     </div>
   );
@@ -113,7 +120,7 @@ export default async function HomePage() {
   const communityCard = (className?: string) => (
     <aside
       className={joinClasses(
-        "home-community-card card-surface h-full rounded-2xl",
+        "home-community-card card-surface rounded-2xl",
         className,
       )}
     >
@@ -144,45 +151,47 @@ export default async function HomePage() {
 
           <div className="relative z-[1] home-hero-grid grid content-start gap-3.5 lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)] lg:items-center">
             <div className="home-hero-copy mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-[36rem] lg:text-left">
-              <div className="home-hero-badge-row flex flex-wrap items-center justify-center lg:justify-start">
-                <span className="page-kicker home-hero-kicker">Fresh jobs updated daily</span>
-                <span className="home-hero-live-pill hidden lg:inline-flex">Verified listings</span>
+              <div className="home-hero-copy-stack">
+                <div className="home-hero-badge-row flex flex-wrap items-center justify-center lg:justify-start">
+                  <span className="page-kicker home-hero-kicker">Fresh jobs updated daily</span>
+                  <span className="home-hero-live-pill hidden lg:inline-flex">Verified listings</span>
+                </div>
+
+                <div className="home-hero-heading-block mx-auto max-w-xs sm:max-w-3xl lg:mx-0 lg:max-w-[34rem]">
+                  <h1 className="page-title home-hero-title mx-auto max-w-xs !text-2xl sm:max-w-3xl sm:!text-3xl lg:mx-0 lg:max-w-[34rem] lg:!text-[2.75rem] xl:!text-[2.95rem]">
+                    Find Verified Jobs in India
+                  </h1>
+
+                  <p className="page-copy home-hero-copy-text mx-auto max-w-[18rem] !text-[0.95rem] sm:max-w-[26rem] sm:!text-[1rem] lg:mx-0 lg:max-w-[31rem] lg:!text-[1rem]">
+                    <span className="sm:hidden">Direct apply. No spam.</span>
+                    <span className="hidden sm:inline">Direct apply. No spam. Updated daily.</span>
+                  </p>
+                </div>
+
+                <p className="home-hero-compact-stats mx-auto mt-0 sm:hidden">{heroStatsSummary}</p>
+
+                <div className="home-hero-proof-row mx-auto hidden max-w-[24rem] flex-wrap items-center justify-center sm:flex sm:max-w-none lg:mx-0 lg:justify-start">
+                  {heroMetrics.map((metric) => (
+                    <span key={metric.label} className="home-hero-proof-chip">
+                      <span className="home-hero-proof-value">{metric.value}</span>
+                      <span className="home-hero-proof-label">{metric.label}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
 
-              <div className="home-hero-heading-block mx-auto max-w-xs sm:max-w-3xl lg:mx-0 lg:max-w-[34rem]">
-                <h1 className="page-title home-hero-title mx-auto max-w-xs !text-2xl sm:max-w-3xl sm:!text-3xl lg:mx-0 lg:max-w-[34rem] lg:!text-[2.75rem] xl:!text-[2.95rem]">
-                  Find Verified Jobs in India
-                </h1>
-
-                <p className="page-copy home-hero-copy-text mx-auto max-w-[18rem] !text-[0.95rem] sm:max-w-[26rem] sm:!text-[1rem] lg:mx-0 lg:max-w-[31rem] lg:!text-[1rem]">
-                  <span className="sm:hidden">Direct apply. No spam.</span>
-                  <span className="hidden sm:inline">Direct apply. No spam. Updated daily.</span>
-                </p>
-              </div>
-
-              <p className="home-hero-compact-stats mx-auto mt-0 sm:hidden">{heroStatsSummary}</p>
-
-              <div className="home-hero-proof-row mx-auto hidden max-w-[24rem] flex-wrap items-center justify-center sm:flex sm:max-w-none lg:mx-0 lg:justify-start">
-                {heroMetrics.map((metric) => (
-                  <span key={metric.label} className="home-hero-proof-chip">
-                    <span className="home-hero-proof-value">{metric.value}</span>
-                    <span className="home-hero-proof-label">{metric.label}</span>
-                  </span>
-                ))}
-              </div>
-
-              <div className="home-hero-action-row mx-auto flex max-w-[17rem] flex-col items-stretch sm:max-w-[16rem] lg:mx-0 lg:max-w-none lg:flex-row lg:flex-wrap lg:items-center">
+              <div className="home-hero-action-row mx-auto flex max-w-[17rem] flex-col items-stretch sm:mx-auto sm:max-w-none sm:flex-row sm:flex-nowrap sm:justify-center lg:mx-0 lg:justify-start lg:items-center">
                 <ActionButton
                   href="/jobs"
                   variant="primary"
-                  className="home-hero-primary-action w-full lg:w-auto"
+                  className="home-hero-primary-action w-full sm:w-auto"
                 >
                   Browse Jobs <span aria-hidden="true">→</span>
                 </ActionButton>
                 <ActionButton
                   href="/blog"
                   variant="secondary"
-                  className="home-hero-secondary-action w-full lg:w-auto"
+                  className="home-hero-secondary-action w-full sm:w-auto"
                 >
                   Career Guides
                 </ActionButton>
@@ -200,7 +209,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="fade-up home-search-wrap relative mt-4 px-2 sm:px-4 lg:px-0">
+        <section className="fade-up home-search-wrap relative mt-2 sm:mt-3 px-2 sm:px-4 lg:px-0">
           <div className="home-search-surface home-search-shell mx-auto max-w-5xl lg:max-w-none">
             <div className="home-mobile-filter-panel">
               <div className="home-mobile-filter-quick-row">

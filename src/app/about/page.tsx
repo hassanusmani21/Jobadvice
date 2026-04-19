@@ -41,6 +41,9 @@ export default function AboutPage() {
           <ActionButton href="/jobs" variant="primary" className="sm:w-auto">
             Browse Jobs
           </ActionButton>
+          <ActionButton href="/how-we-verify-jobs" variant="secondary" className="sm:w-auto">
+            How We Verify Jobs
+          </ActionButton>
           <ActionButton href="/contact" variant="secondary" className="sm:w-auto">
             Contact Us
           </ActionButton>

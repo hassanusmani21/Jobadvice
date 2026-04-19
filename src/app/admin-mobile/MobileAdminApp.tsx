@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState, type ReactNode } from "react";
 import { signOut } from "next-auth/react";
 import {
   type AdminCollection,
@@ -13,7 +13,7 @@ import {
   createEmptyJobEntry,
   getTodayDateString,
 } from "@/lib/adminMobile";
-import { siteName, siteUrl, siteWhatsappChannelUrl } from "@/lib/site";
+import { siteName, siteUrl, siteWhatsappGroupUrl } from "@/lib/site";
 
 type AdminAppProps = {
   adminEmail: string;
@@ -25,9 +25,9 @@ type AdminAppProps = {
 
 type RecordsState = Record<AdminCollection, AdminMobileRecord[]>;
 type LoadingState = Record<AdminCollection, boolean>;
-type JobListMode = "recent" | "threeDays" | "today" | "yesterday" | "all";
+type JobListMode = "today" | "yesterday" | "all";
 type JobListSection = {
-  id: "today" | "yesterday" | "twoDaysAgo";
+  id: "today" | "yesterday";
   title: string;
   description: string;
   emptyMessage: string;
@@ -267,11 +267,7 @@ const buildBatchShareScopeLabel = (mode: JobListMode, searchTerm: string) => {
       ? "today's jobs"
       : mode === "yesterday"
         ? "yesterday's jobs"
-        : mode === "threeDays"
-          ? "jobs from the last 3 days"
-        : mode === "all"
-          ? "all visible jobs"
-          : "jobs from the last 2 days";
+        : "all visible jobs";
 
   if (!searchTerm) {
     return baseLabel;
@@ -304,8 +300,8 @@ const buildBatchJobWhatsappText = (
       : "";
   const brandLine = `${useEmojis ? "📢 " : ""}Shared via ${siteName}`;
   const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
-  const channelLabel = `${useEmojis ? "📲 " : ""}Join WhatsApp Channel:`;
-  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
+  const groupLabel = `${useEmojis ? "📲 " : ""}Join WhatsApp Group:`;
+  const groupLink = `${useEmojis ? "👉 " : ""}${siteWhatsappGroupUrl}`;
 
   const jobLines = section.records.map((record, index) => {
     const recordMeta = [
@@ -334,8 +330,8 @@ const buildBatchJobWhatsappText = (
     websiteLabel,
     siteUrl,
     "",
-    channelLabel,
-    channelLink,
+    groupLabel,
+    groupLink,
   ].join("\n");
 };
 
@@ -412,10 +408,10 @@ const buildPublishedJobWhatsappText = (
   const workModeLine = `${useEmojis ? "🏢 " : ""}${buildShareModeLabel(share.workMode)}`;
   const applyLabel = `${useEmojis ? "🔗 " : ""}Apply Now:`;
   const websiteLabel = `${useEmojis ? "🌐 " : ""}Visit our website for more jobs:`;
-  const channelLabel = `${
+  const groupLabel = `${
     useEmojis ? "📢 " : ""
-  }Join WhatsApp Channel for Daily Jobs:`;
-  const channelLink = `${useEmojis ? "👉 " : ""}${siteWhatsappChannelUrl}`;
+  }Join WhatsApp Group for Daily Jobs:`;
+  const groupLink = `${useEmojis ? "👉 " : ""}${siteWhatsappGroupUrl}`;
 
   return [
     heading,
@@ -433,8 +429,8 @@ const buildPublishedJobWhatsappText = (
     websiteLabel,
     siteUrl,
     "",
-    channelLabel,
-    channelLink,
+    groupLabel,
+    groupLink,
   ].join("\n");
 };
 
@@ -607,6 +603,68 @@ const applyBlogExtractedData = (
 const buildAdminLoginUrl = (adminBasePath: string) =>
   `/admin/login?callbackUrl=${encodeURIComponent(adminBasePath)}`;
 
+type EditorAccordionSectionId =
+  | "job-basics"
+  | "job-details"
+  | "job-application"
+  | "job-requirements"
+  | "blog-basics"
+  | "blog-media"
+  | "blog-content";
+
+const getDefaultEditorAccordionSection = (
+  collection: AdminCollection,
+): EditorAccordionSectionId =>
+  collection === "jobs" ? "job-basics" : "blog-basics";
+
+function EditorAccordionSection({
+  id,
+  title,
+  isOpen,
+  onToggle,
+  children,
+  optionalLabel,
+}: {
+  id: EditorAccordionSectionId;
+  title: string;
+  isOpen: boolean;
+  onToggle: (id: EditorAccordionSectionId) => void;
+  children: ReactNode;
+  optionalLabel?: string;
+}) {
+  return (
+    <section
+      className={cn(
+        "resume-accordion-section card-surface",
+        isOpen && "resume-accordion-section-open",
+      )}
+    >
+      <button
+        type="button"
+        className="resume-accordion-toggle"
+        onClick={(event) => {
+          onToggle(id);
+          if (event.detail > 0) {
+            event.currentTarget.blur();
+          }
+        }}
+        aria-expanded={isOpen}
+      >
+        <span className="resume-accordion-head">
+          <span className="resume-accordion-title">{title}</span>
+          {optionalLabel ? (
+            <span className="resume-accordion-optional">{optionalLabel}</span>
+          ) : null}
+        </span>
+        <span className="resume-accordion-icon" aria-hidden="true">
+          {isOpen ? "−" : "+"}
+        </span>
+      </button>
+      {isOpen ? <div className="resume-accordion-body">{children}</div> : null}
+    </section>
+  );
+}
+
 export default function MobileAdminApp({
   adminEmail,
   initialCollection,
@@ -621,7 +679,7 @@ export default function MobileAdminApp({
     useState<LoadingState>(defaultLoadingState);
   const [recordsError, setRecordsError] = useState("");
   const [searchValue, setSearchValue] = useState("");
-  const [jobListMode, setJobListMode] = useState<JobListMode>("recent");
+  const [jobListMode, setJobListMode] = useState<JobListMode>("today");
   const [jobCategoryFilter, setJobCategoryFilter] = useState<JobCategoryFilter>("all");
   const [publishedJobShare, setPublishedJobShare] = useState<PublishedJobShare | null>(null);
   const [publishedJobShareUsesEmojis, setPublishedJobShareUsesEmojis] = useState(true);
@@ -644,13 +702,15 @@ export default function MobileAdminApp({
   const [extractMode, setExtractMode] = useState<"text" | "url" | "">("");
   const [extractError, setExtractError] = useState("");
   const [extractNotice, setExtractNotice] = useState("");
+  const [openEditorSection, setOpenEditorSection] = useState<EditorAccordionSectionId | null>(
+    getDefaultEditorAccordionSection(initialCollection),
+  );
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const extractorPanelRef = useRef<HTMLDivElement | null>(null);
 
   const activeRecords = recordsByCollection[collection];
   const todayDate = getTodayDateString();
   const yesterdayDate = shiftIsoDateString(todayDate, -1);
-  const twoDaysAgoDate = shiftIsoDateString(todayDate, -2);
   const activeJobRecords =
     collection === "jobs" ? (activeRecords as AdminMobileJobRecord[]) : [];
   const totalDrafts =
@@ -673,14 +733,6 @@ export default function MobileAdminApp({
   const yesterdayJobCount = recordsByCollection.jobs.filter(
     (record) => getRecordActivityDate(record) === yesterdayDate,
   ).length;
-  const threeDayJobCount = recordsByCollection.jobs.filter((record) => {
-    const activityDate = getRecordActivityDate(record);
-    return (
-      activityDate === todayDate ||
-      activityDate === yesterdayDate ||
-      activityDate === twoDaysAgoDate
-    );
-  }).length;
   const jobListSections: JobListSection[] =
     collection === "jobs"
       ? [
@@ -706,17 +758,6 @@ export default function MobileAdminApp({
               .filter((record) => getRecordActivityDate(record) === yesterdayDate)
               .sort(sortRecordsByRecentActivity),
           },
-          {
-            id: "twoDaysAgo",
-            title: "2 Days Ago",
-            description: "Jobs published or updated 2 days ago",
-            emptyMessage: query
-              ? "No jobs from 2 days ago matched your search."
-              : "No jobs were updated 2 days ago.",
-            records: filteredJobRecords
-              .filter((record) => getRecordActivityDate(record) === twoDaysAgoDate)
-              .sort(sortRecordsByRecentActivity),
-          },
         ]
       : [];
   const visibleJobSections =
@@ -724,11 +765,7 @@ export default function MobileAdminApp({
       ? jobListSections.filter((section) => section.id === "today")
       : jobListMode === "yesterday"
         ? jobListSections.filter((section) => section.id === "yesterday")
-        : jobListMode === "threeDays"
-          ? jobListSections
-        : jobListMode === "recent"
-          ? jobListSections.filter((section) => section.id !== "twoDaysAgo")
-          : [];
+        : [];
   const visibleJobRecords =
     collection === "jobs"
       ? jobListMode === "all"
@@ -785,11 +822,7 @@ export default function MobileAdminApp({
         ? "Search today's jobs"
         : jobListMode === "yesterday"
           ? "Search yesterday's jobs"
-          : jobListMode === "threeDays"
-            ? "Search jobs from the last 3 days"
-          : jobListMode === "all"
-            ? "Search all jobs"
-            : "Search jobs from the last 2 days"
+          : "Search all jobs"
       : `Search ${collection}`;
   const publishedJobSummary = publishedJobShare
     ? buildJobShareSummary(publishedJobShare)
@@ -1334,7 +1367,7 @@ export default function MobileAdminApp({
           clearExtractorInputs: true,
           preservePublishedJobShare: true,
           resetSearch: true,
-          nextJobListMode: "recent",
+          nextJobListMode: "today",
         });
         return;
       }
@@ -1521,6 +1554,13 @@ export default function MobileAdminApp({
       ? editorEntry.title || "New job"
       : editorEntry.title || "New blog";
   const extractorEntityLabel = collection === "jobs" ? "job" : "blog";
+  const toggleEditorSection = (sectionId: EditorAccordionSectionId) => {
+    setOpenEditorSection((current) => (current === sectionId ? null : sectionId));
+  };
+
+  useEffect(() => {
+    setOpenEditorSection(getDefaultEditorAccordionSection(collection));
+  }, [collection, editorOpen, originalSlug]);
   const renderRecordButton = (record: AdminMobileRecord) => {
     const activityDate = getRecordActivityDate(record);
     const primaryDateLabel =
@@ -1880,16 +1920,6 @@ export default function MobileAdminApp({
 
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     {[
-                      {
-                        mode: "recent" as const,
-                        label: "Last 2 days",
-                        count: todayJobCount + yesterdayJobCount,
-                      },
-                      {
-                        mode: "threeDays" as const,
-                        label: "Last 3 days",
-                        count: threeDayJobCount,
-                      },
                       {
                         mode: "today" as const,
                         label: "Today",
@@ -2424,468 +2454,545 @@ export default function MobileAdminApp({
                   Loading entry...
                 </p>
               ) : (
-                <div className="mt-5 space-y-5">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Title
-                      </span>
-                      <input
-                        type="text"
-                        value={editorEntry.title}
-                        onChange={(event) => updateEntry({ title: event.target.value })}
-                        className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                        placeholder={
-                          editorEntry.collection === "jobs"
-                            ? "Software Engineer"
-                            : "AI roadmap for freshers"
-                        }
-                      />
-                    </label>
+	                <div className="mt-5 space-y-4">
+	                  {editorEntry.collection === "jobs" ? (
+	                    <>
+	                      <EditorAccordionSection
+	                        id="job-basics"
+	                        title="Job Basics"
+	                        isOpen={openEditorSection === "job-basics"}
+	                        onToggle={toggleEditorSection}
+	                      >
+	                        <div className="grid gap-4 sm:grid-cols-2">
+	                          <label className="block">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Title
+	                            </span>
+	                            <input
+	                              type="text"
+	                              value={editorEntry.title}
+	                              onChange={(event) => updateEntry({ title: event.target.value })}
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                              placeholder="Software Engineer"
+	                            />
+	                          </label>
 
-                    <label className="block">
-                      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                        Publish date
-                      </span>
-                      <input
-                        type="date"
-                        value={editorEntry.date}
-                        onChange={(event) => updateEntry({ date: event.target.value })}
-                        className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                      />
-                    </label>
-                  </div>
+	                          <label className="block">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Publish date
+	                            </span>
+	                            <input
+	                              type="date"
+	                              value={editorEntry.date}
+	                              onChange={(event) => updateEntry({ date: event.target.value })}
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                            />
+	                          </label>
 
-                  {editorEntry.collection === "jobs" ? (
-                    <>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Company
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.company}
-                            onChange={(event) => updateEntry({ company: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Capgemini"
-                          />
-                        </label>
+	                          <label className="block">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Company
+	                            </span>
+	                            <input
+	                              type="text"
+	                              value={editorEntry.company}
+	                              onChange={(event) => updateEntry({ company: event.target.value })}
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                              placeholder="Capgemini"
+	                            />
+	                          </label>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Location
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.location}
-                            onChange={(event) => updateEntry({ location: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Bangalore, India"
-                          />
-                        </label>
-                      </div>
+	                          <label className="block">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Location
+	                            </span>
+	                            <input
+	                              type="text"
+	                              value={editorEntry.location}
+	                              onChange={(event) => updateEntry({ location: event.target.value })}
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                              placeholder="Bangalore, India"
+	                            />
+	                          </label>
+	                        </div>
+	                      </EditorAccordionSection>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Work mode
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.workMode}
-                            onChange={(event) => updateEntry({ workMode: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Remote, Hybrid, On-site"
-                          />
-                        </label>
+	                      <EditorAccordionSection
+	                        id="job-details"
+	                        title="Job Details"
+	                        isOpen={openEditorSection === "job-details"}
+	                        onToggle={toggleEditorSection}
+	                      >
+	                        <div className="space-y-4">
+	                          <div className="grid gap-4 sm:grid-cols-2">
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Work mode
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.workMode}
+	                                onChange={(event) => updateEntry({ workMode: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="Remote, Hybrid, On-site"
+	                              />
+	                            </label>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Employment type
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.employmentType}
-                            onChange={(event) =>
-                              updateEntry({ employmentType: event.target.value })
-                            }
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Full-time"
-                          />
-                        </label>
-                      </div>
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Employment type
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.employmentType}
+	                                onChange={(event) =>
+	                                  updateEntry({ employmentType: event.target.value })
+	                                }
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="Full-time"
+	                              />
+	                            </label>
+	                          </div>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Salary
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.salary}
-                            onChange={(event) => updateEntry({ salary: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="6-8 LPA"
-                          />
-                        </label>
+	                          <div className="grid gap-4 sm:grid-cols-2">
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Salary
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.salary}
+	                                onChange={(event) => updateEntry({ salary: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="6-8 LPA"
+	                              />
+	                            </label>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Experience
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.experience}
-                            onChange={(event) => updateEntry({ experience: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="1-3 years"
-                          />
-                        </label>
-                      </div>
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Experience
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.experience}
+	                                onChange={(event) => updateEntry({ experience: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="1-3 years"
+	                              />
+	                            </label>
+	                          </div>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Apply link
-                          </span>
-                          <input
-                            type="url"
-                            value={editorEntry.applyLink}
-                            onChange={(event) => updateEntry({ applyLink: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="https://company.com/jobs/apply"
-                          />
-                        </label>
+	                          <div className="grid gap-4 sm:grid-cols-2">
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Working days
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.workingDays}
+	                                onChange={(event) => updateEntry({ workingDays: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="Monday-Friday"
+	                              />
+	                            </label>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Application start
-                          </span>
-                          <input
-                            type="date"
-                            value={editorEntry.applicationStartDate}
-                            onChange={(event) =>
-                              updateEntry({ applicationStartDate: event.target.value })
-                            }
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          />
-                        </label>
-                      </div>
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Job timing
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.jobTiming}
+	                                onChange={(event) => updateEntry({ jobTiming: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="9:30 AM - 6:30 PM"
+	                              />
+	                            </label>
+	                          </div>
+	                        </div>
+	                      </EditorAccordionSection>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Application end
-                          </span>
-                          <input
-                            type="date"
-                            value={editorEntry.applicationEndDate}
-                            onChange={(event) =>
-                              updateEntry({ applicationEndDate: event.target.value })
-                            }
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          />
-                        </label>
+	                      <EditorAccordionSection
+	                        id="job-application"
+	                        title="Application"
+	                        isOpen={openEditorSection === "job-application"}
+	                        onToggle={toggleEditorSection}
+	                      >
+	                        <div className="grid gap-4 sm:grid-cols-2">
+	                          <label className="block sm:col-span-2">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Apply link
+	                            </span>
+	                            <input
+	                              type="url"
+	                              value={editorEntry.applyLink}
+	                              onChange={(event) => updateEntry({ applyLink: event.target.value })}
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                              placeholder="https://company.com/jobs/apply"
+	                            />
+	                          </label>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Working days
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.workingDays}
-                            onChange={(event) => updateEntry({ workingDays: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Monday-Friday"
-                          />
-                        </label>
-                      </div>
+	                          <label className="block">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Application start
+	                            </span>
+	                            <input
+	                              type="date"
+	                              value={editorEntry.applicationStartDate}
+	                              onChange={(event) =>
+	                                updateEntry({ applicationStartDate: event.target.value })
+	                              }
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                            />
+	                          </label>
 
-                      <label className="block">
-                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Job timing
-                        </span>
-                        <input
-                          type="text"
-                          value={editorEntry.jobTiming}
-                          onChange={(event) => updateEntry({ jobTiming: event.target.value })}
-                          className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          placeholder="9:30 AM - 6:30 PM"
-                        />
-                      </label>
+	                          <label className="block">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Application end
+	                            </span>
+	                            <input
+	                              type="date"
+	                              value={editorEntry.applicationEndDate}
+	                              onChange={(event) =>
+	                                updateEntry({ applicationEndDate: event.target.value })
+	                              }
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                            />
+	                          </label>
+	                        </div>
+	                      </EditorAccordionSection>
 
-                      <label className="block">
-                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Eligibility criteria
-                        </span>
-                        <textarea
-                          value={editorEntry.eligibilityCriteria}
-                          onChange={(event) =>
-                            updateEntry({ eligibilityCriteria: event.target.value })
-                          }
-                          rows={4}
-                          className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          placeholder="One point per line"
-                        />
-                      </label>
+	                      <EditorAccordionSection
+	                        id="job-requirements"
+	                        title="Requirements"
+	                        isOpen={openEditorSection === "job-requirements"}
+	                        onToggle={toggleEditorSection}
+	                      >
+	                        <div className="space-y-4">
+	                          <label className="block">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Eligibility criteria
+	                            </span>
+	                            <textarea
+	                              value={editorEntry.eligibilityCriteria}
+	                              onChange={(event) =>
+	                                updateEntry({ eligibilityCriteria: event.target.value })
+	                              }
+	                              rows={4}
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                              placeholder="One point per line"
+	                            />
+	                          </label>
 
-                      <div className="grid gap-4 lg:grid-cols-3">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Education
-                          </span>
-                          <textarea
-                            value={listToText(editorEntry.education)}
-                            onChange={(event) =>
-                              updateEntry({ education: textToList(event.target.value) })
-                            }
-                            rows={6}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="B.Tech&#10;MCA"
-                          />
-                        </label>
+	                          <div className="grid gap-4 lg:grid-cols-3">
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Education
+	                              </span>
+	                              <textarea
+	                                value={listToText(editorEntry.education)}
+	                                onChange={(event) =>
+	                                  updateEntry({ education: textToList(event.target.value) })
+	                                }
+	                                rows={6}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="B.Tech&#10;MCA"
+	                              />
+	                            </label>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Skills
-                          </span>
-                          <textarea
-                            value={listToText(editorEntry.skills)}
-                            onChange={(event) =>
-                              updateEntry({ skills: textToList(event.target.value) })
-                            }
-                            rows={6}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="React&#10;TypeScript&#10;SQL"
-                          />
-                        </label>
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Skills
+	                              </span>
+	                              <textarea
+	                                value={listToText(editorEntry.skills)}
+	                                onChange={(event) =>
+	                                  updateEntry({ skills: textToList(event.target.value) })
+	                                }
+	                                rows={6}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="React&#10;TypeScript&#10;SQL"
+	                              />
+	                            </label>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Responsibilities
-                          </span>
-                          <textarea
-                            value={listToText(editorEntry.responsibilities)}
-                            onChange={(event) =>
-                              updateEntry({ responsibilities: textToList(event.target.value) })
-                            }
-                            rows={6}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Build APIs&#10;Collaborate with design"
-                          />
-                        </label>
-                      </div>
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Responsibilities
+	                              </span>
+	                              <textarea
+	                                value={listToText(editorEntry.responsibilities)}
+	                                onChange={(event) =>
+	                                  updateEntry({ responsibilities: textToList(event.target.value) })
+	                                }
+	                                rows={6}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="Build APIs&#10;Collaborate with design"
+	                              />
+	                            </label>
+	                          </div>
+	                        </div>
+	                      </EditorAccordionSection>
+	                    </>
+	                  ) : (
+	                    <>
+	                      <EditorAccordionSection
+	                        id="blog-basics"
+	                        title="Blog Basics"
+	                        isOpen={openEditorSection === "blog-basics"}
+	                        onToggle={toggleEditorSection}
+	                      >
+	                        <div className="space-y-4">
+	                          <div className="grid gap-4 sm:grid-cols-2">
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Title
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.title}
+	                                onChange={(event) => updateEntry({ title: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="AI roadmap for freshers"
+	                              />
+	                            </label>
 
-                    </>
-                  ) : (
-                    <>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Topic
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.topic}
-                            onChange={(event) => updateEntry({ topic: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Career Growth"
-                          />
-                        </label>
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Publish date
+	                              </span>
+	                              <input
+	                                type="date"
+	                                value={editorEntry.date}
+	                                onChange={(event) => updateEntry({ date: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                              />
+	                            </label>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Author
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.author}
-                            onChange={(event) => updateEntry({ author: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Hassan Usmani"
-                          />
-                        </label>
-                      </div>
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Topic
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.topic}
+	                                onChange={(event) => updateEntry({ topic: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="Career Growth"
+	                              />
+	                            </label>
 
-                      <label className="block">
-                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Summary
-                        </span>
-                        <textarea
-                          value={editorEntry.summary}
-                          onChange={(event) => updateEntry({ summary: event.target.value })}
-                          rows={3}
-                          className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          placeholder="Short summary for cards and previews."
-                        />
-                      </label>
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Author
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.author}
+	                                onChange={(event) => updateEntry({ author: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="Hassan Usmani"
+	                              />
+	                            </label>
+	                          </div>
 
-                      <label className="block">
-                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Tags
-                        </span>
-                        <textarea
-                          value={listToText(editorEntry.tags)}
-                          onChange={(event) => updateEntry({ tags: textToList(event.target.value) })}
-                          rows={4}
-                          className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          placeholder="ai&#10;roadmap&#10;career growth"
-                        />
-                      </label>
+	                          <label className="block">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Summary
+	                            </span>
+	                            <textarea
+	                              value={editorEntry.summary}
+	                              onChange={(event) => updateEntry({ summary: event.target.value })}
+	                              rows={3}
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                              placeholder="Short summary for cards and previews."
+	                            />
+	                          </label>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Cover image URL
-                          </span>
-                          <input
-                            type="url"
-                            value={editorEntry.coverImage}
-                            onChange={(event) => updateEntry({ coverImage: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="/uploads/cover-image.jpg"
-                          />
-                        </label>
+	                          <label className="block">
+	                            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                              Tags
+	                            </span>
+	                            <textarea
+	                              value={listToText(editorEntry.tags)}
+	                              onChange={(event) =>
+	                                updateEntry({ tags: textToList(event.target.value) })
+	                              }
+	                              rows={4}
+	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                              placeholder="ai&#10;roadmap&#10;career growth"
+	                            />
+	                          </label>
+	                        </div>
+	                      </EditorAccordionSection>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            Trending
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => updateEntry({ isTrending: !editorEntry.isTrending })}
-                            className={cn(
-                              "flex min-h-[52px] w-full items-center justify-between rounded-[1rem] border px-4 text-sm font-semibold transition",
-                              editorEntry.isTrending
-                                ? "border-amber-300 bg-amber-50 text-amber-800"
-                                : "border-slate-200 bg-white text-slate-600",
-                            )}
-                          >
-                            <span>{editorEntry.isTrending ? "Trending enabled" : "Trending off"}</span>
-                            <span>{editorEntry.isTrending ? "On" : "Off"}</span>
-                          </button>
-                        </label>
-                      </div>
+	                      <EditorAccordionSection
+	                        id="blog-media"
+	                        title="Media & CTA"
+	                        isOpen={openEditorSection === "blog-media"}
+	                        onToggle={toggleEditorSection}
+	                      >
+	                        <div className="space-y-4">
+	                          <div className="grid gap-4 sm:grid-cols-2">
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Cover image URL
+	                              </span>
+	                              <input
+	                                type="url"
+	                                value={editorEntry.coverImage}
+	                                onChange={(event) => updateEntry({ coverImage: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="/uploads/cover-image.jpg"
+	                              />
+	                            </label>
 
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            CTA label
-                          </span>
-                          <input
-                            type="text"
-                            value={editorEntry.ctaLabel}
-                            onChange={(event) => updateEntry({ ctaLabel: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="Apply now"
-                          />
-                        </label>
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Trending
+	                              </span>
+	                              <button
+	                                type="button"
+	                                onClick={() => updateEntry({ isTrending: !editorEntry.isTrending })}
+	                                className={cn(
+	                                  "flex min-h-[52px] w-full items-center justify-between rounded-[1rem] border px-4 text-sm font-semibold transition",
+	                                  editorEntry.isTrending
+	                                    ? "border-amber-300 bg-amber-50 text-amber-800"
+	                                    : "border-slate-200 bg-white text-slate-600",
+	                                )}
+	                              >
+	                                <span>{editorEntry.isTrending ? "Trending enabled" : "Trending off"}</span>
+	                                <span>{editorEntry.isTrending ? "On" : "Off"}</span>
+	                              </button>
+	                            </label>
+	                          </div>
 
-                        <label className="block">
-                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                            CTA link
-                          </span>
-                          <input
-                            type="url"
-                            value={editorEntry.ctaLink}
-                            onChange={(event) => updateEntry({ ctaLink: event.target.value })}
-                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                            placeholder="https://example.com"
-                          />
-                        </label>
-                      </div>
+	                          <div className="grid gap-4 sm:grid-cols-2">
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                CTA label
+	                              </span>
+	                              <input
+	                                type="text"
+	                                value={editorEntry.ctaLabel}
+	                                onChange={(event) => updateEntry({ ctaLabel: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="Apply now"
+	                              />
+	                            </label>
 
-                      <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-slate-900">Image upload</p>
-                            <p className="text-sm text-slate-500">
-                              Upload once, then use it as the cover image or insert it into the article.
-                            </p>
-                          </div>
-                          <label
-                            className={cn(
-                              "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
-                              uploadDisabled
-                                ? "cursor-not-allowed bg-slate-300"
-                                : "cursor-pointer bg-teal-700 hover:bg-teal-800",
-                            )}
-                          >
-                            {uploading ? "Uploading..." : "Upload image"}
-                            <input
-                              type="file"
-                              accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
-                              className="hidden"
-                              disabled={uploadDisabled}
-                              onChange={(event) => {
-                                const nextFile = event.target.files?.[0];
-                                if (nextFile) {
-                                  uploadImage(nextFile);
-                                }
+	                            <label className="block">
+	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                CTA link
+	                              </span>
+	                              <input
+	                                type="url"
+	                                value={editorEntry.ctaLink}
+	                                onChange={(event) => updateEntry({ ctaLink: event.target.value })}
+	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                                placeholder="https://example.com"
+	                              />
+	                            </label>
+	                          </div>
 
-                                event.currentTarget.value = "";
-                              }}
-                            />
-                          </label>
-                        </div>
+	                          <div className="rounded-[1.25rem] border border-slate-200 bg-white p-4 shadow-sm">
+	                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+	                              <div>
+	                                <p className="text-sm font-semibold text-slate-900">Image upload</p>
+	                                <p className="text-sm text-slate-500">
+	                                  Upload once, then use it as the cover image or insert it into the article.
+	                                </p>
+	                              </div>
+	                              <label
+	                                className={cn(
+	                                  "inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold text-white transition",
+	                                  uploadDisabled
+	                                    ? "cursor-not-allowed bg-slate-300"
+	                                    : "cursor-pointer bg-teal-700 hover:bg-teal-800",
+	                                )}
+	                              >
+	                                {uploading ? "Uploading..." : "Upload image"}
+	                                <input
+	                                  type="file"
+	                                  accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+	                                  className="hidden"
+	                                  disabled={uploadDisabled}
+	                                  onChange={(event) => {
+	                                    const nextFile = event.target.files?.[0];
+	                                    if (nextFile) {
+	                                      uploadImage(nextFile);
+	                                    }
 
-                        {editorEntry.coverImage ? (
-                          <div className="mt-4 overflow-hidden rounded-[1rem] border border-slate-200 bg-slate-50">
-                            <div
-                              aria-hidden="true"
-                              className="h-48 w-full bg-cover bg-center"
-                              style={{ backgroundImage: `url("${editorEntry.coverImage}")` }}
-                            />
-                          </div>
-                        ) : null}
+	                                    event.currentTarget.value = "";
+	                                  }}
+	                                />
+	                              </label>
+	                            </div>
 
-                        {uploadedAssetUrl ? (
-                          <div className="mt-4 rounded-[1rem] border border-emerald-200 bg-emerald-50 p-4">
-                            <p className="text-sm font-medium break-all text-emerald-800">
-                              {uploadedAssetUrl}
-                            </p>
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <button
-                                type="button"
-                                onClick={() => updateEntry({ coverImage: uploadedAssetUrl })}
-                                className="inline-flex min-h-11 items-center justify-center rounded-full bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
-                              >
-                                Use as cover
-                              </button>
-                              <button
-                                type="button"
-                                onClick={insertUploadedAsset}
-                                className="inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-300 bg-white px-4 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
-                              >
-                                Insert in article
-                              </button>
-                              <button
-                                type="button"
-                                onClick={copyUploadedAsset}
-                                className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
-                              >
-                                Copy URL
-                              </button>
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
+	                            {editorEntry.coverImage ? (
+	                              <div className="mt-4 overflow-hidden rounded-[1rem] border border-slate-200 bg-slate-50">
+	                                <div
+	                                  aria-hidden="true"
+	                                  className="h-48 w-full bg-cover bg-center"
+	                                  style={{ backgroundImage: `url("${editorEntry.coverImage}")` }}
+	                                />
+	                              </div>
+	                            ) : null}
 
-                      <label className="block">
-                        <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                          Article markdown
-                        </span>
-                        <textarea
-                          value={editorEntry.body}
-                          onChange={(event) => updateEntry({ body: event.target.value })}
-                          rows={16}
-                          className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-                          placeholder="# Headline&#10;&#10;Start writing..."
-                        />
-                      </label>
-                    </>
-                  )}
+	                            {uploadedAssetUrl ? (
+	                              <div className="mt-4 rounded-[1rem] border border-emerald-200 bg-emerald-50 p-4">
+	                                <p className="text-sm font-medium break-all text-emerald-800">
+	                                  {uploadedAssetUrl}
+	                                </p>
+	                                <div className="mt-3 flex flex-wrap gap-2">
+	                                  <button
+	                                    type="button"
+	                                    onClick={() => updateEntry({ coverImage: uploadedAssetUrl })}
+	                                    className="inline-flex min-h-11 items-center justify-center rounded-full bg-emerald-700 px-4 text-sm font-semibold text-white transition hover:bg-emerald-800"
+	                                  >
+	                                    Use as cover
+	                                  </button>
+	                                  <button
+	                                    type="button"
+	                                    onClick={insertUploadedAsset}
+	                                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-emerald-300 bg-white px-4 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+	                                  >
+	                                    Insert in article
+	                                  </button>
+	                                  <button
+	                                    type="button"
+	                                    onClick={copyUploadedAsset}
+	                                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+	                                  >
+	                                    Copy URL
+	                                  </button>
+	                                </div>
+	                              </div>
+	                            ) : null}
+	                          </div>
+	                        </div>
+	                      </EditorAccordionSection>
+
+	                      <EditorAccordionSection
+	                        id="blog-content"
+	                        title="Article Markdown"
+	                        isOpen={openEditorSection === "blog-content"}
+	                        onToggle={toggleEditorSection}
+	                      >
+	                        <label className="block">
+	                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                            Article markdown
+	                          </span>
+	                          <textarea
+	                            value={editorEntry.body}
+	                            onChange={(event) => updateEntry({ body: event.target.value })}
+	                            rows={16}
+	                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                            placeholder="# Headline&#10;&#10;Start writing..."
+	                          />
+	                        </label>
+	                      </EditorAccordionSection>
+	                    </>
+	                  )}
 
                   <div className="rounded-[1rem] border border-slate-200 bg-slate-50/75 p-3 shadow-sm lg:hidden">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

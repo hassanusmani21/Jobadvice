@@ -96,10 +96,14 @@ export default function ThemeToggle({ compact = false }: ThemeToggleProps) {
       aria-label={label}
       title={label}
       className={`utility-button ${
-        compact ? "h-11 w-11 px-0" : "px-3 py-1.5 text-sm font-semibold"
+        compact
+          ? "h-10 w-10 px-0 text-slate-700 hover:text-teal-800"
+          : "h-10 px-[18px] text-sm font-semibold"
       }`}
     >
-      {isDark ? <SunIcon /> : <MoonIcon />}
+      <span className={compact ? "inline-flex h-[18px] w-[18px] items-center justify-center" : ""}>
+        {isDark ? <SunIcon /> : <MoonIcon />}
+      </span>
       {!compact ? <span>{isDark ? "Light" : "Dark"}</span> : null}
     </button>
   );

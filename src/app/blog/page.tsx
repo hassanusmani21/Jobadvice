@@ -9,6 +9,7 @@ import {
   type BlogPost,
 } from "@/lib/blogs";
 import { siteName, siteUrl } from "@/lib/site";
+import { toBlogTopicSlug } from "@/lib/taxonomies";
 
 export const metadata: Metadata = {
   title: "Career Advice, Interview Tips, and Hiring News",
@@ -103,22 +104,65 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      <section className="fade-up jobs-directory-toolbar blog-directory-toolbar-shell">
+      <section className="fade-up jobs-directory-toolbar">
         <div className="jobs-directory-topbar">
           <div className="jobs-directory-title-line">
             <span className="jobs-directory-kicker">Career Articles</span>
             <h1 className="jobs-directory-inline-title">Blog</h1>
           </div>
-          <div className="jobs-directory-count-pill">
+          <div className="jobs-directory-count-pill jobs-directory-count-pill-desktop">
             {filteredBlogs.length} post{filteredBlogs.length === 1 ? "" : "s"}
           </div>
         </div>
 
+        <form action="/blog" method="get" className="jobs-directory-mobile-form">
+          <div className="jobs-directory-mobile-search-row">
+            <label htmlFor="blog-mobile-search" className="sr-only">
+              Search blog posts
+            </label>
+            <input
+              id="blog-mobile-search"
+              name="q"
+              type="search"
+              defaultValue={query}
+              placeholder="Search by title, topic, keyword, or tag"
+              className="form-control jobs-directory-control jobs-directory-mobile-search-input"
+            />
+
+            <button
+              type="submit"
+              className="jobs-directory-mobile-search-button"
+              aria-label="Search blog posts"
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
+                <path
+                  d="m14.5 14.5 3 3m-1.5-8a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                />
+              </svg>
+            </button>
+          </div>
+
+          {query ? (
+            <ActionButton
+              href="/blog"
+              variant="secondary"
+              className="jobs-directory-action w-full"
+            >
+              Clear
+            </ActionButton>
+          ) : null}
+        </form>
+
         <form
           action="/blog"
           method="get"
-          className={`jobs-directory-toolbar-form blog-directory-toolbar-form${
-            query ? " blog-directory-search-panel-has-clear" : ""
+          className={`jobs-directory-desktop-form jobs-directory-toolbar-form blog-directory-filter-panel${
+            query ? " blog-directory-filter-panel-has-clear" : ""
           }`}
         >
           <label htmlFor="blog-search" className="sr-only">
@@ -130,12 +174,12 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             type="search"
             defaultValue={query}
             placeholder="Search by title, topic, keyword, or tag"
-            className="form-control jobs-directory-control blog-directory-search-input"
+            className="form-control jobs-directory-control"
           />
           <ActionButton
             variant="primary"
             buttonType="submit"
-            className="jobs-directory-action blog-directory-search-button w-full"
+            className="jobs-directory-action w-full"
           >
             Search
           </ActionButton>
@@ -143,7 +187,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             <ActionButton
               href="/blog"
               variant="secondary"
-              className="jobs-directory-action blog-directory-search-clear w-full"
+              className="jobs-directory-action w-full"
             >
               Clear
             </ActionButton>
@@ -155,15 +199,8 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             {topTopics.map((item) => (
               <Link
                 key={item.topic}
-                href={{
-                  pathname: "/blog",
-                  query: { q: item.topic },
-                }}
-                className={`content-chip blog-directory-topic-chip text-sm transition ${
-                  query.toLowerCase() === item.topic.toLowerCase()
-                    ? "content-chip-accent"
-                    : "hover:border-teal-200 hover:text-teal-900"
-                }`}
+                href={`/blog/topic/${toBlogTopicSlug(item.topic)}`}
+                className="content-chip blog-directory-topic-chip text-sm transition hover:border-teal-200 hover:text-teal-900"
               >
                 {item.topic}
               </Link>

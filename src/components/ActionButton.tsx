@@ -1,5 +1,11 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "@/components/AppLink";
+import {
+  trackEvent,
+  type AnalyticsEventParams,
+} from "@/lib/analytics";
 
 type ActionButtonVariant = "primary" | "secondary" | "muted" | "danger" | "info";
 
@@ -13,6 +19,8 @@ type ActionButtonProps = {
   external?: boolean;
   target?: string;
   rel?: string;
+  analyticsEvent?: string;
+  analyticsProperties?: AnalyticsEventParams;
   className?: string;
   ariaLabel?: string;
 };
@@ -38,6 +46,8 @@ export default function ActionButton({
   external = false,
   target,
   rel,
+  analyticsEvent,
+  analyticsProperties,
   className,
   ariaLabel,
 }: ActionButtonProps) {
@@ -48,11 +58,19 @@ export default function ActionButton({
     className,
   );
 
+  const handleInteraction = () => {
+    if (analyticsEvent) {
+      trackEvent(analyticsEvent, analyticsProperties);
+    }
+
+    onClick?.();
+  };
+
   if (!href && (buttonType || onClick)) {
     return (
       <button
         type={buttonType || "button"}
-        onClick={onClick}
+        onClick={handleInteraction}
         disabled={disabled}
         className={resolvedClassName}
         aria-label={ariaLabel}
@@ -78,6 +96,7 @@ export default function ActionButton({
         rel={rel}
         className={resolvedClassName}
         aria-label={ariaLabel}
+        onClick={handleInteraction}
       >
         {children}
       </a>
@@ -85,7 +104,12 @@ export default function ActionButton({
   }
 
   return (
-    <Link href={href} className={resolvedClassName} aria-label={ariaLabel}>
+    <Link
+      href={href}
+      className={resolvedClassName}
+      aria-label={ariaLabel}
+      onClick={handleInteraction}
+    >
       {children}
     </Link>
   );
