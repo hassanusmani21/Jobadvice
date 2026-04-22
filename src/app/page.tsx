@@ -67,7 +67,7 @@ export default async function HomePage() {
           WhatsApp
         </p>
 
-        <div className="home-community-copy-block mx-auto max-w-[17rem] sm:max-w-[20rem] lg:mx-0 lg:max-w-none">
+        <div className="home-community-copy-block mx-auto w-full max-w-[24rem] sm:max-w-[20rem] lg:mx-0 lg:max-w-none">
           <h2 className="home-community-title mx-auto font-serif text-[1.26rem] leading-[1.08] text-slate-900 sm:text-[1.38rem] lg:mx-0">
             Get faster job updates
           </h2>
@@ -110,7 +110,7 @@ export default async function HomePage() {
         analyticsProperties={{
           source: "homepage_hero",
         }}
-        className="home-community-button w-full max-w-[17rem] self-center lg:max-w-none lg:self-auto"
+        className="home-community-button w-full self-center lg:max-w-none lg:self-auto"
       >
         Join WhatsApp Group
       </ActionButton>
@@ -157,12 +157,12 @@ export default async function HomePage() {
                   <span className="home-hero-live-pill hidden lg:inline-flex">Verified listings</span>
                 </div>
 
-                <div className="home-hero-heading-block mx-auto max-w-xs sm:max-w-3xl lg:mx-0 lg:max-w-[34rem]">
-                  <h1 className="page-title home-hero-title mx-auto max-w-xs !text-2xl sm:max-w-3xl sm:!text-3xl lg:mx-0 lg:max-w-[34rem] lg:!text-[2.75rem] xl:!text-[2.95rem]">
+                <div className="home-hero-heading-block mx-auto w-full max-w-[24rem] sm:max-w-3xl lg:mx-0 lg:max-w-[34rem]">
+                  <h1 className="page-title home-hero-title mx-auto w-full max-w-[24rem] !text-2xl sm:max-w-3xl sm:!text-3xl lg:mx-0 lg:max-w-[34rem] lg:!text-[2.75rem] xl:!text-[2.95rem]">
                     Find Verified Jobs in India
                   </h1>
 
-                  <p className="page-copy home-hero-copy-text mx-auto max-w-[18rem] !text-[0.95rem] sm:max-w-[26rem] sm:!text-[1rem] lg:mx-0 lg:max-w-[31rem] lg:!text-[1rem]">
+                  <p className="page-copy home-hero-copy-text mx-auto w-full max-w-[24rem] !text-[0.95rem] sm:max-w-[26rem] sm:!text-[1rem] lg:mx-0 lg:max-w-[31rem] lg:!text-[1rem]">
                     <span className="sm:hidden">Direct apply. No spam.</span>
                     <span className="hidden sm:inline">Direct apply. No spam. Updated daily.</span>
                   </p>
@@ -180,7 +180,7 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              <div className="home-hero-action-row mx-auto flex max-w-[17rem] flex-col items-stretch sm:mx-auto sm:max-w-none sm:flex-row sm:flex-nowrap sm:justify-center lg:mx-0 lg:justify-start lg:items-center">
+              <div className="home-hero-action-row mx-auto flex w-full max-w-[24rem] flex-col items-stretch sm:mx-auto sm:max-w-none sm:flex-row sm:flex-nowrap sm:justify-center lg:mx-0 lg:justify-start lg:items-center">
                 <ActionButton
                   href="/jobs"
                   variant="primary"
@@ -191,10 +191,13 @@ export default async function HomePage() {
                 <ActionButton
                   href="/blog"
                   variant="secondary"
-                  className="home-hero-secondary-action w-full sm:w-auto"
+                  className="home-hero-secondary-action hidden w-full sm:inline-flex sm:w-auto"
                 >
                   Career Guides
                 </ActionButton>
+                <Link href="/blog" className="home-hero-mobile-secondary-link sm:hidden">
+                  Explore career guides
+                </Link>
               </div>
             </div>
 
@@ -257,7 +260,7 @@ export default async function HomePage() {
                     </div>
                   </label>
 
-                  <label className="home-search-field block min-w-0">
+                  <label className="home-search-field home-search-category-field block min-w-0">
                     <span className="sr-only">Job type</span>
                     <select
                       name="segment"

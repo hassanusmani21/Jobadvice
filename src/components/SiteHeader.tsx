@@ -142,13 +142,13 @@ export default function SiteHeader() {
   const shouldElevateHeader = hasScrolled || isMenuOpen;
 
   return (
-    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-3 pt-1.5 min-[360px]:px-4 min-[360px]:pt-2 sm:px-6 sm:pt-3 lg:px-8 lg:pt-2">
+    <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-3 pt-1.5 min-[360px]:px-4 min-[360px]:pt-2 sm:px-6 sm:pt-2.5 lg:px-8 lg:pt-2">
       <div
-        className={`fade-up header-shell relative rounded-[1.15rem] px-3 py-2.5 min-[360px]:px-3.5 sm:rounded-2xl sm:px-5 sm:py-2.5 lg:px-4 ${
+        className={`fade-up header-shell relative rounded-[1.15rem] px-3 py-2.5 min-[360px]:px-3.5 sm:rounded-2xl sm:px-4 sm:py-2.5 lg:px-[1.05rem] ${
           shouldElevateHeader ? "header-shell-scrolled" : "header-shell-top"
         }`}
       >
-        <div className="hidden items-center gap-4 sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+        <div className="hidden items-center gap-3.5 sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto]">
           <Link href="/" aria-label="JobAdvice Home" className="inline-flex items-center">
             <Image
               src="/jobadvice-logo.svg"
@@ -169,7 +169,7 @@ export default function SiteHeader() {
           </Link>
 
           <nav
-            className="mx-auto flex flex-wrap items-center justify-center gap-1 text-sm font-semibold text-slate-600 lg:gap-0.5"
+            className="header-primary-nav mx-auto flex flex-wrap items-center justify-center gap-1 px-1.5 py-1 text-[0.83rem] font-semibold text-slate-600 lg:gap-1"
             aria-label="Primary"
           >
             {navigation.map((item) => {
@@ -180,10 +180,10 @@ export default function SiteHeader() {
                   key={item.href}
                   href={item.href}
                   aria-current={isActive ? "page" : undefined}
-                  className={`rounded-xl px-3 py-1.5 transition-colors lg:px-2.5 lg:py-1 ${
+                  className={`header-primary-link rounded-[0.8rem] px-3 py-1.5 transition-[background-color,color,box-shadow] lg:px-3 lg:py-1.5 ${
                     isActive
-                      ? "bg-teal-50 text-teal-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)]"
-                      : "hover:bg-teal-50/80 hover:text-teal-900"
+                      ? "header-primary-link-active"
+                      : "hover:text-slate-900"
                   }`}
                 >
                   {item.label}
@@ -192,14 +192,14 @@ export default function SiteHeader() {
             })}
           </nav>
 
-          <div className="flex items-center justify-end gap-[14px]">
+          <div className="flex items-center justify-end gap-2.5">
             <Link
               href="/resume-builder"
               aria-current={isResumeActive ? "page" : undefined}
-              className={`inline-flex h-10 items-center justify-center gap-2 rounded-[12px] px-[18px] text-[0.88rem] font-semibold transition ${
+              className={`header-resume-link inline-flex h-10 items-center justify-center gap-2 rounded-[12px] px-4 text-[0.84rem] font-semibold transition ${
                 isResumeActive
-                  ? "bg-[linear-gradient(135deg,#0f8f77_0%,#16a085_55%,#1abc9c_100%)] text-white shadow-[0_4px_14px_rgba(26,188,156,0.35)]"
-                  : "bg-[linear-gradient(135deg,#16a085_0%,#1abc9c_100%)] text-white shadow-[0_4px_14px_rgba(26,188,156,0.35)] hover:-translate-y-px hover:shadow-[0_8px_18px_rgba(26,188,156,0.4)]"
+                  ? "bg-[linear-gradient(135deg,#0f8f77_0%,#16a085_55%,#1abc9c_100%)] text-white shadow-[0_10px_22px_-18px_rgba(26,188,156,0.48)]"
+                  : "bg-[linear-gradient(135deg,#16a085_0%,#1abc9c_100%)] text-white shadow-[0_10px_22px_-18px_rgba(26,188,156,0.42)] hover:-translate-y-px hover:shadow-[0_14px_26px_-18px_rgba(26,188,156,0.46)]"
               }`}
             >
               <ResumeIcon />
@@ -210,7 +210,7 @@ export default function SiteHeader() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2 sm:hidden">
+        <div className="flex items-center justify-between gap-2.5 sm:hidden">
           <Link href="/" aria-label="JobAdvice Home" className="inline-flex min-w-0 items-center">
             <Image
               src="/jobadvice-logo.svg"
@@ -218,7 +218,7 @@ export default function SiteHeader() {
               width={220}
               height={76}
               priority
-              className="jobadvice-logo-light h-auto max-w-full w-[100px] min-[360px]:w-[112px]"
+              className="jobadvice-logo-light h-auto w-[104px] max-w-full min-[360px]:w-[116px]"
             />
             <Image
               src="/jobadvice-logo-dark.svg"
@@ -226,11 +226,11 @@ export default function SiteHeader() {
               width={220}
               height={76}
               priority
-              className="jobadvice-logo-dark h-auto max-w-full w-[100px] min-[360px]:w-[112px]"
+              className="jobadvice-logo-dark h-auto w-[104px] max-w-full min-[360px]:w-[116px]"
             />
           </Link>
 
-          <div className="flex shrink-0 items-center gap-1.5 min-[360px]:gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <SavedJobsHeaderLink mobile />
             <ThemeToggle compact />
 
@@ -263,9 +263,9 @@ export default function SiteHeader() {
           />
           <div
             id="mobile-site-menu"
-            className="fixed inset-x-4 bottom-4 top-[4.75rem] z-50 mx-auto w-auto max-w-[22rem] sm:hidden"
+            className="fixed inset-x-4 bottom-4 top-[4.6rem] z-50 mx-auto w-auto max-w-[22rem] sm:hidden"
           >
-            <div className="mobile-menu-surface flex h-full flex-col overflow-hidden p-4">
+            <div className="mobile-menu-surface flex h-full flex-col overflow-hidden p-[1.05rem]">
               <div className="flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
                 <div className="space-y-1">
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-teal-700">
@@ -279,7 +279,7 @@ export default function SiteHeader() {
                   type="button"
                   aria-label="Close navigation menu"
                   onClick={() => setIsMenuOpen(false)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] transition hover:border-slate-300 hover:bg-white hover:text-slate-900"
+                  className="mobile-menu-close inline-flex h-10 w-10 items-center justify-center rounded-xl border transition"
                 >
                   <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
                     <path
