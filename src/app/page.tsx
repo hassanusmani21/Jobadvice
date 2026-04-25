@@ -6,7 +6,6 @@ import EmptyStateCard from "@/components/EmptyStateCard";
 import JobCard from "@/components/JobCard";
 import { getLatestBlogs } from "@/lib/blogs";
 import { getAllJobs } from "@/lib/jobs";
-import { getAllJobSegmentConfigs } from "@/lib/jobSegments";
 import { siteWhatsappGroupUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -50,7 +49,6 @@ export default async function HomePage() {
     getLatestBlogs(3),
   ]);
   const latestJobs = allJobs.slice(0, 6);
-  const finderSegmentOptions = getAllJobSegmentConfigs();
   const finderLocationOptions = toTopLocations(allJobs.map((job) => job.location));
   const coveredLocationCount = finderLocationOptions.length;
   const heroStatsSummary = `${allJobs.length}+ jobs • ${coveredLocationCount}+ cities`;
@@ -236,7 +234,7 @@ export default async function HomePage() {
 
             <div className="home-search-panel">
               <form action="/jobs" method="get" aria-label="Job search" className="home-search-form">
-                <div className="home-search-grid grid gap-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(12.75rem,0.92fr)_minmax(12.75rem,0.92fr)_8.25rem] lg:items-stretch">
+                <div className="home-search-grid grid gap-4">
                   <label className="home-search-field block min-w-0">
                     <span className="sr-only">Role or company</span>
                     <div className="home-search-control home-search-control-rich flex min-w-0 items-center gap-3 px-4">
@@ -254,54 +252,34 @@ export default async function HomePage() {
                       <input
                         name="q"
                         type="search"
-                        placeholder="Role or company"
+                        placeholder="e.g. Software Engineer"
                         className="home-search-input min-w-0 w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                       />
                     </div>
                   </label>
 
-                  <label className="home-search-field home-search-category-field block min-w-0">
-                    <span className="sr-only">Job type</span>
-                    <select
-                      name="segment"
-                      defaultValue=""
-                      className="home-search-control home-search-control-rich w-full px-4 text-sm text-slate-700 outline-none"
-                    >
-                      <option value="">All categories</option>
-                      {finderSegmentOptions.map((segment) => (
-                        <option key={segment.slug} value={segment.slug}>
-                          {segment.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="home-search-field block min-w-0">
-                    <span className="sr-only">Location</span>
-                    <input
-                      name="location"
-                      type="text"
-                      list="homepage-job-locations"
-                      placeholder="City or location"
-                      className="home-search-control home-search-control-rich w-full px-4 text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                    />
-                  </label>
-
                   <ActionButton
                     variant="primary"
                     buttonType="submit"
-                    className="home-search-submit w-full px-6"
+                    ariaLabel="Search jobs"
+                    className="home-search-submit w-full"
                   >
-                    Search
+                    <span className="home-search-submit-label">Search</span>
+                    <span className="home-search-submit-icon" aria-hidden="true">
+                      <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none">
+                        <path
+                          d="m14.5 14.5 3 3m-1.5-8a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.8"
+                        />
+                      </svg>
+                    </span>
                   </ActionButton>
                 </div>
               </form>
             </div>
-            <datalist id="homepage-job-locations">
-              {finderLocationOptions.map((location) => (
-                <option key={location} value={location} />
-              ))}
-            </datalist>
           </div>
         </section>
       </div>
