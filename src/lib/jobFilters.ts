@@ -16,6 +16,8 @@ export type JobFilters = {
 export type JobAlertFilters = {
   query: string;
   skill: string;
+  jobTitles: string[];
+  skills: string[];
   locations: string[];
   segments: JobSegmentSlug[];
   type: string;
@@ -29,7 +31,10 @@ type RawJobFilters = {
   locations?: string[] | string | null;
   segment?: string | null;
   segments?: string[] | string | null;
+  category?: string | null;
   skill?: string | null;
+  skills?: string[] | string | null;
+  jobTitles?: string[] | string | null;
   type?: string | null;
   status?: string | null;
   sort?: string | null;
@@ -97,6 +102,8 @@ export const normalizeJobFilters = (rawFilters: RawJobFilters = {}): JobFilters 
 export const toJobAlertFilters = (filters: JobFilters): JobAlertFilters => ({
   query: filters.query,
   skill: "",
+  jobTitles: filters.query ? [filters.query] : [],
+  skills: [],
   locations: filters.location ? [filters.location] : [],
   segments: filters.segment ? [filters.segment] : [],
   type: filters.type,
@@ -107,13 +114,17 @@ export const normalizeJobAlertFilters = (rawFilters: Partial<JobAlertFilters> & 
   const normalizedFilters = normalizeJobFilters({
     query: rawFilters.query,
     location: rawFilters.location,
-    segment: rawFilters.segment,
+    segment: rawFilters.segment || rawFilters.category,
     type: rawFilters.type,
     status: rawFilters.status,
     sort: "newest",
   });
   const locations = normalizeStringArray(rawFilters.locations);
   const segments = normalizeStringArray(rawFilters.segments).filter(isJobSegmentSlug);
+  const jobTitles = normalizeStringArray(rawFilters.jobTitles);
+  const skills = normalizeStringArray(rawFilters.skills);
+  const legacyQuery = normalizedFilters.query;
+  const legacySkill = normalizeString(rawFilters.skill);
 
   if (normalizedFilters.location && !locations.includes(normalizedFilters.location)) {
     locations.unshift(normalizedFilters.location);
@@ -123,9 +134,19 @@ export const normalizeJobAlertFilters = (rawFilters: Partial<JobAlertFilters> & 
     segments.unshift(normalizedFilters.segment);
   }
 
+  if (legacyQuery && !jobTitles.includes(legacyQuery)) {
+    jobTitles.unshift(legacyQuery);
+  }
+
+  if (legacySkill && !skills.includes(legacySkill)) {
+    skills.unshift(legacySkill);
+  }
+
   return {
-    query: normalizedFilters.query,
-    skill: normalizeString(rawFilters.skill),
+    query: legacyQuery,
+    skill: legacySkill,
+    jobTitles,
+    skills,
     locations,
     segments,
     type: normalizedFilters.type,
@@ -137,6 +158,8 @@ export const hasActiveJobAlertFilters = (filters: JobAlertFilters) =>
   Boolean(
     filters.query ||
       filters.skill ||
+      filters.jobTitles.length > 0 ||
+      filters.skills.length > 0 ||
       filters.locations.length > 0 ||
       filters.segments.length > 0 ||
       filters.type ||
@@ -177,12 +200,23 @@ const matchesJobSkill = (job: JobPost, skill: string) => {
   return haystack.includes(skill.toLowerCase());
 };
 
+const matchesJobTitle = (job: JobPost, title: string) =>
+  job.title.toLowerCase().includes(title.toLowerCase());
+
 export const jobMatchesAlertFilters = (job: JobPost, filters: JobAlertFilters) => {
-  if (filters.query && !matchesJobSearch(job, filters.query)) {
+  if (filters.jobTitles.length > 0) {
+    if (!filters.jobTitles.some((title) => matchesJobTitle(job, title))) {
+      return false;
+    }
+  } else if (filters.query && !matchesJobSearch(job, filters.query)) {
     return false;
   }
 
-  if (filters.skill && !matchesJobSkill(job, filters.skill)) {
+  if (filters.skills.length > 0) {
+    if (!filters.skills.some((skill) => matchesJobSkill(job, skill))) {
+      return false;
+    }
+  } else if (filters.skill && !matchesJobSkill(job, filters.skill)) {
     return false;
   }
 
@@ -258,11 +292,15 @@ const summarizeList = (values: string[]) => {
 export const buildJobAlertSummary = (filters: JobAlertFilters) => {
   const parts: string[] = [];
 
-  if (filters.query) {
+  if (filters.jobTitles.length > 0) {
+    parts.push(`Titles: ${summarizeList(filters.jobTitles)}`);
+  } else if (filters.query) {
     parts.push(`"${filters.query}"`);
   }
 
-  if (filters.skill) {
+  if (filters.skills.length > 0) {
+    parts.push(`Skills: ${summarizeList(filters.skills)}`);
+  } else if (filters.skill) {
     parts.push(`Skill: ${filters.skill}`);
   }
 
@@ -298,7 +336,15 @@ export const buildJobAlertSummary = (filters: JobAlertFilters) => {
 export const buildJobAlertSearchParams = (filters: JobAlertFilters) => {
   const searchParams = new URLSearchParams();
 
-  const browseQuery = [filters.query, filters.skill].filter(Boolean).join(" ").trim();
+  const browseQuery = [
+    ...filters.jobTitles,
+    ...(filters.jobTitles.length === 0 && filters.query ? [filters.query] : []),
+    ...filters.skills,
+    ...(filters.skills.length === 0 && filters.skill ? [filters.skill] : []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
 
   if (browseQuery) {
     searchParams.set("q", browseQuery);

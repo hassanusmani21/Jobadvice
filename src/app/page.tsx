@@ -51,7 +51,6 @@ export default async function HomePage() {
   const latestJobs = allJobs.slice(0, 6);
   const finderLocationOptions = toTopLocations(allJobs.map((job) => job.location));
   const coveredLocationCount = finderLocationOptions.length;
-  const heroStatsSummary = `${allJobs.length}+ jobs • ${coveredLocationCount}+ cities`;
   const heroMetrics = [
     { value: `${allJobs.length}+`, label: "Verified Jobs" },
     { value: "Direct Apply", label: "Only" },
@@ -165,8 +164,6 @@ export default async function HomePage() {
                     <span className="hidden sm:inline">Direct apply. No spam. Updated daily.</span>
                   </p>
                 </div>
-
-                <p className="home-hero-compact-stats mx-auto mt-0 sm:hidden">{heroStatsSummary}</p>
 
                 <div className="home-hero-proof-row mx-auto hidden max-w-[24rem] flex-wrap items-center justify-center sm:flex sm:max-w-none lg:mx-0 lg:justify-start">
                   {heroMetrics.map((metric) => (

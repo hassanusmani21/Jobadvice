@@ -13,17 +13,15 @@ import {
 import { RESUME_POPUP_DISMISSED_AT_KEY } from "@/lib/resumeBuilderPromo";
 
 type HomeEngagementPopupsProps = {
-  locationOptions: string[];
   skillOptions: string[];
   titleOptions: string[];
 };
 
 const JOB_ALERT_DELAY_MS = 3000;
-const RESUME_POPUP_DELAY_MS = 30000;
+const RESUME_POPUP_DELAY_MS = 50000;
 const resumePromoStorageKey = RESUME_POPUP_DISMISSED_AT_KEY;
 
 export default function HomeEngagementPopups({
-  locationOptions,
   skillOptions,
   titleOptions,
 }: HomeEngagementPopupsProps) {
@@ -100,7 +98,6 @@ export default function HomeEngagementPopups({
       {showJobAlertPopup ? (
         <JobAlertWelcomePopup
           delayMs={0}
-          locationOptions={locationOptions}
           skillOptions={skillOptions}
           titleOptions={titleOptions}
           onSettled={() => {

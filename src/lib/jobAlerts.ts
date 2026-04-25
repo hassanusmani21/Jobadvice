@@ -64,6 +64,10 @@ type SendEmailInput = {
   text: string;
 };
 
+type SendEmailResult = {
+  id: string | null;
+};
+
 export type JobAlertSubscription = {
   signature: string;
   email: string;
@@ -75,6 +79,7 @@ export type JobAlertSubscription = {
   createdAt: string;
   updatedAt: string;
   lastSentAt: string | null;
+  welcomeEmailSentAt: string | null;
   unsubscribeToken: string;
   sentJobSlugs: string[];
 };
@@ -198,6 +203,26 @@ const createAlertSignature = (email: string, filters: JobAlertFilters) =>
 
 const isValidEmail = (email: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(email));
+
+const hydrateJobAlertSubscription = (
+  subscription: JobAlertSubscription | null | undefined,
+) => {
+  if (!subscription) {
+    return null;
+  }
+
+  return {
+    ...subscription,
+    filters: normalizeJobAlertFilters(subscription.filters),
+    // Older stored records did not track the welcome-email timestamp.
+    welcomeEmailSentAt:
+      typeof subscription.welcomeEmailSentAt === "string"
+        ? subscription.welcomeEmailSentAt
+        : subscription.welcomeEmailSentAt === null
+          ? null
+          : subscription.createdAt || null,
+  } satisfies JobAlertSubscription;
+};
 
 const readLocalAlertsState = async (): Promise<JobAlertLocalState> => {
   try {
@@ -327,27 +352,32 @@ const listStoredSubscriptions = async () => {
 };
 
 export const listJobAlertSubscriptions = async () =>
-  (await listStoredSubscriptions()).sort(
-    (firstSubscription, secondSubscription) =>
-      new Date(secondSubscription.updatedAt).getTime() -
-      new Date(firstSubscription.updatedAt).getTime(),
-  );
+  (await listStoredSubscriptions())
+    .map((subscription) => hydrateJobAlertSubscription(subscription))
+    .filter((subscription): subscription is JobAlertSubscription => Boolean(subscription))
+    .sort(
+      (firstSubscription, secondSubscription) =>
+        new Date(secondSubscription.updatedAt).getTime() -
+        new Date(firstSubscription.updatedAt).getTime(),
+    );
 
 const getStoredSubscriptionBySignature = async (signature: string) => {
   if (shouldUseLocalAlertsFileStore) {
     const state = await readLocalAlertsState();
-    return state.subscriptions[signature] || null;
+    return hydrateJobAlertSubscription(state.subscriptions[signature] || null);
   }
 
   assertConfiguredProductionStorage();
 
   if (configuredStorageProvider === "vercel-blob") {
-    return readVercelBlobJson<JobAlertSubscription>(toSubscriptionKey(signature));
+    return hydrateJobAlertSubscription(
+      await readVercelBlobJson<JobAlertSubscription>(toSubscriptionKey(signature)),
+    );
   }
 
   const store = getAlertsStore();
   const value = await store.get(toSubscriptionKey(signature), { type: "json" });
-  return (value as JobAlertSubscription | null) || null;
+  return hydrateJobAlertSubscription((value as JobAlertSubscription | null) || null);
 };
 
 const persistSubscription = async (subscription: JobAlertSubscription) => {
@@ -392,7 +422,7 @@ const getStoredSubscriptionByUnsubscribeToken = async (token: string) => {
       return null;
     }
 
-    return state.subscriptions[signature] || null;
+    return hydrateJobAlertSubscription(state.subscriptions[signature] || null);
   }
 
   assertConfiguredProductionStorage();
@@ -624,7 +654,7 @@ const buildWelcomeAlertText = (subscription: JobAlertSubscription) => {
   ].join("\n");
 };
 
-const sendEmail = async ({ to, subject, html, text }: SendEmailInput) => {
+const sendEmail = async ({ to, subject, html, text }: SendEmailInput): Promise<SendEmailResult> => {
   const resendApiKey = (process.env.RESEND_API_KEY || "").trim();
   const fromEmail =
     (process.env.JOB_ALERTS_FROM_EMAIL || process.env.EMAIL_FROM || "").trim();
@@ -640,6 +670,7 @@ const sendEmail = async ({ to, subject, html, text }: SendEmailInput) => {
     headers: {
       Authorization: `Bearer ${resendApiKey}`,
       "Content-Type": "application/json",
+      "Idempotency-Key": randomUUID(),
     },
     body: JSON.stringify({
       from: fromEmail,
@@ -650,9 +681,36 @@ const sendEmail = async ({ to, subject, html, text }: SendEmailInput) => {
     }),
   });
 
+  // Always consume the body so Undici can safely reuse the connection on
+  // long-lived serverless instances.
+  const responseBody = await response.text();
+
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Resend send failed: ${response.status} ${errorBody}`);
+    const rateLimitRemaining = response.headers.get("ratelimit-remaining");
+    const retryAfter = response.headers.get("retry-after");
+    const quotaHint =
+      rateLimitRemaining || retryAfter
+        ? ` (ratelimit-remaining=${rateLimitRemaining || "unknown"}, retry-after=${retryAfter || "unknown"})`
+        : "";
+
+    throw new Error(`Resend send failed: ${response.status} ${responseBody}${quotaHint}`);
+  }
+
+  if (!responseBody) {
+    return {
+      id: null,
+    };
+  }
+
+  try {
+    const payload = JSON.parse(responseBody) as { id?: string };
+    return {
+      id: typeof payload.id === "string" ? payload.id : null,
+    };
+  } catch {
+    return {
+      id: null,
+    };
   }
 };
 
@@ -714,6 +772,7 @@ export const createJobAlertSubscription = async (
     createdAt: existingSubscription?.createdAt || now,
     updatedAt: now,
     lastSentAt: existingSubscription?.lastSentAt || null,
+    welcomeEmailSentAt: null,
     unsubscribeToken: existingSubscription?.unsubscribeToken || randomUUID(),
     sentJobSlugs: existingSubscription?.sentJobSlugs || [],
   };
@@ -746,9 +805,12 @@ export const unsubscribeJobAlertSubscription = async (token: string) => {
 
 export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
   const checkedAt = new Date().toISOString();
-  const activeSubscriptions = (await listStoredSubscriptions()).filter(
-    (subscription) => subscription.isActive,
-  );
+  const activeSubscriptions = (await listStoredSubscriptions())
+    .map((subscription) => hydrateJobAlertSubscription(subscription))
+    .filter(
+      (subscription): subscription is JobAlertSubscription =>
+        Boolean(subscription?.isActive),
+    );
 
   if (activeSubscriptions.length === 0) {
     return {
@@ -834,12 +896,24 @@ export const buildJobAlertSuccessMessage = (result: JobAlertUpsertResult) => {
 };
 
 export const sendJobAlertWelcomeEmail = async (subscription: JobAlertSubscription) => {
-  await sendEmail({
+  return sendEmail({
     to: subscription.email,
     subject: buildWelcomeAlertSubject(subscription),
     html: buildWelcomeAlertHtml(subscription),
     text: buildWelcomeAlertText(subscription),
   });
+};
+
+export const markJobAlertWelcomeEmailSent = async (subscription: JobAlertSubscription) => {
+  const sentAt = new Date().toISOString();
+  const nextSubscription: JobAlertSubscription = {
+    ...subscription,
+    updatedAt: sentAt,
+    welcomeEmailSentAt: sentAt,
+  };
+
+  await persistSubscription(nextSubscription);
+  return nextSubscription;
 };
 
 export const buildJobAlertEmailPreview = (subscription: JobAlertSubscription, jobs: JobPost[]) => ({

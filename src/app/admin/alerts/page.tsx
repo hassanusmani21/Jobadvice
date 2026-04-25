@@ -39,11 +39,19 @@ const formatDateTime = (value: string | null) => {
 const summarizeFilterBadges = (filters: JobAlertFilters) => {
   const badges: string[] = [];
 
-  if (filters.query) {
+  if (filters.jobTitles.length > 0) {
+    for (const title of filters.jobTitles) {
+      badges.push(`Title: ${title}`);
+    }
+  } else if (filters.query) {
     badges.push(`Role: ${filters.query}`);
   }
 
-  if (filters.skill) {
+  if (filters.skills.length > 0) {
+    for (const skill of filters.skills) {
+      badges.push(`Skill: ${skill}`);
+    }
+  } else if (filters.skill) {
     badges.push(`Skill: ${filters.skill}`);
   }
 

@@ -6,11 +6,10 @@ import {
   markJobAlertPopupDismissed,
 } from "@/lib/jobAlertPopup";
 import { trackEvent } from "@/lib/analytics";
-import { getAllJobSegmentConfigs, type JobSegmentSlug } from "@/lib/jobSegments";
+import type { JobSegmentSlug } from "@/lib/jobSegments";
 
 type JobAlertWelcomePopupProps = {
   delayMs?: number;
-  locationOptions: string[];
   onSettled?: () => void;
   skillOptions: string[];
   titleOptions: string[];
@@ -26,25 +25,568 @@ const initialSubmitState: SubmitState = {
   message: "",
 };
 
+const popupCategoryOptions: Array<{ label: string; value: JobSegmentSlug }> = [
+  { label: "Fresher", value: "freshers" },
+  { label: "Internship", value: "internships" },
+  { label: "Experienced", value: "experienced" },
+];
+
+const JOB_TITLE_TAG_LIMIT = 5;
+const SKILL_TAG_LIMIT = 8;
+
+const normalizeTagValue = (value: string) =>
+  value
+    .trim()
+    .replace(/^[,;]+|[,;]+$/g, "")
+    .replace(/\s*\/\s*/g, "/")
+    .replace(/\s+/g, " ");
+
+const toNormalizedToken = (value: string) => normalizeTagValue(value).toLowerCase();
+
+const canonicalTagValueMap = new Map<string, string>([
+  ["artificial intelligence", "Artificial Intelligence"],
+  ["business process outsourcing", "Business Process Outsourcing"],
+  ["devops", "DevOps"],
+  ["full stack", "Full Stack"],
+  ["human resources", "Human Resources"],
+  ["information technology", "Information Technology"],
+  ["machine learning", "Machine Learning"],
+  ["quality assurance", "Quality Assurance"],
+  ["software development engineer", "Software Development Engineer"],
+  ["software engineer", "Software Engineer"],
+  ["user experience", "User Experience"],
+  ["user interface", "User Interface"],
+  ["ui ux", "UI/UX"],
+  ["ui/ux", "UI/UX"],
+]);
+
+const canonicalAcronymMap = new Map<string, string>([
+  ["ai", "AI"],
+  ["api", "API"],
+  ["aws", "AWS"],
+  ["bpo", "BPO"],
+  ["crm", "CRM"],
+  ["css", "CSS"],
+  ["erp", "ERP"],
+  ["etl", "ETL"],
+  ["html", "HTML"],
+  ["html5", "HTML5"],
+  ["hr", "HR"],
+  ["hris", "HRIS"],
+  ["it", "IT"],
+  ["ml", "ML"],
+  ["nlp", "NLP"],
+  ["php", "PHP"],
+  ["qa", "QA"],
+  ["sap", "SAP"],
+  ["sde", "SDE"],
+  ["seo", "SEO"],
+  ["sql", "SQL"],
+  ["swe", "SWE"],
+  ["ui", "UI"],
+  ["ux", "UX"],
+  ["ui/ux", "UI/UX"],
+]);
+
+const shortDisplayLabelMap = new Map<string, string>([
+  ["ai", "AI"],
+  ["artificial intelligence", "AI"],
+  ["bpo", "BPO"],
+  ["business process outsourcing", "BPO"],
+  ["hr", "HR"],
+  ["human resources", "HR"],
+  ["it", "IT"],
+  ["information technology", "IT"],
+  ["machine learning", "ML"],
+  ["ml", "ML"],
+  ["qa", "QA"],
+  ["quality assurance", "QA"],
+  ["sde", "SDE"],
+  ["software development engineer", "SDE"],
+  ["software engineer", "SWE"],
+  ["swe", "SWE"],
+  ["ui", "UI"],
+  ["user interface", "UI"],
+  ["user experience", "UX"],
+  ["ux", "UX"],
+  ["ui ux", "UI/UX"],
+  ["ui/ux", "UI/UX"],
+]);
+
+const getSuggestionMatch = (value: string, suggestions: string[]) => {
+  const normalizedValue = toNormalizedToken(value);
+  return suggestions.find((suggestion) => toNormalizedToken(suggestion) === normalizedValue);
+};
+
+const capitalizeFirstLetter = (value: string) =>
+  value.replace(/^[a-z]/, (character) => character.toUpperCase());
+
+const formatTagValue = (value: string, suggestions: string[]) => {
+  const cleanedValue = normalizeTagValue(value);
+  const suggestionMatch = getSuggestionMatch(cleanedValue, suggestions);
+
+  if (suggestionMatch) {
+    return suggestionMatch;
+  }
+
+  const normalizedToken = toNormalizedToken(cleanedValue);
+
+  if (canonicalTagValueMap.has(normalizedToken)) {
+    return canonicalTagValueMap.get(normalizedToken)!;
+  }
+
+  if (canonicalAcronymMap.has(normalizedToken)) {
+    return canonicalAcronymMap.get(normalizedToken)!;
+  }
+
+  return capitalizeFirstLetter(cleanedValue);
+};
+
+const hasMeaninglessPattern = (value: string, suggestions: string[]) => {
+  const normalizedToken = toNormalizedToken(value);
+
+  if (
+    getSuggestionMatch(value, suggestions) ||
+    canonicalTagValueMap.has(normalizedToken) ||
+    canonicalAcronymMap.has(normalizedToken)
+  ) {
+    return false;
+  }
+
+  const lettersOnly = normalizedToken.replace(/[^a-z]/g, "");
+
+  if (!lettersOnly) {
+    return true;
+  }
+
+  if (/^(.)\1+$/i.test(lettersOnly) || /^(.{1,2})\1+$/i.test(lettersOnly)) {
+    return true;
+  }
+
+  if (lettersOnly.length <= 4 && !/[aeiou]/i.test(lettersOnly)) {
+    return true;
+  }
+
+  return false;
+};
+
+const getShortDisplayLabel = (value: string) => shortDisplayLabelMap.get(toNormalizedToken(value));
+
+const toComparableToken = (value: string) =>
+  (getShortDisplayLabel(value) || toNormalizedToken(value)).toLowerCase();
+
+type FieldFeedback =
+  | { tone: "idle"; message: string }
+  | { tone: "hint"; message: string }
+  | { tone: "error"; message: string };
+
+const initialFieldFeedback: FieldFeedback = {
+  tone: "idle",
+  message: "",
+};
+
+const renderHighlightedSuggestion = (value: string, query: string) => {
+  if (!query.trim()) {
+    return value;
+  }
+
+  const normalizedValue = value.toLowerCase();
+  const normalizedQuery = query.trim().toLowerCase();
+  const matchIndex = normalizedValue.indexOf(normalizedQuery);
+
+  if (matchIndex === -1) {
+    return value;
+  }
+
+  const matchEnd = matchIndex + normalizedQuery.length;
+
+  return (
+    <>
+      {value.slice(0, matchIndex)}
+      <span className="font-semibold text-emerald-200">
+        {value.slice(matchIndex, matchEnd)}
+      </span>
+      {value.slice(matchEnd)}
+    </>
+  );
+};
+
+type MultiValueSuggestionFieldProps = {
+  id: string;
+  label: string;
+  placeholder: string;
+  maxValues: number;
+  suggestions: string[];
+  values: string[];
+  onChange: (values: string[]) => void;
+};
+
+function MultiValueSuggestionField({
+  id,
+  label,
+  placeholder,
+  maxValues,
+  suggestions,
+  values,
+  onChange,
+}: MultiValueSuggestionFieldProps) {
+  const [inputValue, setInputValue] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [feedback, setFeedback] = useState<FieldFeedback>(initialFieldFeedback);
+  const blurTimeoutRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const selectedTokens = useMemo(
+    () => new Set(values.map((value) => toComparableToken(value))),
+    [values],
+  );
+  const filteredSuggestions = useMemo(() => {
+    const normalizedQuery = toNormalizedToken(inputValue);
+
+    return suggestions
+      .filter((suggestion) => !selectedTokens.has(toComparableToken(suggestion)))
+      .map((suggestion) => {
+        const normalizedSuggestion = toNormalizedToken(suggestion);
+
+        if (!normalizedQuery) {
+          return {
+            rank: 0,
+            suggestion,
+          };
+        }
+
+        if (normalizedSuggestion.startsWith(normalizedQuery)) {
+          return {
+            rank: 0,
+            suggestion,
+          };
+        }
+
+        if (normalizedSuggestion.includes(normalizedQuery)) {
+          return {
+            rank: 1,
+            suggestion,
+          };
+        }
+
+        return {
+          rank: Number.POSITIVE_INFINITY,
+          suggestion,
+        };
+      })
+      .filter(({ rank }) => Number.isFinite(rank))
+      .sort(
+        (firstSuggestion, secondSuggestion) =>
+          firstSuggestion.rank - secondSuggestion.rank ||
+          firstSuggestion.suggestion.localeCompare(secondSuggestion.suggestion),
+      )
+      .map(({ suggestion }) => suggestion)
+      .slice(0, 6);
+  }, [inputValue, selectedTokens, suggestions]);
+  const activeFeedback = useMemo(() => {
+    if (feedback.tone !== "idle") {
+      return feedback;
+    }
+
+    if (isOpen && inputValue.trim() && filteredSuggestions.length > 0) {
+      return {
+        tone: "hint" as const,
+        message: "Suggestions shown. Press Enter to select the highlighted match.",
+      };
+    }
+
+    return initialFieldFeedback;
+  }, [feedback, filteredSuggestions.length, inputValue, isOpen]);
+
+  useEffect(() => {
+    setHighlightedIndex((currentIndex) =>
+      filteredSuggestions.length === 0
+        ? -1
+        : inputValue.trim()
+          ? currentIndex < 0
+            ? 0
+            : Math.min(currentIndex, filteredSuggestions.length - 1)
+          : currentIndex < 0
+            ? -1
+          : Math.min(currentIndex, filteredSuggestions.length - 1),
+    );
+  }, [filteredSuggestions, inputValue]);
+
+  useEffect(() => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    containerRef.current.scrollTop = containerRef.current.scrollHeight;
+  }, [values]);
+
+  useEffect(() => {
+    return () => {
+      if (blurTimeoutRef.current) {
+        window.clearTimeout(blurTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const commitValue = useCallback(
+    (value: string) => {
+      const cleanedInput = normalizeTagValue(value);
+
+      if (!cleanedInput) {
+        return;
+      }
+
+      if (values.length >= maxValues) {
+        setFeedback({
+          tone: "error",
+          message: "Maximum limit reached",
+        });
+        return;
+      }
+
+      const suggestionMatch = getSuggestionMatch(cleanedInput, suggestions);
+      const normalizedToken = toNormalizedToken(cleanedInput);
+
+      if (
+        cleanedInput.length < 3 &&
+        !suggestionMatch &&
+        !canonicalAcronymMap.has(normalizedToken)
+      ) {
+        setFeedback({
+          tone: "error",
+          message: "Use at least 3 characters.",
+        });
+        return;
+      }
+
+      if (!/[a-z]/i.test(cleanedInput)) {
+        setFeedback({
+          tone: "error",
+          message: "Enter a valid tag.",
+        });
+        return;
+      }
+
+      const formattedValue = formatTagValue(cleanedInput, suggestions);
+      const formattedToken = toComparableToken(formattedValue);
+
+      if (selectedTokens.has(formattedToken)) {
+        setFeedback({
+          tone: "error",
+          message: "Already added.",
+        });
+        return;
+      }
+
+      if (hasMeaninglessPattern(formattedValue, suggestions)) {
+        setFeedback({
+          tone: "error",
+          message: "Enter a clearer tag.",
+        });
+        return;
+      }
+
+      onChange([...values, formattedValue]);
+      setInputValue("");
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+      setFeedback(initialFieldFeedback);
+    },
+    [maxValues, onChange, selectedTokens, suggestions, values],
+  );
+
+  const handleRemoveValue = useCallback(
+    (valueToRemove: string) => {
+      onChange(values.filter((currentValue) => currentValue !== valueToRemove));
+      setFeedback(initialFieldFeedback);
+    },
+    [onChange, values],
+  );
+
+  return (
+    <div className="relative">
+      <label
+        htmlFor={id}
+        className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-slate-400"
+      >
+        {label}
+      </label>
+
+      <div
+        ref={containerRef}
+        className="mt-1 flex max-h-[100px] min-h-10 w-full flex-wrap content-start items-center gap-1.5 overflow-y-auto rounded-[0.95rem] border border-white/10 bg-slate-900/60 px-3 py-2 text-[0.92rem] text-white transition focus-within:border-emerald-400/40 focus-within:ring-2 focus-within:ring-emerald-400/20"
+      >
+        {values.map((value) => (
+          <span
+            key={value}
+            className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[0.78rem] text-emerald-100"
+            title={value}
+          >
+            <span className="truncate">{getShortDisplayLabel(value) || value}</span>
+            <button
+              type="button"
+              aria-label={`Remove ${value}`}
+              onClick={() => handleRemoveValue(value)}
+              className="inline-flex h-4 w-4 items-center justify-center rounded-full text-emerald-200 transition hover:bg-white/10 hover:text-white"
+            >
+              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3">
+                <path
+                  d="M5 5 15 15M15 5 5 15"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="1.8"
+                />
+              </svg>
+            </button>
+          </span>
+        ))}
+
+        <input
+          id={id}
+          type="text"
+          value={inputValue}
+          autoComplete="off"
+          aria-autocomplete="list"
+          aria-invalid={feedback.tone === "error"}
+          aria-controls={filteredSuggestions.length > 0 ? `${id}-suggestions` : undefined}
+          aria-describedby={activeFeedback.message ? `${id}-feedback` : undefined}
+          onChange={(event) => {
+            setInputValue(event.target.value);
+            setIsOpen(true);
+            setHighlightedIndex(event.target.value.trim() ? 0 : -1);
+            setFeedback(initialFieldFeedback);
+          }}
+          onFocus={() => {
+            if (blurTimeoutRef.current) {
+              window.clearTimeout(blurTimeoutRef.current);
+            }
+            setIsOpen(true);
+          }}
+          onBlur={() => {
+            blurTimeoutRef.current = window.setTimeout(() => {
+              setIsOpen(false);
+              setHighlightedIndex(-1);
+            }, 120);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Backspace" && !inputValue && values.length > 0) {
+              onChange(values.slice(0, -1));
+              setFeedback(initialFieldFeedback);
+              return;
+            }
+
+            if (event.key === "ArrowDown") {
+              if (filteredSuggestions.length === 0) {
+                return;
+              }
+
+              event.preventDefault();
+              setIsOpen(true);
+              setHighlightedIndex((currentIndex) =>
+                currentIndex < 0 || currentIndex >= filteredSuggestions.length - 1
+                  ? 0
+                  : currentIndex + 1,
+              );
+              return;
+            }
+
+            if (event.key === "ArrowUp") {
+              if (filteredSuggestions.length === 0) {
+                return;
+              }
+
+              event.preventDefault();
+              setIsOpen(true);
+              setHighlightedIndex((currentIndex) =>
+                currentIndex <= 0 ? filteredSuggestions.length - 1 : currentIndex - 1,
+              );
+              return;
+            }
+
+            if (event.key === "Escape") {
+              setIsOpen(false);
+              setHighlightedIndex(-1);
+              return;
+            }
+
+            if (event.key === "Enter") {
+              const nextSuggestion =
+                highlightedIndex >= 0 ? filteredSuggestions[highlightedIndex] : undefined;
+              const nextValue = nextSuggestion || inputValue;
+
+              if (!nextValue.trim()) {
+                return;
+              }
+
+              event.preventDefault();
+              commitValue(nextValue);
+            }
+          }}
+          placeholder={placeholder}
+          className="min-w-[7rem] flex-1 border-0 bg-transparent p-0 text-[0.92rem] text-white outline-none placeholder:text-slate-500"
+        />
+      </div>
+
+      {activeFeedback.message ? (
+        <p
+          id={`${id}-feedback`}
+          aria-live="polite"
+          className={`mt-1 text-[0.72rem] leading-5 ${
+            activeFeedback.tone === "error" ? "text-rose-300" : "text-slate-400"
+          }`}
+        >
+          {activeFeedback.message}
+        </p>
+      ) : null}
+
+      {isOpen && filteredSuggestions.length > 0 ? (
+        <div className="absolute left-0 right-0 z-30 mt-1 overflow-hidden rounded-[0.95rem] border border-white/10 bg-slate-950/98 shadow-[0_18px_30px_-20px_rgba(15,23,42,0.95)]">
+          <ul
+            id={`${id}-suggestions`}
+            role="listbox"
+            aria-label={`${label} suggestions`}
+            className="py-1"
+          >
+            {filteredSuggestions.map((suggestion, index) => (
+              <li key={suggestion}>
+                <button
+                  type="button"
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    commitValue(suggestion);
+                  }}
+                  className={`flex w-full items-center px-3 py-2 text-left text-[0.84rem] text-slate-200 transition ${
+                    index === highlightedIndex ? "bg-emerald-400/10 text-white" : "hover:bg-white/5"
+                  }`}
+                >
+                  {renderHighlightedSuggestion(suggestion, inputValue)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function JobAlertWelcomePopup({
   delayMs = 2500,
-  locationOptions,
   onSettled,
   skillOptions,
   titleOptions,
 }: JobAlertWelcomePopupProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [selectedTitle, setSelectedTitle] = useState("");
-  const [selectedSkill, setSelectedSkill] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [selectedSegment, setSelectedSegment] = useState<JobSegmentSlug | "">("");
+  const [selectedTitles, setSelectedTitles] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<JobSegmentSlug | "">("");
   const [submitState, setSubmitState] = useState<SubmitState>(initialSubmitState);
   const [delayElapsed, setDelayElapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [isEntered, setIsEntered] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const categoryOptions = useMemo(() => getAllJobSegmentConfigs(), []);
   const closeTimeoutRef = useRef<number | null>(null);
   const successTimeoutRef = useRef<number | null>(null);
 
@@ -134,22 +676,10 @@ export default function JobAlertWelcomePopup({
     event.preventDefault();
     setSubmitState(initialSubmitState);
 
-    const filters = {
-      query: selectedTitle.trim(),
-      skill: selectedSkill.trim(),
-      locations: selectedLocation ? [selectedLocation] : [],
-      segments: selectedSegment ? [selectedSegment] : [],
-    };
-
-    if (
-      !filters.query &&
-      !filters.skill &&
-      filters.locations.length === 0 &&
-      filters.segments.length === 0
-    ) {
+    if (selectedTitles.length === 0 && selectedSkills.length === 0 && !selectedCategory) {
       setSubmitState({
         tone: "error",
-        message: "Choose a category, city, role, or skill before subscribing.",
+        message: "Choose a category, role, or skill before subscribing.",
       });
       return;
     }
@@ -179,8 +709,10 @@ export default function JobAlertWelcomePopup({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          jobTitles: selectedTitles,
+          skills: selectedSkills,
+          category: selectedCategory,
           email,
-          filters,
           name,
         }),
       });
@@ -206,10 +738,11 @@ export default function JobAlertWelcomePopup({
       });
       trackEvent("job_alert_signup", {
         alert_source: "homepage_popup",
-        locations: filters.locations.join(","),
-        query: filters.query || "",
-        segments: filters.segments.join(","),
-        skill: filters.skill || "",
+        job_titles: selectedTitles.join(","),
+        query: selectedTitles.join(","),
+        segments: selectedCategory ? [selectedCategory].join(",") : "",
+        skill: selectedSkills.join(","),
+        skills: selectedSkills.join(","),
       });
 
       successTimeoutRef.current = window.setTimeout(() => {
@@ -335,47 +868,27 @@ export default function JobAlertWelcomePopup({
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="job-alert-popup-title"
-                    className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    Job Title
-                  </label>
-                  <select
+                  <MultiValueSuggestionField
                     id="job-alert-popup-title"
-                    value={selectedTitle}
-                    onChange={(event) => setSelectedTitle(event.target.value)}
-                    className="mt-1 block h-10 w-full rounded-[0.95rem] border border-white/10 bg-slate-900/60 px-3 pr-8 text-[0.92rem] text-white outline-none transition focus:border-emerald-400/40 focus:ring-2 focus:ring-emerald-400/20"
-                  >
-                    <option value="">Any title</option>
-                    {titleOptions.map((titleOption) => (
-                      <option key={titleOption} value={titleOption}>
-                        {titleOption}
-                      </option>
-                    ))}
-                  </select>
+                    label="Job Titles"
+                    placeholder="Search titles and press Enter"
+                    maxValues={JOB_TITLE_TAG_LIMIT}
+                    suggestions={titleOptions}
+                    values={selectedTitles}
+                    onChange={setSelectedTitles}
+                  />
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="job-alert-popup-skill"
-                    className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    Skill
-                  </label>
-                  <select
+                  <MultiValueSuggestionField
                     id="job-alert-popup-skill"
-                    value={selectedSkill}
-                    onChange={(event) => setSelectedSkill(event.target.value)}
-                    className="mt-1 block h-10 w-full rounded-[0.95rem] border border-white/10 bg-slate-900/60 px-3 pr-8 text-[0.92rem] text-white outline-none transition focus:border-emerald-400/40 focus:ring-2 focus:ring-emerald-400/20"
-                  >
-                    <option value="">Any skill</option>
-                    {skillOptions.map((skillOption) => (
-                      <option key={skillOption} value={skillOption}>
-                        {skillOption}
-                      </option>
-                    ))}
-                  </select>
+                    label="Skills"
+                    placeholder="Search skills and press Enter"
+                    maxValues={SKILL_TAG_LIMIT}
+                    suggestions={skillOptions}
+                    values={selectedSkills}
+                    onChange={setSelectedSkills}
+                  />
                 </div>
 
                 <div>
@@ -387,38 +900,16 @@ export default function JobAlertWelcomePopup({
                   </label>
                   <select
                     id="job-alert-popup-category"
-                    value={selectedSegment}
+                    value={selectedCategory}
                     onChange={(event) =>
-                      setSelectedSegment(event.target.value as JobSegmentSlug | "")
+                      setSelectedCategory(event.target.value as JobSegmentSlug | "")
                     }
                     className="mt-1 block h-10 w-full rounded-[0.95rem] border border-white/10 bg-slate-900/60 px-3 pr-8 text-[0.92rem] text-white outline-none transition focus:border-emerald-400/40 focus:ring-2 focus:ring-emerald-400/20"
                   >
                     <option value="">Any category</option>
-                    {categoryOptions.map((category) => (
-                      <option key={category.slug} value={category.slug}>
-                        {category.shortLabel}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="job-alert-popup-city"
-                    className="text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                  >
-                    Preferred City
-                  </label>
-                  <select
-                    id="job-alert-popup-city"
-                    value={selectedLocation}
-                    onChange={(event) => setSelectedLocation(event.target.value)}
-                    className="mt-1 block h-10 w-full rounded-[0.95rem] border border-white/10 bg-slate-900/60 px-3 pr-8 text-[0.92rem] text-white outline-none transition focus:border-emerald-400/40 focus:ring-2 focus:ring-emerald-400/20"
-                  >
-                    <option value="">Any city</option>
-                    {locationOptions.map((locationOption) => (
-                      <option key={locationOption} value={locationOption}>
-                        {locationOption}
+                    {popupCategoryOptions.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.label}
                       </option>
                     ))}
                   </select>
