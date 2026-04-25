@@ -51,7 +51,6 @@ type ResumeBuilderState = {
   basics: ResumeBasics;
   summary: string;
   skills: string;
-  targetJobDescription: string;
   hobbies: string;
   optionalSections: ResumeOptionalSections;
   experience: ResumeExperience[];
@@ -93,66 +92,6 @@ const templateOptions: Array<{
     tag: "Reference style",
   },
 ];
-
-const stopWords = new Set([
-  "about",
-  "able",
-  "across",
-  "after",
-  "again",
-  "along",
-  "also",
-  "among",
-  "and",
-  "any",
-  "apply",
-  "around",
-  "because",
-  "been",
-  "before",
-  "being",
-  "between",
-  "build",
-  "career",
-  "communication",
-  "company",
-  "could",
-  "daily",
-  "details",
-  "direct",
-  "each",
-  "early",
-  "ensure",
-  "experience",
-  "from",
-  "good",
-  "have",
-  "help",
-  "high",
-  "hiring",
-  "india",
-  "into",
-  "jobs",
-  "knowledge",
-  "more",
-  "must",
-  "need",
-  "openings",
-  "our",
-  "role",
-  "skills",
-  "should",
-  "that",
-  "their",
-  "them",
-  "they",
-  "this",
-  "through",
-  "using",
-  "with",
-  "work",
-  "your",
-]);
 
 const joinClasses = (...values: Array<string | false | null | undefined>) =>
   values.filter(Boolean).join(" ");
@@ -201,7 +140,6 @@ const defaultResumeState: ResumeBuilderState = {
   },
   summary: "",
   skills: "",
-  targetJobDescription: "",
   hobbies: "",
   optionalSections: {
     experience: true,
@@ -229,8 +167,6 @@ const sampleResumeState: ResumeBuilderState = {
     "Early-career backend developer focused on Node.js, APIs, databases, and automation. Built project-ready web tools, improved query performance in academic work, and enjoys turning complex requirements into clean implementation plans.",
   skills:
     "Node.js, Express.js, TypeScript, REST APIs, PostgreSQL, MongoDB, Git, Docker, SQL, Problem Solving, Communication, Debugging",
-  targetJobDescription:
-    "We are hiring a backend developer intern with strong knowledge of Node.js, TypeScript, REST APIs, SQL, debugging, communication, and database fundamentals. Experience with Git, Docker, and backend services is preferred.",
   hobbies: "Open-source building, tech writing, mentoring juniors",
   optionalSections: {
     experience: true,
@@ -298,39 +234,6 @@ const splitSkills = (value: string) =>
 const makeDynamicId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
-const extractKeywords = (description: string) => {
-  const frequencies = new Map<string, number>();
-  const normalized = description
-    .toLowerCase()
-    .replace(/[^a-z0-9+#.\-\s]/g, " ")
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter((token) => token.length >= 4 && !stopWords.has(token));
-
-  for (const token of normalized) {
-    frequencies.set(token, (frequencies.get(token) || 0) + 1);
-  }
-
-  return [...frequencies.entries()]
-    .sort((firstEntry, secondEntry) => secondEntry[1] - firstEntry[1] || firstEntry[0].localeCompare(secondEntry[0]))
-    .slice(0, 12)
-    .map(([token]) => token);
-};
-
-const buildResumeSearchText = (resume: ResumeBuilderState) =>
-  [
-    Object.values(resume.basics).join(" "),
-    resume.summary,
-    resume.skills,
-    resume.hobbies,
-    resume.experience.map((item) => Object.values(item).join(" ")).join(" "),
-    resume.education.map((item) => Object.values(item).join(" ")).join(" "),
-    resume.projects.map((item) => Object.values(item).join(" ")).join(" "),
-    resume.certifications.map((item) => Object.values(item).join(" ")).join(" "),
-  ]
-    .join(" ")
-    .toLowerCase();
-
 const normalizeResumeState = (value: unknown): ResumeBuilderState => {
   if (!value || typeof value !== "object") {
     return defaultResumeState;
@@ -368,7 +271,6 @@ const normalizeResumeState = (value: unknown): ResumeBuilderState => {
     },
     summary: source.summary || "",
     skills: source.skills || "",
-    targetJobDescription: source.targetJobDescription || "",
     hobbies: source.hobbies || "",
     optionalSections: {
       experience: source.optionalSections?.experience ?? defaultResumeState.optionalSections.experience,
@@ -592,11 +494,6 @@ export default function ResumeBuilderClient() {
   const certificationItems = resume.certifications.filter(
     (item) => item.name || item.issuer,
   );
-
-  const extractedKeywords = extractKeywords(resume.targetJobDescription);
-  const resumeSearchText = buildResumeSearchText(resume);
-  const matchedKeywords = extractedKeywords.filter((keyword) => resumeSearchText.includes(keyword));
-  const missingKeywords = extractedKeywords.filter((keyword) => !resumeSearchText.includes(keyword));
 
   const previewContactLines = [
     resume.basics.email.trim(),
@@ -1584,55 +1481,6 @@ export default function ResumeBuilderClient() {
               </div>
               {previewSheet}
             </div>
-
-            <section className="resume-keyword-panel card-surface">
-              <div className="resume-keyword-panel-head">
-                <h2 className="resume-builder-panel-title">Keyword Suggestions</h2>
-              </div>
-              <Field label="Paste job description">
-                <textarea
-                  className="form-control resume-builder-control resume-builder-textarea resume-builder-textarea-compact"
-                  value={resume.targetJobDescription}
-                  onChange={(event) =>
-                    setResume((current) => ({
-                      ...current,
-                      targetJobDescription: event.target.value,
-                    }))
-                  }
-                  placeholder="Paste the target job description to compare keywords."
-                />
-              </Field>
-              <div className="resume-keyword-grid">
-                <div>
-                  <p className="resume-keyword-title">Matched Keywords</p>
-                  <div className="resume-keyword-chips">
-                    {matchedKeywords.length > 0 ? (
-                      matchedKeywords.slice(0, 10).map((keyword) => (
-                        <span key={keyword} className="resume-keyword-chip resume-keyword-chip-match">
-                          {keyword}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="resume-keyword-empty">Paste a job description to compare.</span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <p className="resume-keyword-title">Missing Keywords</p>
-                  <div className="resume-keyword-chips">
-                    {missingKeywords.length > 0 ? (
-                      missingKeywords.slice(0, 10).map((keyword) => (
-                        <span key={keyword} className="resume-keyword-chip resume-keyword-chip-miss">
-                          {keyword}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="resume-keyword-empty">No missing keywords yet.</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
           </div>
         </aside>
       </section>

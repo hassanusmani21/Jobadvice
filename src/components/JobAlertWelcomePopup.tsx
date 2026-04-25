@@ -414,20 +414,22 @@ function MultiValueSuggestionField({
 
       <div
         ref={containerRef}
-        className="mt-1 flex max-h-[100px] min-h-10 w-full flex-wrap content-start items-center gap-1.5 overflow-y-auto rounded-[0.95rem] border border-white/10 bg-slate-900/60 px-3 py-2 text-[0.92rem] text-white transition focus-within:border-emerald-400/40 focus-within:ring-2 focus-within:ring-emerald-400/20"
+        className="mt-1 flex max-h-[100px] min-h-10 w-full min-w-0 flex-wrap content-start items-center gap-1.5 overflow-x-hidden overflow-y-auto rounded-[0.95rem] border border-white/10 bg-slate-900/60 px-3 py-2 text-[0.92rem] text-white transition focus-within:border-emerald-400/40 focus-within:ring-2 focus-within:ring-emerald-400/20"
       >
         {values.map((value) => (
           <span
             key={value}
-            className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[0.78rem] text-emerald-100"
+            className="inline-flex max-w-full min-w-0 items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[0.78rem] text-emerald-100"
             title={value}
           >
-            <span className="truncate">{getShortDisplayLabel(value) || value}</span>
+            <span className="min-w-0 flex-1 truncate">
+              {getShortDisplayLabel(value) || value}
+            </span>
             <button
               type="button"
               aria-label={`Remove ${value}`}
               onClick={() => handleRemoveValue(value)}
-              className="inline-flex h-4 w-4 items-center justify-center rounded-full text-emerald-200 transition hover:bg-white/10 hover:text-white"
+              className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-emerald-200 transition hover:bg-white/10 hover:text-white"
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3 w-3">
                 <path
