@@ -20,7 +20,6 @@ import {
   siteSocialProfiles,
   siteUrl,
   siteVerifiedPublisherName,
-  siteVerifiedPublisherRole,
   siteWhatsappGroupUrl,
   websiteId,
 } from "@/lib/site";
@@ -282,10 +281,27 @@ const footerResourceLinks = [
 ];
 
 const footerTrustItems = [
-  "Direct apply links when the original source is available.",
-  "No pay-to-access job information.",
-  "Independent platform. Not a recruiter or placement agency.",
+  "Direct Apply Links",
+  "Independent Curation",
+  "No Pay-to-Access",
 ];
+
+const footerCommunitySignals = [
+  "Source Checks",
+  "Daily Updates",
+  "Early-Career Focus",
+];
+
+const footerCommunityTrustItems = [
+  "WhatsApp Updates",
+  "Email Support",
+  "Social Channels",
+];
+
+const footerSummary =
+  "Verified jobs and internships in India with direct apply links and practical guidance.";
+
+const footerFounderLine = `${siteVerifiedPublisherName} — Founder`;
 
 const socialLinks = [
   {
@@ -390,6 +406,43 @@ const websiteJsonLd = {
   },
 };
 
+function FooterCheckLine({
+  items,
+  label,
+  className,
+}: Readonly<{
+  items: string[];
+  label: string;
+  className?: string;
+}>) {
+  return (
+    <div
+      className={className ? `site-footer-inline-checkline ${className}` : "site-footer-inline-checkline"}
+      aria-label={label}
+    >
+      {items.map((item) => (
+        <span key={item} className="site-footer-inline-check-item">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 16 16"
+            className="site-footer-inline-check-mark"
+          >
+            <path
+              d="M3.5 8.2 6.3 11l6.2-6.3"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.8"
+            />
+          </svg>
+          <span>{item}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -449,128 +502,129 @@ export default function RootLayout({
 
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-20 sm:px-6 sm:pt-5 sm:pb-10 lg:px-8 lg:pt-2">{children}</main>
 
-          <footer className="mt-8 border-t border-slate-200 bg-slate-50/90 sm:mt-10">
-            <div className="mx-auto w-full max-w-6xl px-4 pt-7 pb-20 sm:px-6 sm:pt-8 sm:pb-8 lg:px-8">
-              <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/80 p-4 shadow-[0_20px_60px_-45px_rgba(15,23,42,0.35)] backdrop-blur sm:rounded-[1.75rem] sm:p-6">
-                <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)_minmax(0,0.8fr)]">
-                  <section className="space-y-4">
-                    <div>
-                      <p className="text-[0.72rem] font-semibold uppercase tracking-[0.2em] text-teal-700">
-                        JobAdvice
-                      </p>
-                      <h2 className="mt-3 font-serif text-[1.8rem] leading-[1.05] text-slate-900 sm:text-[2rem]">
-                        Verified job discovery with clearer trust signals.
-                      </h2>
-                      <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
-                        {siteDescription} We focus on cleaner listings, easier source-checking, and
-                        direct-apply clarity for students, freshers, and early-career job seekers.
-                      </p>
-                    </div>
+          <footer className="site-footer mt-8 sm:mt-10">
+            <div className="mx-auto w-full max-w-6xl px-4 pt-4 pb-8 sm:px-6 sm:pt-8 sm:pb-8 lg:px-8">
+              <div className="site-footer-shell">
+                <div className="site-footer-grid">
+                  <section className="site-footer-column site-footer-column-brand">
+                    <div className="site-footer-brand-stack">
+                      <div className="site-footer-brand-copy">
+                        <p className="site-footer-kicker">
+                          JobAdvice
+                        </p>
+                        <h2 className="site-footer-title">
+                          Verified jobs with clearer signals.
+                        </h2>
+                        <p className="site-footer-copy">
+                          {footerSummary}
+                        </p>
+                      </div>
 
-                    <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                      {footerTrustItems.map((item) => (
-                        <div
-                          key={item}
-                          className="rounded-2xl border border-emerald-100 bg-emerald-50/75 px-4 py-4"
-                        >
-                          <p className="text-sm leading-6 text-slate-700">{item}</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                        Curated by
-                      </p>
-                      <p className="mt-2 text-base font-semibold text-slate-900">
-                        {siteVerifiedPublisherName}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">{siteVerifiedPublisherRole}</p>
+                      <FooterCheckLine
+                        items={footerTrustItems}
+                        label="JobAdvice trust points"
+                        className="site-footer-inline-checkline-brand"
+                      />
                     </div>
                   </section>
 
-                  <section>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Explore
-                    </h3>
-                    <nav className="mt-4 grid gap-3" aria-label="Footer resources">
-                      {footerResourceLinks.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className="text-sm font-medium text-slate-700 underline-offset-4 transition hover:text-slate-900 hover:underline"
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </nav>
+                  <section className="site-footer-column site-footer-column-divider site-footer-column-nav">
+                    <div className="site-footer-nav-grid">
+                      <div className="site-footer-nav-group">
+                        <h3 className="site-footer-label">
+                          Explore
+                        </h3>
+                        <nav className="site-footer-nav" aria-label="Footer resources">
+                          {footerResourceLinks.map((item) => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className="site-footer-link"
+                            >
+                              {item.label}
+                            </Link>
+                          ))}
+                        </nav>
+                      </div>
 
-                    <h3 className="mt-7 text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Trust & Info
-                    </h3>
-                    <nav className="mt-4 grid gap-3" aria-label="Footer information">
-                      {footerLinks.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className="text-sm font-medium text-slate-700 underline-offset-4 transition hover:text-slate-900 hover:underline"
-                        >
-                          {item.label}
-                        </Link>
-                      ))}
-                    </nav>
+                      <div className="site-footer-nav-group">
+                        <h3 className="site-footer-label">
+                          Trust & Info
+                        </h3>
+                        <nav className="site-footer-nav" aria-label="Footer information">
+                          {footerLinks.map((item) => (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className="site-footer-link"
+                            >
+                              {item.label}
+                            </Link>
+                          ))}
+                        </nav>
+                      </div>
+                    </div>
+
+                    <FooterCheckLine
+                      items={footerCommunitySignals}
+                      label="Trust signals"
+                      className="site-footer-inline-checkline-muted"
+                    />
                   </section>
 
-                  <section>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Community
-                    </h3>
-                    <p className="mt-4 text-sm leading-7 text-slate-600">
-                      Questions, corrections, and partnerships are welcome. For important issues,
-                      email is the best route.
-                    </p>
-                    <p className="mt-4 break-all text-sm font-semibold text-slate-900">
-                      {siteEmail}
-                    </p>
+                  <section className="site-footer-column site-footer-column-divider site-footer-column-community">
+                    <div className="site-footer-community-stack">
+                      <h3 className="site-footer-label">
+                        Community
+                      </h3>
+                      <a href={`mailto:${siteEmail}`} className="site-footer-email">
+                        {siteEmail}
+                      </a>
 
-                    <div className="mt-5 flex flex-col gap-3">
-                      <Link
-                        href="/how-we-verify-jobs"
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-teal-200 hover:text-teal-900"
-                      >
-                        Read How We Verify Jobs
-                      </Link>
                       <a
                         href={siteWhatsappGroupUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                        className="site-footer-action site-footer-action-primary"
                       >
                         Join WhatsApp Updates
                       </a>
-                    </div>
+                      <p className="site-footer-support">
+                        Get verified jobs directly on your phone.
+                      </p>
 
-                    <div className="mt-5 flex items-center gap-2">
-                      {socialLinks.map((item) => (
-                        <a
-                          key={item.label}
-                          href={item.href}
-                          aria-label={item.label}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                        >
-                          {item.icon}
-                        </a>
-                      ))}
+                      <FooterCheckLine
+                        items={footerCommunityTrustItems}
+                        label="Community trust signals"
+                        className="site-footer-inline-checkline-muted site-footer-inline-checkline-community"
+                      />
+
+                      <div className="site-footer-socials">
+                        {socialLinks.map((item) => (
+                          <a
+                            key={item.label}
+                            href={item.href}
+                            aria-label={item.label}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="site-footer-social-link"
+                          >
+                            {item.icon}
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   </section>
                 </div>
 
-                <div className="mt-6 border-t border-slate-200/80 pt-5">
-                  <p className="text-center text-[13px] font-medium leading-6 text-slate-500 lg:text-left">
-                    © 2026 {siteName}. Independent job information platform. External employer and
-                    portal pages may update or remove listings at any time.
+                <div className="site-footer-legal">
+                  <p className="site-footer-legal-line">
+                    <span className="site-footer-legal-primary">
+                      © 2026 JobAdvice • Independent platform • {footerFounderLine}
+                    </span>
+                    <span className="site-footer-legal-secondary">
+                      Built for students, freshers, and early careers
+                    </span>
                   </p>
                 </div>
               </div>
