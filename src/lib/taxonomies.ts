@@ -14,6 +14,12 @@ export type BlogTopicLanding = {
   count: number;
 };
 
+export type JobSkillLanding = {
+  slug: string;
+  label: string;
+  count: number;
+};
+
 const cityAliases = [
   { label: "Navi Mumbai", patterns: ["navi mumbai"] },
   { label: "Bangalore", patterns: ["bengaluru", "bangalore"] },
@@ -127,6 +133,61 @@ export const getJobsForLocationSlug = (jobs: JobPost[], slug: string) =>
     const label = resolveJobLocationLabel(job.location);
     return label ? toContentSlug(label) === slug : false;
   });
+
+const genericSkillPattern =
+  /^(core skills|preferred skills|good communication skills|communication skills|problem solving|team collaboration|collaboration)$/i;
+
+export const normalizeSkillLabel = (skill: string) =>
+  normalizeText(skill)
+    .replace(/:$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+export const getAllJobSkillLandings = (jobs: JobPost[]): JobSkillLanding[] => {
+  const skills = new Map<string, { label: string; count: number }>();
+
+  for (const job of jobs) {
+    for (const rawSkill of job.skills) {
+      const label = normalizeSkillLabel(rawSkill);
+      if (!label || genericSkillPattern.test(label) || label.length > 42) {
+        continue;
+      }
+
+      const slug = toContentSlug(label);
+      if (!slug) {
+        continue;
+      }
+
+      const existing = skills.get(slug);
+      if (existing) {
+        existing.count += 1;
+        continue;
+      }
+
+      skills.set(slug, { label, count: 1 });
+    }
+  }
+
+  return [...skills.entries()]
+    .map(([slug, item]) => ({
+      slug,
+      ...item,
+    }))
+    .sort((firstItem, secondItem) => {
+      return (
+        secondItem.count - firstItem.count ||
+        firstItem.label.localeCompare(secondItem.label)
+      );
+    });
+};
+
+export const getJobSkillLandingBySlug = (jobs: JobPost[], slug: string) =>
+  getAllJobSkillLandings(jobs).find((item) => item.slug === slug) || null;
+
+export const getJobsForSkillSlug = (jobs: JobPost[], slug: string) =>
+  jobs.filter((job) =>
+    job.skills.some((skill) => toContentSlug(normalizeSkillLabel(skill)) === slug),
+  );
 
 export const toBlogTopicSlug = (topic: string) => toContentSlug(normalizeText(topic));
 

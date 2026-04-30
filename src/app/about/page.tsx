@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
 import Link from "@/components/AppLink";
+import { createPageMetadata } from "@/lib/seo";
 import { siteName } from "@/lib/site";
 
 const principles = [
@@ -15,14 +16,13 @@ const boundaries = [
   "We do not ask for payment to access job information.",
 ];
 
-export const metadata: Metadata = {
-  title: "About",
+export const metadata: Metadata = createPageMetadata({
+  title: "About JobAdvice",
   description:
-    "Learn what JobAdvice publishes, how job information is sourced, and what role the platform plays.",
-  alternates: {
-    canonical: "/about/",
-  },
-};
+    "Learn what JobAdvice publishes, how job information is sourced, and how the platform helps students, freshers, and early-career professionals.",
+  path: "/about/",
+  keywords: ["about JobAdvice", "verified job updates", "fresher jobs India"],
+});
 
 export default function AboutPage() {
   return (

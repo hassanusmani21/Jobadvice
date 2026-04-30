@@ -5,6 +5,7 @@ import { siteUrl } from "@/lib/site";
 import {
   getAllBlogTopicLandings,
   getAllJobLocationLandings,
+  getAllJobSkillLandings,
 } from "@/lib/taxonomies";
 
 export const dynamic = "force-static";
@@ -22,6 +23,7 @@ const staticRoutes = [
   "/about",
   "/how-we-verify-jobs",
   "/contact",
+  "/terms",
   "/privacy-policy",
 ];
 const toAbsoluteUrl = (route: string) => {
@@ -33,6 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [jobs, blogs] = await Promise.all([getAllJobs(), getAllBlogs()]);
   const now = new Date();
   const locationLandings = getAllJobLocationLandings(jobs);
+  const skillLandings = getAllJobSkillLandings(jobs);
   const topicLandings = getAllBlogTopicLandings(blogs);
 
   const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
@@ -70,11 +73,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.72,
   }));
 
+  const skillEntries: MetadataRoute.Sitemap = skillLandings.map((item) => ({
+    url: toAbsoluteUrl(`/jobs/skill/${item.slug}`),
+    lastModified: now,
+    changeFrequency: "daily",
+    priority: item.count > 1 ? 0.72 : 0.62,
+  }));
+
   return [
     ...staticEntries,
     ...jobEntries,
     ...blogEntries,
     ...locationEntries,
+    ...skillEntries,
     ...topicEntries,
   ];
 }

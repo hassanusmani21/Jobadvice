@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import ActionButton from "@/components/ActionButton";
 import Link from "@/components/AppLink";
 import BlogCard from "@/components/BlogCard";
 import EmptyStateCard from "@/components/EmptyStateCard";
+import GlobalEngagementPopups from "@/components/GlobalEngagementPopups";
 import JobCard from "@/components/JobCard";
 import { getLatestBlogs } from "@/lib/blogs";
 import { getAllJobs } from "@/lib/jobs";
+import { createPageMetadata } from "@/lib/seo";
 import { siteWhatsappGroupUrl } from "@/lib/site";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: "Fresher Jobs, Internships, and Verified Openings in India",
   description:
-    "Discover verified fresher jobs, internships, and direct-apply openings in India along with practical career guidance for students and early-career job seekers.",
-};
+    "Discover verified fresher jobs, internships, and direct-apply openings in India with practical career guidance for students and early-career job seekers.",
+  path: "/",
+  keywords: ["fresher jobs", "internships in India", "verified job openings", "job advice"],
+});
 
 export const revalidate = 60 * 60;
 
@@ -127,6 +132,10 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-5 lg:space-y-6">
+      <Suspense fallback={null}>
+        <GlobalEngagementPopups />
+      </Suspense>
+
       <div className="home-first-fold">
         <section className="fade-up hero-surface home-hero-shell relative overflow-visible rounded-2xl px-4 py-5 sm:px-6 sm:py-6 lg:flex lg:items-center lg:px-8">
           <div

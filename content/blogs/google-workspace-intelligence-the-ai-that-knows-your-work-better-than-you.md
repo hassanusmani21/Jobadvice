@@ -235,4 +235,4 @@ The only question is:
 Want to stay ahead in AI and tech careers?
 
 👉 Join our WhatsApp group for daily updates:  
-https://example.com
+https://chat.whatsapp.com/L6Qh1hBedLZ3vfL3kQMB4r

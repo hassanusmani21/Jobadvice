@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import ApplicationStatusBadge from "@/components/ApplicationStatusBadge";
 import JobDetailSections from "@/components/JobDetailSections";
 import JobActionButton from "@/components/JobActionButton";
+import Link from "@/components/AppLink";
 import RecommendedJobs from "@/components/RecommendedJobs";
 import SaveJobButton from "@/components/SaveJobButton";
 import {
@@ -13,6 +14,8 @@ import {
 } from "@/lib/jobs";
 import { formatPostedDate } from "@/lib/formatDate";
 import { siteUrl } from "@/lib/site";
+import { toContentSlug } from "@/lib/slug";
+import { resolveJobLocationLabel } from "@/lib/taxonomies";
 
 type JobPageProps = {
   params: {
@@ -74,6 +77,7 @@ type JobDetailFact = {
   value: string;
   kind: HeaderInfoIconProps["kind"];
   tone: "neutral" | "accent" | "warm";
+  href?: string;
   span?: "wide" | "full";
   compact?: boolean;
 };
@@ -82,6 +86,12 @@ type JobDetailHighlight = {
   key: string;
   value: string;
   kind: HeaderInfoIconProps["kind"];
+};
+
+type StructuredAddressLocation = {
+  locality: string;
+  region: string;
+  country: string;
 };
 
 const HeaderInfoIcon = ({
@@ -240,46 +250,73 @@ const HeaderInfoIcon = ({
 
 const cityRegionCountryMap: Record<
   string,
-  { locality: string; region: string; country: string }
+  StructuredAddressLocation
 > = {
   ahmedabad: { locality: "Ahmedabad", region: "Gujarat", country: "IN" },
   bangalore: { locality: "Bengaluru", region: "Karnataka", country: "IN" },
   bengaluru: { locality: "Bengaluru", region: "Karnataka", country: "IN" },
   chandigarh: { locality: "Chandigarh", region: "Chandigarh", country: "IN" },
   chennai: { locality: "Chennai", region: "Tamil Nadu", country: "IN" },
+  colombo: { locality: "Colombo", region: "Western Province", country: "LK" },
   coimbatore: { locality: "Coimbatore", region: "Tamil Nadu", country: "IN" },
+  delhi: { locality: "Delhi", region: "Delhi", country: "IN" },
   gurgaon: { locality: "Gurgaon", region: "Haryana", country: "IN" },
   gurugram: { locality: "Gurugram", region: "Haryana", country: "IN" },
+  hydrabad: { locality: "Hyderabad", region: "Telangana", country: "IN" },
   hyderabad: { locality: "Hyderabad", region: "Telangana", country: "IN" },
+  kochi: { locality: "Kochi", region: "Kerala", country: "IN" },
+  kolkata: { locality: "Kolkata", region: "West Bengal", country: "IN" },
+  london: { locality: "London", region: "England", country: "GB" },
   lucknow: { locality: "Lucknow", region: "Uttar Pradesh", country: "IN" },
   mangalore: { locality: "Mangalore", region: "Karnataka", country: "IN" },
   mumbai: { locality: "Mumbai", region: "Maharashtra", country: "IN" },
   mysore: { locality: "Mysuru", region: "Karnataka", country: "IN" },
   mysuru: { locality: "Mysuru", region: "Karnataka", country: "IN" },
   "navi mumbai": { locality: "Navi Mumbai", region: "Maharashtra", country: "IN" },
+  "new delhi": { locality: "New Delhi", region: "Delhi", country: "IN" },
   noida: { locality: "Noida", region: "Uttar Pradesh", country: "IN" },
   pune: { locality: "Pune", region: "Maharashtra", country: "IN" },
+  taloja: { locality: "Taloja", region: "Maharashtra", country: "IN" },
+  trivandrum: { locality: "Trivandrum", region: "Kerala", country: "IN" },
 };
 
 const regionAliasMap: Record<string, string> = {
   chandigarh: "Chandigarh",
+  delhi: "Delhi",
+  dl: "Delhi",
+  england: "England",
   gujarat: "Gujarat",
+  gj: "Gujarat",
   haryana: "Haryana",
+  hr: "Haryana",
+  ka: "Karnataka",
   karnataka: "Karnataka",
+  kl: "Kerala",
+  kerala: "Kerala",
   maharashtra: "Maharashtra",
   maharastra: "Maharashtra",
   "mahārāshtra": "Maharashtra",
-  tamilnadu: "Tamil Nadu",
+  mh: "Maharashtra",
   "tamil nadu": "Tamil Nadu",
+  tamilnadu: "Tamil Nadu",
+  tg: "Telangana",
   telangana: "Telangana",
+  tn: "Tamil Nadu",
+  ts: "Telangana",
+  up: "Uttar Pradesh",
   "uttar pradesh": "Uttar Pradesh",
+  "west bengal": "West Bengal",
+  wb: "West Bengal",
 };
 
 const countryAliasMap: Record<
   string,
   { code: string; name: string }
 > = {
+  gb: { code: "GB", name: "United Kingdom" },
+  in: { code: "IN", name: "India" },
   india: { code: "IN", name: "India" },
+  lk: { code: "LK", name: "Sri Lanka" },
   "sri lanka": { code: "LK", name: "Sri Lanka" },
   "united kingdom": { code: "GB", name: "United Kingdom" },
   uk: { code: "GB", name: "United Kingdom" },
@@ -289,7 +326,7 @@ const countryAliasMap: Record<
 };
 
 const placeholderValuePattern =
-  /\b(optional|experience required|work mode|job timing|education)\b/i;
+  /\b(optional|experience required|work mode|job timing|education|not clearly specified|not specified|location may vary|location varies|varies by role)\b/i;
 const remoteLocationPattern =
   /\b(remote|work from home|wfh|telecommute)\b/i;
 const multipleLocationPattern =
@@ -302,6 +339,7 @@ const estimatedSalaryPattern =
 const normalizeLocationPart = (value: string) =>
   value
     .replace(/\([^)]*\)/g, " ")
+    .replace(/\s[-–—]\s/g, ",")
     .replace(/[–—]/g, ",")
     .replace(/\//g, ",")
     .replace(/\s+/g, " ")
@@ -315,6 +353,50 @@ const normalizeLocationLookupValue = (value: string) =>
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const cityLookupKeys = Object.keys(cityRegionCountryMap).sort(
+  (left, right) => right.length - left.length,
+);
+
+const getCountryName = (countryCode: string) =>
+  Object.values(countryAliasMap).find((country) => country.code === countryCode)?.name ||
+  "";
+
+const resolveMappedCityEntry = (lookupPart: string) => {
+  const exactMatch = cityRegionCountryMap[lookupPart];
+  if (exactMatch) {
+    return exactMatch;
+  }
+
+  const matchingCityKey = cityLookupKeys.find((cityKey) =>
+    new RegExp(`(?:^|\\s)${escapeRegExp(cityKey)}(?:\\s|$)`).test(lookupPart),
+  );
+
+  return matchingCityKey ? cityRegionCountryMap[matchingCityKey] : undefined;
+};
+
+const resolveMappedCityEntries = (lookupParts: string[]) => {
+  const seenEntries = new Set<string>();
+
+  return lookupParts
+    .map((part) => resolveMappedCityEntry(part))
+    .filter((entry): entry is StructuredAddressLocation => {
+      if (!entry) {
+        return false;
+      }
+
+      const key = `${entry.locality}|${entry.region}|${entry.country}`;
+      if (seenEntries.has(key)) {
+        return false;
+      }
+
+      seenEntries.add(key);
+      return true;
+    });
+};
 
 const getCondensedLocation = (location: string | undefined) => {
   const primaryLocation = String(location || "").split("|")[0] || "";
@@ -375,25 +457,33 @@ const resolveJobAddress = (location: string, workMode?: string) => {
     .filter(Boolean);
   const lookupParts = rawParts.map((part) => normalizeLocationLookupValue(part));
   const countryInfo = resolveCountryInfo(rawParts);
+  const mappedCityEntries = resolveMappedCityEntries(lookupParts);
+  const mappedCity = mappedCityEntries[0];
+  const countryCode = countryInfo?.code || mappedCity?.country || "";
+  const countryName = countryInfo?.name || getCountryName(countryCode);
   const isRemoteByMode =
     /\bremote\b/i.test(workMode || "") && !/\bhybrid\b/i.test(workMode || "");
 
   if (remoteLocationPattern.test(normalizedLocation) || isRemoteByMode) {
     return {
       remote: true,
-      countryCode: countryInfo?.code || "",
-      countryName: countryInfo?.name || "",
+      countryCode,
+      countryName,
     };
   }
 
-  const mappedCityEntries = lookupParts
-    .map((part) => cityRegionCountryMap[part])
-    .filter(Boolean);
-  const mappedCity = mappedCityEntries[0];
+  const isCountryLevelLocation =
+    (!mappedCity && Boolean(countryInfo) && rawParts.length === 1) ||
+    /\bpan\s+india\b/i.test(normalizedLocation);
+
+  if (isCountryLevelLocation) {
+    return null;
+  }
+
   const uniqueMappedLocalities = new Set(
     mappedCityEntries.map((entry) => entry.locality.toLowerCase()),
   );
-  const cityIndex = lookupParts.findIndex((part) => Boolean(cityRegionCountryMap[part]));
+  const cityIndex = lookupParts.findIndex((part) => Boolean(resolveMappedCityEntry(part)));
   const hasMultipleLocations =
     multipleLocationPattern.test(normalizedLocation) || uniqueMappedLocalities.size > 1;
 
@@ -409,7 +499,6 @@ const resolveJobAddress = (location: string, workMode?: string) => {
     resolveRegionName(rawParts) ||
     "";
 
-  const countryCode = countryInfo?.code || mappedCity?.country || "";
   const postalCode = !hasMultipleLocations ? resolvePostalCode(rawParts) : "";
   const streetAddress =
     !hasMultipleLocations && cityIndex > 0
@@ -443,7 +532,7 @@ const resolveJobAddress = (location: string, workMode?: string) => {
     remote: false,
     address,
     countryCode,
-    countryName: countryInfo?.name || "",
+    countryName,
   };
 };
 
@@ -530,6 +619,84 @@ const resolveBaseSalary = (salary: string | undefined) => {
   };
 };
 
+const toSentence = (items: string[], limit = 5) => {
+  const normalizedItems = items
+    .map((item) => item.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .slice(0, limit);
+
+  if (normalizedItems.length === 0) {
+    return "";
+  }
+
+  if (normalizedItems.length === 1) {
+    return normalizedItems[0];
+  }
+
+  return `${normalizedItems.slice(0, -1).join(", ")} and ${normalizedItems.at(-1)}`;
+};
+
+const buildRoleOverview = (job: Awaited<ReturnType<typeof getAllJobs>>[number]) => {
+  const employmentType = job.employmentType || job.jobType || "role";
+  const workMode = job.workMode ? `${job.workMode.toLowerCase()} ` : "";
+  const location = job.location ? ` in ${job.location}` : "";
+  const skills = toSentence(job.skills, 4);
+
+  return [
+    `${job.title} at ${job.company} is a ${workMode}${employmentType.toLowerCase()} opportunity${location}.`,
+    skills
+      ? `This opening is relevant for candidates with exposure to ${skills}.`
+      : "This opening is relevant for candidates who can understand the role requirements and verify the official source before applying.",
+    job.salary && !genericSalaryPattern.test(job.salary)
+      ? `The listed compensation signal is ${job.salary}.`
+      : "Compensation details should be verified on the official employer or application source.",
+  ].join(" ");
+};
+
+const buildWhoShouldApply = (job: Awaited<ReturnType<typeof getAllJobs>>[number]) => {
+  const education = toSentence(job.education, 4);
+  const experience = job.experience || job.experienceYears || job.experienceLevel;
+  const skills = toSentence(job.skills, 5);
+
+  return [
+    experience
+      ? `Candidates matching the experience level (${experience}) should review this role carefully.`
+      : "Candidates who match the responsibilities and eligibility criteria should review this role carefully.",
+    education ? `Relevant education signals include ${education}.` : "",
+    skills ? `A stronger application will connect your resume to ${skills}.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+};
+
+const buildApplicationTips = (job: Awaited<ReturnType<typeof getAllJobs>>[number]) => [
+  "Open the official apply link and confirm the company, location, deadline, and eligibility before submitting personal information.",
+  `Tailor your resume headline and skills section to match ${job.title} at ${job.company}.`,
+  "Avoid any opportunity that asks for money, refundable deposits, training fees, or unofficial payment before hiring.",
+];
+
+const buildStructuredDescription = (
+  job: Awaited<ReturnType<typeof getAllJobs>>[number],
+  roleOverview: string,
+  whoShouldApply: string,
+) =>
+  [
+    roleOverview,
+    whoShouldApply,
+    job.eligibilityCriteria ? `Eligibility: ${job.eligibilityCriteria}` : "",
+    job.responsibilities.length > 0
+      ? `Responsibilities: ${job.responsibilities.join("; ")}`
+      : "",
+    job.skills.length > 0 ? `Skills: ${job.skills.join(", ")}` : "",
+    job.education.length > 0 ? `Education: ${job.education.join(", ")}` : "",
+    job.workingDays ? `Working days: ${job.workingDays}` : "",
+    job.jobTiming ? `Job timing: ${job.jobTiming}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+const toSkillLandingHref = (skill: string) => `/jobs/skill/${toContentSlug(skill)}/`;
+
 export async function generateStaticParams() {
   const jobs = await getAllJobs();
   if (jobs.length === 0) {
@@ -607,11 +774,14 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   const skills = job.skills;
   const responsibilities = job.responsibilities;
   const education = job.education;
-  const summary = job.summary || responsibilities[0] || "";
-  const schemaDescription =
-    summary ||
-    responsibilities.join(" ") ||
-    `${job.title} at ${job.company}${job.location ? ` in ${job.location}` : ""}.`;
+  const roleOverview = buildRoleOverview(job);
+  const whoShouldApply = buildWhoShouldApply(job);
+  const applicationTips = buildApplicationTips(job);
+  const schemaDescription = buildStructuredDescription(
+    job,
+    roleOverview,
+    whoShouldApply,
+  );
   const sourceHost = resolveSourceHost(job.applyLink);
   const companyInitials = getCompanyInitials(job.company);
   const displayApplicationStatus =
@@ -631,6 +801,15 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   const companySourceLabel = sourceHost ? `Apply via ${sourceHost}` : "Direct application source";
   const condensedLocation = getCondensedLocation(job.location);
   const shortLocation = condensedLocation.split(",")[0]?.trim() || "";
+  const locationLandingLabel = resolveJobLocationLabel(job.location);
+  const locationLandingHref = locationLandingLabel
+    ? `/jobs/location/${toContentSlug(locationLandingLabel)}/`
+    : "";
+  const skillLinks = Object.fromEntries(
+    skills
+      .map((skill) => [skill, toSkillLandingHref(skill)] as const)
+      .filter(([, href]) => href !== "/jobs/skill//"),
+  );
   const shouldHighlightSalary = Boolean(job.salary && !genericSalaryPattern.test(job.salary));
   const quickHighlights = ([
     shortLocation
@@ -672,6 +851,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
           value: condensedLocation || job.location,
           kind: "location",
           tone: "neutral",
+          href: locationLandingHref,
           span: "wide",
         }
       : null,
@@ -737,12 +917,37 @@ export default async function JobDetailPage({ params }: JobPageProps) {
       value: job.slug,
     },
   };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: siteUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Jobs",
+        item: `${siteUrl}/jobs/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: job.title,
+        item: `${siteUrl}/jobs/${job.slug}/`,
+      },
+    ],
+  };
+  const structuredData = [jobPostingSchema, breadcrumbSchema];
 
   return (
     <div className="grid gap-6 lg:grid-cols-10">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       <article className="space-y-6 lg:col-span-7">
         <header className="job-detail-header-surface fade-up relative overflow-hidden rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(249,251,252,0.96)_58%,rgba(242,247,246,0.94)_100%)] px-4 py-4 shadow-[0_18px_42px_-32px_rgba(15,23,42,0.22),inset_0_1px_0_rgba(255,255,255,0.92)] sm:px-7 sm:py-6">
@@ -823,7 +1028,15 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                       <HeaderInfoIcon kind={fact.kind} className="h-4 w-4" />
                       <span>{fact.label}</span>
                     </dt>
-                    <dd className="job-detail-fact-value">{fact.value}</dd>
+                    <dd className="job-detail-fact-value">
+                      {fact.href ? (
+                        <Link href={fact.href} className="transition hover:text-teal-900">
+                          {fact.value}
+                        </Link>
+                      ) : (
+                        fact.value
+                      )}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -888,13 +1101,31 @@ export default async function JobDetailPage({ params }: JobPageProps) {
         <JobDetailSections
           sections={[
             {
+              id: "overview",
+              title: "Role Overview",
+              content: {
+                kind: "text",
+                value: roleOverview,
+              },
+              animationDelayMs: 90,
+            },
+            {
+              id: "who-should-apply",
+              title: "Who Should Apply",
+              content: {
+                kind: "text",
+                value: whoShouldApply,
+              },
+              animationDelayMs: 105,
+            },
+            {
               id: "eligibility",
               title: "Eligibility Criteria",
               content: {
                 kind: "text",
                 value: eligibilityCriteria,
               },
-              animationDelayMs: 105,
+              animationDelayMs: 120,
             },
             {
               id: "responsibilities",
@@ -904,7 +1135,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                 items: responsibilities,
                 bullet: true,
               },
-              animationDelayMs: 125,
+              animationDelayMs: 140,
             },
             {
               id: "skills",
@@ -913,8 +1144,9 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                 kind: "chips",
                 items: skills,
                 tone: "teal",
+                links: skillLinks,
               },
-              animationDelayMs: 150,
+              animationDelayMs: 165,
             },
             {
               id: "education",
@@ -924,7 +1156,17 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                 items: education,
                 tone: "slate",
               },
-              animationDelayMs: 180,
+              animationDelayMs: 190,
+            },
+            {
+              id: "application-tips",
+              title: "Tips to Apply",
+              content: {
+                kind: "list",
+                items: applicationTips,
+                bullet: true,
+              },
+              animationDelayMs: 215,
             },
           ]}
         />

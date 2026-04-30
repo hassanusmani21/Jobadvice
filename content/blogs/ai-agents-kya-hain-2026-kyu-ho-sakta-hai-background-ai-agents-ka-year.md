@@ -430,7 +430,7 @@ AI ka evolution kuch is tarah dekha ja sakta hai:
 
 2024 – LLM APIs ka rise  
 
-2025 – AI agent demos  
+2025 – AI agent showcases  
 
 2026 – Background AI agents ka growth  
 

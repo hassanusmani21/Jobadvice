@@ -9,6 +9,12 @@ export type MarkdownBlock =
       text: string;
     }
   | {
+      type: "image";
+      alt: string;
+      src: string;
+      title?: string;
+    }
+  | {
       type: "list";
       ordered: boolean;
       items: string[];
@@ -28,6 +34,7 @@ export type MarkdownBlock =
     };
 
 const headingPattern = /^(#{1,6})\s+(.*)$/;
+const imagePattern = /^!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]+)")?\)$/;
 const unorderedListItemPattern = /^[-*]\s+(.*)$/;
 const orderedListItemPattern = /^\d+\.\s+(.*)$/;
 const horizontalRulePattern = /^([-*_])\1{2,}$/;
@@ -158,6 +165,19 @@ export const markdownToBlocks = (markdown: string): MarkdownBlock[] => {
         type: "heading",
         level: headingMatch[1].length,
         text: headingMatch[2].trim(),
+      });
+      continue;
+    }
+
+    const imageMatch = trimmedLine.match(imagePattern);
+    if (imageMatch) {
+      flushParagraph();
+      flushList();
+      blocks.push({
+        type: "image",
+        alt: imageMatch[1].trim(),
+        src: imageMatch[2].trim(),
+        ...(imageMatch[3] ? { title: imageMatch[3].trim() } : {}),
       });
       continue;
     }

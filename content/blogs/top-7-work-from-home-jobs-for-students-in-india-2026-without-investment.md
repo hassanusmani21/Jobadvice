@@ -110,7 +110,7 @@ Content writing is still one of the most realistic starting points for students 
 
 ### Why it works for students
 
-You can start with small samples, work from home, and improve as you go. You do not need an expensive course to begin. Two or three solid writing samples are often enough for your first applications.
+You can start with small portfolio pieces, work from home, and improve as you go. You do not need an expensive course to begin. Two or three solid writing clips are often enough for your first applications.
 
 ---
 
@@ -135,7 +135,7 @@ Many small businesses, coaches, and local brands need help with daily posting bu
 
 ### Realistic note
 
-This is better for students who already spend time understanding social content, not just consuming it. If you can show one mock content calendar or sample post set, you become easier to hire.
+This is better for students who already spend time understanding social content, not just consuming it. If you can show one mock content calendar or portfolio post set, you become easier to hire.
 
 ---
 
@@ -183,7 +183,7 @@ Graphic design is a strong option for students who enjoy visual work. In 2026, m
 
 ### Best entry strategy
 
-Build 5 to 8 sample posts for an imaginary brand or college event. A simple portfolio matters more than saying “I know design.”
+Build 5 to 8 portfolio posts for an imaginary brand or college event. A simple portfolio matters more than saying “I know design.”
 
 ---
 
@@ -311,7 +311,7 @@ This is the most important section if you are a student beginner.
 - No company website or no real LinkedIn presence
 - Only WhatsApp communication, no proper email
 - Unrealistic salary promises for very simple work
-- No interview, no sample test, no role details
+- No interview, no skill test, no role details
 - Pressure to share bank, Aadhaar, or other sensitive details too early
 
 ### Safer verification checklist
@@ -322,7 +322,7 @@ This is the most important section if you are a student beginner.
 - Look for recent reviews or public presence
 - Confirm whether the work actually matches the company’s business
 
-Genuine employers may ask for a sample task, resume, or portfolio. Genuine employers should not ask you to pay money for access to the job.
+Genuine employers may ask for a short skill task, resume, or portfolio. Genuine employers should not ask you to pay money for access to the job.
 
 ---
 
@@ -339,7 +339,7 @@ If you are serious, follow this simple plan:
 
 ### Week 2
 
-- Create 2 or 3 sample projects
+- Create 2 or 3 portfolio projects
 - Write a short resume
 - Create a LinkedIn profile or simple portfolio folder
 
@@ -347,7 +347,7 @@ If you are serious, follow this simple plan:
 
 - Apply to 5 to 10 relevant roles every day
 - Message a few recruiters or founders directly
-- Improve your samples based on common job requirements
+- Improve your portfolio pieces based on common job requirements
 
 ### Week 4
 
@@ -383,4 +383,4 @@ For most students, content writing, tutoring, and social media support are the e
 
 Work from home jobs for students in India are growing in 2026, but the best option is not the one that sounds easiest. It is the one that matches your skill, schedule, and ability to show proof of work.
 
-Start with one skill, build small samples, use verified platforms, and stay away from any offer that asks for money. If you stay consistent for one month, you will understand very quickly which path fits you best.
+Start with one skill, build small portfolio pieces, use verified platforms, and stay away from any offer that asks for money. If you stay consistent for one month, you will understand very quickly which path fits you best.

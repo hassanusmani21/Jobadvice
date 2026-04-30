@@ -1,5 +1,3 @@
-const encodedRemoteImagePrefix = "/api/image?url=";
-
 const hasProtocol = (value: string) => /^https?:\/\//i.test(value);
 
 export const toDisplayImageSrc = (value: string | undefined) => {
@@ -8,11 +6,7 @@ export const toDisplayImageSrc = (value: string | undefined) => {
     return "";
   }
 
-  if (!hasProtocol(normalizedValue)) {
-    return normalizedValue;
-  }
-
-  return `${encodedRemoteImagePrefix}${encodeURIComponent(normalizedValue)}`;
+  return normalizedValue;
 };
 
 export const isLikelyUnstableImageHost = (value: string | undefined) => {

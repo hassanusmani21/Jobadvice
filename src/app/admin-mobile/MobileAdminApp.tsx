@@ -1648,7 +1648,7 @@ export default function MobileAdminApp({
               placeholder={
                 collection === "jobs"
                   ? "https://company.com/careers/job-posting"
-                  : "https://example.com/post"
+                  : "https://company.com/careers/post"
               }
               className={fieldClassName}
             />
@@ -2889,7 +2889,7 @@ export default function MobileAdminApp({
 	                                value={editorEntry.ctaLink}
 	                                onChange={(event) => updateEntry({ ctaLink: event.target.value })}
 	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-	                                placeholder="https://example.com"
+	                                placeholder="https://company.com/careers"
 	                              />
 	                            </label>
 	                          </div>

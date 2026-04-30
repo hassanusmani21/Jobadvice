@@ -13,7 +13,8 @@
     "local:admin:auto": "bash ./scripts/local-admin-auto.sh",
     "auto:publish": "bash ./scripts/auto-publish-content.sh",
     "publish:content": "bash ./scripts/publish-content.sh",
-    "build": "npm run validate:jobs && next build",
+    "validate:content": "node ./scripts/validate-production-content.mjs",
+    "build": "npm run validate:jobs && npm run validate:content && next build",
     "start": "next start",
     "lint": "eslint"
   },

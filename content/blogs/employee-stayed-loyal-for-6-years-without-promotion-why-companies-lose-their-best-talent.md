@@ -17,7 +17,7 @@ tags:
   - career advice
 isTrending: false
 author: "Hassan usmani "
-coverImage: https://pixabay.com/illustrations/man-office-weary-stress-worker-8751709/
+coverImage: https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80
 date: 2026-03-09
 ---
 \# Employee Stayed Loyal for 6 Years Without Promotion – A Lesson for Companies and Employees

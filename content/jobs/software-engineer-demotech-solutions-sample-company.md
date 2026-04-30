@@ -3,7 +3,7 @@ title: "Software Engineer"
 slug: "software-engineer-demotech-solutions-sample-company"
 date: "2026-04-14"
 updatedAt: "2026-04-14"
-draft: false
+draft: true
 company: "DemoTech Solutions (Sample Company)"
 location: "Bangalore, Karnataka, India"
 workMode: "Hybrid"

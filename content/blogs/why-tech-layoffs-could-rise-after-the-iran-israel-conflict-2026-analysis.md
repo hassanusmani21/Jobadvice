@@ -185,4 +185,4 @@ The real question is:
 Want real-time job alerts and career updates?
 
 👉 Join our WhatsApp group:  
-https://example.com
+https://chat.whatsapp.com/L6Qh1hBedLZ3vfL3kQMB4r

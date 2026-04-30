@@ -8,23 +8,37 @@ import {
   getTopBlogTopics,
   type BlogPost,
 } from "@/lib/blogs";
+import { createPageMetadata, noIndexFollowRobots } from "@/lib/seo";
 import { siteName, siteUrl } from "@/lib/site";
 import { toBlogTopicSlug } from "@/lib/taxonomies";
-
-export const metadata: Metadata = {
-  title: "Career Advice, Interview Tips, and Hiring News",
-  description:
-    "Read career advice, interview tips, hiring news, salary insights, and practical job-search guidance for students and early-career job seekers in India.",
-  alternates: {
-    canonical: "/blog/",
-  },
-};
 
 type BlogPageProps = {
   searchParams?: {
     q?: string | string[];
   };
 };
+
+export async function generateMetadata({
+  searchParams,
+}: BlogPageProps): Promise<Metadata> {
+  const baseMetadata = createPageMetadata({
+    title: "Career Advice, Interview Tips, and Hiring News",
+    description:
+      "Read career advice, interview tips, hiring news, salary insights, and practical job-search guidance for students and early-career job seekers in India.",
+    path: "/blog/",
+    keywords: ["career advice", "interview tips", "job search India", "hiring news"],
+  });
+
+  if (!toSearchQuery(searchParams?.q)) {
+    return baseMetadata;
+  }
+
+  return {
+    ...baseMetadata,
+    title: "Filtered Career Articles",
+    robots: noIndexFollowRobots,
+  };
+}
 
 const toSearchQuery = (rawValue: string | string[] | undefined) => {
   const value = Array.isArray(rawValue) ? rawValue[0] : rawValue;

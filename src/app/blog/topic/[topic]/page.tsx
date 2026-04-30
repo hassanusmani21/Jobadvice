@@ -5,6 +5,7 @@ import Link from "@/components/AppLink";
 import BlogCard from "@/components/BlogCard";
 import EmptyStateCard from "@/components/EmptyStateCard";
 import { getAllBlogs } from "@/lib/blogs";
+import { createPageMetadata } from "@/lib/seo";
 import {
   getAllBlogTopicLandings,
   getBlogTopicLandingBySlug,
@@ -83,11 +84,12 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${landing.label} Articles`,
-    description: `Read ${landing.label} articles, explainers, and job-search guidance on ${siteName}.`,
-    alternates: {
-      canonical: `/blog/topic/${landing.slug}/`,
-    },
+    ...createPageMetadata({
+      title: `${landing.label} Articles`,
+      description: `Read ${landing.label} articles, explainers, hiring analysis, and job-search guidance on ${siteName}.`,
+      path: `/blog/topic/${landing.slug}/`,
+      keywords: [landing.label, `${landing.label} careers`, "career guidance"],
+    }),
   };
 }
 

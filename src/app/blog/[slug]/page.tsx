@@ -153,6 +153,38 @@ const toBreadcrumbJsonLd = (blog: BlogPost) => ({
   ],
 });
 
+const buildBlogFaq = (blog: BlogPost) => [
+  {
+    question: `What is this ${blog.topic || "career"} article about?`,
+    answer:
+      blog.summary ||
+      `This article explains ${blog.title.toLowerCase()} with practical context for students, freshers, and early-career professionals.`,
+  },
+  {
+    question: "Who should read this guide?",
+    answer:
+      "Students, freshers, job seekers, and early-career professionals who want clearer career decisions, safer job-search habits, and practical next steps should read this guide.",
+  },
+  {
+    question: "Where can I find related jobs or career resources?",
+    answer:
+      "You can browse verified openings on the JobAdvice jobs page, use topic links for related articles, and use the resume builder to prepare an application-ready resume.",
+  },
+];
+
+const toFaqJsonLd = (faqItems: ReturnType<typeof buildBlogFaq>) => ({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqItems.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.answer,
+    },
+  })),
+});
+
 const inlineMarkdownPattern =
   /(\[([^\]]+)\]\(([^)\s]+)\)|(https?:\/\/[^\s<]+)|\*\*([^*]+)\*\*|__([^_]+)__|`([^`]+)`|\*([^*]+)\*|_([^_]+)_)/g;
 const ctaKeywordPattern =
@@ -416,6 +448,10 @@ const buildArticleListenText = (
       continue;
     }
 
+    if (block.type === "image") {
+      continue;
+    }
+
     const tableText = block.rows
       .map((row) =>
         row
@@ -581,10 +617,11 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
   const visibleArticleBlocks = articleBlocks.filter(
     (block) => !shouldHideCtaParagraph(block, cta),
   );
+  const faqItems = buildBlogFaq(blog);
   const articleListenText = buildArticleListenText(blog, visibleArticleBlocks);
   const showTableOfContents =
     outline.length >= 3 || blog.readingTimeMinutes >= 5;
-  const structuredData = [toBlogJsonLd(blog), toBreadcrumbJsonLd(blog)];
+  const structuredData = [toBlogJsonLd(blog), toBreadcrumbJsonLd(blog), toFaqJsonLd(faqItems)];
   const reviewedLabel = blog.reviewedBy
     ? [blog.reviewedBy, blog.reviewerRole].filter(Boolean).join(", ")
     : "";
@@ -631,12 +668,13 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
           {blog.tags.length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {blog.tags.map((tag) => (
-                <span
+                <Link
                   key={tag}
+                  href={`/blog/?q=${encodeURIComponent(tag)}`}
                   className="max-w-full break-words rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700"
                 >
                   #{tag}
-                </span>
+                </Link>
               ))}
             </div>
           ) : null}
@@ -780,6 +818,32 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                 );
               }
 
+              if (block.type === "image") {
+                const imageSrc = toDisplayImageSrc(block.src);
+                if (!imageSrc) {
+                  return null;
+                }
+
+                return (
+                  <figure key={`${block.src}-${index}`} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <Image
+                      src={imageSrc}
+                      alt={block.alt || blog.title}
+                      width={1400}
+                      height={788}
+                      className="h-auto w-full"
+                      loading="lazy"
+                      sizes="(min-width: 1024px) 66vw, 100vw"
+                    />
+                    {block.title || block.alt ? (
+                      <figcaption className="px-4 py-3 text-xs leading-5 text-slate-500">
+                        {block.title || block.alt}
+                      </figcaption>
+                    ) : null}
+                  </figure>
+                );
+              }
+
               return (
                 <p key={`${block.text}-${index}`} className="whitespace-pre-line break-words leading-7">
                   {renderInlineMarkdown(block.text)}
@@ -847,6 +911,18 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
               </Link>
             </p>
           </div>
+
+          <section className="mt-8 rounded-2xl border border-slate-200 bg-white/72 px-5 py-5">
+            <h2 className="font-serif text-xl text-slate-900">Common Questions</h2>
+            <div className="mt-4 space-y-4">
+              {faqItems.map((item) => (
+                <section key={item.question} className="border-t border-slate-100 pt-4 first:border-t-0 first:pt-0">
+                  <h3 className="text-sm font-semibold text-slate-900">{item.question}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.answer}</p>
+                </section>
+              ))}
+            </div>
+          </section>
         </section>
 
         <div className="fade-up" style={{ animationDelay: "150ms" }}>

@@ -12,16 +12,8 @@ import {
   type JobFilters,
 } from "@/lib/jobFilters";
 import { getAllJobs } from "@/lib/jobs";
+import { createPageMetadata, noIndexFollowRobots } from "@/lib/seo";
 import { getAllJobLocationLandings } from "@/lib/taxonomies";
-
-export const metadata: Metadata = {
-  title: "Jobs",
-  description:
-    "Browse all job updates on JobAdvice including company, location, and role details.",
-  alternates: {
-    canonical: "/jobs/",
-  },
-};
 
 type JobsPageProps = {
   searchParams?: {
@@ -34,6 +26,39 @@ type JobsPageProps = {
     alert?: string | string[];
   };
 };
+
+const hasFilterSearchParams = (searchParams: JobsPageProps["searchParams"]) =>
+  Boolean(
+    searchParams?.q ||
+      searchParams?.location ||
+      searchParams?.segment ||
+      searchParams?.type ||
+      searchParams?.status ||
+      searchParams?.sort ||
+      searchParams?.alert,
+  );
+
+export async function generateMetadata({
+  searchParams,
+}: JobsPageProps): Promise<Metadata> {
+  const baseMetadata = createPageMetadata({
+    title: "Verified Jobs, Internships, and Fresher Openings",
+    description:
+      "Browse verified jobs and internships with direct apply links, company details, locations, eligibility, and career-friendly role summaries.",
+    path: "/jobs/",
+    keywords: ["verified jobs", "fresher jobs", "internships in India", "direct apply jobs"],
+  });
+
+  if (!hasFilterSearchParams(searchParams)) {
+    return baseMetadata;
+  }
+
+  return {
+    ...baseMetadata,
+    title: "Filtered Job Results",
+    robots: noIndexFollowRobots,
+  };
+}
 
 const toUniqueSortedValues = (values: string[]) =>
   Array.from(

@@ -18,8 +18,6 @@ export default function robots(): MetadataRoute.Robots {
           "/admin-mobile/*",
           "/login",
           "/api/admin/*",
-          "/api/apply/*",
-          "/api/image",
           "/api/auth/*",
           "/api/decap/*",
         ],

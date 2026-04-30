@@ -83,7 +83,7 @@ responsibilities:
   - Collaborate with product and frontend teams.
 education:
   - Bachelor's degree in CS or related field.
-applyLink: https://example.com/apply
+applyLink: https://company.com/careers/apply
 date: 2026-02-21
 applicationStartDate: 2026-02-21
 applicationEndDate: 2026-03-21
@@ -124,7 +124,7 @@ AUTH_SECRET=replace-with-long-random-secret
 NEXTAUTH_URL=https://your-domain.com
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-ALLOWED_ADMIN_EMAILS=admin1@example.com,admin2@example.com
+ALLOWED_ADMIN_EMAILS=admin@company.com,editor@company.com
 NO_EXPIRY_JOB_RETENTION_DAYS=30
 ADMIN_CONTENTS_TOKEN=your-github-fine-grained-token
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxx

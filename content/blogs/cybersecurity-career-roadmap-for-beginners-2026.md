@@ -215,7 +215,7 @@ Hands-on practice is essential for learning cybersecurity.
 - Vulnerability detection project  
 - Secure web application testing  
 
-Practical projects demonstrate real skills to employers.
+Practical projects show real skills to employers.
 
 ---
 

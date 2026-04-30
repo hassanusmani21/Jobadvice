@@ -152,12 +152,12 @@ const defaultResumeState: ResumeBuilderState = {
   certifications: [createCertificationEntry("certification-1")],
 };
 
-const sampleResumeState: ResumeBuilderState = {
+const starterResumeState: ResumeBuilderState = {
   templateId: "focus",
   basics: {
     fullName: "Aarav Sharma",
     headline: "Backend Developer Intern",
-    email: "aarav.sharma@example.com",
+    email: "aarav.sharma@mail.com",
     phone: "+91 98765 43210",
     location: "Bengaluru, India",
     website: "aaravsharma.dev",
@@ -946,10 +946,10 @@ export default function ResumeBuilderClient() {
           <ActionButton
             variant="secondary"
             buttonType="button"
-            onClick={() => setResume(sampleResumeState)}
+            onClick={() => setResume(starterResumeState)}
             className="resume-builder-hero-button"
           >
-            Use Example
+            Use Starter Resume
           </ActionButton>
         </div>
       </section>
@@ -1019,7 +1019,7 @@ export default function ResumeBuilderClient() {
                     className="form-control resume-builder-control"
                     value={resume.basics.email}
                     onChange={(event) => updateBasics("email", event.target.value)}
-                    placeholder="name@example.com"
+                    placeholder="name@email.com"
                   />
                 </Field>
                 <Field label="Phone">

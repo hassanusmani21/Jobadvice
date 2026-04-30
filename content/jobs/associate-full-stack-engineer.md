@@ -11,7 +11,7 @@ eligibilityCriteria: |-
   Exposure to asynchronous programming concepts
   Strong communication and collaboration skills
   Ability to communicate effectively in Hindi
-  Willingness to travel for trials and demonstrations
+  Willingness to travel for product trials and client presentations
 education:
   - Bachelor’s Degree in Computer Science
   - Engineering

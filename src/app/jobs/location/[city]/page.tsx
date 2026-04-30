@@ -5,6 +5,7 @@ import Link from "@/components/AppLink";
 import EmptyStateCard from "@/components/EmptyStateCard";
 import JobCard from "@/components/JobCard";
 import { getAllJobs } from "@/lib/jobs";
+import { createPageMetadata } from "@/lib/seo";
 import {
   getAllJobLocationLandings,
   getJobLocationLandingBySlug,
@@ -91,11 +92,12 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${landing.label} Jobs`,
-    description: `Browse verified jobs in ${landing.label} with direct apply links, fresher-friendly openings, and cleaner role summaries.`,
-    alternates: {
-      canonical: `/jobs/location/${landing.slug}/`,
-    },
+    ...createPageMetadata({
+      title: `${landing.label} Jobs`,
+      description: `Browse verified jobs in ${landing.label} with direct apply links, fresher-friendly openings, and cleaner role summaries.`,
+      path: `/jobs/location/${landing.slug}/`,
+      keywords: [`${landing.label} jobs`, `fresher jobs in ${landing.label}`, "direct apply jobs"],
+    }),
   };
 }
 

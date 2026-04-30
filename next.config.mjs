@@ -126,7 +126,55 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "caspianpost.com",
+      },
+      {
+        protocol: "https",
+        hostname: "miro.medium.com",
+      },
+      {
+        protocol: "https",
+        hostname: "i.insider.com",
+      },
+      {
+        protocol: "https",
+        hostname: "media.licdn.com",
+      },
+      {
+        protocol: "https",
+        hostname: "ichef.bbci.co.uk",
+      },
+      {
+        protocol: "https",
+        hostname: "ocdn.eu",
+      },
+      {
+        protocol: "https",
         hostname: "trainings.internshala.com",
+      },
+      {
+        protocol: "https",
+        hostname: "growthindia.co",
+      },
+      {
+        protocol: "https",
+        hostname: "cambridgeinfotech.io",
+      },
+      {
+        protocol: "https",
+        hostname: "dims.apnews.com",
+      },
+      {
+        protocol: "https",
+        hostname: "assets.apnews.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.brainlabsdigital.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.specialeurasia.com",
       },
     ],
   },
@@ -190,10 +238,6 @@ const nextConfig = {
       },
       {
         source: "/api/apply/:path*",
-        headers: [...noStoreHeaders, ...noIndexHeaders],
-      },
-      {
-        source: "/api/image",
         headers: [...noStoreHeaders, ...noIndexHeaders],
       },
       {

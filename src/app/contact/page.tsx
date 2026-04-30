@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import ActionButton from "@/components/ActionButton";
+import { createPageMetadata } from "@/lib/seo";
 import { siteEmail, siteName } from "@/lib/site";
 
 type ContactLink = {
@@ -86,13 +87,13 @@ const contactLinks: ContactLink[] = [
   },
 ];
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description: "Reach JobAdvice for support, feedback, or partnership queries.",
-  alternates: {
-    canonical: "/contact/",
-  },
-};
+export const metadata: Metadata = createPageMetadata({
+  title: "Contact JobAdvice",
+  description:
+    "Reach JobAdvice for job listing corrections, support, privacy questions, feedback, or partnership queries.",
+  path: "/contact/",
+  keywords: ["contact JobAdvice", "job listing corrections", "career website support"],
+});
 
 export default function ContactPage() {
   return (

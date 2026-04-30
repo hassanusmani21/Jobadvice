@@ -205,4 +205,4 @@ And the truth is simple:
 Want daily job updates, hiring alerts, and career strategies?
 
 👉 Join our WhatsApp group:  
-https://example.com
+https://chat.whatsapp.com/L6Qh1hBedLZ3vfL3kQMB4r

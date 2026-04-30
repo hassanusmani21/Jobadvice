@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
+import Link from "@/components/AppLink";
+import { createPageMetadata } from "@/lib/seo";
 import { siteEmail, siteName } from "@/lib/site";
 
 const policySections = [
@@ -13,7 +15,23 @@ const policySections = [
   },
   {
     title: "What data may be used",
-    body: "We do not collect personal job application data through this site. We may use limited non-personal analytics to improve performance, speed, and usability.",
+    body: "We do not collect personal job application data through this site. If you subscribe to alerts or contact us, we use the information you submit only to provide that service, respond to your message, improve reliability, and prevent abuse.",
+  },
+  {
+    title: "Cookies and analytics",
+    body: "This site may use cookies, local storage, and privacy-conscious analytics to remember preferences, measure page usage, understand performance, and improve navigation. Browser settings can usually block or delete cookies, but some preferences may stop working.",
+  },
+  {
+    title: "Advertising and Google AdSense disclosure",
+    body: "If advertising is enabled, third-party vendors including Google may use cookies, web beacons, IP addresses, or similar identifiers to serve ads and measure ad performance. Google advertising cookies can allow Google and its partners to serve ads based on visits to this and other websites.",
+  },
+  {
+    title: "Personalized ads choices",
+    body: "Users can manage personalized advertising through Google Ads Settings. Third-party vendors and ad networks may also provide their own opt-out choices, and some industry opt-outs are available through aboutads.info where supported.",
+  },
+  {
+    title: "Job alerts and communication",
+    body: "If you provide an email address for job alerts, we use it to send requested job updates and service messages. Unsubscribe links are included where applicable, and you can contact us to request removal.",
   },
   {
     title: "External websites",
@@ -22,12 +40,13 @@ const policySections = [
 ];
 
 export const metadata: Metadata = {
-  title: "Privacy Policy & Disclaimer",
-  description:
-    "Read the JobAdvice privacy policy and disclaimer covering external links, website data, and platform limitations.",
-  alternates: {
-    canonical: "/privacy-policy/",
-  },
+  ...createPageMetadata({
+    title: "Privacy Policy & Advertising Disclosure",
+    description:
+      "Read the JobAdvice privacy policy covering cookies, analytics, advertising disclosures, external links, and user privacy choices.",
+    path: "/privacy-policy/",
+    keywords: ["JobAdvice privacy policy", "advertising disclosure", "cookie policy"],
+  }),
 };
 
 export default function PrivacyPolicyPage() {
@@ -40,7 +59,7 @@ export default function PrivacyPolicyPage() {
         </h1>
         <p className="mt-4 max-w-3xl text-[0.98rem] leading-7 text-slate-600">
           This page explains what {siteName} is responsible for, what happens on external apply
-          links, and how limited website data may be used.
+          links, how cookies and analytics may be used, and how advertising disclosures work.
         </p>
       </section>
 
@@ -61,7 +80,12 @@ export default function PrivacyPolicyPage() {
       <section className="fade-up soft-note rounded-[1.5rem] px-5 py-5 sm:px-6" style={{ animationDelay: "140ms" }}>
         <h2 className="text-lg font-serif text-slate-900">Questions?</h2>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          If you need a correction or have a privacy-related question, email us directly.
+          If you need a correction, data removal, or have a privacy-related question, email us
+          directly. You can also review the{" "}
+          <Link href="/terms" className="font-medium text-slate-900 underline underline-offset-4">
+            terms of use
+          </Link>
+          .
         </p>
         <p className="mt-4 break-all text-sm font-semibold text-slate-900">{siteEmail}</p>
 

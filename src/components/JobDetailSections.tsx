@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "@/components/AppLink";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type JobDetailSection = {
@@ -19,6 +20,7 @@ type JobDetailSection = {
         kind: "chips";
         items: string[];
         tone: "teal" | "slate";
+        links?: Record<string, string>;
       };
   animationDelayMs?: number;
 };
@@ -62,7 +64,13 @@ const renderSectionContent = (content: JobDetailSection["content"]) => {
               : "border border-slate-200 bg-slate-100 text-slate-800",
           )}
         >
-          {item}
+          {content.links?.[item] ? (
+            <Link href={content.links[item]} className="transition hover:text-teal-700">
+              {item}
+            </Link>
+          ) : (
+            item
+          )}
         </li>
       ))}
     </ul>

@@ -3,7 +3,6 @@ import Script from "next/script";
 import { Suspense } from "react";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import Link from "@/components/AppLink";
-import GlobalEngagementPopups from "@/components/GlobalEngagementPopups";
 import RouteProgressReset from "@/components/RouteProgressReset";
 import SiteHeader from "@/components/SiteHeader";
 import ToastContainer from "@/components/Toast";
@@ -19,7 +18,6 @@ import {
   siteName,
   siteSocialProfiles,
   siteUrl,
-  siteVerifiedPublisherName,
   siteWhatsappGroupUrl,
   websiteId,
 } from "@/lib/site";
@@ -39,9 +37,7 @@ const themePreferenceScript = `
     var resolvedTheme =
       storedTheme === "dark" || storedTheme === "light"
         ? storedTheme
-        : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+        : "light";
 
     document.documentElement.dataset.theme = resolvedTheme;
     document.documentElement.style.colorScheme = resolvedTheme;
@@ -270,6 +266,7 @@ const footerLinks = [
   { href: "/about", label: "About" },
   { href: "/how-we-verify-jobs", label: "How We Verify Jobs" },
   { href: "/contact", label: "Contact" },
+  { href: "/terms", label: "Terms" },
   { href: "/privacy-policy", label: "Privacy Policy" },
 ];
 
@@ -282,26 +279,20 @@ const footerResourceLinks = [
 
 const footerTrustItems = [
   "Direct Apply Links",
-  "Independent Curation",
   "No Pay-to-Access",
+  "Independent Curation",
 ];
 
-const footerCommunitySignals = [
-  "Source Checks",
-  "Daily Updates",
-  "Early-Career Focus",
-];
-
-const footerCommunityTrustItems = [
-  "WhatsApp Updates",
-  "Email Support",
-  "Social Channels",
+const footerCommunityBenefits = [
+  "Verified listings only",
+  "No spam",
+  "Daily updates",
 ];
 
 const footerSummary =
   "Verified jobs and internships in India with direct apply links and practical guidance.";
 
-const footerFounderLine = `${siteVerifiedPublisherName} — Founder`;
+const footerCommunitySupport = "Trusted by 5k+ students across India.";
 
 const socialLinks = [
   {
@@ -404,6 +395,11 @@ const websiteJsonLd = {
   publisher: {
     "@id": organizationId,
   },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: `${siteUrl}/jobs/?q={search_term_string}`,
+    "query-input": "required name=search_term_string",
+  },
 };
 
 function FooterCheckLine({
@@ -438,6 +434,34 @@ function FooterCheckLine({
           </svg>
           <span>{item}</span>
         </span>
+      ))}
+    </div>
+  );
+}
+
+function FooterSocialLinks({
+  className,
+  label,
+}: Readonly<{
+  className?: string;
+  label: string;
+}>) {
+  return (
+    <div
+      className={className ? `site-footer-socials ${className}` : "site-footer-socials"}
+      aria-label={label}
+    >
+      {socialLinks.map((item) => (
+        <a
+          key={item.label}
+          href={item.href}
+          aria-label={item.label}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="site-footer-social-link"
+        >
+          {item.icon}
+        </a>
       ))}
     </div>
   );
@@ -495,10 +519,6 @@ export default function RootLayout({
           <SiteHeader />
 
           <ToastContainer />
-
-          <Suspense fallback={null}>
-            <GlobalEngagementPopups />
-          </Suspense>
 
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-20 sm:px-6 sm:pt-5 sm:pb-10 lg:px-8 lg:pt-2">{children}</main>
 
@@ -565,11 +585,6 @@ export default function RootLayout({
                       </div>
                     </div>
 
-                    <FooterCheckLine
-                      items={footerCommunitySignals}
-                      label="Trust signals"
-                      className="site-footer-inline-checkline-muted"
-                    />
                   </section>
 
                   <section className="site-footer-column site-footer-column-divider site-footer-column-community">
@@ -577,7 +592,7 @@ export default function RootLayout({
                       <h3 className="site-footer-label">
                         Community
                       </h3>
-                      <a href={`mailto:${siteEmail}`} className="site-footer-email">
+                      <a href={`mailto:${siteEmail}`} className="site-footer-email" aria-label="Email Support">
                         {siteEmail}
                       </a>
 
@@ -590,42 +605,52 @@ export default function RootLayout({
                         Join WhatsApp Updates
                       </a>
                       <p className="site-footer-support">
-                        Get verified jobs directly on your phone.
+                        {footerCommunitySupport}
                       </p>
 
-                      <FooterCheckLine
-                        items={footerCommunityTrustItems}
-                        label="Community trust signals"
-                        className="site-footer-inline-checkline-muted site-footer-inline-checkline-community"
-                      />
-
-                      <div className="site-footer-socials">
-                        {socialLinks.map((item) => (
-                          <a
-                            key={item.label}
-                            href={item.href}
-                            aria-label={item.label}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="site-footer-social-link"
-                          >
-                            {item.icon}
-                          </a>
+                      <ul className="site-footer-benefits" aria-label="Community benefits">
+                        {footerCommunityBenefits.map((item) => (
+                          <li key={item} className="site-footer-benefit-item">
+                            <svg
+                              aria-hidden="true"
+                              viewBox="0 0 16 16"
+                              className="site-footer-benefit-mark"
+                            >
+                              <path
+                                d="M3.5 8.2 6.3 11l6.2-6.3"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="1.8"
+                              />
+                            </svg>
+                            <span>{item}</span>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
+
+                      <FooterSocialLinks
+                        className="site-footer-community-socials"
+                        label="Community social channels"
+                      />
                     </div>
                   </section>
                 </div>
 
                 <div className="site-footer-legal">
-                  <p className="site-footer-legal-line">
+                  <div className="site-footer-legal-line">
                     <span className="site-footer-legal-primary">
-                      © 2026 JobAdvice • Independent platform • {footerFounderLine}
+                      © 2026 JobAdvice • Independent platform
                     </span>
                     <span className="site-footer-legal-secondary">
                       Built for students, freshers, and early careers
                     </span>
-                  </p>
+                    <FooterSocialLinks
+                      className="site-footer-legal-socials"
+                      label="JobAdvice social channels"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
