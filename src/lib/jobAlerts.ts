@@ -2,7 +2,12 @@ import { createHash, randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { getStore, type Store } from "@netlify/blobs";
-import { get as getVercelBlob, list as listVercelBlobs, put as putVercelBlob } from "@vercel/blob";
+import {
+  del as deleteVercelBlob,
+  get as getVercelBlob,
+  list as listVercelBlobs,
+  put as putVercelBlob,
+} from "@vercel/blob";
 import {
   buildJobAlertSearchParams,
   buildJobAlertSummary,
@@ -408,6 +413,46 @@ const persistSubscription = async (subscription: JobAlertSubscription) => {
       signature: subscription.signature,
     } satisfies JobAlertTokenRecord),
   ]);
+};
+
+export const deleteJobAlertSubscription = async (signature: string) => {
+  const normalizedSignature = signature.trim();
+
+  if (!normalizedSignature) {
+    return null;
+  }
+
+  const subscription = await getStoredSubscriptionBySignature(normalizedSignature);
+
+  if (!subscription) {
+    return null;
+  }
+
+  if (shouldUseLocalAlertsFileStore) {
+    const state = await readLocalAlertsState();
+    delete state.subscriptions[normalizedSignature];
+    delete state.tokenToSignature[subscription.unsubscribeToken];
+    await writeLocalAlertsState(state);
+    return subscription;
+  }
+
+  assertConfiguredProductionStorage();
+
+  if (configuredStorageProvider === "vercel-blob") {
+    await deleteVercelBlob([
+      toSubscriptionKey(normalizedSignature),
+      toTokenKey(subscription.unsubscribeToken),
+    ]);
+    return subscription;
+  }
+
+  const store = getAlertsStore();
+  await Promise.all([
+    store.delete(toSubscriptionKey(normalizedSignature)),
+    store.delete(toTokenKey(subscription.unsubscribeToken)),
+  ]);
+
+  return subscription;
 };
 
 const getStoredSubscriptionByUnsubscribeToken = async (token: string) => {

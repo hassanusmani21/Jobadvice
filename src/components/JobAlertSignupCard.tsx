@@ -143,7 +143,7 @@ export default function JobAlertSignupCard({
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="Enter your email for daily alerts"
+                placeholder="Email for daily alerts"
                 autoComplete="email"
                 required
                 className="form-control job-alert-input"
