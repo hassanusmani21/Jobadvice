@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import ActionButton from "@/components/ActionButton";
-import { siteName, siteUrl } from "@/lib/site";
+import { siteName } from "@/lib/site";
 
 type ResumeTemplateId = "classic" | "modern" | "focus" | "structured";
 type ResumeBasics = {
@@ -334,16 +334,19 @@ function PreviewSection({
   title,
   children,
   sectionKey,
+  isFirst,
 }: {
   title: string;
   children: ReactNode;
   sectionKey?: string;
+  isFirst?: boolean;
 }) {
   return (
     <section
       className={joinClasses(
         "resume-preview-section",
         sectionKey && `resume-preview-section-${sectionKey}`,
+        isFirst && "resume-preview-section-first",
       )}
     >
       <h3 className="resume-preview-section-title">{title}</h3>
@@ -650,7 +653,6 @@ export default function ResumeBuilderClient() {
         : resume.templateId === "modern"
           ? ["summary", "skills", "projects", "education", "experience", "certifications", "hobbies"]
           : ["summary", "education", "skills", "projects", "experience", "certifications", "hobbies"];
-  const printableSiteUrl = siteUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   const previewName = resume.basics.fullName.trim();
   const previewHeadline = resume.basics.headline.trim();
   const hasPreviewIdentity = Boolean(previewName || previewHeadline || previewContactLines.length > 0);
@@ -668,19 +670,35 @@ export default function ResumeBuilderClient() {
       showCertificationPreview ||
       showHobbiesPreview,
   );
+  const isSectionVisible = (sectionKey: string) => {
+    if (sectionKey === "summary") {
+      return resume.summary.trim().length > 0;
+    }
+    if (sectionKey === "skills") {
+      return skillItems.length > 0;
+    }
+    if (sectionKey === "education") {
+      return educationItems.length > 0;
+    }
+    if (sectionKey === "projects") {
+      return projectItems.length > 0;
+    }
+    if (sectionKey === "experience") {
+      return showExperiencePreview;
+    }
+    if (sectionKey === "certifications") {
+      return showCertificationPreview;
+    }
+    if (sectionKey === "hobbies") {
+      return showHobbiesPreview;
+    }
+
+    return false;
+  };
+  const firstVisibleSectionKey = previewSectionOrder.find((sectionKey) => isSectionVisible(sectionKey)) ?? null;
 
   const previewSheet = (
     <div className="resume-preview-sheet">
-      <div
-        className={joinClasses(
-          "resume-preview-brandline",
-          isStructuredTemplate && "resume-preview-brandline-structured",
-        )}
-      >
-        <span className="resume-preview-brandline-label">Built with</span>
-        <span className="resume-preview-brandline-url">{printableSiteUrl}</span>
-      </div>
-
       <header
         className={joinClasses(
           "resume-preview-header",
@@ -722,7 +740,12 @@ export default function ResumeBuilderClient() {
         {previewSectionOrder.map((sectionKey) => {
           if (sectionKey === "summary" && resume.summary.trim()) {
             return (
-              <PreviewSection key={sectionKey} title="Summary" sectionKey="summary">
+              <PreviewSection
+                key={sectionKey}
+                title="Summary"
+                sectionKey="summary"
+                isFirst={firstVisibleSectionKey === sectionKey}
+              >
                 <p
                   className={joinClasses(
                     "resume-preview-copy",
@@ -737,7 +760,12 @@ export default function ResumeBuilderClient() {
 
           if (sectionKey === "skills" && skillItems.length > 0) {
             return (
-              <PreviewSection key={sectionKey} title="Skills" sectionKey="skills">
+              <PreviewSection
+                key={sectionKey}
+                title="Skills"
+                sectionKey="skills"
+                isFirst={firstVisibleSectionKey === sectionKey}
+              >
                 {isStructuredTemplate ? (
                   <div className="resume-preview-structured-table">
                     <div className="resume-preview-structured-row">
@@ -766,7 +794,12 @@ export default function ResumeBuilderClient() {
 
           if (sectionKey === "education" && educationItems.length > 0) {
             return (
-              <PreviewSection key={sectionKey} title="Education" sectionKey="education">
+              <PreviewSection
+                key={sectionKey}
+                title="Education"
+                sectionKey="education"
+                isFirst={firstVisibleSectionKey === sectionKey}
+              >
                 <div
                   className={joinClasses(
                     "resume-preview-stack",
@@ -804,7 +837,12 @@ export default function ResumeBuilderClient() {
 
           if (sectionKey === "projects" && projectItems.length > 0) {
             return (
-              <PreviewSection key={sectionKey} title="Projects" sectionKey="projects">
+              <PreviewSection
+                key={sectionKey}
+                title="Projects"
+                sectionKey="projects"
+                isFirst={firstVisibleSectionKey === sectionKey}
+              >
                 <div
                   className={joinClasses(
                     "resume-preview-stack",
@@ -839,7 +877,12 @@ export default function ResumeBuilderClient() {
 
           if (sectionKey === "experience" && showExperiencePreview) {
             return (
-              <PreviewSection key={sectionKey} title="Experience" sectionKey="experience">
+              <PreviewSection
+                key={sectionKey}
+                title="Experience"
+                sectionKey="experience"
+                isFirst={firstVisibleSectionKey === sectionKey}
+              >
                 <div
                   className={joinClasses(
                     "resume-preview-stack",
@@ -877,7 +920,12 @@ export default function ResumeBuilderClient() {
 
           if (sectionKey === "certifications" && showCertificationPreview) {
             return (
-              <PreviewSection key={sectionKey} title="Certifications" sectionKey="certifications">
+              <PreviewSection
+                key={sectionKey}
+                title="Certifications"
+                sectionKey="certifications"
+                isFirst={firstVisibleSectionKey === sectionKey}
+              >
                 <div
                   className={joinClasses(
                     "resume-preview-stack",
@@ -908,7 +956,12 @@ export default function ResumeBuilderClient() {
 
           if (sectionKey === "hobbies" && showHobbiesPreview) {
             return (
-              <PreviewSection key={sectionKey} title="Hobbies" sectionKey="hobbies">
+              <PreviewSection
+                key={sectionKey}
+                title="Hobbies"
+                sectionKey="hobbies"
+                isFirst={firstVisibleSectionKey === sectionKey}
+              >
                 <div className="resume-preview-skill-row">
                   {hobbyItems.map((hobby) => (
                     <span

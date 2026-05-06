@@ -7236,6 +7236,10 @@ html[data-theme="dark"] .blog-hero-thumbnail:hover {
 }
 
 @media print {
+  @page {
+    margin: 12mm;
+  }
+
   html,
   body {
     background: #ffffff !important;
@@ -7247,6 +7251,7 @@ html[data-theme="dark"] .blog-hero-thumbnail:hover {
   .site-glow,
   .route-progress-indicator,
   .resume-builder-hero,
+  .resume-builder-support,
   .resume-builder-editor,
   .resume-builder-score-panel,
   .resume-keyword-panel,
@@ -7277,10 +7282,35 @@ html[data-theme="dark"] .blog-hero-thumbnail:hover {
     padding: 0 !important;
   }
 
-  .resume-preview-body,
+  .resume-preview-header {
+    gap: 0.55rem !important;
+    padding-bottom: 0.75rem !important;
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  .resume-preview-body {
+    margin-top: 0.75rem !important;
+    gap: 0.75rem !important;
+  }
+
   .resume-preview-section,
+  .resume-preview-stack,
+  .resume-preview-body {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .resume-preview-section-first,
   .resume-preview-entry {
-    break-inside: avoid;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  .resume-preview-section-title,
+  .resume-preview-entry-head {
+    break-after: avoid-page;
+    page-break-after: avoid;
   }
 
   .resume-preview-copy,
@@ -7304,6 +7334,12 @@ html[data-theme="dark"] .blog-hero-thumbnail:hover {
   .resume-preview-entry,
   .resume-preview-skill-pill {
     border-color: rgba(203, 213, 225, 0.96) !important;
+  }
+
+  .resume-preview-focus .resume-preview-section-projects,
+  .resume-preview-focus .resume-preview-section-skills,
+  .resume-preview-modern .resume-preview-entry {
+    padding: 0.65rem 0.72rem !important;
   }
 }
 
