@@ -4,7 +4,7 @@ import { runDailyJobAlerts } from "@/lib/jobAlerts";
 export const dynamic = "force-dynamic";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
-const cronSecret = (process.env.JOB_ALERTS_CRON_SECRET || "").trim();
+const cronSecret = (process.env.JOB_ALERTS_CRON_SECRET || process.env.CRON_SECRET || "").trim();
 
 const isAuthorizedCronRequest = (request: Request) => {
   if (isDevelopment && !cronSecret) {
