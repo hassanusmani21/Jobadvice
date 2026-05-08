@@ -603,64 +603,28 @@ const applyBlogExtractedData = (
 const buildAdminLoginUrl = (adminBasePath: string) =>
   `/admin/login?callbackUrl=${encodeURIComponent(adminBasePath)}`;
 
-type EditorAccordionSectionId =
-  | "job-basics"
-  | "job-details"
-  | "job-application"
-  | "job-requirements"
-  | "blog-basics"
-  | "blog-media"
-  | "blog-content";
-
-const getDefaultEditorAccordionSection = (
-  collection: AdminCollection,
-): EditorAccordionSectionId =>
-  collection === "jobs" ? "job-basics" : "blog-basics";
-
-function EditorAccordionSection({
-  id,
+function EditorFormSection({
   title,
-  isOpen,
-  onToggle,
   children,
   optionalLabel,
 }: {
-  id: EditorAccordionSectionId;
   title: string;
-  isOpen: boolean;
-  onToggle: (id: EditorAccordionSectionId) => void;
   children: ReactNode;
   optionalLabel?: string;
 }) {
   return (
-    <section
-      className={cn(
-        "resume-accordion-section card-surface",
-        isOpen && "resume-accordion-section-open",
-      )}
-    >
-      <button
-        type="button"
-        className="resume-accordion-toggle"
-        onClick={(event) => {
-          onToggle(id);
-          if (event.detail > 0) {
-            event.currentTarget.blur();
-          }
-        }}
-        aria-expanded={isOpen}
-      >
-        <span className="resume-accordion-head">
-          <span className="resume-accordion-title">{title}</span>
-          {optionalLabel ? (
-            <span className="resume-accordion-optional">{optionalLabel}</span>
-          ) : null}
-        </span>
-        <span className="resume-accordion-icon" aria-hidden="true">
-          {isOpen ? "−" : "+"}
-        </span>
-      </button>
-      {isOpen ? <div className="resume-accordion-body">{children}</div> : null}
+    <section className="rounded-[1.15rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-600">
+          {title}
+        </h3>
+        {optionalLabel ? (
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
+            {optionalLabel}
+          </span>
+        ) : null}
+      </div>
+      <div>{children}</div>
     </section>
   );
 }
@@ -702,9 +666,6 @@ export default function MobileAdminApp({
   const [extractMode, setExtractMode] = useState<"text" | "url" | "">("");
   const [extractError, setExtractError] = useState("");
   const [extractNotice, setExtractNotice] = useState("");
-  const [openEditorSection, setOpenEditorSection] = useState<EditorAccordionSectionId | null>(
-    getDefaultEditorAccordionSection(initialCollection),
-  );
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const extractorPanelRef = useRef<HTMLDivElement | null>(null);
 
@@ -1554,13 +1515,6 @@ export default function MobileAdminApp({
       ? editorEntry.title || "New job"
       : editorEntry.title || "New blog";
   const extractorEntityLabel = collection === "jobs" ? "job" : "blog";
-  const toggleEditorSection = (sectionId: EditorAccordionSectionId) => {
-    setOpenEditorSection((current) => (current === sectionId ? null : sectionId));
-  };
-
-  useEffect(() => {
-    setOpenEditorSection(getDefaultEditorAccordionSection(collection));
-  }, [collection, editorOpen, originalSlug]);
   const renderRecordButton = (record: AdminMobileRecord) => {
     const activityDate = getRecordActivityDate(record);
     const primaryDateLabel =
@@ -2457,11 +2411,8 @@ export default function MobileAdminApp({
 	                <div className="mt-5 space-y-4">
 	                  {editorEntry.collection === "jobs" ? (
 	                    <>
-	                      <EditorAccordionSection
-	                        id="job-basics"
+	                      <EditorFormSection
 	                        title="Job Basics"
-	                        isOpen={openEditorSection === "job-basics"}
-	                        onToggle={toggleEditorSection}
 	                      >
 	                        <div className="grid gap-4 sm:grid-cols-2">
 	                          <label className="block">
@@ -2515,13 +2466,10 @@ export default function MobileAdminApp({
 	                            />
 	                          </label>
 	                        </div>
-	                      </EditorAccordionSection>
+	                      </EditorFormSection>
 
-	                      <EditorAccordionSection
-	                        id="job-details"
+	                      <EditorFormSection
 	                        title="Job Details"
-	                        isOpen={openEditorSection === "job-details"}
-	                        onToggle={toggleEditorSection}
 	                      >
 	                        <div className="space-y-4">
 	                          <div className="grid gap-4 sm:grid-cols-2">
@@ -2610,13 +2558,10 @@ export default function MobileAdminApp({
 	                            </label>
 	                          </div>
 	                        </div>
-	                      </EditorAccordionSection>
+	                      </EditorFormSection>
 
-	                      <EditorAccordionSection
-	                        id="job-application"
+	                      <EditorFormSection
 	                        title="Application"
-	                        isOpen={openEditorSection === "job-application"}
-	                        onToggle={toggleEditorSection}
 	                      >
 	                        <div className="grid gap-4 sm:grid-cols-2">
 	                          <label className="block sm:col-span-2">
@@ -2660,13 +2605,10 @@ export default function MobileAdminApp({
 	                            />
 	                          </label>
 	                        </div>
-	                      </EditorAccordionSection>
+	                      </EditorFormSection>
 
-	                      <EditorAccordionSection
-	                        id="job-requirements"
+	                      <EditorFormSection
 	                        title="Requirements"
-	                        isOpen={openEditorSection === "job-requirements"}
-	                        onToggle={toggleEditorSection}
 	                      >
 	                        <div className="space-y-4">
 	                          <label className="block">
@@ -2731,15 +2673,12 @@ export default function MobileAdminApp({
 	                            </label>
 	                          </div>
 	                        </div>
-	                      </EditorAccordionSection>
+	                      </EditorFormSection>
 	                    </>
 	                  ) : (
 	                    <>
-	                      <EditorAccordionSection
-	                        id="blog-basics"
+	                      <EditorFormSection
 	                        title="Blog Basics"
-	                        isOpen={openEditorSection === "blog-basics"}
-	                        onToggle={toggleEditorSection}
 	                      >
 	                        <div className="space-y-4">
 	                          <div className="grid gap-4 sm:grid-cols-2">
@@ -2823,13 +2762,10 @@ export default function MobileAdminApp({
 	                            />
 	                          </label>
 	                        </div>
-	                      </EditorAccordionSection>
+	                      </EditorFormSection>
 
-	                      <EditorAccordionSection
-	                        id="blog-media"
+	                      <EditorFormSection
 	                        title="Media & CTA"
-	                        isOpen={openEditorSection === "blog-media"}
-	                        onToggle={toggleEditorSection}
 	                      >
 	                        <div className="space-y-4">
 	                          <div className="grid gap-4 sm:grid-cols-2">
@@ -2970,13 +2906,10 @@ export default function MobileAdminApp({
 	                            ) : null}
 	                          </div>
 	                        </div>
-	                      </EditorAccordionSection>
+	                      </EditorFormSection>
 
-	                      <EditorAccordionSection
-	                        id="blog-content"
+	                      <EditorFormSection
 	                        title="Article Markdown"
-	                        isOpen={openEditorSection === "blog-content"}
-	                        onToggle={toggleEditorSection}
 	                      >
 	                        <label className="block">
 	                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -2990,7 +2923,7 @@ export default function MobileAdminApp({
 	                            placeholder="# Headline&#10;&#10;Start writing..."
 	                          />
 	                        </label>
-	                      </EditorAccordionSection>
+	                      </EditorFormSection>
 	                    </>
 	                  )}
 
