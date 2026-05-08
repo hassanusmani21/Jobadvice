@@ -17,7 +17,7 @@ import {
   sortJobsByFilters,
   type JobAlertFilters,
 } from "@/lib/jobFilters";
-import { formatPostedDate, getAllJobs, type JobPost } from "@/lib/jobs";
+import { formatPostedDate, getAllJobsForAlerts, type JobPost } from "@/lib/jobs";
 import { siteName, siteUrl } from "@/lib/site";
 
 const alertsStoreName = "job-alerts";
@@ -868,7 +868,7 @@ export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
     };
   }
 
-  const jobs = await getAllJobs();
+  const jobs = await getAllJobsForAlerts();
   let emailsSent = 0;
   let matchedJobs = 0;
   let skippedAlerts = 0;

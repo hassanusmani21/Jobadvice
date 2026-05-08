@@ -1204,6 +1204,8 @@ const readJobsForAdmin = (options: { includeDrafts?: boolean; includeExpired?: b
 
 export const getAllJobs = async () => readJobs();
 
+export const getAllJobsForAlerts = async () => loadJobs();
+
 export const getAllJobsForAdmin = async () =>
   readJobsForAdmin({ includeDrafts: true, includeExpired: true });
 
