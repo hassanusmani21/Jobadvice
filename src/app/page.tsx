@@ -63,7 +63,7 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-6 lg:space-y-4">
-      <section className="fade-up hero-surface home-hero-shell relative overflow-hidden px-5 py-5 sm:px-7 sm:py-5 lg:px-8 lg:py-4.5">
+      <section className="fade-up hero-surface home-hero-shell relative overflow-hidden px-5 py-5 sm:px-7 sm:py-5 lg:px-8 lg:py-4.5 border-t border-white/5 mt-8 pt-6">
         <div
           aria-hidden
           className="absolute -top-24 right-[-5rem] h-44 w-44 rounded-full bg-white/45 blur-3xl sm:h-64 sm:w-64"
@@ -71,6 +71,10 @@ export default async function HomePage() {
         <div
           aria-hidden
           className="absolute -bottom-20 left-[-4rem] h-36 w-36 rounded-full bg-teal-200/40 blur-3xl sm:h-52 sm:w-52"
+        />
+        <div
+          aria-hidden
+          className="absolute bottom-0 left-0 w-80 h-80 bg-emerald-500/10 blur-[120px] rounded-full"
         />
         <div
           aria-hidden
@@ -84,7 +88,7 @@ export default async function HomePage() {
               <span className="home-hero-live-pill">Updated daily</span>
             </div>
 
-            <h1 className="page-title home-hero-title max-w-3xl !text-[1.9rem] sm:!text-[2.25rem] lg:!text-[2.48rem]">
+            <h1 className="page-title home-hero-title max-w-3xl text-[42px] leading-[1.15] tracking-[-0.02em] font-semibold">
               Find verified jobs and internships in India
             </h1>
 
@@ -93,11 +97,11 @@ export default async function HomePage() {
               place.
             </p>
 
-            <div className="home-hero-proof-row mt-3.5 flex flex-wrap items-center gap-2">
+            <div className="home-hero-proof-row flex gap-6 mt-5 text-sm text-white/70">
               {heroMetrics.map((metric) => (
                 <span key={metric.label} className="home-hero-proof-chip">
-                  <span className="home-hero-proof-value">{metric.value}</span>
-                  <span className="home-hero-proof-label">{metric.label}</span>
+                  <span className="home-hero-proof-value text-emerald-400 drop-shadow">{metric.value}</span>
+                  <span className="home-hero-proof-label text-white/70">{metric.label}</span>
                 </span>
               ))}
             </div>
@@ -112,13 +116,15 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <aside className="home-community-card card-surface h-full rounded-[1.45rem] p-4 sm:p-[1.125rem]">
+          <aside className="home-community-card card-surface h-full relative rounded-2xl p-4 sm:p-[1.125rem]">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="home-community-kicker text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-700">
                 Community
               </p>
               <span className="home-community-status">Fast lane</span>
             </div>
+
+            <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none rounded-2xl" />
 
             <h2 className="home-community-title mt-2 font-serif text-[1.16rem] leading-[1.05] text-slate-900 sm:text-[1.28rem]">
               Join the WhatsApp community
