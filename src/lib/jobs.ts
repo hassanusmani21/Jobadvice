@@ -362,6 +362,7 @@ export type JobPost = {
   employmentType?: string;
   jobType?: string;
   applyLink?: string;
+  publishedAt?: string;
   date: string;
   updatedAt: string;
   applicationStartDate: string;
@@ -1075,10 +1076,13 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
   const jobType = employmentType;
   const fileModifiedDate =
     toDateString(fileStats.mtime.toISOString()) || getTodayDateString();
+  const fileModifiedAt = fileStats.mtime.toISOString();
   const date =
     toDateString(
       data.date || data.postedDate,
     ) || fileModifiedDate;
+  const publishedAt =
+    normalizeTextValue(data.publishedAt || data.postedAt) || fileModifiedAt;
   const explicitUpdatedAt = toDateString(data.updatedAt || data.updated || data.lastUpdated);
   const applicationStartDate =
     toDateString(data.applicationStartDate || data.startDate) || date;
@@ -1161,6 +1165,7 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
     ...(employmentType ? { employmentType } : {}),
     ...(jobType ? { jobType } : {}),
     ...(applyLink ? { applyLink } : {}),
+    ...(publishedAt ? { publishedAt } : {}),
     date,
     updatedAt,
     applicationStartDate,

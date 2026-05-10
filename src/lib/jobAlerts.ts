@@ -77,6 +77,7 @@ export type JobAlertSubscription = {
   signature: string;
   email: string;
   name?: string;
+  timeZone?: string;
   filters: JobAlertFilters;
   channel: JobAlertDeliveryChannel;
   frequency: JobAlertDeliveryFrequency;
@@ -177,6 +178,21 @@ const assertConfiguredProductionStorage = () => {
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 const normalizeSubscriberName = (name: string) => name.trim().replace(/\s+/g, " ").slice(0, 80);
+const defaultJobAlertTimeZone = "Asia/Kolkata";
+const normalizeTimeZone = (timeZone: string | null | undefined) => {
+  const candidate = typeof timeZone === "string" ? timeZone.trim() : "";
+
+  if (!candidate) {
+    return defaultJobAlertTimeZone;
+  }
+
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: candidate }).format(new Date());
+    return candidate;
+  } catch {
+    return defaultJobAlertTimeZone;
+  }
+};
 const escapeHtml = (value: string) =>
   value
     .replaceAll("&", "&amp;")
@@ -211,13 +227,14 @@ const isValidEmail = (email: string) =>
 
 const hydrateJobAlertSubscription = (
   subscription: JobAlertSubscription | null | undefined,
-) => {
+): JobAlertSubscription | null => {
   if (!subscription) {
     return null;
   }
 
   return {
     ...subscription,
+    timeZone: normalizeTimeZone(subscription.timeZone),
     filters: normalizeJobAlertFilters(subscription.filters),
     // Older stored records did not track the welcome-email timestamp.
     welcomeEmailSentAt:
@@ -502,8 +519,85 @@ const appendSentJobSlugs = (subscription: JobAlertSubscription, jobSlugs: string
   return nextSentJobSlugs;
 };
 
-const buildJobsDigestSubject = (subscription: JobAlertSubscription, matchedJobs: JobPost[]) => {
-  const summary = buildJobAlertSummary(subscription.filters);
+const getLocalDateKey = (date: Date, timeZone: string) => {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone,
+    year: "numeric",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${values.year}-${values.month}-${values.day}`;
+};
+
+const wasAlertSentToday = (
+  subscription: JobAlertSubscription,
+  checkedAt: string,
+) => {
+  if (!subscription.lastSentAt) {
+    return false;
+  }
+
+  const timeZone = normalizeTimeZone(subscription.timeZone);
+  const lastSentDate = new Date(subscription.lastSentAt);
+  const checkedDate = new Date(checkedAt);
+
+  if (
+    Number.isNaN(lastSentDate.getTime()) ||
+    Number.isNaN(checkedDate.getTime())
+  ) {
+    return false;
+  }
+
+  return getLocalDateKey(lastSentDate, timeZone) === getLocalDateKey(checkedDate, timeZone);
+};
+
+const toDateOnlyEndTimestamp = (value: string) => Date.parse(`${value}T23:59:59.999Z`);
+
+const getJobPostedTimestamp = (job: JobPost) => {
+  const exactPublishedAt =
+    "publishedAt" in job && typeof job.publishedAt === "string" ? job.publishedAt : "";
+
+  for (const value of [exactPublishedAt, job.updatedAt, job.date]) {
+    if (!value) {
+      continue;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      const endOfDayTimestamp = toDateOnlyEndTimestamp(value);
+      if (!Number.isNaN(endOfDayTimestamp)) {
+        return endOfDayTimestamp;
+      }
+    }
+
+    const timestamp = Date.parse(value);
+    if (!Number.isNaN(timestamp)) {
+      return timestamp;
+    }
+  }
+
+  return 0;
+};
+
+const wasJobPostedAfterLastAlert = (job: JobPost, subscription: JobAlertSubscription) => {
+  if (!subscription.lastSentAt) {
+    return true;
+  }
+
+  const lastSentTimestamp = Date.parse(subscription.lastSentAt);
+  if (Number.isNaN(lastSentTimestamp)) {
+    return true;
+  }
+
+  return getJobPostedTimestamp(job) > lastSentTimestamp;
+};
+
+const buildJobsDigestSubject = (
+  subscription: JobAlertSubscription,
+  matchedJobs: JobPost[],
+  summary = buildJobAlertSummary(subscription.filters),
+) => {
   const prefix = matchedJobs.length === 1 ? "1 new job" : `${matchedJobs.length} new jobs`;
 
   return `${siteName} alert: ${prefix} for ${summary}`;
@@ -512,8 +606,11 @@ const buildJobsDigestSubject = (subscription: JobAlertSubscription, matchedJobs:
 const buildUnsubscribeUrl = (token: string) =>
   `${siteUrl}/api/job-alerts/unsubscribe?token=${encodeURIComponent(token)}`;
 
-const buildJobDigestHtml = (subscription: JobAlertSubscription, matchedJobs: JobPost[]) => {
-  const summary = buildJobAlertSummary(subscription.filters);
+const buildJobDigestHtml = (
+  subscription: JobAlertSubscription,
+  matchedJobs: JobPost[],
+  summary = buildJobAlertSummary(subscription.filters),
+) => {
   const filtersQuery = buildJobAlertSearchParams(subscription.filters);
   const browseUrl = filtersQuery ? `${siteUrl}/jobs/?${filtersQuery}` : `${siteUrl}/jobs/`;
   const unsubscribeUrl = buildUnsubscribeUrl(subscription.unsubscribeToken);
@@ -573,7 +670,9 @@ const buildJobDigestHtml = (subscription: JobAlertSubscription, matchedJobs: Job
                 matchedJobs.length === 1 ? "job matches" : "job matches"
               }</h1>
               <p style="margin:0 0 18px;font-size:15px;line-height:1.65;color:#526171;">
-                Daily alert for <strong>${safeSummary}</strong>. These are the newest live jobs that match your saved filter.
+                Today we found <strong>${matchedJobs.length} new ${
+                  matchedJobs.length === 1 ? "job" : "jobs"
+                }</strong> matching ${safeSummary}.
               </p>
               <a href="${escapeHtml(browseUrl)}" style="display:inline-block;padding:12px 18px;border-radius:14px;background:#0d9488;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Browse matching jobs</a>
             </div>
@@ -595,8 +694,11 @@ const buildJobDigestHtml = (subscription: JobAlertSubscription, matchedJobs: Job
   `;
 };
 
-const buildJobDigestText = (subscription: JobAlertSubscription, matchedJobs: JobPost[]) => {
-  const summary = buildJobAlertSummary(subscription.filters);
+const buildJobDigestText = (
+  subscription: JobAlertSubscription,
+  matchedJobs: JobPost[],
+  summary = buildJobAlertSummary(subscription.filters),
+) => {
   const browseQuery = buildJobAlertSearchParams(subscription.filters);
   const browseUrl = browseQuery ? `${siteUrl}/jobs/?${browseQuery}` : `${siteUrl}/jobs/`;
   const unsubscribeUrl = buildUnsubscribeUrl(subscription.unsubscribeToken);
@@ -619,7 +721,7 @@ const buildJobDigestText = (subscription: JobAlertSubscription, matchedJobs: Job
   return [
     getSubscriberGreetingLine(subscription),
     "",
-    `${matchedJobs.length} new job ${matchedJobs.length === 1 ? "match" : "matches"} for ${summary}`,
+    `Today we found ${matchedJobs.length} new ${matchedJobs.length === 1 ? "job" : "jobs"} matching ${summary}.`,
     "",
     jobLines,
     "",
@@ -763,6 +865,7 @@ export const createJobAlertSubscription = async (
   email: string,
   rawFilters: Partial<JobAlertFilters>,
   name: string,
+  timeZone?: string,
 ): Promise<JobAlertUpsertResult> => {
   const normalizedEmail = normalizeEmail(email);
   const normalizedName = normalizeSubscriberName(name);
@@ -788,6 +891,7 @@ export const createJobAlertSubscription = async (
       const nextSubscription: JobAlertSubscription = {
         ...existingSubscription,
         name: normalizedName,
+        timeZone: normalizeTimeZone(timeZone || existingSubscription.timeZone),
         updatedAt: new Date().toISOString(),
       };
 
@@ -814,6 +918,7 @@ export const createJobAlertSubscription = async (
     channel: "email",
     frequency: "daily",
     isActive: true,
+    timeZone: normalizeTimeZone(timeZone || existingSubscription?.timeZone),
     createdAt: existingSubscription?.createdAt || now,
     updatedAt: now,
     lastSentAt: existingSubscription?.lastSentAt || null,
@@ -873,45 +978,93 @@ export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
   let matchedJobs = 0;
   let skippedAlerts = 0;
   const errors: string[] = [];
+  const subscriptionsByEmail = new Map<string, JobAlertSubscription[]>();
 
   for (const subscription of activeSubscriptions) {
-    const matchingJobs = sortJobsByFilters(
-      filterJobsByAlertFilters(jobs, subscription.filters),
-      "newest",
-    );
-    const unsentJobs = matchingJobs
-      .filter((job) => !subscription.sentJobSlugs.includes(job.slug))
-      .slice(0, 10);
+    const subscriptionsForEmail = subscriptionsByEmail.get(subscription.email) || [];
+    subscriptionsForEmail.push(subscription);
+    subscriptionsByEmail.set(subscription.email, subscriptionsForEmail);
+  }
 
-    if (unsentJobs.length === 0) {
-      skippedAlerts += 1;
+  for (const subscriptionsForEmail of subscriptionsByEmail.values()) {
+    const [primarySubscription] = subscriptionsForEmail;
+
+    if (subscriptionsForEmail.some((subscription) => wasAlertSentToday(subscription, checkedAt))) {
+      skippedAlerts += subscriptionsForEmail.length;
       continue;
     }
 
+    const jobsBySlug = new Map<string, JobPost>();
+    const sentSlugsBySubscription = new Map<string, string[]>();
+
+    for (const subscription of subscriptionsForEmail) {
+      const unsentJobsForSubscription = sortJobsByFilters(
+        filterJobsByAlertFilters(jobs, subscription.filters),
+        "newest",
+      )
+        .filter((job) => wasJobPostedAfterLastAlert(job, subscription))
+        .filter((job) => !subscription.sentJobSlugs.includes(job.slug))
+        .slice(0, 10);
+
+      if (unsentJobsForSubscription.length === 0) {
+        continue;
+      }
+
+      sentSlugsBySubscription.set(
+        subscription.signature,
+        unsentJobsForSubscription.map((job) => job.slug),
+      );
+
+      for (const job of unsentJobsForSubscription) {
+        jobsBySlug.set(job.slug, job);
+      }
+    }
+
+    const unsentJobs = sortJobsByFilters([...jobsBySlug.values()], "newest").slice(0, 10);
+
+    if (unsentJobs.length === 0) {
+      skippedAlerts += subscriptionsForEmail.length;
+      continue;
+    }
+
+    const digestSummary =
+      subscriptionsForEmail.length === 1
+        ? buildJobAlertSummary(primarySubscription.filters)
+        : "your saved job alert profile";
+
     try {
+      const sentJobSlugsInDigest = new Set(unsentJobs.map((job) => job.slug));
+
       await sendEmail({
-        to: subscription.email,
-        subject: buildJobsDigestSubject(subscription, unsentJobs),
-        html: buildJobDigestHtml(subscription, unsentJobs),
-        text: buildJobDigestText(subscription, unsentJobs),
+        to: primarySubscription.email,
+        subject: buildJobsDigestSubject(primarySubscription, unsentJobs, digestSummary),
+        html: buildJobDigestHtml(primarySubscription, unsentJobs, digestSummary),
+        text: buildJobDigestText(primarySubscription, unsentJobs, digestSummary),
       });
 
-      const nextSubscription: JobAlertSubscription = {
-        ...subscription,
-        lastSentAt: checkedAt,
-        updatedAt: checkedAt,
-        sentJobSlugs: appendSentJobSlugs(
-          subscription,
-          unsentJobs.map((job) => job.slug),
-        ),
-      };
+      await Promise.all(
+        subscriptionsForEmail.map((subscription) => {
+          const sentSlugs = (sentSlugsBySubscription.get(subscription.signature) || []).filter(
+            (slug) => sentJobSlugsInDigest.has(slug),
+          );
+          const nextSubscription: JobAlertSubscription = {
+            ...subscription,
+            lastSentAt: sentSlugs.length > 0 ? checkedAt : subscription.lastSentAt,
+            updatedAt: checkedAt,
+            sentJobSlugs:
+              sentSlugs.length > 0
+                ? appendSentJobSlugs(subscription, sentSlugs)
+                : subscription.sentJobSlugs,
+          };
 
-      await persistSubscription(nextSubscription);
+          return persistSubscription(nextSubscription);
+        }),
+      );
       emailsSent += 1;
       matchedJobs += unsentJobs.length;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown email send failure.";
-      errors.push(`${subscription.email}: ${message}`);
+      errors.push(`${primarySubscription.email}: ${message}`);
     }
   }
 

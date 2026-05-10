@@ -19,6 +19,8 @@ export type JobAlertFilters = {
   jobTitles: string[];
   skills: string[];
   locations: string[];
+  experienceLevels: string[];
+  workModes: string[];
   segments: JobSegmentSlug[];
   type: string;
   status: JobStatusFilter;
@@ -35,6 +37,8 @@ type RawJobFilters = {
   skill?: string | null;
   skills?: string[] | string | null;
   jobTitles?: string[] | string | null;
+  experienceLevels?: string[] | string | null;
+  workModes?: string[] | string | null;
   type?: string | null;
   status?: string | null;
   sort?: string | null;
@@ -105,6 +109,8 @@ export const toJobAlertFilters = (filters: JobFilters): JobAlertFilters => ({
   jobTitles: filters.query ? [filters.query] : [],
   skills: [],
   locations: filters.location ? [filters.location] : [],
+  experienceLevels: [],
+  workModes: [],
   segments: filters.segment ? [filters.segment] : [],
   type: filters.type,
   status: filters.status,
@@ -123,6 +129,8 @@ export const normalizeJobAlertFilters = (rawFilters: Partial<JobAlertFilters> & 
   const segments = normalizeStringArray(rawFilters.segments).filter(isJobSegmentSlug);
   const jobTitles = normalizeStringArray(rawFilters.jobTitles);
   const skills = normalizeStringArray(rawFilters.skills);
+  const experienceLevels = normalizeStringArray(rawFilters.experienceLevels);
+  const workModes = normalizeStringArray(rawFilters.workModes);
   const legacyQuery = normalizedFilters.query;
   const legacySkill = normalizeString(rawFilters.skill);
 
@@ -148,6 +156,8 @@ export const normalizeJobAlertFilters = (rawFilters: Partial<JobAlertFilters> & 
     jobTitles,
     skills,
     locations,
+    experienceLevels,
+    workModes,
     segments,
     type: normalizedFilters.type,
     status: normalizedFilters.status,
@@ -161,6 +171,8 @@ export const hasActiveJobAlertFilters = (filters: JobAlertFilters) =>
       filters.jobTitles.length > 0 ||
       filters.skills.length > 0 ||
       filters.locations.length > 0 ||
+      filters.experienceLevels.length > 0 ||
+      filters.workModes.length > 0 ||
       filters.segments.length > 0 ||
       filters.type ||
       filters.status,
@@ -203,6 +215,22 @@ const matchesJobSkill = (job: JobPost, skill: string) => {
 const matchesJobTitle = (job: JobPost, title: string) =>
   job.title.toLowerCase().includes(title.toLowerCase());
 
+const matchesJobExperienceLevel = (job: JobPost, experienceLevel: string) => {
+  const haystack = [
+    job.experience || "",
+    job.experienceLevel || "",
+    job.experienceYears || "",
+    job.summary || "",
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(experienceLevel.toLowerCase());
+};
+
+const matchesJobWorkMode = (job: JobPost, workMode: string) =>
+  (job.workMode || "").toLowerCase().includes(workMode.toLowerCase());
+
 export const jobMatchesAlertFilters = (job: JobPost, filters: JobAlertFilters) => {
   if (filters.jobTitles.length > 0) {
     if (!filters.jobTitles.some((title) => matchesJobTitle(job, title))) {
@@ -229,7 +257,25 @@ export const jobMatchesAlertFilters = (job: JobPost, filters: JobAlertFilters) =
 
   if (
     filters.locations.length > 0 &&
-    !filters.locations.some((location) => job.location.toLowerCase() === location.toLowerCase())
+    !filters.locations.some((location) =>
+      job.location.toLowerCase().includes(location.toLowerCase()),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    filters.experienceLevels.length > 0 &&
+    !filters.experienceLevels.some((experienceLevel) =>
+      matchesJobExperienceLevel(job, experienceLevel),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    filters.workModes.length > 0 &&
+    !filters.workModes.some((workMode) => matchesJobWorkMode(job, workMode))
   ) {
     return false;
   }
@@ -312,6 +358,14 @@ export const buildJobAlertSummary = (filters: JobAlertFilters) => {
 
   if (filters.locations.length > 0) {
     parts.push(summarizeList(filters.locations));
+  }
+
+  if (filters.experienceLevels.length > 0) {
+    parts.push(`Experience: ${summarizeList(filters.experienceLevels)}`);
+  }
+
+  if (filters.workModes.length > 0) {
+    parts.push(`Mode: ${summarizeList(filters.workModes)}`);
   }
 
   if (filters.type) {

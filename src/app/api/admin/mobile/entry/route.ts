@@ -8,7 +8,6 @@ import {
 } from "@/lib/adminContentStore";
 import { isAdminCollection } from "@/lib/adminMobile";
 import { requireAdminApiRequest } from "@/lib/adminSession";
-import { runDailyJobAlerts, type JobAlertRunSummary } from "@/lib/jobAlerts";
 import { noStoreJson } from "@/lib/requestSecurity";
 import { toContentSlug } from "@/lib/slug";
 
@@ -122,21 +121,12 @@ export async function POST(request: Request) {
     });
     const normalizedOriginalSlug = toContentSlug(originalSlug) || "";
     revalidateCollectionPaths(collection, result.entry.slug, normalizedOriginalSlug || undefined);
-    let jobAlertRun: JobAlertRunSummary | null = null;
-
-    if (collection === "jobs" && result.entry.collection === "jobs" && !result.entry.draft) {
-      try {
-        jobAlertRun = await runDailyJobAlerts();
-      } catch (error) {
-        console.error("[admin/mobile/entry] Job alert run after publish failed:", error);
-      }
-    }
 
     return noStoreJson({
       success: true,
       entry: result.entry,
       record: result.record,
-      jobAlertRun,
+      jobAlertRun: null,
     });
   } catch (error) {
     if (error instanceof AdminContentValidationError) {

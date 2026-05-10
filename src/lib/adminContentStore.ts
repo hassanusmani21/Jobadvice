@@ -776,6 +776,10 @@ const normalizeJobEntry = (
   const title = normalizeTextValue(input.title);
   const company = normalizeTextValue(input.company);
   const date = toDateString(input.date) || today;
+  const preservedFields = normalizePreservedFields(input.preservedFields);
+  const publishedAt =
+    normalizeTextValue(preservedFields.publishedAt) ||
+    (!normalizeBooleanValue(input.draft) && !originalSlug ? new Date().toISOString() : "");
   const slug = resolveSlug(
     "jobs",
     normalizeTextValue(input.slug),
@@ -806,7 +810,10 @@ const normalizeJobEntry = (
     applicationStartDate: toDateString(input.applicationStartDate) || date,
     applicationEndDate: toDateString(input.applicationEndDate),
     body: normalizeBody(input.body),
-    preservedFields: normalizePreservedFields(input.preservedFields),
+    preservedFields: {
+      ...preservedFields,
+      ...(publishedAt ? { publishedAt } : {}),
+    },
   };
 };
 

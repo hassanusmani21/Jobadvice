@@ -62,7 +62,7 @@ In Netlify:
 - [ ] Auto Extract runs without `401`
 - [ ] Publish 1 job from admin, wait for deploy, verify it on public page
 - [ ] Create a filtered job alert from `/jobs`
-- [ ] Confirm the scheduled alert secret is set before enabling email sends
+- [ ] Confirm the scheduled alert secret is set before enabling the 6:00 AM daily digest
 - [ ] `/sitemap.xml` loads
 - [ ] `/robots.txt` loads
 

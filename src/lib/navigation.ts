@@ -6,6 +6,7 @@ export type NavigationItem = {
 export const primaryNavigation: NavigationItem[] = [
   { href: "/", label: "Home" },
   { href: "/jobs", label: "Jobs" },
+  { href: "/question-papers", label: "MU Papers" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },

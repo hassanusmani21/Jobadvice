@@ -134,4 +134,4 @@ JOB_ALERTS_CRON_SECRET=replace-with-long-random-secret
 
 `ADMIN_CONTENTS_TOKEN` is required in production if you want the custom `/admin` app to save posts, upload images, or delete entries.
 
-`RESEND_API_KEY`, `JOB_ALERTS_FROM_EMAIL`, and `JOB_ALERTS_CRON_SECRET` are required if you want the daily filtered job alert emails to run in production.
+`RESEND_API_KEY`, `JOB_ALERTS_FROM_EMAIL`, and `JOB_ALERTS_CRON_SECRET` are required if you want the daily filtered job alert digest emails to run in production. The production cron runs once per day at 6:00 AM Asia/Kolkata time.

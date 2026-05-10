@@ -19,6 +19,7 @@ type JobAlertsRouteBody = {
   skills?: string[];
   category?: string;
   name?: string;
+  timeZone?: string;
 };
 
 export async function POST(request: Request) {
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
       typeof payload.email === "string" ? payload.email : "",
       filters,
       typeof payload.name === "string" ? payload.name : "",
+      typeof payload.timeZone === "string" ? payload.timeZone : "",
     );
     const shouldSendWelcomeEmail =
       result.status !== "already_subscribed" || result.subscription.welcomeEmailSentAt === null;

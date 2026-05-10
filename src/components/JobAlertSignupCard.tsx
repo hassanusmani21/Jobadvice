@@ -85,6 +85,7 @@ export default function JobAlertSignupCard({
                     email,
                     filters,
                     name,
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                   }),
                 });
 
