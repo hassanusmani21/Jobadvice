@@ -296,7 +296,7 @@ const footerCommunitySupport = "Trusted by 5k+ students across India.";
 
 const socialLinks = [
   {
-    href: "https://www.instagram.com/jobsadvice.in?utm_source=qr&igsh=MTM0eGhud3VtNGNvcw==",
+    href: "https://www.instagram.com/jobadvices/",
     label: "Instagram",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
@@ -316,7 +316,7 @@ const socialLinks = [
     ),
   },
   {
-    href: "https://www.linkedin.com/in/hassan-usmani21",
+    href: "https://www.linkedin.com/company/jobadvices/",
     label: "LinkedIn",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
@@ -342,7 +342,7 @@ const socialLinks = [
     ),
   },
   {
-    href: "https://www.youtube.com/@JobAdvice4u",
+    href: "https://youtube.com/@jobadvices?si=vMW4l3TDMBwCIjl5",
     label: "YouTube",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
@@ -354,6 +354,22 @@ const socialLinks = [
           strokeWidth="1.75"
         />
         <path d="m10.25 9.55 4.5 2.45-4.5 2.45v-4.9Z" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    href: "https://x.com/jobadvices",
+    label: "X",
+    icon: (
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
+        <path
+          d="m5.2 5.2 13.6 13.6M18.6 5.4 5.4 18.6"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.75"
+        />
       </svg>
     ),
   },

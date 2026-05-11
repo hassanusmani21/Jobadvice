@@ -37,8 +37,8 @@ const contactLinks: ContactLink[] = [
   },
   {
     label: "LinkedIn",
-    href: "https://www.linkedin.com/in/hassan-usmani21",
-    handle: "hassan-usmani21",
+    href: "https://www.linkedin.com/company/jobadvices/",
+    handle: "jobadvices",
     description: "Professional introductions and collaborations.",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
@@ -65,8 +65,8 @@ const contactLinks: ContactLink[] = [
   },
   {
     label: "Instagram",
-    href: "https://www.instagram.com/jobsadvice.in?utm_source=qr&igsh=MTM0eGhud3VtNGNvcw==",
-    handle: "@jobsadvice.in",
+    href: "https://www.instagram.com/jobadvices/",
+    handle: "@jobadvices",
     description: "Short updates and announcements.",
     icon: (
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
@@ -82,6 +82,42 @@ const contactLinks: ContactLink[] = [
         />
         <circle cx="12" cy="12" r="3.75" fill="none" stroke="currentColor" strokeWidth="1.75" />
         <circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    label: "YouTube",
+    href: "https://youtube.com/@jobadvices?si=vMW4l3TDMBwCIjl5",
+    handle: "@jobadvices",
+    description: "Video updates and career guides.",
+    icon: (
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
+        <path
+          d="M20 8.9c-.16-1.2-.96-2.08-2.03-2.24C16.7 6.45 14.9 6.3 12 6.3s-4.7.15-5.97.36C4.96 6.82 4.16 7.7 4 8.9c-.17 1.26-.17 2.94 0 4.2.16 1.2.96 2.08 2.03 2.24 1.27.21 3.07.36 5.97.36s4.7-.15 5.97-.36c1.07-.16 1.87-1.04 2.03-2.24.17-1.26.17-2.94 0-4.2Z"
+          fill="none"
+          stroke="currentColor"
+          strokeLinejoin="round"
+          strokeWidth="1.75"
+        />
+        <path d="m10.25 9.55 4.5 2.45-4.5 2.45v-4.9Z" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    label: "X",
+    href: "https://x.com/jobadvices",
+    handle: "@jobadvices",
+    description: "Quick updates and announcements.",
+    icon: (
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
+        <path
+          d="m5.2 5.2 13.6 13.6M18.6 5.4 5.4 18.6"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.75"
+        />
       </svg>
     ),
   },

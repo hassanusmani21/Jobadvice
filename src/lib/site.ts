@@ -18,9 +18,10 @@ export const siteWhatsappChannelUrl =
 export const siteWhatsappGroupUrl =
   "https://chat.whatsapp.com/L6Qh1hBedLZ3vfL3kQMB4r";
 export const siteSocialProfiles = [
-  "https://www.instagram.com/jobsadvice.in?utm_source=qr&igsh=MTM0eGhud3VtNGNvcw==",
-  "https://www.linkedin.com/in/hassan-usmani21",
-  "https://www.youtube.com/@JobAdvice4u",
+  "https://www.instagram.com/jobadvices/",
+  "https://youtube.com/@jobadvices?si=vMW4l3TDMBwCIjl5",
+  "https://www.linkedin.com/company/jobadvices/",
+  "https://x.com/jobadvices",
   "https://t.me/jobadvice4u",
 ];
 export const siteKeywords = [
