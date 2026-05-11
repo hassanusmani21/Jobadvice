@@ -283,12 +283,6 @@ const footerTrustItems = [
   "Independent Curation",
 ];
 
-const footerCommunityBenefits = [
-  "Verified listings only",
-  "No spam",
-  "Daily updates",
-];
-
 const footerSummary =
   "Verified jobs and internships in India with direct apply links and practical guidance.";
 
@@ -624,8 +618,14 @@ export default function RootLayout({
                         {footerCommunitySupport}
                       </p>
 
+                      <p className="site-footer-benefits-inline" aria-label="Community benefits">
+                        <span>Verified</span>
+                        <span>No Spam</span>
+                        <span>Daily Jobs</span>
+                      </p>
+
                       <ul className="site-footer-benefits" aria-label="Community benefits">
-                        {footerCommunityBenefits.map((item) => (
+                        {["Verified listings only", "No spam", "Daily updates"].map((item) => (
                           <li key={item} className="site-footer-benefit-item">
                             <svg
                               aria-hidden="true"
