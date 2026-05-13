@@ -5,7 +5,7 @@ date: "2026-05-13"
 updatedAt: "2026-05-13"
 draft: false
 company: "NatWest Group"
-location: "Chennai, Tamil Nadu, India"
+location: "Chennai, Gurugram India"
 workMode: "Hybrid"
 employmentType: "Contract"
 salary: "Not disclosed"
