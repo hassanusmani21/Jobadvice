@@ -1,45 +1,55 @@
 ---
-title: "AICTE Internship"
+title: "CISCO Virtual Internship Program 2026"
 slug: "aicte-internship-not-mentioned"
 date: "2026-05-18"
 updatedAt: "2026-05-18"
 draft: false
-company: "Not mentioned"
-location: "Not mentioned"
+company: "Cisco"
+location: "Pan India"
 workMode: ""
 employmentType: "Internship"
-salary: "Not mentioned"
+salary: "₹0 / month"
 experience: "Fresher"
 eligibilityCriteria: |-
-  Students currently pursuing graduation or diploma are eligible
-  Candidates should have interest in internship training and industry learning
-  Good communication and interpersonal skills preferred
-  Basic technical or domain knowledge preferred depending on role
-  Ability to work in a team environment
+  Students from 1st, 2nd, and 3rd year are eligible
+  Final-year students are not eligible
+  Candidates must be enrolled in institutions affiliated with Cisco Networking Academy
+  Open to engineering, technical, and non-technical degree and diploma students
+  Candidates must be available for the complete 2-month duration
+  Must have relevant skills and interest in technology domains
+  Applicants should demonstrate a proactive approach to learning
 education:
-  - "Undergraduate"
-  - "Postgraduate"
-  - "Diploma students"
-  - "Relevant discipline as per internship requirement"
+  - "B.Tech"
+  - "B.E"
+  - "Equivalent"
+  - "MCA"
+  - "B.Sc"
+  - "M.Sc"
+  - "BCA"
+  - "M.Tech"
+  - "M.E"
+  - "Diploma in Engineering"
 skills:
+  - "Networking"
+  - "Cyber Security"
+  - "Artificial Intelligence"
+  - "Problem Solving"
+  - "Technical Learning"
+  - "Project Development"
   - "Communication Skills"
   - "Team Collaboration"
-  - "Problem Solving"
   - "Analytical Thinking"
-  - "Technical Fundamentals"
-  - "Time Management"
-  - "Research Skills"
-  - "Microsoft Office"
-  - "Computer Basics"
+  - "Digital Learning Platforms"
 responsibilities:
-  - "Participate in internship training activities"
-  - "Work on assigned tasks and projects"
-  - "Support team operations and project execution"
-  - "Prepare reports and documentation as required"
-  - "Collaborate with mentors and team members"
-  - "Learn industry processes and practical applications"
-  - "Follow organizational guidelines and timelines"
-  - "Assist in research, analysis, or technical activities depending on assignment"
+  - "Complete designated technical courses on the Cisco Networking Academy platform"
+  - "Attend industry sessions and webinars conducted by Cisco experts"
+  - "Work on assigned problem statements under instructor guidance"
+  - "Submit proof of course completion and digital badges"
+  - "Participate in mentoring and learning activities"
+  - "Develop and submit a final project"
+  - "Complete the final quiz as part of the internship process"
+  - "Follow internship guidelines and timelines"
+  - "Engage in skill development activities related to Networking, Cyber Security, and AI"
 workingDays: "Not mentioned"
 jobTiming: "Not mentioned"
 applyLink: "https://internship.aicte-india.org/internship-details.php?uid=SU5URVJOU0hJUF8xNzc0NDIwNjY0NjljMzgyYjg3MTU3Yw==&level=NA=="
