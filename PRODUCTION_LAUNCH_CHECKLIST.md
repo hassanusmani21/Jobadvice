@@ -33,7 +33,8 @@ Add these in Netlify -> Site settings -> Environment variables:
 - [ ] `NO_EXPIRY_JOB_RETENTION_DAYS=30` (optional)
 - [ ] `RESEND_API_KEY=<resend-api-key>` if using email job alerts
 - [ ] `JOB_ALERTS_FROM_EMAIL=alerts@<your-domain>` if using email job alerts
-- [ ] `JOB_ALERTS_CRON_SECRET=<long-random-secret>` if using email job alerts
+- [ ] `CRON_SECRET=<long-random-secret>` if using email job alerts on Vercel
+- [ ] `JOB_ALERTS_CRON_SECRET=<same-long-random-secret>` optional fallback for manual cron calls
 
 ## 4) Google OAuth Setup
 
