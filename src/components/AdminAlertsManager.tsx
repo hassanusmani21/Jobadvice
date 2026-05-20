@@ -237,33 +237,33 @@ export default function AdminAlertsManager({
   };
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="rounded-[1.35rem] border border-slate-200 bg-white/[0.92] shadow-[0_24px_70px_-48px_rgba(15,23,42,0.35)] backdrop-blur">
-        <div className="border-b border-slate-200 px-4 py-4 sm:px-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <section className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-5 lg:px-6">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white/[0.92] shadow-[0_18px_56px_-44px_rgba(15,23,42,0.32)] backdrop-blur">
+        <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-teal-700">
+              <p className="text-[0.64rem] font-semibold uppercase tracking-[0.16em] text-teal-700">
                 Admin
               </p>
-              <h1 className="mt-2 font-serif text-[1.72rem] leading-none text-slate-950 sm:text-[2rem]">
+              <h1 className="mt-1.5 font-serif text-[1.45rem] leading-tight text-slate-950 sm:text-[1.72rem]">
                 Job Alert Subscribers
               </h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              <p className="mt-1.5 max-w-2xl text-[0.82rem] leading-5 text-slate-600">
                 Manage saved email alerts in a compact sheet view. Search, filter, export, refresh,
                 and delete a single subscriber without touching the rest.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex shrink-0 flex-wrap gap-2 lg:flex-nowrap lg:justify-end">
               <a
                 href="/admin"
-                className="inline-flex h-9 items-center justify-center rounded-full border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
+                className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full border border-slate-200 bg-white px-3 text-[0.8rem] font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950"
               >
                 Back to editor
               </a>
               <a
                 href="/api/admin/alerts?format=csv"
-                className="inline-flex h-9 items-center justify-center rounded-full border border-teal-200 bg-teal-50 px-3.5 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100"
+                className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full border border-teal-200 bg-teal-50 px-3 text-[0.8rem] font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100"
               >
                 Export CSV
               </a>
@@ -271,42 +271,42 @@ export default function AdminAlertsManager({
                 type="button"
                 onClick={refreshSubscriptions}
                 disabled={isPending}
-                className="inline-flex h-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 px-3.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-3 text-[0.8rem] font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPending && !deletingSignature ? "Refreshing..." : "Refresh"}
               </button>
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-4">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="mt-3 grid gap-2 sm:grid-cols-4">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
                 Total
               </p>
-              <p className="mt-1 text-xl font-semibold text-slate-950">{subscriptions.length}</p>
+              <p className="mt-0.5 text-lg font-semibold text-slate-950">{subscriptions.length}</p>
             </div>
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
-              <p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
+              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-emerald-700">
                 Active
               </p>
-              <p className="mt-1 text-xl font-semibold text-emerald-900">{activeCount}</p>
+              <p className="mt-0.5 text-lg font-semibold text-emerald-900">{activeCount}</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
                 Inactive
               </p>
-              <p className="mt-1 text-xl font-semibold text-slate-950">{inactiveCount}</p>
+              <p className="mt-0.5 text-lg font-semibold text-slate-950">{inactiveCount}</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-              <p className="text-[0.66rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <p className="text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
                 Sent Tracked
               </p>
-              <p className="mt-1 text-xl font-semibold text-slate-950">{sentCount}</p>
+              <p className="mt-0.5 text-lg font-semibold text-slate-950">{sentCount}</p>
             </div>
           </div>
         </div>
 
-        <div className="border-b border-slate-200 px-4 py-3 sm:px-5">
+        <div className="border-b border-slate-200 px-4 py-2.5 sm:px-5">
           <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_10rem_8rem]">
             <label className="min-w-0">
               <span className="sr-only">Search alert subscribers</span>
@@ -315,7 +315,7 @@ export default function AdminAlertsManager({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search by email, name, title, skill, city..."
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-100"
+                className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[0.82rem] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-100"
               />
             </label>
 
@@ -326,7 +326,7 @@ export default function AdminAlertsManager({
                 onChange={(event) =>
                   setStatusFilter(event.target.value as "all" | "active" | "inactive")
                 }
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-teal-300 focus:ring-4 focus:ring-teal-100"
+                className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[0.82rem] font-semibold text-slate-700 outline-none transition focus:border-teal-300 focus:ring-4 focus:ring-teal-100"
               >
                 <option value="all">All status</option>
                 <option value="active">Active only</option>
@@ -339,7 +339,7 @@ export default function AdminAlertsManager({
               <select
                 value={pageSize}
                 onChange={(event) => setPageSize(Number(event.target.value))}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-teal-300 focus:ring-4 focus:ring-teal-100"
+                className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-[0.82rem] font-semibold text-slate-700 outline-none transition focus:border-teal-300 focus:ring-4 focus:ring-teal-100"
               >
                 {pageSizeOptions.map((option) => (
                   <option key={option} value={option}>
@@ -365,22 +365,22 @@ export default function AdminAlertsManager({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1040px] border-separate border-spacing-0 text-left text-sm">
+          <table className="w-full min-w-[960px] border-separate border-spacing-0 text-left text-[0.82rem]">
             <thead>
-              <tr className="bg-slate-50 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                <th className="border-b border-slate-200 px-4 py-3">Subscriber</th>
-                <th className="border-b border-slate-200 px-4 py-3">Saved alert</th>
-                <th className="border-b border-slate-200 px-4 py-3">Status</th>
-                <th className="border-b border-slate-200 px-4 py-3">Created</th>
-                <th className="border-b border-slate-200 px-4 py-3">Last sent</th>
-                <th className="border-b border-slate-200 px-4 py-3 text-right">Sent</th>
-                <th className="border-b border-slate-200 px-4 py-3 text-right">Action</th>
+              <tr className="bg-slate-50 text-[0.62rem] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                <th className="border-b border-slate-200 px-3 py-2.5">Subscriber</th>
+                <th className="border-b border-slate-200 px-3 py-2.5">Saved alert</th>
+                <th className="border-b border-slate-200 px-3 py-2.5">Status</th>
+                <th className="border-b border-slate-200 px-3 py-2.5">Created</th>
+                <th className="border-b border-slate-200 px-3 py-2.5">Last sent</th>
+                <th className="border-b border-slate-200 px-3 py-2.5 text-right">Sent</th>
+                <th className="border-b border-slate-200 px-3 py-2.5 text-right">Action</th>
               </tr>
             </thead>
             <tbody>
               {visibleSubscriptions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-500">
+                  <td colSpan={7} className="px-3 py-8 text-center text-sm text-slate-500">
                     No alert subscribers match this view.
                   </td>
                 </tr>
@@ -396,33 +396,33 @@ export default function AdminAlertsManager({
                       key={subscription.signature}
                       className="align-top transition hover:bg-slate-50/80"
                     >
-                      <td className="border-b border-slate-100 px-4 py-3">
+                      <td className="border-b border-slate-100 px-3 py-2.5">
                         <div className="min-w-0 max-w-[15rem]">
                           <p className="truncate font-semibold text-slate-950">
                             {subscription.email}
                           </p>
-                          <p className="mt-1 truncate text-xs font-semibold uppercase tracking-[0.14em] text-teal-700">
+                          <p className="mt-0.5 truncate text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-teal-700">
                             {subscription.name || "No name"}
                           </p>
                         </div>
                       </td>
-                      <td className="border-b border-slate-100 px-4 py-3">
+                      <td className="border-b border-slate-100 px-3 py-2.5">
                         <div className="max-w-[28rem]">
-                          <p className="line-clamp-2 text-sm leading-5 text-slate-700">
+                          <p className="line-clamp-2 text-[0.82rem] leading-5 text-slate-700">
                             {subscription.summary}
                           </p>
                           {chips.length > 0 ? (
-                            <div className="mt-2 flex flex-wrap gap-1.5">
+                            <div className="mt-1.5 flex flex-wrap gap-1">
                               {visibleChips.map((chip) => (
                                 <span
                                   key={`${subscription.signature}-${chip}`}
-                                  className="inline-flex max-w-[14rem] rounded-full border border-slate-200 bg-white px-2 py-1 text-[0.72rem] font-medium leading-none text-slate-600"
+                                  className="inline-flex max-w-[14rem] rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[0.68rem] font-medium leading-5 text-slate-600"
                                 >
                                   <span className="truncate">{chip}</span>
                                 </span>
                               ))}
                               {extraChipCount > 0 ? (
-                                <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[0.72rem] font-semibold leading-none text-slate-500">
+                                <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.68rem] font-semibold leading-5 text-slate-500">
                                   +{extraChipCount}
                                 </span>
                               ) : null}
@@ -430,9 +430,9 @@ export default function AdminAlertsManager({
                           ) : null}
                         </div>
                       </td>
-                      <td className="border-b border-slate-100 px-4 py-3">
+                      <td className="border-b border-slate-100 px-3 py-2.5">
                         <span
-                          className={`inline-flex rounded-full px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-[0.64rem] font-semibold uppercase tracking-[0.12em] ${
                             subscription.isActive
                               ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
                               : "border border-slate-200 bg-white text-slate-500"
@@ -442,26 +442,26 @@ export default function AdminAlertsManager({
                         </span>
                       </td>
                       <td
-                        className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-600"
+                        className="whitespace-nowrap border-b border-slate-100 px-3 py-2.5 text-slate-600"
                         title={formatDateTime(subscription.createdAt)}
                       >
                         {formatDateShort(subscription.createdAt)}
                       </td>
                       <td
-                        className="whitespace-nowrap border-b border-slate-100 px-4 py-3 text-slate-600"
+                        className="whitespace-nowrap border-b border-slate-100 px-3 py-2.5 text-slate-600"
                         title={formatDateTime(subscription.lastSentAt)}
                       >
                         {formatDateShort(subscription.lastSentAt)}
                       </td>
-                      <td className="border-b border-slate-100 px-4 py-3 text-right font-semibold text-slate-700">
+                      <td className="border-b border-slate-100 px-3 py-2.5 text-right font-semibold text-slate-700">
                         {subscription.sentJobsTracked}
                       </td>
-                      <td className="border-b border-slate-100 px-4 py-3 text-right">
+                      <td className="border-b border-slate-100 px-3 py-2.5 text-right">
                         <button
                           type="button"
                           onClick={() => deleteSubscription(subscription)}
                           disabled={Boolean(deletingSignature)}
-                          className="inline-flex h-8 items-center justify-center rounded-full border border-rose-200 bg-white px-3 text-xs font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="inline-flex h-7 items-center justify-center whitespace-nowrap rounded-full border border-rose-200 bg-white px-2.5 text-[0.72rem] font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isDeleting ? "Deleting..." : "Delete"}
                         </button>
@@ -474,7 +474,7 @@ export default function AdminAlertsManager({
           </table>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="flex flex-col gap-2 border-t border-slate-200 px-4 py-2.5 text-[0.82rem] text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <p>
             Showing{" "}
             <span className="font-semibold text-slate-900">{visibleSubscriptions.length}</span> of{" "}
@@ -487,18 +487,18 @@ export default function AdminAlertsManager({
               type="button"
               onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
               disabled={page <= 1}
-              className="inline-flex h-8 items-center justify-center rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-7 items-center justify-center rounded-full border border-slate-200 bg-white px-2.5 text-[0.72rem] font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Previous
             </button>
-            <span className="min-w-20 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+            <span className="min-w-16 text-center text-[0.68rem] font-semibold uppercase tracking-[0.1em] text-slate-500">
               {page} / {totalPages}
             </span>
             <button
               type="button"
               onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
               disabled={page >= totalPages}
-              className="inline-flex h-8 items-center justify-center rounded-full border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-7 items-center justify-center rounded-full border border-slate-200 bg-white px-2.5 text-[0.72rem] font-semibold text-slate-700 transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Next
             </button>
