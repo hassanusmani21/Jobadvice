@@ -129,9 +129,11 @@ NO_EXPIRY_JOB_RETENTION_DAYS=30
 ADMIN_CONTENTS_TOKEN=your-github-fine-grained-token
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxx
 JOB_ALERTS_FROM_EMAIL=alerts@your-domain.com
-JOB_ALERTS_CRON_SECRET=replace-with-long-random-secret
+CRON_SECRET=replace-with-long-random-secret
+# Optional fallback name for manual cron calls:
+JOB_ALERTS_CRON_SECRET=replace-with-same-long-random-secret
 ```
 
 `ADMIN_CONTENTS_TOKEN` is required in production if you want the custom `/admin` app to save posts, upload images, or delete entries.
 
-`RESEND_API_KEY`, `JOB_ALERTS_FROM_EMAIL`, and `JOB_ALERTS_CRON_SECRET` are required if you want the daily filtered job alert digest emails to run in production. The production cron runs once per day at 6:00 AM Asia/Kolkata time.
+`RESEND_API_KEY`, `JOB_ALERTS_FROM_EMAIL`, and `CRON_SECRET` are required if you want the daily filtered job alert digest emails to run in production on Vercel. Vercel Cron calls `/api/cron/job-alerts` from `vercel.json` once per day and sends `CRON_SECRET` automatically in the `Authorization` header. The production cron runs once per day at 6:00 AM Asia/Kolkata time.
