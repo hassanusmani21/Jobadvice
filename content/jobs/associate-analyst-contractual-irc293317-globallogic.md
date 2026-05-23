@@ -1,5 +1,5 @@
 ---
-title: "Associate Analyst (Contractual) IRC293317"
+title: "Associate Analyst"
 slug: "associate-analyst-contractual-irc293317-globallogic"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
