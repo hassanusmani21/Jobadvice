@@ -30,6 +30,12 @@ const uploadDirectory = path.join(process.cwd(), "public", "uploads");
 const uploadRepoDirectory = "public/uploads";
 const draftFieldFallbackPrefix = "draft";
 const blockingDuplicateSimilarityScore = 88;
+const bannedProductionPatterns = [
+  { label: "example.com", pattern: /example\.com/i },
+  { label: "demo", pattern: /\bdemos?\b/i },
+  { label: "sample", pattern: /\bsamples?\b/i },
+  { label: "demonstration", pattern: /\bdemonstrations?\b/i },
+];
 
 type ParsedFrontMatterDocument = {
   body: string;
@@ -119,7 +125,7 @@ export const shouldUseRemoteAdminStore = () =>
 export const isAdminContentWriteConfigured = () =>
   !shouldUseRemoteAdminStore() || githubContentsToken.length > 0;
 
-const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "").trim();
+const stripWrappingQuotes = (value: string) => value.replace(/^[']|[']$/g, "").replace(/^[\"]|[\"]$/g, "").trim();
 
 const normalizeTextValue = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
@@ -657,7 +663,7 @@ const deleteStoredText = async (collection: AdminCollection, slug: string) => {
 
   if (shouldUseRemoteAdminStore()) {
     if (!githubContentsToken) {
-      throw new Error("ADMIN_CONTENTS_TOKEN is required for production admin deletes.");
+      throw new AdminContentNotFoundError();
     }
 
     const payload = await fetchGithubFile(relativePath);
@@ -905,6 +911,24 @@ const validateBlogEntry = (entry: AdminMobileBlogEntry) => {
   }
   if (entry.ctaLink && !normalizeExternalUrl(entry.ctaLink)) {
     issues.push("CTA link must be a full http/https URL.");
+  }
+
+  return issues;
+};
+
+const validatePublishedProductionContent = (
+  collection: AdminCollection,
+  serializedContent: string,
+) => {
+  const issues: string[] = [];
+  const collectionLabel = collection === "jobs" ? "job" : "blog";
+
+  for (const bannedPattern of bannedProductionPatterns) {
+    if (bannedPattern.pattern.test(serializedContent)) {
+      issues.push(
+        `Published ${collectionLabel} content cannot contain "${bannedPattern.label}". Replace it before publishing so production builds do not fail.`,
+      );
+    }
   }
 
   return issues;
@@ -1163,14 +1187,18 @@ export const saveAdminEntry = async ({
         ]
       : validateBlogEntry(normalizedEntry);
 
-  if (issues.length > 0) {
-    throw new AdminContentValidationError(issues);
-  }
-
   const serializedContent =
     normalizedEntry.collection === "jobs"
       ? serializeJobEntry(normalizedEntry)
       : serializeBlogEntry(normalizedEntry);
+  const productionContentIssues = normalizedEntry.draft
+    ? []
+    : validatePublishedProductionContent(normalizedEntry.collection, serializedContent);
+  const allIssues = [...issues, ...productionContentIssues];
+
+  if (allIssues.length > 0) {
+    throw new AdminContentValidationError(allIssues);
+  }
 
   await writeStoredText(
     collection,
