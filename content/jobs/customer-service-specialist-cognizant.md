@@ -6,7 +6,7 @@ updatedAt: "2026-05-23"
 draft: false
 company: "Cognizant"
 location: "Hyderabad, Telangana, India"
-workMode: "Hybrid"
+workMode: "Work from Home"
 employmentType: "Full-time"
 salary: "Not mentioned"
 experience: "1-3 years"
