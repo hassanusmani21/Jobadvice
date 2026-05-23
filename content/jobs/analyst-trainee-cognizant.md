@@ -1,56 +1,58 @@
 ---
 title: "Analyst Trainee"
 slug: "analyst-trainee-cognizant"
-date: "2026-04-01"
-updatedAt: "2026-04-01"
+date: "2026-05-23"
+updatedAt: "2026-05-23"
 draft: false
 company: "Cognizant"
-location: "PAN India (Any Cognizant office location)"
-workMode: "On-site"
+location: "PAN India"
+workMode: "Hybrid"
 employmentType: "Full-time"
-salary: "Up to ₹4–6 LPA (Estimated)"
+salary: "₹4.5 LPA"
 experience: "Fresher"
 eligibilityCriteria: |-
-  Graduates from 2024 or 2025 batch
-  Minimum required academic percentage as per company criteria
-  No active backlogs
-  Willing to relocate anywhere in India
-  Must be ready to work in rotational shifts
-  Indian nationals eligible to apply
-  (Eligible degree types include BCA, BSc, BA, BCom, BBA and similar 3-year UG programs.)
+  2026 batch graduates
+  Full-time degree students only
+  Minimum 60% aggregate in academics
+  No active backlogs at the time of joining
+  Good communication and analytical skills
+  Basic programming and technical knowledge required
 education:
   - "BCA"
-  - "BSc (Computer Science / IT / Mathematics / Physics / Statistics etc.)"
-  - "BA"
-  - "BCom"
-  - "BBA"
-  - "BMS"
-  - "BVoc or similar"
-  - "Graduation Year: 2024 or 2025"
-  - "No standing arrears at the time of joining."
+  - "B.Sc (CS/IT/Maths/Statistics)"
+  - "BBA (IT)"
+  - "BE"
+  - "B.Tech"
+  - "or related degree"
 skills:
-  - "Good communication skills"
-  - "Basic computer knowledge"
-  - "Problem-solving ability"
-  - "Time management skills"
-  - "Teamwork ability"
-  - "Basic IT or technical understanding"
-  - "Analytical thinking"
-  - "Adaptability to new technologies"
+  - "Basic programming and technical knowledge required"
+  - "Java"
+  - "Python"
+  - "C Programming"
+  - "SQL"
+  - "DBMS"
+  - "Problem-solving"
+  - "Analytical Skills"
+  - "Communication Skills"
+  - "Software Development Fundamentals"
+  - "Agile Methodology"
+  - "SDLC"
+  - "Testing Basics"
+  - "Team Collaboration"
 responsibilities:
-  - "Write database queries and retrieve data"
-  - "Perform CRUD operations"
-  - "Execute test cases"
-  - "Monitor IT systems"
-  - "Resolve service tickets"
-  - "Provide technical support to users"
-  - "Troubleshoot software and hardware issues"
-  - "Maintain documentation"
-  - "Follow IT service processes"
-  - "Support cloud and infrastructure operations"
-workingDays: "5 Days / Shift-based"
-jobTiming: "Rotational Shifts (May include Night Shift)"
-applyLink: "https://app.joinsuperset.com/join/#/signup/student/jobprofiles/65ac431a-2d60-417a-b1f6-6b0f455a1d33"
-applicationStartDate: "2026-04-01"
+  - "Participate in Cognizant training and onboarding programs"
+  - "Support software development and maintenance activities"
+  - "Assist in testing and debugging applications"
+  - "Work on client projects across multiple technologies"
+  - "Participate in Agile ceremonies and team discussions"
+  - "Support data analysis and reporting tasks"
+  - "Prepare technical documentation and status reports"
+  - "Learn and adapt to enterprise tools and technologies"
+  - "Collaborate with project teams to deliver business solutions"
+workingDays: "5 Days Working"
+jobTiming: "Not mentioned"
+applyLink: "https://app.joinsuperset.com/join/#/signup/student/jobprofiles/a8af19f3-444e-43bd-8828-e8656f637a17"
+applicationStartDate: "2026-05-23"
 applicationEndDate: ""
+publishedAt: "2026-05-23T09:07:06.697Z"
 ---
