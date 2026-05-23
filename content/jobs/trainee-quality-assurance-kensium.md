@@ -52,7 +52,7 @@ responsibilities:
   - "Execute functional, integration, regression, and UAT testing"
   - "Validate defect fixes through retesting and regression testing"
   - "Prepare test execution reports and highlight issues"
-  - "Participate in sprint reviews, demos, and QA discussions"
+  - "Participate in sprint reviews and QA discussions"
   - "Gain hands-on exposure to automation and API testing tools"
   - "Follow QA standards, processes, and best practices"
   - "Continuously learn new QA tools, methodologies, and domain knowledge"
