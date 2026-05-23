@@ -54,5 +54,5 @@ jobTiming: "Not mentioned"
 applyLink: "https://app.joinsuperset.com/join/#/signup/student/jobprofiles/a8af19f3-444e-43bd-8828-e8656f637a17"
 applicationStartDate: "2026-05-23"
 applicationEndDate: ""
-publishedAt: "2026-05-23T09:07:06.697Z"
+publishedAt: "2026-05-23T10:15:05.925Z"
 ---
