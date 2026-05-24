@@ -1,5 +1,5 @@
 ---
-title: "AI Is Changing the Internet Forever — Here’s What’s Happening"
+title: "AI Is Changing the Internet Forever Here’s What’s Happening"
 slug: "ai-changing-the-internet-forever"
 summary: "Artificial intelligence is transforming the internet faster than most people realize. Search engines are becoming conversational, websites are turning smarter, online shopping is getting hyper-personalized, and digital content is increasingly AI-assisted."
 topic: "** Artificial Intelligence & Technology"
