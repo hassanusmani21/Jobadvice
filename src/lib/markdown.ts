@@ -291,3 +291,6 @@ export const markdownToBlocks = (markdown: string): MarkdownBlock[] => {
 
   return blocks;
 };
+
+export { injectInternalLinks, injectInternalLinksIntoBlocks } from "./internal-linking/injector";
+export type { InternalLinkTarget } from "./internal-linking/link-priority";

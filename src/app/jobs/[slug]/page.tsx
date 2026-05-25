@@ -5,13 +5,17 @@ import JobDetailSections from "@/components/JobDetailSections";
 import JobActionButton from "@/components/JobActionButton";
 import Link from "@/components/AppLink";
 import RecommendedJobs from "@/components/RecommendedJobs";
+import { RelatedTopics } from "@/components/RelatedTopics";
 import SaveJobButton from "@/components/SaveJobButton";
+import { getAllBlogs } from "@/lib/blogs";
+import { injectInternalLinks } from "@/lib/markdown";
 import {
   formatApplicationWindow,
   getAllJobs,
   getRelatedJobs,
   resolveStructuredValidThrough,
 } from "@/lib/jobs";
+import { buildInternalLinkKeywordMap } from "@/lib/internal-linking/keyword-map";
 import { formatPostedDate } from "@/lib/formatDate";
 import { siteUrl } from "@/lib/site";
 import { toContentSlug } from "@/lib/slug";
@@ -756,6 +760,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   }
 
   const allJobs = await getAllJobs();
+  const allBlogs = await getAllBlogs();
   const job = allJobs.find((listedJob) => listedJob.slug === slug);
 
   if (!job) {
@@ -810,6 +815,59 @@ export default async function JobDetailPage({ params }: JobPageProps) {
       .map((skill) => [skill, toSkillLandingHref(skill)] as const)
       .filter(([, href]) => href !== "/jobs/skill//"),
   );
+  const internalLinkTargets = buildInternalLinkKeywordMap({
+    jobs: allJobs,
+    blogs: allBlogs,
+  });
+  const internalLinkContext = {
+    currentPath: `/jobs/${job.slug}/`,
+    currentSlug: job.slug,
+    currentType: "job" as const,
+  };
+  const autoLinkText = (value: string, maxLinks = 2) =>
+    injectInternalLinks(value, internalLinkTargets, {
+      context: internalLinkContext,
+      maxLinks,
+      maxLinksPerParagraph: 1,
+    });
+  const autoLinkItems = (items: string[], maxLinks = 3) => {
+    let remainingLinks = maxLinks;
+
+    return items.map((item) => {
+      if (remainingLinks <= 0) {
+        return item;
+      }
+
+      const linkedItem = injectInternalLinks(item, internalLinkTargets, {
+        context: internalLinkContext,
+        maxLinks: 1,
+        maxLinksPerParagraph: 1,
+      });
+
+      if (linkedItem !== item) {
+        remainingLinks -= 1;
+      }
+
+      return linkedItem;
+    });
+  };
+  const contextualTopics = internalLinkTargets
+    .filter((target) => {
+      if (target.href === `/jobs/${job.slug}/`) {
+        return false;
+      }
+
+      if (target.type === "skill") {
+        return job.skills.some((skill) => toContentSlug(skill) === target.href.split("/").at(-2));
+      }
+
+      if (target.type === "location") {
+        return Boolean(locationLandingHref && target.href === locationLandingHref);
+      }
+
+      return target.type === "category" || target.type === "blog";
+    })
+    .slice(0, 8);
   const shouldHighlightSalary = Boolean(job.salary && !genericSalaryPattern.test(job.salary));
   const quickHighlights = ([
     shortLocation
@@ -1105,7 +1163,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Role Overview",
               content: {
                 kind: "text",
-                value: roleOverview,
+                value: autoLinkText(roleOverview),
               },
               animationDelayMs: 90,
             },
@@ -1114,7 +1172,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Who Should Apply",
               content: {
                 kind: "text",
-                value: whoShouldApply,
+                value: autoLinkText(whoShouldApply),
               },
               animationDelayMs: 105,
             },
@@ -1123,7 +1181,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Eligibility Criteria",
               content: {
                 kind: "text",
-                value: eligibilityCriteria,
+                value: autoLinkText(eligibilityCriteria),
               },
               animationDelayMs: 120,
             },
@@ -1132,7 +1190,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Responsibilities",
               content: {
                 kind: "list",
-                items: responsibilities,
+                items: autoLinkItems(responsibilities),
                 bullet: true,
               },
               animationDelayMs: 140,
@@ -1163,7 +1221,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Tips to Apply",
               content: {
                 kind: "list",
-                items: applicationTips,
+                items: autoLinkItems(applicationTips, 2),
                 bullet: true,
               },
               animationDelayMs: 215,
@@ -1180,6 +1238,11 @@ export default async function JobDetailPage({ params }: JobPageProps) {
 
       <div className="lg:col-span-3">
         <RecommendedJobs jobs={relatedJobs} />
+        <RelatedTopics
+          title="Related searches"
+          topics={contextualTopics}
+          className="mt-5 rounded-[2rem] border border-slate-200/80 bg-white/95 p-5"
+        />
       </div>
     </div>
   );
