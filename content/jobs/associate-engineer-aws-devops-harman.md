@@ -1,59 +1,62 @@
 ---
 title: "Associate Engineer – AWS DevOps"
 slug: "associate-engineer-aws-devops-harman"
-date: "2026-05-23"
-updatedAt: "2026-05-23"
+date: "2026-05-26"
+updatedAt: "2026-05-26"
 draft: false
 company: "HARMAN"
 location: "Bangalore, Karnataka, India"
-workMode: "Hybrid"
+workMode: ""
 employmentType: "Full-time"
 salary: "Not mentioned"
-experience: "1-3 years"
+experience: "0-1 years"
 eligibilityCriteria: |-
-  Strong understanding of AWS cloud services and DevOps concepts
-  Basic knowledge of CI/CD pipelines and automation tools
-  Understanding of Linux systems and networking fundamentals
-  Familiarity with scripting and infrastructure automation
-  Good analytical and troubleshooting skills
-  Ability to work collaboratively in teams
-  Good communication skills
+  Basic understanding of CI/CD concepts and pipelines
+  Exposure to GitLab CI and/or Jenkins
+  Hands-on or academic experience with Docker
+  Basic knowledge of Kubernetes concepts
+  Familiarity with Linux fundamentals
+  Basic scripting knowledge in Python or Shell
+  Strong willingness to learn and adapt to new technologies
+  Good problem-solving and analytical skills
+  Good communication and teamwork abilities
 education:
   - "Bachelor’s degree in Computer Science"
   - "Information Technology"
-  - "Electronics"
-  - "or related field"
+  - "or related technical discipline"
 skills:
-  - "Ability to work collaboratively in teams"
+  - "Good communication and teamwork abilities"
   - "AWS"
   - "DevOps"
-  - "CI/CD"
-  - "Linux"
-  - "Shell Scripting"
-  - "Python"
-  - "Git"
+  - "CI/CD Pipelines"
+  - "GitLab CI"
+  - "Jenkins"
   - "Docker"
   - "Kubernetes"
-  - "Jenkins"
-  - "Infrastructure Automation"
+  - "Linux"
+  - "Python"
+  - "Shell Scripting"
   - "Cloud Computing"
-  - "Monitoring and Troubleshooting"
-  - "Networking Basics"
+  - "Automation"
+  - "Git"
+  - "Microservices"
   - "Problem-solving"
+  - "Analytical Skills"
+  - "Team Collaboration"
 responsibilities:
-  - "Support AWS cloud infrastructure and DevOps operations"
-  - "Assist in building and maintaining CI/CD pipelines"
-  - "Automate deployment and infrastructure tasks"
-  - "Monitor system performance and troubleshoot issues"
-  - "Collaborate with development and operations teams"
-  - "Support containerization and orchestration environments"
-  - "Maintain system reliability and scalability"
-  - "Participate in deployment, testing, and release activities"
-  - "Contribute to process improvement and automation initiatives"
-workingDays: "Not mentioned"
+  - "Assist in building, maintaining, and improving CI/CD pipelines"
+  - "Support automation of build, test, and deployment workflows"
+  - "Containerize applications and services using Docker"
+  - "Support deployment and basic operations in Kubernetes environments"
+  - "Monitor CI/CD pipeline executions and troubleshoot failures"
+  - "Collaborate with development and QA teams to streamline software delivery"
+  - "Support cloud infrastructure and DevOps operations"
+  - "Learn and follow DevOps and cloud-native best practices"
+  - "Participate in Agile and continuous improvement activities"
+workingDays: "5 Days Work from Office"
 jobTiming: "Not mentioned"
 applyLink: "https://jobsearch.harman.com/en_US/careers/JobDetail/Associate-Engineer-AWS-Devops/31598"
-applicationStartDate: "2026-05-23"
+applicationStartDate: "2026-05-26"
 applicationEndDate: ""
-publishedAt: "2026-05-23T08:50:36.572Z"
+publishedAt: "2026-05-26T04:34:35.798Z"
 ---
