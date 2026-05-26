@@ -9,7 +9,7 @@ location: "Hyderabad, Telangana, India"
 workMode: "On-site"
 employmentType: "Full-time"
 salary: "Not mentioned"
-experience: "1-3 years"
+experience: "0-2 years"
 eligibilityCriteria: |-
   Degree in Chemical or Mechanical Engineering or equivalent experience
   Recently graduated or up to 2 years of experience in pipeline operations or related fields
@@ -55,5 +55,5 @@ jobTiming: "Full-time"
 applyLink: "https://hdjq.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1/job/25028334/"
 applicationStartDate: "2026-05-26"
 applicationEndDate: ""
-publishedAt: "2026-05-26T04:43:52.276Z"
+publishedAt: "2026-05-26T04:45:05.733Z"
 ---
