@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
 import Link from "@/components/AppLink";
 import { createPageMetadata } from "@/lib/seo";
-import { siteName } from "@/lib/site";
+import {
+  siteEmail,
+  siteName,
+  siteVerifiedPublisherName,
+  siteVerifiedPublisherRole,
+} from "@/lib/site";
 
 const principles = [
   "Verified openings and internships in a cleaner format.",
@@ -14,6 +19,13 @@ const boundaries = [
   "We do not recruit on behalf of employers.",
   "We do not collect resumes for hiring.",
   "We do not ask for payment to access job information.",
+];
+
+const editorialChecks = [
+  "We prefer official career pages, employer-hosted forms, or well-known application portals.",
+  "We rewrite listings into clearer summaries instead of asking readers to trust copied job text.",
+  "We add safety notes so readers can verify the company, deadline, salary signal, and apply flow.",
+  "We update or remove content when a listing is reported as expired, misleading, or unsafe.",
 ];
 
 export const metadata: Metadata = createPageMetadata({
@@ -81,6 +93,33 @@ export default function AboutPage() {
                 </div>
               ))}
             </div>
+          </section>
+
+          <section id="how-we-verify-information" className="scroll-mt-28 border-t border-slate-200/80 pt-6">
+            <h2 className="text-2xl font-serif text-slate-900">Editorial responsibility</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
+              {siteName} is maintained by {siteVerifiedPublisherName}, {siteVerifiedPublisherRole}.
+              The site is independent from the employers and portals mentioned in listings. Our job
+              pages are written to help readers verify an opportunity faster, not to replace the
+              original employer instructions.
+            </p>
+            <div className="mt-4 space-y-3">
+              {editorialChecks.map((item) => (
+                <div key={item} className="rounded-2xl border border-slate-200 bg-white/72 px-4 py-4">
+                  <p className="text-sm leading-6 text-slate-700">{item}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="border-t border-slate-200/80 pt-6">
+            <h2 className="text-2xl font-serif text-slate-900">Corrections and removals</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
+              If a listing is closed, the apply link is wrong, a company detail is inaccurate, or a
+              page should be removed, send the page URL and the correction request to{" "}
+              <span className="font-semibold text-slate-900">{siteEmail}</span>. We review reports
+              so readers are not sent toward outdated or unsafe application paths.
+            </p>
           </section>
         </div>
       </section>

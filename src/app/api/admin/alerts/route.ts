@@ -3,6 +3,7 @@ import { requireAdminApiRequest } from "@/lib/adminSession";
 import {
   deleteJobAlertSubscription,
   listJobAlertSubscriptions,
+  runDailyJobAlerts,
   type JobAlertSubscription,
 } from "@/lib/jobAlerts";
 import { noStoreJson } from "@/lib/requestSecurity";
@@ -166,5 +167,39 @@ export async function DELETE(request: Request) {
   return noStoreJson({
     success: true,
     deletedSignature: deletedSubscription.signature,
+  });
+}
+
+export async function POST(request: Request) {
+  const unauthorizedResponse = await requireAdminApiRequest(request);
+
+  if (unauthorizedResponse) {
+    return unauthorizedResponse;
+  }
+
+  const payload = (await request.json().catch(() => null)) as {
+    action?: string;
+    force?: boolean;
+    includeAlreadySent?: boolean;
+  } | null;
+
+  if (payload?.action !== "run-digest") {
+    return noStoreJson(
+      {
+        success: false,
+        error: "UnsupportedAlertAction",
+      },
+      { status: 400 },
+    );
+  }
+
+  const result = await runDailyJobAlerts({
+    force: Boolean(payload.force),
+    includeAlreadySent: Boolean(payload.includeAlreadySent),
+  });
+
+  return noStoreJson({
+    success: true,
+    result,
   });
 }

@@ -371,6 +371,15 @@ export type JobPost = {
   excerpt: string;
 };
 
+export const hasStrongPublicJobContent = (job: JobPost) => {
+  const hasUsefulRoleDetails =
+    job.responsibilities.length >= 3 &&
+    job.skills.length >= 3 &&
+    Boolean(job.eligibilityCriteria || job.education.length > 0);
+
+  return Boolean(job.applyLink) && hasUsefulRoleDetails;
+};
+
 const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "").trim();
 
 const hasClosingQuote = (value: string, quote: '"' | "'") => {

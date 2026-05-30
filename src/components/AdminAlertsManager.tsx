@@ -108,6 +108,7 @@ export default function AdminAlertsManager({
   const [page, setPage] = useState(1);
   const [notice, setNotice] = useState<NoticeState>(initialNotice);
   const [deletingSignature, setDeletingSignature] = useState("");
+  const [isRunningDigest, setIsRunningDigest] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const activeCount = useMemo(
@@ -236,6 +237,61 @@ export default function AdminAlertsManager({
     });
   };
 
+  const runDigestNow = () => {
+    setNotice(initialNotice);
+    setIsRunningDigest(true);
+
+    startTransition(async () => {
+      try {
+        const response = await fetch("/api/admin/alerts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "run-digest",
+            force: true,
+          }),
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | {
+              error?: string;
+              result?: {
+                activeAlerts: number;
+                emailsSent: number;
+                matchedJobs: number;
+                skippedAlerts: number;
+                skippedAlreadySentToday: number;
+                skippedNoNewMatches: number;
+                uniqueRecipients: number;
+              };
+            }
+          | null;
+
+        if (!response.ok || !payload?.result) {
+          throw new Error(payload?.error || "Unable to run the digest.");
+        }
+
+        const result = payload.result;
+        setNotice({
+          tone: result.emailsSent > 0 ? "success" : "error",
+          message:
+            `Digest checked ${result.activeAlerts} active alerts across ${result.uniqueRecipients} recipients. ` +
+            `Sent ${result.emailsSent} emails for ${result.matchedJobs} jobs. ` +
+            `Skipped ${result.skippedAlerts} alerts (${result.skippedNoNewMatches} with no new matches).`,
+        });
+        refreshSubscriptions();
+      } catch (error) {
+        setNotice({
+          tone: "error",
+          message: error instanceof Error ? error.message : "Unable to run the digest.",
+        });
+      } finally {
+        setIsRunningDigest(false);
+      }
+    });
+  };
+
   return (
     <section className="mx-auto w-full max-w-7xl px-3 py-4 sm:px-5 lg:px-6">
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white/[0.92] shadow-[0_18px_56px_-44px_rgba(15,23,42,0.32)] backdrop-blur">
@@ -269,8 +325,16 @@ export default function AdminAlertsManager({
               </a>
               <button
                 type="button"
+                onClick={runDigestNow}
+                disabled={isPending || isRunningDigest}
+                className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full border border-emerald-200 bg-emerald-50 px-3 text-[0.8rem] font-semibold text-emerald-800 transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isRunningDigest ? "Running..." : "Run Digest Now"}
+              </button>
+              <button
+                type="button"
                 onClick={refreshSubscriptions}
-                disabled={isPending}
+                disabled={isPending || isRunningDigest}
                 className="inline-flex h-8 items-center justify-center whitespace-nowrap rounded-full border border-slate-200 bg-slate-50 px-3 text-[0.8rem] font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isPending && !deletingSignature ? "Refreshing..." : "Refresh"}

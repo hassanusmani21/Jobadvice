@@ -23,7 +23,7 @@ const policySections = [
   },
   {
     title: "Advertising and Google AdSense disclosure",
-    body: "If advertising is enabled, third-party vendors including Google may use cookies, web beacons, IP addresses, or similar identifiers to serve ads and measure ad performance. Google advertising cookies can allow Google and its partners to serve ads based on visits to this and other websites.",
+    body: "If advertising is enabled, third-party vendors including Google may use cookies, web beacons, IP addresses, or similar identifiers to serve ads and measure ad performance. Google advertising cookies can allow Google and its partners to serve ads based on visits to this and other websites. You can learn how Google uses information from partner sites at https://policies.google.com/technologies/partner-sites.",
   },
   {
     title: "Personalized ads choices",

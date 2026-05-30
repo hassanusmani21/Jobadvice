@@ -101,7 +101,16 @@ export type JobAlertRunSummary = {
   emailsSent: number;
   errors: string[];
   matchedJobs: number;
+  skippedAlreadySentToday: number;
   skippedAlerts: number;
+  skippedNoNewMatches: number;
+  storageProvider: JobAlertsStorageProvider;
+  uniqueRecipients: number;
+};
+
+export type JobAlertRunOptions = {
+  force?: boolean;
+  includeAlreadySent?: boolean;
 };
 
 export class JobAlertValidationError extends Error {}
@@ -953,8 +962,12 @@ export const unsubscribeJobAlertSubscription = async (token: string) => {
   return nextSubscription;
 };
 
-export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
+export const runDailyJobAlerts = async (
+  options: JobAlertRunOptions = {},
+): Promise<JobAlertRunSummary> => {
   const checkedAt = new Date().toISOString();
+  const forceRun = Boolean(options.force);
+  const includeAlreadySent = Boolean(options.includeAlreadySent);
   const activeSubscriptions = (await listStoredSubscriptions())
     .map((subscription) => hydrateJobAlertSubscription(subscription))
     .filter(
@@ -969,7 +982,11 @@ export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
       emailsSent: 0,
       errors: [],
       matchedJobs: 0,
+      skippedAlreadySentToday: 0,
       skippedAlerts: 0,
+      skippedNoNewMatches: 0,
+      storageProvider: configuredStorageProvider,
+      uniqueRecipients: 0,
     };
   }
 
@@ -977,6 +994,8 @@ export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
   let emailsSent = 0;
   let matchedJobs = 0;
   let skippedAlerts = 0;
+  let skippedAlreadySentToday = 0;
+  let skippedNoNewMatches = 0;
   const errors: string[] = [];
   const subscriptionsByEmail = new Map<string, JobAlertSubscription[]>();
 
@@ -989,8 +1008,12 @@ export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
   for (const subscriptionsForEmail of subscriptionsByEmail.values()) {
     const [primarySubscription] = subscriptionsForEmail;
 
-    if (subscriptionsForEmail.some((subscription) => wasAlertSentToday(subscription, checkedAt))) {
+    if (
+      !forceRun &&
+      subscriptionsForEmail.some((subscription) => wasAlertSentToday(subscription, checkedAt))
+    ) {
       skippedAlerts += subscriptionsForEmail.length;
+      skippedAlreadySentToday += subscriptionsForEmail.length;
       continue;
     }
 
@@ -1002,8 +1025,8 @@ export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
         filterJobsByAlertFilters(jobs, subscription.filters),
         "newest",
       )
-        .filter((job) => wasJobPostedAfterLastAlert(job, subscription))
-        .filter((job) => !subscription.sentJobSlugs.includes(job.slug))
+        .filter((job) => includeAlreadySent || wasJobPostedAfterLastAlert(job, subscription))
+        .filter((job) => includeAlreadySent || !subscription.sentJobSlugs.includes(job.slug))
         .slice(0, 10);
 
       if (unsentJobsForSubscription.length === 0) {
@@ -1024,6 +1047,7 @@ export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
 
     if (unsentJobs.length === 0) {
       skippedAlerts += subscriptionsForEmail.length;
+      skippedNoNewMatches += subscriptionsForEmail.length;
       continue;
     }
 
@@ -1074,7 +1098,11 @@ export const runDailyJobAlerts = async (): Promise<JobAlertRunSummary> => {
     emailsSent,
     errors,
     matchedJobs,
+    skippedAlreadySentToday,
     skippedAlerts,
+    skippedNoNewMatches,
+    storageProvider: configuredStorageProvider,
+    uniqueRecipients: subscriptionsByEmail.size,
   };
 };
 

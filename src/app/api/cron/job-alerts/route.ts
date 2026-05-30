@@ -28,6 +28,8 @@ const isAuthorizedCronRequest = (request: Request) => {
   return false;
 };
 
+const isCronSecretMissing = () => !cronSecret && !isDevelopment;
+
 const buildUnauthorizedResponse = () =>
   NextResponse.json(
     {
@@ -39,19 +41,51 @@ const buildUnauthorizedResponse = () =>
   );
 
 export async function GET(request: Request) {
+  if (isCronSecretMissing()) {
+    console.error("[job-alerts-cron] Missing CRON_SECRET or JOB_ALERTS_CRON_SECRET.");
+    return NextResponse.json(
+      {
+        message:
+          "Cron secret is not configured. Set CRON_SECRET in production so Vercel Cron can authorize this route.",
+      },
+      {
+        status: 503,
+      },
+    );
+  }
+
   if (!isAuthorizedCronRequest(request)) {
     return buildUnauthorizedResponse();
   }
 
   const result = await runDailyJobAlerts();
+  console.info("[job-alerts-cron] Daily job alerts completed", result);
   return NextResponse.json(result);
 }
 
 export async function POST(request: Request) {
+  if (isCronSecretMissing()) {
+    console.error("[job-alerts-cron] Missing CRON_SECRET or JOB_ALERTS_CRON_SECRET.");
+    return NextResponse.json(
+      {
+        message:
+          "Cron secret is not configured. Set CRON_SECRET in production so Vercel Cron can authorize this route.",
+      },
+      {
+        status: 503,
+      },
+    );
+  }
+
   if (!isAuthorizedCronRequest(request)) {
     return buildUnauthorizedResponse();
   }
 
-  const result = await runDailyJobAlerts();
+  const requestUrl = new URL(request.url);
+  const result = await runDailyJobAlerts({
+    force: requestUrl.searchParams.get("force") === "1",
+    includeAlreadySent: requestUrl.searchParams.get("includeAlreadySent") === "1",
+  });
+  console.info("[job-alerts-cron] Manual job alerts completed", result);
   return NextResponse.json(result);
 }

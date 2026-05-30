@@ -10,10 +10,11 @@ import {
   formatApplicationWindow,
   getAllJobs,
   getRelatedJobs,
+  hasStrongPublicJobContent,
   resolveStructuredValidThrough,
 } from "@/lib/jobs";
 import { formatPostedDate } from "@/lib/formatDate";
-import { siteUrl } from "@/lib/site";
+import { siteName, siteUrl, siteVerifiedPublisherName } from "@/lib/site";
 import { toContentSlug } from "@/lib/slug";
 import { resolveJobLocationLabel } from "@/lib/taxonomies";
 
@@ -675,14 +676,71 @@ const buildApplicationTips = (job: Awaited<ReturnType<typeof getAllJobs>>[number
   "Avoid any opportunity that asks for money, refundable deposits, training fees, or unofficial payment before hiring.",
 ];
 
+const buildVerificationNote = (job: Awaited<ReturnType<typeof getAllJobs>>[number]) => {
+  const sourceHost = resolveSourceHost(job.applyLink);
+  const sourceText = sourceHost
+    ? `The apply action on this page routes through JobAdvice to ${sourceHost}, so readers can check the original application source before sharing details.`
+    : "No official apply link is attached yet, so readers should avoid sharing personal details until a reliable source is available.";
+  const deadlineText = job.applicationEndDate
+    ? `The listed application window runs until ${formatPostedDate(job.applicationEndDate)}.`
+    : "No fixed closing date was found, so the role can close early on the employer side.";
+
+  return [
+    `${siteName} treats job listings as information pages, not recruitment promises.`,
+    sourceText,
+    deadlineText,
+    `Last listing update checked by ${siteVerifiedPublisherName}: ${formatPostedDate(job.updatedAt || job.date)}.`,
+  ].join(" ");
+};
+
+const buildResumeFocusItems = (job: Awaited<ReturnType<typeof getAllJobs>>[number]) => {
+  const primarySkills = job.skills.slice(0, 5);
+  const items = [
+    primarySkills.length > 0
+      ? `Place the most relevant skills near the top of your resume: ${toSentence(primarySkills, 5)}.`
+      : "Put the most role-relevant tools, projects, and coursework near the top of your resume.",
+    job.responsibilities[0]
+      ? `Add one project or achievement that proves you can ${job.responsibilities[0].replace(/\.$/, "").toLowerCase()}.`
+      : `Add one project or achievement that clearly matches the ${job.title} responsibilities.`,
+    job.education.length > 0
+      ? `Mention matching education clearly, especially ${toSentence(job.education, 3)}.`
+      : "Mention your strongest matching qualification, certification, or portfolio project clearly.",
+  ];
+
+  if (job.workMode) {
+    items.push(`For ${job.workMode.toLowerCase()} roles, show communication habits, availability, and collaboration examples.`);
+  }
+
+  return items;
+};
+
+const buildBeforeApplyChecklist = (job: Awaited<ReturnType<typeof getAllJobs>>[number]) => {
+  const checklist = [
+    `Confirm that the company name is ${job.company} on the destination page.`,
+    job.location
+      ? `Check that the location or work mode still matches ${job.location}.`
+      : "Check the current location and work mode on the official page.",
+    "Read the eligibility, deadline, and application instructions before uploading documents.",
+    "Use a fresh resume PDF and avoid submitting sensitive IDs unless the official employer flow clearly requires them.",
+  ];
+
+  if (job.salary) {
+    checklist.push(`Treat compensation listed as "${job.salary}" as a signal until the employer confirms it.`);
+  }
+
+  return checklist;
+};
+
 const buildStructuredDescription = (
   job: Awaited<ReturnType<typeof getAllJobs>>[number],
   roleOverview: string,
   whoShouldApply: string,
+  verificationNote?: string,
 ) =>
   [
     roleOverview,
     whoShouldApply,
+    verificationNote ? `Source check: ${verificationNote}` : "",
     job.eligibilityCriteria ? `Eligibility: ${job.eligibilityCriteria}` : "",
     job.responsibilities.length > 0
       ? `Responsibilities: ${job.responsibilities.join("; ")}`
@@ -724,13 +782,25 @@ export async function generateMetadata({ params }: JobPageProps): Promise<Metada
   const title = `${job.title} at ${job.company}`;
   const description = `${job.title} opening at ${job.company}${
     job.location ? ` in ${job.location}` : ""
-  }.`;
+  } with eligibility, skills, application checks, and source guidance for job seekers.`;
   const jobUrl = `${siteUrl}/jobs/${job.slug}/`;
+  const isStrongPublicPage = hasStrongPublicJobContent(job);
 
   return {
     title,
     description,
     keywords: [job.title, job.company, job.location, ...job.skills],
+    robots: {
+      index: isStrongPublicPage,
+      follow: true,
+      googleBot: {
+        index: isStrongPublicPage,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
     alternates: {
       canonical: `/jobs/${job.slug}/`,
     },
@@ -777,10 +847,14 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   const roleOverview = buildRoleOverview(job);
   const whoShouldApply = buildWhoShouldApply(job);
   const applicationTips = buildApplicationTips(job);
+  const verificationNote = buildVerificationNote(job);
+  const resumeFocusItems = buildResumeFocusItems(job);
+  const beforeApplyChecklist = buildBeforeApplyChecklist(job);
   const schemaDescription = buildStructuredDescription(
     job,
     roleOverview,
     whoShouldApply,
+    verificationNote,
   );
   const sourceHost = resolveSourceHost(job.applyLink);
   const companyInitials = getCompanyInitials(job.company);
@@ -1149,6 +1223,16 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               animationDelayMs: 165,
             },
             {
+              id: "resume-focus",
+              title: "Resume Focus",
+              content: {
+                kind: "list",
+                items: resumeFocusItems,
+                bullet: true,
+              },
+              animationDelayMs: 180,
+            },
+            {
               id: "education",
               title: "Education",
               content: {
@@ -1156,7 +1240,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                 items: education,
                 tone: "slate",
               },
-              animationDelayMs: 190,
+              animationDelayMs: 200,
             },
             {
               id: "application-tips",
@@ -1166,7 +1250,26 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                 items: applicationTips,
                 bullet: true,
               },
-              animationDelayMs: 215,
+              animationDelayMs: 220,
+            },
+            {
+              id: "before-apply",
+              title: "Before You Apply",
+              content: {
+                kind: "list",
+                items: beforeApplyChecklist,
+                bullet: true,
+              },
+              animationDelayMs: 240,
+            },
+            {
+              id: "verification-note",
+              title: "Source Check",
+              content: {
+                kind: "text",
+                value: verificationNote,
+              },
+              animationDelayMs: 260,
             },
           ]}
         />

@@ -14,7 +14,7 @@ ctaLabel: ""
 ctaLink: ""
 date: "2026-04-02"
 updatedAt: "2026-04-02"
-draft: false
+draft: true
 ---
 
 # Oracle Layoffs 2026: 12,000 Employees in India Affected – Full Details & Tech Job Impact
