@@ -110,6 +110,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     ? allBlogs.filter((blog) => matchesSearch(blog, query))
     : allBlogs;
   const structuredData = [toCollectionJsonLd(allBlogs), toBreadcrumbJsonLd()];
+  const readingGuidance = [
+    "Start with roadmap and skill guides when you are choosing what to learn next.",
+    "Use hiring-news articles for market context, then verify company-specific details before acting on them.",
+    "Pair articles with live job listings so your learning plan stays connected to real role requirements.",
+  ];
 
   return (
     <div className="space-y-6">
@@ -222,6 +227,25 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           </div>
         ) : null}
       </section>
+
+      {!query ? (
+        <section className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8" style={{ animationDelay: "80ms" }}>
+          <span className="page-kicker">Career Reading Guide</span>
+          <h2 className="page-title">Turn career articles into next actions</h2>
+          <p className="page-copy">
+            The blog is organized for readers who want practical next steps, not only headlines.
+            Use the guides to understand market shifts, prepare applications, and connect learning
+            choices with verified job requirements.
+          </p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {readingGuidance.map((item) => (
+              <div key={item} className="rounded-2xl border border-slate-200 bg-white/72 px-4 py-4">
+                <p className="text-sm leading-6 text-slate-700">{item}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <ul className="blog-directory-grid">
         {filteredBlogs.map((blog) => (

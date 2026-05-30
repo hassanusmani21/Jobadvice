@@ -21,6 +21,7 @@ const staticRoutes = [
   "/resume-builder",
   "/blog",
   "/about",
+  "/editorial-policy",
   "/how-we-verify-jobs",
   "/contact",
   "/terms",

@@ -97,6 +97,11 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
   const typeOptions = toUniqueSortedValues(
     jobs.map((job) => job.employmentType || job.jobType || ""),
   );
+  const directoryGuidance = [
+    "Use location and work-mode filters to separate office, hybrid, and remote roles before comparing eligibility.",
+    "Open the source link from each job page and confirm the employer, deadline, and required documents before applying.",
+    "Save roles that match your current skills, then update your resume around the repeated requirements you see across listings.",
+  ];
 
   const filteredJobs = filterJobsByAlertFilters(jobs, alertFilters);
 
@@ -312,6 +317,25 @@ export default async function JobsPage({ searchParams }: JobsPageProps) {
       ) : null}
 
       {hasActiveFilters ? <JobAlertSignupCard filters={alertFilters} /> : null}
+
+      {!hasActiveFilters && !query ? (
+        <section className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8" style={{ animationDelay: "90ms" }}>
+          <span className="page-kicker">How to Use This Directory</span>
+          <h2 className="page-title">Compare jobs by source quality, not only title</h2>
+          <p className="page-copy">
+            A good application starts before the form opens. Use this directory to shortlist roles,
+            check the company source, compare eligibility, and avoid applying blindly to every post
+            with the same title.
+          </p>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {directoryGuidance.map((item) => (
+              <div key={item} className="rounded-2xl border border-slate-200 bg-white/72 px-4 py-4">
+                <p className="text-sm leading-6 text-slate-700">{item}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <div className="jobs-directory-grid grid gap-x-5 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
         {sortedJobs.map((job) => (

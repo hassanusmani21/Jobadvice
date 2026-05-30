@@ -264,6 +264,7 @@ export const viewport: Viewport = {
 
 const footerLinks = [
   { href: "/about", label: "About" },
+  { href: "/editorial-policy", label: "Editorial Policy" },
   { href: "/how-we-verify-jobs", label: "How We Verify Jobs" },
   { href: "/contact", label: "Contact" },
   { href: "/terms", label: "Terms" },

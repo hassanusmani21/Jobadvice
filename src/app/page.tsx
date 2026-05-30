@@ -61,6 +61,23 @@ export default async function HomePage() {
     { value: "Direct Apply", label: "Only" },
     { value: `${coveredLocationCount}+`, label: "Cities" },
   ];
+  const readerValueItems = [
+    {
+      title: "Source-first listings",
+      body:
+        "Job pages are built around the original apply source when it is available, so readers can confirm the company, role, location, and deadline before applying.",
+    },
+    {
+      title: "Cleaner career context",
+      body:
+        "Listings include scan-friendly eligibility, skills, resume focus points, and verification notes instead of only copied job-description blocks.",
+    },
+    {
+      title: "Reader safety over hype",
+      body:
+        "We avoid paid-access promises, placement guarantees, and unclear application routes. If a listing looks weak, it should not be treated as a strong public page.",
+    },
+  ];
   const communityTrustItems = ["Verified links", "No spam", "Daily updates"];
   const communityContent = (
     <div className="home-community-body items-center text-center lg:items-start lg:text-left">
@@ -289,6 +306,34 @@ export default async function HomePage() {
           </div>
         </section>
       </div>
+
+      <section className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8" style={{ animationDelay: "80ms" }}>
+        <span className="page-kicker">Why JobAdvice Exists</span>
+        <h2 className="page-title">Job search pages should help before they redirect</h2>
+        <p className="page-copy">
+          JobAdvice is written for students, freshers, and early-career professionals who need
+          clarity before clicking an apply button. The site adds practical checks around each
+          opportunity so readers can compare roles, verify sources, and avoid noisy job posts.
+        </p>
+
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          {readerValueItems.map((item) => (
+            <div key={item.title} className="rounded-2xl border border-slate-200 bg-white/72 px-4 py-4">
+              <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <ActionButton href="/editorial-policy" variant="secondary" className="sm:w-auto">
+            Editorial Policy
+          </ActionButton>
+          <ActionButton href="/how-we-verify-jobs" variant="secondary" className="sm:w-auto">
+            Verification Process
+          </ActionButton>
+        </div>
+      </section>
 
       <section className="space-y-6 py-2">
         <div
