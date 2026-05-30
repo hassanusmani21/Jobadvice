@@ -13,8 +13,8 @@ type ContactLink = {
 };
 
 const supportNotes = [
-  "Share the page link or job title when reporting a problem.",
-  "Email is the best option for corrections, privacy questions, and partnerships.",
+  "Share the page link or job title when reporting a problem so the page can be checked quickly.",
+  "Email is the best option for corrections, privacy questions, partnerships, and source clarifications.",
 ];
 
 const contactLinks: ContactLink[] = [
@@ -140,8 +140,8 @@ export default function ContactPage() {
           Get in touch
         </h1>
         <p className="mt-4 max-w-3xl text-[0.98rem] leading-7 text-slate-600">
-          Keep it simple: use email for support, corrections, privacy questions, or partnerships.
-          Use social channels for updates and quick follow-ups.
+          Keep it simple: use email for support, corrections, privacy questions, partnerships, or
+          source clarifications. Use social channels for updates and quick follow-ups.
         </p>
       </section>
 
@@ -150,7 +150,8 @@ export default function ContactPage() {
           <section>
             <h2 className="text-2xl font-serif text-slate-900">Best contact method</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
-              For anything important, email is the most reliable channel.
+              For anything important, email is the most reliable channel because it creates a clear
+              record of the page, the issue, and the requested correction.
             </p>
 
             <div className="mt-5 rounded-[1.35rem] border border-slate-200 bg-white/72 px-5 py-5">

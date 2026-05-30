@@ -20,6 +20,10 @@ export type JobSkillLanding = {
   count: number;
 };
 
+const minimumPublicLocationLandingCount = 2;
+const minimumPublicSkillLandingCount = 4;
+const minimumPublicTopicLandingCount = 2;
+
 const cityAliases = [
   { label: "Navi Mumbai", patterns: ["navi mumbai"] },
   { label: "Bangalore", patterns: ["bengaluru", "bangalore"] },
@@ -114,7 +118,7 @@ export const getAllJobLocationLandings = (jobs: JobPost[]): LocationLanding[] =>
       count,
       slug: toContentSlug(label),
     }))
-    .filter((item) => Boolean(item.slug))
+    .filter((item) => Boolean(item.slug) && item.count >= minimumPublicLocationLandingCount)
     .sort((firstItem, secondItem) => {
       return (
         secondItem.count - firstItem.count ||
@@ -135,7 +139,7 @@ export const getJobsForLocationSlug = (jobs: JobPost[], slug: string) =>
   });
 
 const genericSkillPattern =
-  /^(core skills|preferred skills|good communication skills|communication skills|problem solving|team collaboration|collaboration)$/i;
+  /^(core skills|preferred skills|good communication skills|communication skills|problem solving|problem-solving|team collaboration|collaboration)$/i;
 
 export const normalizeSkillLabel = (skill: string) =>
   normalizeText(skill)
@@ -173,6 +177,7 @@ export const getAllJobSkillLandings = (jobs: JobPost[]): JobSkillLanding[] => {
       slug,
       ...item,
     }))
+    .filter((item) => item.count >= minimumPublicSkillLandingCount)
     .sort((firstItem, secondItem) => {
       return (
         secondItem.count - firstItem.count ||
@@ -215,7 +220,7 @@ export const getAllBlogTopicLandings = (blogs: BlogPost[]): BlogTopicLanding[] =
       ...item,
       slug: toBlogTopicSlug(item.label),
     }))
-    .filter((item) => Boolean(item.slug))
+    .filter((item) => Boolean(item.slug) && item.count >= minimumPublicTopicLandingCount)
     .sort((firstItem, secondItem) => {
       return (
         secondItem.count - firstItem.count ||

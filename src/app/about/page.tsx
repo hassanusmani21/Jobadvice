@@ -5,9 +5,9 @@ import { createPageMetadata } from "@/lib/seo";
 import { siteName } from "@/lib/site";
 
 const principles = [
-  "Verified openings and internships in a cleaner format.",
-  "Direct apply links when the original source is available.",
-  "Job pages built for faster scanning and easier verification.",
+  "Verified openings and internships presented with source context, deadlines, and role details.",
+  "Direct apply links kept when the original source is available and reliable.",
+  "Job pages shaped for faster scanning, easier verification, and safer decision-making.",
 ];
 
 const boundaries = [
@@ -33,8 +33,9 @@ export default function AboutPage() {
           {siteName}
         </h1>
         <p className="mt-4 max-w-3xl text-[0.98rem] leading-7 text-slate-600">
-          {siteName} is a simple job information platform for students, freshers, and early-career
-          professionals who want clearer listings and easier source verification.
+          {siteName} is a job information platform for students, freshers, and early-career
+          professionals who want clearer listings, cleaner source checks, and fewer misleading
+          application paths.
         </p>
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -57,7 +58,7 @@ export default function AboutPage() {
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
               We publish openings, internships, and career articles in a format that is easier to
               scan than long copy-paste posts. The goal is to help readers move from discovery to
-              verification faster.
+              verification with enough context to decide whether a role is actually worth opening.
             </p>
           </section>
 

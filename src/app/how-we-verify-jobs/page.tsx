@@ -64,7 +64,7 @@ export default function HowWeVerifyJobsPage() {
         <p className="mt-4 max-w-3xl text-[0.98rem] leading-7 text-slate-600">
           {siteName} is built to make job discovery clearer, not noisier. The goal is simple:
           help readers reach reliable openings faster, understand what a listing really says, and
-          avoid pay-to-access confusion.
+          avoid pay-to-access confusion or copy-paste job text that hides the useful details.
         </p>
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -116,7 +116,8 @@ export default function HowWeVerifyJobsPage() {
             <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
               Employers and job portals can update, close, or remove listings without notice. That
               means a correct listing today can become outdated tomorrow. The verification process
-              reduces noise, but it cannot freeze the external hiring market.
+              reduces noise, but it cannot freeze the external hiring market or replace the official
+              employer page.
             </p>
           </section>
         </div>
