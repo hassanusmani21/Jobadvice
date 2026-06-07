@@ -9,7 +9,7 @@ tags:
   - "career"
 isTrending: true
 author: "Hassan Usmani"
-coverImage: "/uploads/gemini-generated-image-u8z0iou8z0iou8z0-1780824982974.png"
+coverImage: "/uploads/042b17da-0371-4821-9bd1-458753879ad8-1780831140496.jpg"
 ctaLabel: "Apply Now"
 ctaLink: "https://pminternship.mca.gov.in/login/"
 date: "2026-06-07"
@@ -17,7 +17,6 @@ updatedAt: "2026-06-07"
 draft: false
 ---
 
-```markdown
 # PM Internship Scheme 2026: Apply Online, Eligibility, Stipend, Benefits & Complete Guide
 
 Finding your first real career opportunity can feel confusing.
