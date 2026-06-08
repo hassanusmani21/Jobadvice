@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { runDailyJobAlerts } from "@/lib/jobAlerts";
+import { getJobAlertRuntimeStatus, runDailyJobAlerts } from "@/lib/jobAlerts";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 const cronSecret = (process.env.CRON_SECRET || process.env.JOB_ALERTS_CRON_SECRET || "").trim();
@@ -47,6 +48,7 @@ export async function GET(request: Request) {
       {
         message:
           "Cron secret is not configured. Set CRON_SECRET in production so Vercel Cron can authorize this route.",
+        diagnostics: getJobAlertRuntimeStatus(),
       },
       {
         status: 503,
@@ -58,9 +60,26 @@ export async function GET(request: Request) {
     return buildUnauthorizedResponse();
   }
 
-  const result = await runDailyJobAlerts();
-  console.info("[job-alerts-cron] Daily job alerts completed", result);
-  return NextResponse.json(result);
+  try {
+    const result = await runDailyJobAlerts();
+    console.info("[job-alerts-cron] Daily job alerts completed", result);
+    return NextResponse.json({
+      ...result,
+      diagnostics: getJobAlertRuntimeStatus(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown cron failure.";
+    console.error("[job-alerts-cron] Daily job alerts failed", error);
+    return NextResponse.json(
+      {
+        message,
+        diagnostics: getJobAlertRuntimeStatus(),
+      },
+      {
+        status: 500,
+      },
+    );
+  }
 }
 
 export async function POST(request: Request) {
@@ -70,6 +89,7 @@ export async function POST(request: Request) {
       {
         message:
           "Cron secret is not configured. Set CRON_SECRET in production so Vercel Cron can authorize this route.",
+        diagnostics: getJobAlertRuntimeStatus(),
       },
       {
         status: 503,
@@ -81,11 +101,28 @@ export async function POST(request: Request) {
     return buildUnauthorizedResponse();
   }
 
-  const requestUrl = new URL(request.url);
-  const result = await runDailyJobAlerts({
-    force: requestUrl.searchParams.get("force") === "1",
-    includeAlreadySent: requestUrl.searchParams.get("includeAlreadySent") === "1",
-  });
-  console.info("[job-alerts-cron] Manual job alerts completed", result);
-  return NextResponse.json(result);
+  try {
+    const requestUrl = new URL(request.url);
+    const result = await runDailyJobAlerts({
+      force: requestUrl.searchParams.get("force") === "1",
+      includeAlreadySent: requestUrl.searchParams.get("includeAlreadySent") === "1",
+    });
+    console.info("[job-alerts-cron] Manual job alerts completed", result);
+    return NextResponse.json({
+      ...result,
+      diagnostics: getJobAlertRuntimeStatus(),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown cron failure.";
+    console.error("[job-alerts-cron] Manual job alerts failed", error);
+    return NextResponse.json(
+      {
+        message,
+        diagnostics: getJobAlertRuntimeStatus(),
+      },
+      {
+        status: 500,
+      },
+    );
+  }
 }

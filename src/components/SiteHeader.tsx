@@ -7,7 +7,7 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 mx-auto w-full max-w-6xl px-3 pt-1.5 min-[360px]:px-4 min-[360px]:pt-2 sm:px-6 sm:pt-2.5 lg:px-8 lg:pt-2">
       <div className="fade-up header-shell header-shell-top relative rounded-[1.15rem] px-3 py-2.5 min-[360px]:px-3.5 sm:rounded-2xl sm:px-4 sm:py-2.5 lg:px-[1.05rem]">
-        <div className="hidden items-center gap-3.5 sm:grid sm:grid-cols-[auto_minmax(0,1fr)_auto]">
+        <div className="hidden items-center gap-3.5 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto]">
           <Link href="/" aria-label="JobAdvice Home" className="inline-flex items-center">
             <Image
               src="/jobadvice-logo.svg"
@@ -45,7 +45,7 @@ export default function SiteHeader() {
           <SiteHeaderClientControls mode="desktop" />
         </div>
 
-        <div className="flex items-center justify-between gap-2.5 sm:hidden">
+        <div className="flex items-center justify-between gap-2.5 lg:hidden">
           <Link href="/" aria-label="JobAdvice Home" className="inline-flex min-w-0 items-center">
             <Image
               src="/jobadvice-logo.svg"

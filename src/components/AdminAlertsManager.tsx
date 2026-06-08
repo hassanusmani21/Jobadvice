@@ -258,11 +258,14 @@ export default function AdminAlertsManager({
               error?: string;
               result?: {
                 activeAlerts: number;
+                emailConfigured: boolean;
                 emailsSent: number;
+                errors?: string[];
                 matchedJobs: number;
                 skippedAlerts: number;
                 skippedAlreadySentToday: number;
                 skippedNoNewMatches: number;
+                storageProvider?: string;
                 uniqueRecipients: number;
               };
             }
@@ -274,11 +277,13 @@ export default function AdminAlertsManager({
 
         const result = payload.result;
         setNotice({
-          tone: result.emailsSent > 0 ? "success" : "error",
+          tone: result.emailsSent > 0 || result.activeAlerts === 0 ? "success" : "error",
           message:
             `Digest checked ${result.activeAlerts} active alerts across ${result.uniqueRecipients} recipients. ` +
             `Sent ${result.emailsSent} emails for ${result.matchedJobs} jobs. ` +
-            `Skipped ${result.skippedAlerts} alerts (${result.skippedNoNewMatches} with no new matches).`,
+            `Skipped ${result.skippedAlerts} alerts (${result.skippedNoNewMatches} with no new matches). ` +
+            `Email config: ${result.emailConfigured ? "ready" : "missing"}.` +
+            (result.errors?.length ? ` First error: ${result.errors[0]}` : ""),
         });
         refreshSubscriptions();
       } catch (error) {

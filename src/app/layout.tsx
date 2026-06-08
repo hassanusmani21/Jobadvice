@@ -3,6 +3,8 @@ import Script from "next/script";
 import { Suspense } from "react";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import Link from "@/components/AppLink";
+import PremiumAtmosphere from "@/components/PremiumAtmosphere";
+import PremiumMotion from "@/components/PremiumMotion";
 import RouteProgressReset from "@/components/RouteProgressReset";
 import SiteHeader from "@/components/SiteHeader";
 import ToastContainer from "@/components/Toast";
@@ -515,6 +517,7 @@ export default function RootLayout({
         ) : null}
       </head>
       <body className="antialiased">
+        <PremiumMotion />
         <Suspense fallback={null}>
           <RouteProgressReset />
         </Suspense>
@@ -529,6 +532,7 @@ export default function RootLayout({
           }}
         />
         <div className="site-grid">
+          <PremiumAtmosphere />
           <div aria-hidden className="site-glow site-glow-left" />
           <div aria-hidden className="site-glow site-glow-right" />
 

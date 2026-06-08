@@ -9,7 +9,6 @@ import JobCard from "@/components/JobCard";
 import { getLatestBlogs } from "@/lib/blogs";
 import { getAllJobs } from "@/lib/jobs";
 import { createPageMetadata } from "@/lib/seo";
-import { siteWhatsappGroupUrl } from "@/lib/site";
 
 export const metadata: Metadata = createPageMetadata({
   title: "Fresher Jobs, Internships, and Verified Openings in India",
@@ -20,9 +19,6 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 export const revalidate = 60 * 60;
-
-const joinClasses = (...parts: Array<string | false | null | undefined>) =>
-  parts.filter(Boolean).join(" ");
 
 const toTopLocations = (locations: string[], limit = 12) => {
   const locationCounts = new Map<string, number>();
@@ -54,144 +50,74 @@ export default async function HomePage() {
     getLatestBlogs(3),
   ]);
   const latestJobs = allJobs.slice(0, 6);
+  const dashboardJobs = latestJobs.slice(0, 4);
   const finderLocationOptions = toTopLocations(allJobs.map((job) => job.location));
   const coveredLocationCount = finderLocationOptions.length;
   const heroMetrics = [
-    { value: `${allJobs.length}+`, label: "Verified Jobs" },
-    { value: "Direct Apply", label: "Only" },
-    { value: `${coveredLocationCount}+`, label: "Cities" },
+    { value: `${allJobs.length}+`, label: "Verified roles" },
+    { value: "Direct", label: "Apply routes" },
+    { value: `${coveredLocationCount}+`, label: "Hiring cities" },
   ];
+  const dashboardMetrics = [
+    { value: `${allJobs.length}+`, label: "Verified roles" },
+    { value: "Direct", label: "Apply routes" },
+    { value: "Daily", label: "Review cadence" },
+  ];
+  const dashboardChecks = ["Original source", "Role clarity", "No paid routes"];
   const readerValueItems = [
     {
-      title: "Source-first listings",
+      title: "Verified at the source",
       body:
-        "Job pages are built around the original apply source when it is available, so readers can confirm the company, role, location, and deadline before applying.",
+        "Every listing is shaped around the original apply route so readers can confirm company, role, location, and deadline before acting.",
     },
     {
-      title: "Cleaner career context",
+      title: "Context before clicks",
       body:
-        "Listings include scan-friendly eligibility, skills, resume focus points, and verification notes instead of only copied job-description blocks.",
+        "Scan-friendly eligibility, skills, resume cues, and verification notes make each opportunity easier to compare.",
     },
     {
-      title: "Reader safety over hype",
+      title: "Trust over noise",
       body:
-        "We avoid paid-access promises, placement guarantees, and unclear application routes. If a listing looks weak, it should not be treated as a strong public page.",
+        "No paid-access promises, vague guarantees, or unclear application routes. Weak listings should not feel like strong opportunities.",
     },
   ];
-  const communityTrustItems = ["Verified links", "No spam", "Daily updates"];
-  const communityContent = (
-    <div className="home-community-body items-center text-center lg:items-start lg:text-left">
-      <div className="home-community-top w-full">
-        <p className="home-community-kicker text-[0.72rem] font-semibold uppercase tracking-[0.18em] text-emerald-700 sm:text-[0.76rem] lg:text-[0.74rem]">
-          WhatsApp
-        </p>
-
-        <div className="home-community-copy-block mx-auto w-full max-w-[24rem] sm:max-w-[20rem] lg:mx-0 lg:max-w-none">
-          <h2 className="home-community-title mx-auto font-serif text-[1.26rem] leading-[1.08] text-slate-900 sm:text-[1.38rem] lg:mx-0">
-            Get faster job updates
-          </h2>
-
-          <p className="home-community-proof mx-auto text-[0.95rem] font-medium text-slate-600 sm:text-[1rem] lg:mx-0">
-            5k+ members • daily updates
-          </p>
-
-          <div
-            className="home-community-trust-row justify-center lg:justify-start"
-            aria-label="WhatsApp update highlights"
-          >
-            {communityTrustItems.map((item) => (
-              <span key={item} className="home-community-trust-item">
-                <span aria-hidden="true" className="home-community-trust-icon">
-                  <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none">
-                    <path
-                      d="M4 8.2 6.5 10.7 12 5.3"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span>{item}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <ActionButton
-        href={siteWhatsappGroupUrl}
-        external
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="primary"
-        analyticsEvent="whatsapp_group_click"
-        analyticsProperties={{
-          source: "homepage_hero",
-        }}
-        className="home-community-button w-full self-center lg:max-w-none lg:self-auto"
-      >
-        Join WhatsApp Group
-      </ActionButton>
-    </div>
-  );
-
-  const communityCard = (className?: string) => (
-    <aside
-      className={joinClasses(
-        "home-community-card card-surface rounded-2xl",
-        className,
-      )}
-    >
-      {communityContent}
-    </aside>
-  );
 
   return (
-    <div className="space-y-5 lg:space-y-6">
+    <div className="home-page-shell space-y-5 lg:space-y-6">
       <Suspense fallback={null}>
         <GlobalEngagementPopups />
       </Suspense>
 
       <div className="home-first-fold">
         <section className="fade-up hero-surface home-hero-shell relative overflow-visible rounded-2xl px-4 py-5 sm:px-6 sm:py-6 lg:flex lg:items-center lg:px-8">
+          <div aria-hidden className="home-hero-light-field home-hero-light-field-top" />
+          <div aria-hidden className="home-hero-light-field home-hero-light-field-bottom" />
           <div
             aria-hidden
-            className="absolute -top-24 right-[-5rem] h-44 w-44 rounded-full bg-white/45 blur-3xl sm:h-64 sm:w-64"
-          />
-          <div
-            aria-hidden
-            className="absolute -bottom-20 left-[-4rem] h-36 w-36 rounded-full bg-teal-200/40 blur-3xl sm:h-52 sm:w-52"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute bottom-0 left-0 h-56 w-56 rounded-full bg-emerald-500/10 blur-[120px] sm:h-72 sm:w-72 lg:h-80 lg:w-80"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-y-10 left-[61%] hidden w-px bg-gradient-to-b from-transparent via-white/12 to-transparent lg:block"
+            className="home-hero-divider absolute inset-y-10 left-[55%] hidden w-px lg:block"
           />
 
-          <div className="relative z-[1] home-hero-grid grid content-start gap-3.5 lg:grid-cols-[minmax(0,1.12fr)_minmax(18rem,0.88fr)] lg:items-center">
-            <div className="home-hero-copy mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-[36rem] lg:text-left">
+          <div className="relative z-[1] home-hero-grid grid content-start gap-3.5 lg:grid-cols-[minmax(0,0.95fr)_minmax(22rem,0.92fr)] lg:items-center">
+            <div className="home-hero-copy mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-[38rem] lg:text-left">
               <div className="home-hero-copy-stack">
                 <div className="home-hero-badge-row flex flex-wrap items-center justify-center lg:justify-start">
-                  <span className="page-kicker home-hero-kicker">Fresh jobs updated daily</span>
-                  <span className="home-hero-live-pill hidden lg:inline-flex">Verified listings</span>
+                  <span className="page-kicker home-hero-kicker">Verified job intelligence</span>
+                  <span className="home-hero-live-pill hidden lg:inline-flex">Updated daily</span>
                 </div>
 
-                <div className="home-hero-heading-block mx-auto w-full max-w-[24rem] sm:max-w-3xl lg:mx-0 lg:max-w-[34rem]">
-                  <h1 className="page-title home-hero-title mx-auto w-full max-w-[24rem] !text-2xl sm:max-w-3xl sm:!text-3xl lg:mx-0 lg:max-w-[34rem] lg:!text-[2.75rem] xl:!text-[2.95rem]">
-                    Find Verified Jobs in India
+                <div className="home-hero-heading-block mx-auto w-full max-w-[25rem] sm:max-w-3xl lg:mx-0 lg:max-w-[37rem]">
+                  <h1 className="page-title home-hero-title mx-auto w-full max-w-[25rem] !text-3xl sm:max-w-3xl sm:!text-5xl lg:mx-0 lg:max-w-[37rem] lg:!text-[4.25rem] xl:!text-[4.65rem]">
+                    <span className="home-hero-title-line">Verified jobs.</span>
+                    <span className="home-hero-title-line">Clearer moves.</span>
                   </h1>
 
-                  <p className="page-copy home-hero-copy-text mx-auto w-full max-w-[24rem] !text-[0.95rem] sm:max-w-[26rem] sm:!text-[1rem] lg:mx-0 lg:max-w-[31rem] lg:!text-[1rem]">
-                    <span className="sm:hidden">Direct apply. No spam.</span>
-                    <span className="hidden sm:inline">Direct apply. No spam. Updated daily.</span>
+                  <p className="page-copy home-hero-copy-text mx-auto w-full max-w-[25rem] !text-[1rem] sm:max-w-[35rem] sm:!text-[1.08rem] lg:mx-0 lg:max-w-[34rem] lg:!text-[1.12rem]">
+                    Source-checked fresher jobs and internships, organized so you can compare the
+                    role, company, location, and apply route without the noise.
                   </p>
                 </div>
 
-                <div className="home-hero-proof-row mx-auto hidden max-w-[24rem] flex-wrap items-center justify-center sm:flex sm:max-w-none lg:mx-0 lg:justify-start">
+                <div className="home-hero-proof-row mx-auto flex max-w-[25rem] flex-wrap items-center justify-center sm:max-w-none lg:mx-0 lg:justify-start">
                   {heroMetrics.map((metric) => (
                     <span key={metric.label} className="home-hero-proof-chip">
                       <span className="home-hero-proof-value">{metric.value}</span>
@@ -207,33 +133,87 @@ export default async function HomePage() {
                   variant="primary"
                   className="home-hero-primary-action w-full sm:w-auto"
                 >
-                  Browse Jobs <span aria-hidden="true">→</span>
+                  Browse verified jobs <span aria-hidden="true">→</span>
                 </ActionButton>
                 <ActionButton
-                  href="/blog"
+                  href="/how-we-verify-jobs"
                   variant="secondary"
                   className="home-hero-secondary-action hidden w-full sm:inline-flex sm:w-auto"
                 >
-                  Career Guides
+                  How we verify
                 </ActionButton>
-                <Link href="/blog" className="home-hero-mobile-secondary-link sm:hidden">
-                  Explore career guides
+                <Link href="/how-we-verify-jobs" className="home-hero-mobile-secondary-link sm:hidden">
+                  How we verify
                 </Link>
               </div>
             </div>
 
-            <div className="home-hero-mobile-community block lg:hidden">
-              <div aria-hidden="true" className="home-hero-mobile-divider" />
-              <div className="home-hero-mobile-community-panel">
-                {communityContent}
-              </div>
-            </div>
+            <div className="home-dashboard-stage" aria-label="JobAdvice live verification dashboard">
+              <div aria-hidden="true" className="home-dashboard-orbit home-dashboard-orbit-one" />
+              <div aria-hidden="true" className="home-dashboard-orbit home-dashboard-orbit-two" />
 
-            {communityCard("home-community-card-desktop hidden lg:flex")}
+              <aside className="home-dashboard-shell">
+                <div className="home-dashboard-topbar">
+                  <div>
+                    <p className="home-dashboard-eyebrow">Curated board</p>
+                    <h2 className="home-dashboard-title">
+                      <span>Openings,</span>
+                      <span>cleanly sorted</span>
+                    </h2>
+                  </div>
+                  <span className="home-dashboard-live">
+                    <span aria-hidden="true" />
+                    Online
+                  </span>
+                </div>
+
+                <div className="home-dashboard-metrics" aria-label="Platform metrics">
+                  {dashboardMetrics.map((metric) => (
+                    <div key={metric.label} className="home-dashboard-metric">
+                      <span className="home-dashboard-metric-value">{metric.value}</span>
+                      <span className="home-dashboard-metric-label">{metric.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="home-dashboard-card home-dashboard-list-card">
+                  <div className="home-dashboard-card-header">
+                    <span>Latest verified roles</span>
+                    <strong>{dashboardJobs.length || 0} new</strong>
+                  </div>
+                  <div className="home-dashboard-job-list">
+                    {dashboardJobs.map((job, index) => (
+                      <Link
+                        key={job.slug}
+                        href={`/jobs/${job.slug}`}
+                        className="home-dashboard-job-row"
+                      >
+                        <span className="home-dashboard-company-mark" aria-hidden="true">
+                          {job.company.trim().slice(0, 1) || String(index + 1)}
+                        </span>
+                        <span className="home-dashboard-job-copy">
+                          <strong>{job.title}</strong>
+                          <small>{job.company}</small>
+                        </span>
+                        <span className="home-dashboard-job-status">
+                          {job.workMode || job.location.split(",")[0] || "Open"}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="home-dashboard-proof-strip" aria-label="Verification signals">
+                  {dashboardChecks.map((check) => (
+                    <span key={check}>{check}</span>
+                  ))}
+                </div>
+              </aside>
+            </div>
           </div>
         </section>
 
-        <section className="fade-up home-search-wrap relative mt-2 sm:mt-3 px-2 sm:px-4 lg:px-0">
+        <div className="fade-up home-search-wrap home-search-wrap-integrated relative px-0">
           <div className="home-search-surface home-search-shell mx-auto max-w-5xl lg:max-w-none">
             <div className="home-mobile-filter-panel">
               <div className="home-mobile-filter-quick-row">
@@ -304,10 +284,10 @@ export default async function HomePage() {
               </form>
             </div>
           </div>
-        </section>
+        </div>
       </div>
 
-      <section className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8" style={{ animationDelay: "80ms" }}>
+      <section className="fade-up home-value-section px-5 py-6 sm:px-8 sm:py-8" style={{ animationDelay: "80ms" }}>
         <span className="page-kicker">Why JobAdvice Exists</span>
         <h2 className="page-title">Job search pages should help before they redirect</h2>
         <p className="page-copy">
@@ -316,9 +296,12 @@ export default async function HomePage() {
           opportunity so readers can compare roles, verify sources, and avoid noisy job posts.
         </p>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-3">
-          {readerValueItems.map((item) => (
-            <div key={item.title} className="rounded-2xl border border-slate-200 bg-white/72 px-4 py-4">
+        <div className="home-value-grid mt-5 grid gap-3 md:grid-cols-3">
+          {readerValueItems.map((item, index) => (
+            <div key={item.title} className="home-value-card">
+              <span className="home-value-card-index" aria-hidden="true">
+                {String(index + 1).padStart(2, "0")}
+              </span>
               <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
             </div>

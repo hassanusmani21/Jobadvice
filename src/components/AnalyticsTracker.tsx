@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
-  analyticsMeasurementId,
   trackEvent,
   trackPageView,
 } from "@/lib/analytics";
@@ -26,10 +25,6 @@ export default function AnalyticsTracker() {
   const lastExitSignatureRef = useRef("");
 
   useEffect(() => {
-    if (!analyticsMeasurementId) {
-      return;
-    }
-
     const search = searchParams.toString();
     const path = buildPathWithSearch(pathname, search);
     const title = document.title || "JobAdvice";
@@ -85,10 +80,6 @@ export default function AnalyticsTracker() {
   }, [pathname, searchParams]);
 
   useEffect(() => {
-    if (!analyticsMeasurementId) {
-      return;
-    }
-
     const sendExitEvent = (exitReason: "hidden" | "pagehide") => {
       const currentVisit = currentVisitRef.current;
       if (!currentVisit) {
@@ -128,6 +119,85 @@ export default function AnalyticsTracker() {
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, []);
+
+  useEffect(() => {
+    const getLink = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) {
+        return null;
+      }
+
+      return target.closest<HTMLAnchorElement>("a[href]");
+    };
+
+    const getSlug = (pathnameValue: string, prefix: string) => {
+      const match = pathnameValue.match(new RegExp(`^/${prefix}/([^/]+)`));
+      return match?.[1] || "";
+    };
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      const link = getLink(event.target);
+
+      if (!link) {
+        return;
+      }
+
+      let url: URL;
+
+      try {
+        url = new URL(link.href, window.location.href);
+      } catch {
+        return;
+      }
+
+      if (url.origin !== window.location.origin) {
+        return;
+      }
+
+      const label = (link.textContent || "").trim().replace(/\s+/g, " ").slice(0, 120);
+      const sourcePath = `${window.location.pathname}${window.location.search}`;
+      const jobSlug = getSlug(url.pathname, "jobs");
+      const blogSlug = getSlug(url.pathname, "blog");
+      const universitySlug =
+        getSlug(url.pathname, "universities") || getSlug(url.pathname, "university");
+
+      if (jobSlug && !["freshers", "internships", "remote", "experienced"].includes(jobSlug)) {
+        trackEvent("job_link_click", {
+          job_slug: jobSlug,
+          link_text: label,
+          source_path: sourcePath,
+        });
+        return;
+      }
+
+      if (blogSlug && blogSlug !== "topic") {
+        trackEvent("blog_link_click", {
+          blog_slug: blogSlug,
+          blog_title: label,
+          source_path: sourcePath,
+        });
+        return;
+      }
+
+      if (universitySlug) {
+        trackEvent("university_link_click", {
+          university_slug: universitySlug,
+          university_name: label,
+          source_path: sourcePath,
+        });
+      }
+    };
+
+    document.addEventListener("click", handleDocumentClick, {
+      capture: true,
+      passive: true,
+    });
+
+    return () => {
+      document.removeEventListener("click", handleDocumentClick, {
+        capture: true,
+      });
     };
   }, []);
 

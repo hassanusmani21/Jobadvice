@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   RESUME_POPUP_DISMISSED_AT_KEY,
   RESUME_POPUP_DISMISS_DURATION_MS,
@@ -27,7 +27,7 @@ const featureBullets = [
 
 function CheckIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 text-emerald-300">
+    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4 text-cyan-300">
       <path
         d="M5.5 10.5 8.4 13.4 14.8 7"
         fill="none"
@@ -49,6 +49,7 @@ export default function ResumeBuilderPromoPopup({
   storageKey = RESUME_POPUP_DISMISSED_AT_KEY,
 }: ResumeBuilderPromoPopupProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { dismiss, isHydrated, isVisible } = useResumeBuilderPromo({
     delayMs,
     dismissForMs,
@@ -58,6 +59,7 @@ export default function ResumeBuilderPromoPopup({
     storageKey,
   });
   const closeTimeoutRef = useRef<number | null>(null);
+  const pathnameRef = useRef(pathname);
   const [isMounted, setIsMounted] = useState(false);
   const [isEntered, setIsEntered] = useState(false);
 
@@ -117,6 +119,22 @@ export default function ResumeBuilderPromoPopup({
     };
   }, []);
 
+  useEffect(() => {
+    if (pathnameRef.current === pathname) {
+      return;
+    }
+
+    pathnameRef.current = pathname;
+
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current);
+    }
+
+    setIsEntered(false);
+    dismiss();
+    setIsMounted(false);
+  }, [dismiss, pathname]);
+
   const handleDismiss = () => {
     if (closeTimeoutRef.current) {
       window.clearTimeout(closeTimeoutRef.current);
@@ -133,6 +151,9 @@ export default function ResumeBuilderPromoPopup({
     trackEvent("resume_builder_promo_click", {
       source: storageKey,
     });
+    dismiss();
+    setIsEntered(false);
+    setIsMounted(false);
     router.push("/resume-builder");
   };
 
@@ -156,18 +177,18 @@ export default function ResumeBuilderPromoPopup({
         aria-modal="true"
         aria-labelledby="resume-builder-promo-title"
         aria-describedby="resume-builder-promo-copy"
-        className={`pointer-events-auto relative w-full max-w-[28rem] overflow-hidden rounded-[1.75rem] border border-emerald-400/20 bg-[radial-gradient(circle_at_top,_rgba(52,211,153,0.18),_transparent_38%),linear-gradient(180deg,_rgba(15,23,42,0.98),_rgba(2,6,23,0.98))] p-5 text-slate-100 shadow-[0_30px_80px_-35px_rgba(15,23,42,0.95)] transition-all duration-200 ease-out sm:p-6 ${
+        className={`pointer-events-auto relative w-full max-w-[28rem] overflow-hidden rounded-[1.75rem] border border-sky-400/24 bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.2),_transparent_34%),radial-gradient(circle_at_82%_0%,_rgba(6,182,212,0.16),_transparent_30%),linear-gradient(180deg,_rgba(15,23,42,0.98),_rgba(2,6,23,0.98))] p-5 text-slate-100 shadow-[0_30px_80px_-35px_rgba(15,23,42,0.95)] transition-all duration-200 ease-out sm:p-6 ${
           isEntered ? "translate-y-0 scale-100 opacity-100" : "translate-y-3 scale-[0.97] opacity-0"
         }`}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),transparent_45%,rgba(16,185,129,0.05))]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.045),transparent_45%,rgba(6,182,212,0.06))]" />
 
         <div className="relative">
           <button
             type="button"
             aria-label="Close popup"
             onClick={handleDismiss}
-            className="absolute right-0 top-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-white/20 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/60 focus:ring-offset-2 focus:ring-offset-slate-950"
+            className="absolute right-0 top-0 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:border-sky-300/35 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-sky-400/60 focus:ring-offset-2 focus:ring-offset-slate-950"
           >
             <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
               <path
@@ -181,7 +202,7 @@ export default function ResumeBuilderPromoPopup({
           </button>
 
           <div className="pr-12">
-            <span className="inline-flex rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-emerald-200">
+            <span className="inline-flex rounded-full border border-sky-400/28 bg-sky-400/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-sky-200">
               Resume Builder
             </span>
 
@@ -212,7 +233,7 @@ export default function ResumeBuilderPromoPopup({
                 key={feature}
                 className="flex items-center gap-2.5 rounded-2xl border border-white/8 bg-white/[0.04] px-3 py-3 text-sm font-medium text-slate-200"
               >
-                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-400/12">
+                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cyan-400/12">
                   <CheckIcon />
                 </span>
                 <span>{feature}</span>
@@ -224,7 +245,7 @@ export default function ResumeBuilderPromoPopup({
             <button
               type="button"
               onClick={handlePrimaryClick}
-              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-2xl bg-emerald-400 px-5 py-3 text-sm font-semibold text-slate-950 shadow-[0_18px_34px_-20px_rgba(16,185,129,0.9)] transition hover:bg-emerald-300 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 focus:ring-offset-slate-950"
+              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#2563eb,#1d4ed8_48%,#06b6d4)] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_34px_-20px_rgba(37,99,235,0.9)] transition hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               Explore Resume Builder
             </button>

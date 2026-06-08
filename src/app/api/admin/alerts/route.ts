@@ -2,6 +2,7 @@ import { buildJobAlertSummary } from "@/lib/jobFilters";
 import { requireAdminApiRequest } from "@/lib/adminSession";
 import {
   deleteJobAlertSubscription,
+  getJobAlertRuntimeStatus,
   listJobAlertSubscriptions,
   runDailyJobAlerts,
   type JobAlertSubscription,
@@ -127,6 +128,7 @@ export async function GET(request: Request) {
 
   return noStoreJson({
     success: true,
+    diagnostics: getJobAlertRuntimeStatus(),
     total: records.length,
     records,
   });
@@ -193,13 +195,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await runDailyJobAlerts({
-    force: Boolean(payload.force),
-    includeAlreadySent: Boolean(payload.includeAlreadySent),
-  });
+  try {
+    const result = await runDailyJobAlerts({
+      force: Boolean(payload.force),
+      includeAlreadySent: Boolean(payload.includeAlreadySent),
+    });
 
-  return noStoreJson({
-    success: true,
-    result,
-  });
+    return noStoreJson({
+      success: true,
+      diagnostics: getJobAlertRuntimeStatus(),
+      result,
+    });
+  } catch (error) {
+    return noStoreJson(
+      {
+        success: false,
+        diagnostics: getJobAlertRuntimeStatus(),
+        error: error instanceof Error ? error.message : "UnableToRunDigest",
+      },
+      { status: 500 },
+    );
+  }
 }

@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import ApplicationStatusBadge from "@/components/ApplicationStatusBadge";
 import JobDetailSections from "@/components/JobDetailSections";
 import JobActionButton from "@/components/JobActionButton";
 import Link from "@/components/AppLink";
 import RecommendedJobs from "@/components/RecommendedJobs";
-import { RelatedTopics } from "@/components/RelatedTopics";
 import SaveJobButton from "@/components/SaveJobButton";
-import { getAllBlogs } from "@/lib/blogs";
-import { injectInternalLinks } from "@/lib/markdown";
 import {
   formatApplicationWindow,
   getAllJobs,
@@ -16,7 +12,6 @@ import {
   hasStrongPublicJobContent,
   resolveStructuredValidThrough,
 } from "@/lib/jobs";
-import { buildInternalLinkKeywordMap } from "@/lib/internal-linking/keyword-map";
 import { formatPostedDate } from "@/lib/formatDate";
 import { siteName, siteUrl, siteVerifiedPublisherName } from "@/lib/site";
 import { toContentSlug } from "@/lib/slug";
@@ -830,7 +825,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   }
 
   const allJobs = await getAllJobs();
-  const allBlogs = await getAllBlogs();
   const job = allJobs.find((listedJob) => listedJob.slug === slug);
 
   if (!job) {
@@ -863,10 +857,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   );
   const sourceHost = resolveSourceHost(job.applyLink);
   const companyInitials = getCompanyInitials(job.company);
-  const displayApplicationStatus =
-    job.applicationStatus.state === "no_expiry"
-      ? { ...job.applicationStatus, label: "Open" }
-      : job.applicationStatus;
   const structuredValidThrough = resolveStructuredValidThrough(
     job.date,
     job.applicationEndDate,
@@ -889,59 +879,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
       .map((skill) => [skill, toSkillLandingHref(skill)] as const)
       .filter(([, href]) => href !== "/jobs/skill//"),
   );
-  const internalLinkTargets = buildInternalLinkKeywordMap({
-    jobs: allJobs,
-    blogs: allBlogs,
-  });
-  const internalLinkContext = {
-    currentPath: `/jobs/${job.slug}/`,
-    currentSlug: job.slug,
-    currentType: "job" as const,
-  };
-  const autoLinkText = (value: string, maxLinks = 2) =>
-    injectInternalLinks(value, internalLinkTargets, {
-      context: internalLinkContext,
-      maxLinks,
-      maxLinksPerParagraph: 1,
-    });
-  const autoLinkItems = (items: string[], maxLinks = 3) => {
-    let remainingLinks = maxLinks;
-
-    return items.map((item) => {
-      if (remainingLinks <= 0) {
-        return item;
-      }
-
-      const linkedItem = injectInternalLinks(item, internalLinkTargets, {
-        context: internalLinkContext,
-        maxLinks: 1,
-        maxLinksPerParagraph: 1,
-      });
-
-      if (linkedItem !== item) {
-        remainingLinks -= 1;
-      }
-
-      return linkedItem;
-    });
-  };
-  const contextualTopics = internalLinkTargets
-    .filter((target) => {
-      if (target.href === `/jobs/${job.slug}/`) {
-        return false;
-      }
-
-      if (target.type === "skill") {
-        return job.skills.some((skill) => toContentSlug(skill) === target.href.split("/").at(-2));
-      }
-
-      if (target.type === "location") {
-        return Boolean(locationLandingHref && target.href === locationLandingHref);
-      }
-
-      return target.type === "category" || target.type === "blog";
-    })
-    .slice(0, 8);
   const shouldHighlightSalary = Boolean(job.salary && !genericSalaryPattern.test(job.salary));
   const quickHighlights = ([
     shortLocation
@@ -1175,18 +1112,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
             </section>
 
             <div className="job-detail-footer mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/75 pt-4">
-              <div className="job-detail-footer-meta flex flex-col gap-2">
-                <ApplicationStatusBadge status={displayApplicationStatus} className="text-[11px]" />
-                {!hasApplyLink || isApplicationUpcoming ? (
-                  <p className="job-detail-footer-note text-sm text-slate-500">
-                    {isApplicationUpcoming
-                      ? "Link appears when applications open."
-                      : "Direct apply link not listed yet."}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+              <div className="job-detail-footer-meta flex w-full flex-col gap-2 sm:w-auto">
                 {isJobExpired ? (
                   <JobActionButton variant="danger" className="w-full sm:w-auto">
                     Job Expired
@@ -1217,7 +1143,16 @@ export default async function JobDetailPage({ params }: JobPageProps) {
                     Apply Now
                   </JobActionButton>
                 )}
+                {!hasApplyLink || isApplicationUpcoming ? (
+                  <p className="job-detail-footer-note text-sm text-slate-500">
+                    {isApplicationUpcoming
+                      ? "Link appears when applications open."
+                      : "Direct apply link not listed yet."}
+                  </p>
+                ) : null}
+              </div>
 
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
                 <SaveJobButton
                   slug={job.slug}
                   title={job.title}
@@ -1237,7 +1172,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Role Overview",
               content: {
                 kind: "text",
-                value: autoLinkText(roleOverview),
+                value: roleOverview,
               },
               animationDelayMs: 90,
             },
@@ -1246,7 +1181,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Who Should Apply",
               content: {
                 kind: "text",
-                value: autoLinkText(whoShouldApply),
+                value: whoShouldApply,
               },
               animationDelayMs: 105,
             },
@@ -1255,7 +1190,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Eligibility Criteria",
               content: {
                 kind: "text",
-                value: autoLinkText(eligibilityCriteria),
+                value: eligibilityCriteria,
               },
               animationDelayMs: 120,
             },
@@ -1264,7 +1199,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Responsibilities",
               content: {
                 kind: "list",
-                items: autoLinkItems(responsibilities),
+                items: responsibilities,
                 bullet: true,
               },
               animationDelayMs: 140,
@@ -1305,7 +1240,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
               title: "Tips to Apply",
               content: {
                 kind: "list",
-                items: autoLinkItems(applicationTips, 2),
+                items: applicationTips,
                 bullet: true,
               },
               animationDelayMs: 220,
@@ -1341,11 +1276,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
 
       <div className="lg:col-span-3">
         <RecommendedJobs jobs={relatedJobs} />
-        <RelatedTopics
-          title="Related searches"
-          topics={contextualTopics}
-          className="mt-5 rounded-[2rem] border border-slate-200/80 bg-white/95 p-5"
-        />
       </div>
     </div>
   );

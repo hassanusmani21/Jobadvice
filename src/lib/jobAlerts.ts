@@ -98,6 +98,7 @@ export type JobAlertUpsertResult = {
 export type JobAlertRunSummary = {
   activeAlerts: number;
   checkedAt: string;
+  emailConfigured: boolean;
   emailsSent: number;
   errors: string[];
   matchedJobs: number;
@@ -147,6 +148,47 @@ const configuredStorageProvider = (() => {
 const shouldUseLocalAlertsFileStore = configuredStorageProvider === "local";
 
 let alertsStoreInstance: Store | null = null;
+
+const getResendApiKey = () => (process.env.RESEND_API_KEY || "").trim();
+const getJobAlertsFromEmail = () =>
+  (process.env.JOB_ALERTS_FROM_EMAIL || process.env.EMAIL_FROM || "").trim();
+
+const isJobAlertsEmailConfigured = () =>
+  Boolean(getResendApiKey() && getJobAlertsFromEmail());
+
+const isJobAlertsStorageConfigured = () => {
+  if (configuredStorageProvider === "local") {
+    return true;
+  }
+
+  if (configuredStorageProvider === "vercel-blob") {
+    return hasVercelBlobConfig;
+  }
+
+  if (configuredStorageProvider === "netlify-blobs") {
+    return hasNetlifyBlobConfig;
+  }
+
+  return false;
+};
+
+export const getJobAlertRuntimeStatus = () => {
+  const fromEmail = getJobAlertsFromEmail();
+  const fromDomain = fromEmail.includes("@") ? fromEmail.split("@").pop() || "" : "";
+
+  return {
+    cronSecretConfigured: Boolean(
+      (process.env.CRON_SECRET || process.env.JOB_ALERTS_CRON_SECRET || "").trim(),
+    ),
+    emailConfigured: isJobAlertsEmailConfigured(),
+    fromDomain,
+    fromEmailConfigured: Boolean(fromEmail),
+    resendConfigured: Boolean(getResendApiKey()),
+    siteUrl,
+    storageConfigured: isJobAlertsStorageConfigured(),
+    storageProvider: configuredStorageProvider,
+  };
+};
 
 const getAlertsStore = () => {
   if (alertsStoreInstance) {
@@ -625,6 +667,9 @@ const buildJobDigestHtml = (
   const unsubscribeUrl = buildUnsubscribeUrl(subscription.unsubscribeToken);
   const greetingLine = escapeHtml(getSubscriberGreetingLine(subscription));
   const safeSummary = escapeHtml(summary);
+  const preheader = escapeHtml(
+    `${matchedJobs.length} new ${matchedJobs.length === 1 ? "job" : "jobs"} matching ${summary}.`,
+  );
 
   const jobItems = matchedJobs
     .map((job) => {
@@ -640,27 +685,42 @@ const buildJobDigestHtml = (
 
       return `
         <tr>
-          <td style="padding:0 0 18px;">
-            <div style="border:1px solid #dbe7e6;border-radius:16px;background:#ffffff;padding:18px 18px 16px;">
-              <p style="margin:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#0f766e;font-weight:700;">${escapeHtml(job.company)}</p>
-              <p style="margin:0 0 8px;font-size:22px;line-height:1.2;color:#0f172a;font-family:Georgia,serif;font-weight:700;">
-                <a href="${escapeHtml(jobUrl)}" style="color:#0f172a;text-decoration:none;">${escapeHtml(job.title)}</a>
-              </p>
-              ${
-                locationParts
-                  ? `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;color:#475569;">${escapeHtml(locationParts)}</p>`
-                  : ""
-              }
-              ${
-                metaParts
-                  ? `<p style="margin:0 0 12px;font-size:13px;line-height:1.5;color:#64748b;">${escapeHtml(metaParts)}</p>`
-                  : ""
-              }
-              <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#526171;">${escapeHtml(
-                job.summary || job.excerpt || "Open the listing to view the full role details.",
-              )}</p>
-              <a href="${escapeHtml(jobUrl)}" style="display:inline-block;padding:10px 16px;border-radius:12px;background:#0d9488;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">View job</a>
-            </div>
+          <td style="padding:0 0 16px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #dbeafe;border-radius:22px;background:#ffffff;box-shadow:0 16px 42px -34px rgba(15,23,42,0.32);">
+              <tr>
+                <td style="padding:20px 20px 18px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="width:50px;vertical-align:top;padding-right:12px;">
+                        <div style="width:38px;height:38px;border-radius:14px;background:#eff6ff;border:1px solid #bfdbfe;color:#2563eb;font-size:16px;line-height:38px;text-align:center;font-weight:800;">${escapeHtml(
+                          job.company.slice(0, 1).toUpperCase() || "J",
+                        )}</div>
+                      </td>
+                      <td style="vertical-align:top;">
+                        <p style="margin:0 0 6px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#2563eb;font-weight:800;">${escapeHtml(job.company)}</p>
+                        <p style="margin:0 0 8px;font-size:21px;line-height:1.24;color:#0f172a;font-family:Arial,Helvetica,sans-serif;font-weight:800;">
+                          <a href="${escapeHtml(jobUrl)}" style="color:#1d4ed8;text-decoration:none;">${escapeHtml(job.title)}</a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                  ${
+                    locationParts
+                      ? `<p style="margin:6px 0 8px;font-size:14px;line-height:1.55;color:#475569;">${escapeHtml(locationParts)}</p>`
+                      : ""
+                  }
+                  ${
+                    metaParts
+                      ? `<p style="margin:0 0 12px;font-size:13px;line-height:1.55;color:#64748b;">${escapeHtml(metaParts)}</p>`
+                      : ""
+                  }
+                  <p style="margin:0 0 16px;font-size:14px;line-height:1.65;color:#526171;">${escapeHtml(
+                    job.summary || job.excerpt || "Open the listing to view the full role details.",
+                  )}</p>
+                  <a href="${escapeHtml(jobUrl)}" style="display:inline-block;padding:11px 17px;border-radius:14px;background:#2563eb;color:#ffffff;text-decoration:none;font-size:14px;font-weight:800;">View job details</a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       `;
@@ -668,34 +728,55 @@ const buildJobDigestHtml = (
     .join("");
 
   return `
-    <div style="margin:0;padding:24px;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;">
+    <div style="display:none;max-height:0;overflow:hidden;color:transparent;opacity:0;">${preheader}</div>
+    <div style="margin:0;padding:24px;background:#edf6ff;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
         <tr>
+          <td style="padding:0 0 14px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+              <tr>
+                <td style="font-size:24px;line-height:1.2;font-weight:900;color:#0b2f63;text-shadow:0 1px 0 rgba(255,255,255,0.7);">JobAdvice</td>
+                <td align="right" style="font-size:12px;line-height:1.4;color:#2563eb;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;">Verified alert</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
           <td style="padding:0 0 20px;">
-            <div style="border:1px solid #dbe7e6;border-radius:22px;background:linear-gradient(180deg,#ffffff 0%,#f0fdfa 100%);padding:24px;">
-              <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#0f766e;font-weight:700;">Job Alert</p>
-              <p style="margin:0 0 8px;font-size:15px;line-height:1.65;color:#0f172a;font-weight:600;">${greetingLine}</p>
-              <h1 style="margin:0 0 12px;font-size:34px;line-height:1.08;font-family:Georgia,serif;color:#0f172a;">${matchedJobs.length} new ${
-                matchedJobs.length === 1 ? "job matches" : "job matches"
-              }</h1>
-              <p style="margin:0 0 18px;font-size:15px;line-height:1.65;color:#526171;">
-                Today we found <strong>${matchedJobs.length} new ${
-                  matchedJobs.length === 1 ? "job" : "jobs"
-                }</strong> matching ${safeSummary}.
-              </p>
-              <a href="${escapeHtml(browseUrl)}" style="display:inline-block;padding:12px 18px;border-radius:14px;background:#0d9488;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Browse matching jobs</a>
-            </div>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #bfdbfe;border-radius:26px;background:#ffffff;background-image:linear-gradient(135deg,#ffffff 0%,#eff6ff 56%,#ecfeff 100%);box-shadow:0 24px 58px -42px rgba(37,99,235,0.38);">
+              <tr>
+                <td style="padding:26px 24px 24px;">
+                  <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#2563eb;font-weight:900;">Daily job intelligence</p>
+                  <p style="margin:0 0 8px;font-size:15px;line-height:1.65;color:#1e293b;font-weight:700;">${greetingLine}</p>
+                  <h1 style="margin:0 0 12px;font-size:34px;line-height:1.08;font-family:Arial,Helvetica,sans-serif;color:#0f172a;font-weight:900;">${matchedJobs.length} new ${
+                    matchedJobs.length === 1 ? "job match" : "job matches"
+                  }</h1>
+                  <p style="margin:0 0 18px;font-size:15px;line-height:1.7;color:#526171;">
+                    We found <strong style="color:#0f172a;">${matchedJobs.length} fresh ${
+                      matchedJobs.length === 1 ? "opening" : "openings"
+                    }</strong> matching ${safeSummary}. Each role is organized with source, company, location, and apply route.
+                  </p>
+                  <a href="${escapeHtml(browseUrl)}" style="display:inline-block;padding:13px 19px;border-radius:15px;background:#2563eb;color:#ffffff;text-decoration:none;font-size:14px;font-weight:900;">Browse matching jobs</a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         ${jobItems}
         <tr>
           <td style="padding-top:8px;">
-            <p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#64748b;">
-              You are receiving this because you asked for a daily JobAdvice alert for ${safeSummary}.
-            </p>
-            <p style="margin:0;font-size:13px;line-height:1.6;">
-              <a href="${escapeHtml(unsubscribeUrl)}" style="color:#0f766e;text-decoration:underline;">Unsubscribe from this alert</a>
-            </p>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #cbd5e1;">
+              <tr>
+                <td style="padding-top:16px;">
+                  <p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#64748b;">
+                    You are receiving this because you asked for a daily JobAdvice alert for ${safeSummary}.
+                  </p>
+                  <p style="margin:0;font-size:13px;line-height:1.6;">
+                    <a href="${escapeHtml(unsubscribeUrl)}" style="color:#2563eb;text-decoration:underline;">Unsubscribe from this alert</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       </table>
@@ -750,44 +831,69 @@ const buildWelcomeAlertHtml = (subscription: JobAlertSubscription) => {
   const unsubscribeUrl = buildUnsubscribeUrl(subscription.unsubscribeToken);
 
   return `
-    <div style="margin:0;padding:24px;background:#f8fafc;font-family:Arial,sans-serif;color:#0f172a;">
+    <div style="display:none;max-height:0;overflow:hidden;color:transparent;opacity:0;">Your JobAdvice daily alert is live for ${escapeHtml(summary)}.</div>
+    <div style="margin:0;padding:24px;background:#edf6ff;font-family:Arial,Helvetica,sans-serif;color:#0f172a;">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;">
         <tr>
+          <td style="padding:0 0 14px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+              <tr>
+                <td style="font-size:24px;line-height:1.2;font-weight:900;color:#0b2f63;">JobAdvice</td>
+                <td align="right" style="font-size:12px;line-height:1.4;color:#2563eb;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;">Daily alerts</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
           <td style="padding:0 0 20px;">
-            <div style="border:1px solid #dbe7e6;border-radius:22px;background:linear-gradient(180deg,#ffffff 0%,#f0fdfa 100%);padding:24px;">
-              <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#0f766e;font-weight:700;">Welcome</p>
-              <p style="margin:0 0 8px;font-size:15px;line-height:1.65;color:#0f172a;font-weight:600;">${escapeHtml(
-                getSubscriberGreetingLine(subscription),
-              )}</p>
-              <h1 style="margin:0 0 12px;font-size:34px;line-height:1.08;font-family:Georgia,serif;color:#0f172a;">Your daily alert is live</h1>
-              <p style="margin:0 0 18px;font-size:15px;line-height:1.65;color:#526171;">
-                ${escapeHtml(getSubscriberThanksLine(subscription))} We will send fresh verified jobs for <strong>${escapeHtml(
-                  summary,
-                )}</strong> whenever new matches are published.
-              </p>
-              <a href="${escapeHtml(
-                browseUrl,
-              )}" style="display:inline-block;padding:12px 18px;border-radius:14px;background:#0d9488;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">Browse matching jobs</a>
-            </div>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #bfdbfe;border-radius:26px;background:#ffffff;background-image:linear-gradient(135deg,#ffffff 0%,#eff6ff 56%,#ecfeff 100%);box-shadow:0 24px 58px -42px rgba(37,99,235,0.38);">
+              <tr>
+                <td style="padding:26px 24px 24px;">
+                  <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.16em;text-transform:uppercase;color:#2563eb;font-weight:900;">Welcome</p>
+                  <p style="margin:0 0 8px;font-size:15px;line-height:1.65;color:#1e293b;font-weight:700;">${escapeHtml(
+                    getSubscriberGreetingLine(subscription),
+                  )}</p>
+                  <h1 style="margin:0 0 12px;font-size:34px;line-height:1.08;font-family:Arial,Helvetica,sans-serif;color:#0f172a;font-weight:900;">Your daily alert is live</h1>
+                  <p style="margin:0 0 18px;font-size:15px;line-height:1.7;color:#526171;">
+                    ${escapeHtml(getSubscriberThanksLine(subscription))} We will send fresh verified roles for <strong style="color:#0f172a;">${escapeHtml(
+                      summary,
+                    )}</strong> when new matching jobs are published.
+                  </p>
+                  <a href="${escapeHtml(
+                    browseUrl,
+                  )}" style="display:inline-block;padding:13px 19px;border-radius:15px;background:#2563eb;color:#ffffff;text-decoration:none;font-size:14px;font-weight:900;">Browse matching jobs</a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
           <td style="padding:0 0 18px;">
-            <div style="border:1px solid #dbe7e6;border-radius:18px;background:#ffffff;padding:18px;">
-              <p style="margin:0 0 8px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#0f766e;font-weight:700;">What happens next</p>
-              <p style="margin:0 0 10px;font-size:14px;line-height:1.7;color:#526171;">You will receive one email per day for this saved filter when new matching jobs are available.</p>
-              <p style="margin:0;font-size:14px;line-height:1.7;color:#526171;">You can unsubscribe anytime from the footer of any alert email.</p>
-            </div>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #dbeafe;border-radius:22px;background:#ffffff;">
+              <tr>
+                <td style="padding:20px;">
+                  <p style="margin:0 0 8px;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb;font-weight:900;">What happens next</p>
+                  <p style="margin:0 0 10px;font-size:14px;line-height:1.7;color:#526171;">You will receive one email per day for this saved filter when new matching jobs are available.</p>
+                  <p style="margin:0;font-size:14px;line-height:1.7;color:#526171;">Every email includes direct job links and an unsubscribe link.</p>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
           <td style="padding-top:8px;">
-            <p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#64748b;">
-              Saved alert: ${escapeHtml(summary)}
-            </p>
-            <p style="margin:0;font-size:13px;line-height:1.6;">
-              <a href="${escapeHtml(unsubscribeUrl)}" style="color:#0f766e;text-decoration:underline;">Unsubscribe from this alert</a>
-            </p>
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-top:1px solid #cbd5e1;">
+              <tr>
+                <td style="padding-top:16px;">
+                  <p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#64748b;">
+                    Saved alert: ${escapeHtml(summary)}
+                  </p>
+                  <p style="margin:0;font-size:13px;line-height:1.6;">
+                    <a href="${escapeHtml(unsubscribeUrl)}" style="color:#2563eb;text-decoration:underline;">Unsubscribe from this alert</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       </table>
@@ -811,9 +917,8 @@ const buildWelcomeAlertText = (subscription: JobAlertSubscription) => {
 };
 
 const sendEmail = async ({ to, subject, html, text }: SendEmailInput): Promise<SendEmailResult> => {
-  const resendApiKey = (process.env.RESEND_API_KEY || "").trim();
-  const fromEmail =
-    (process.env.JOB_ALERTS_FROM_EMAIL || process.env.EMAIL_FROM || "").trim();
+  const resendApiKey = getResendApiKey();
+  const fromEmail = getJobAlertsFromEmail();
 
   if (!resendApiKey || !fromEmail) {
     throw new JobAlertConfigurationError(
@@ -979,6 +1084,7 @@ export const runDailyJobAlerts = async (
     return {
       activeAlerts: 0,
       checkedAt,
+      emailConfigured: isJobAlertsEmailConfigured(),
       emailsSent: 0,
       errors: [],
       matchedJobs: 0,
@@ -1095,6 +1201,7 @@ export const runDailyJobAlerts = async (
   return {
     activeAlerts: activeSubscriptions.length,
     checkedAt,
+    emailConfigured: isJobAlertsEmailConfigured(),
     emailsSent,
     errors,
     matchedJobs,

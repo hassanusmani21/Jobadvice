@@ -66,6 +66,8 @@ export default function ActionButton({
     onClick?.();
   };
 
+  const content = <span className="job-action-button-content">{children}</span>;
+
   if (!href && (buttonType || onClick)) {
     return (
       <button
@@ -75,7 +77,7 @@ export default function ActionButton({
         className={resolvedClassName}
         aria-label={ariaLabel}
       >
-        {children}
+        {content}
       </button>
     );
   }
@@ -83,7 +85,7 @@ export default function ActionButton({
   if (!href) {
     return (
       <span className={resolvedClassName} aria-label={ariaLabel}>
-        {children}
+        {content}
       </span>
     );
   }
@@ -98,7 +100,7 @@ export default function ActionButton({
         aria-label={ariaLabel}
         onClick={handleInteraction}
       >
-        {children}
+        {content}
       </a>
     );
   }
@@ -110,7 +112,7 @@ export default function ActionButton({
       aria-label={ariaLabel}
       onClick={handleInteraction}
     >
-      {children}
+      {content}
     </Link>
   );
 }

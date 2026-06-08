@@ -87,7 +87,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     <>
       <AdminMobileThemeLock />
       <style dangerouslySetInnerHTML={{ __html: adminShellStyles }} />
-      <div className="fixed right-4 top-4 z-50">
+      <div className="fixed right-4 top-4 z-50 flex flex-wrap justify-end gap-2">
+        <a
+          href="/admin/analytics"
+          className="inline-flex items-center justify-center rounded-full border border-blue-200 bg-blue-50/95 px-4 py-2.5 text-sm font-semibold text-blue-800 shadow-[0_20px_40px_-30px_rgba(37,99,235,0.45)] backdrop-blur transition hover:border-blue-300 hover:bg-blue-100"
+        >
+          Analytics
+        </a>
         <a
           href="/admin/alerts"
           className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/92 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.45)] backdrop-blur transition hover:border-slate-300 hover:text-slate-950"

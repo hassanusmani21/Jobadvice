@@ -87,7 +87,14 @@ export default function HomeEngagementPopups({
     return () => {
       timerIds.forEach((timerId) => window.clearTimeout(timerId));
     };
-  }, [isHydrated, popupOverride, shouldResetPopups, supportsJobAlertPopup, supportsResumePromo]);
+  }, [
+    isHydrated,
+    pathname,
+    popupOverride,
+    shouldResetPopups,
+    supportsJobAlertPopup,
+    supportsResumePromo,
+  ]);
 
   if (!isHydrated) {
     return null;

@@ -4,8 +4,6 @@ import BlogHeroMetaStrip from "@/components/BlogHeroMetaStrip";
 import Image from "next/image";
 import Link from "@/components/AppLink";
 import { notFound } from "next/navigation";
-import { RelatedTopics } from "@/components/RelatedTopics";
-import { SmartRelatedLinks } from "@/components/SmartRelatedLinks";
 import type { ReactNode } from "react";
 import {
   formatBlogDate,
@@ -15,12 +13,9 @@ import {
 } from "@/lib/blogs";
 import {
   decodeMarkdownEscapes,
-  injectInternalLinksIntoBlocks,
   markdownToBlocks,
   type MarkdownBlock,
 } from "@/lib/markdown";
-import { getAllJobs } from "@/lib/jobs";
-import { buildInternalLinkKeywordMap } from "@/lib/internal-linking/keyword-map";
 import { toDisplayImageSrc } from "@/lib/images";
 import { toContentSlug } from "@/lib/slug";
 import {
@@ -612,23 +607,8 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
   const coverImageSrc = toDisplayImageSrc(blog.coverImage);
   const allBlogs = await getAllBlogs();
-  const allJobs = await getAllJobs();
   const relatedBlogs = getRelatedBlogs(allBlogs, blog);
-  const internalLinkTargets = buildInternalLinkKeywordMap({
-    jobs: allJobs,
-    blogs: allBlogs,
-  });
-  const internalLinkContext = {
-    currentPath: `/blog/${blog.slug}/`,
-    currentSlug: blog.slug,
-    currentType: "blog" as const,
-  };
-  const { blocks: markdownBlocks, links: injectedInternalLinks } =
-    injectInternalLinksIntoBlocks(markdownToBlocks(blog.content), internalLinkTargets, {
-      context: internalLinkContext,
-      maxLinks: 8,
-      maxLinksPerParagraph: 2,
-    });
+  const markdownBlocks = markdownToBlocks(blog.content);
   const { articleBlocks, outline } = buildArticleStructure(
     markdownBlocks,
     blog.title,
@@ -638,27 +618,6 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     (block) => !shouldHideCtaParagraph(block, cta),
   );
   const faqItems = buildBlogFaq(blog);
-  const relatedTopicLinks = internalLinkTargets
-    .filter((target) => {
-      if (target.href === `/blog/${blog.slug}/`) {
-        return false;
-      }
-
-      if (target.type === "blog") {
-        return (
-          target.label.toLowerCase() === blog.topic.toLowerCase() ||
-          blog.tags.some((tag) => target.label.toLowerCase().includes(tag.toLowerCase()))
-        );
-      }
-
-      return target.type === "skill" || target.type === "location" || target.type === "category";
-    })
-    .slice(0, 10);
-  const smartRelatedLinks = internalLinkTargets
-    .filter((target) =>
-      injectedInternalLinks.some((link) => link.targetId === target.id),
-    )
-    .slice(0, 6);
   const articleListenText = buildArticleListenText(blog, visibleArticleBlocks);
   const showTableOfContents =
     outline.length >= 3 || blog.readingTimeMinutes >= 5;
@@ -1046,17 +1005,6 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
             <p className="mt-3 text-sm text-slate-600">No related articles yet.</p>
           )}
         </section>
-
-        <RelatedTopics
-          title="Topic cluster"
-          topics={relatedTopicLinks}
-          className="fade-up card-surface rounded-3xl p-5"
-        />
-
-        <SmartRelatedLinks
-          title="Contextual links"
-          links={smartRelatedLinks}
-        />
       </aside>
     </div>
   );

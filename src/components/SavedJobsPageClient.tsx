@@ -119,7 +119,7 @@ export default function SavedJobsPageClient({
       {hasLoaded && visibleJobs.length > 0 ? (
         <div className="saved-jobs-grid">
           {visibleJobs.map((job) => (
-            <JobCard key={job.slug} job={job} compact />
+            <JobCard key={job.slug} job={job} />
           ))}
         </div>
       ) : null}

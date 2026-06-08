@@ -1,6 +1,5 @@
 "use client";
 
-import { AutoInternalLinks } from "@/components/AutoInternalLinks";
 import Link from "@/components/AppLink";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -35,11 +34,7 @@ const joinClasses = (...values: Array<string | false | null | undefined>) =>
 
 const renderSectionContent = (content: JobDetailSection["content"]) => {
   if (content.kind === "text") {
-    return (
-      <p className="whitespace-pre-line leading-7 text-slate-700">
-        <AutoInternalLinks text={content.value} />
-      </p>
-    );
+    return <p className="whitespace-pre-line leading-7 text-slate-700">{content.value}</p>;
   }
 
   if (content.kind === "list") {
@@ -51,9 +46,7 @@ const renderSectionContent = (content: JobDetailSection["content"]) => {
         )}
       >
         {content.items.map((item) => (
-          <li key={item}>
-            <AutoInternalLinks text={item} />
-          </li>
+          <li key={item}>{item}</li>
         ))}
       </ul>
     );

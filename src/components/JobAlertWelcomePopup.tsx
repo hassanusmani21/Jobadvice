@@ -247,7 +247,7 @@ const renderHighlightedSuggestion = (value: string, query: string) => {
   return (
     <>
       {value.slice(0, matchIndex)}
-      <span className="font-semibold text-emerald-200">
+      <span className="font-semibold text-sky-200">
         {value.slice(matchIndex, matchEnd)}
       </span>
       {value.slice(matchEnd)}
@@ -566,7 +566,7 @@ function SmartPreferenceField({
 
       <div
         ref={containerRef}
-        className="mt-2 flex max-h-[132px] min-h-[3.35rem] w-full min-w-0 flex-wrap content-start items-center gap-2 overflow-x-hidden overflow-y-auto rounded-[1rem] border border-white/7 bg-white/[0.045] px-3.5 py-2.5 text-[0.92rem] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl transition focus-within:border-emerald-300/28 focus-within:bg-white/[0.06] focus-within:shadow-[0_0_0_4px_rgba(16,185,129,0.07)]"
+        className="mt-2 flex max-h-[132px] min-h-[3.35rem] w-full min-w-0 flex-wrap content-start items-center gap-2 overflow-x-hidden overflow-y-auto rounded-[1rem] border border-white/7 bg-white/[0.045] px-3.5 py-2.5 text-[0.92rem] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl transition focus-within:border-sky-300/30 focus-within:bg-white/[0.06] focus-within:shadow-[0_0_0_4px_rgba(37,99,235,0.1)]"
       >
         <span className="mt-0.5 text-slate-500">
           <SparklesIcon />
@@ -578,7 +578,7 @@ function SmartPreferenceField({
             className={`inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.78rem] ${
               value.kind === "title"
                 ? "border-cyan-400/16 bg-cyan-400/8 text-cyan-100"
-                : "border-emerald-400/16 bg-emerald-400/8 text-emerald-100"
+                : "border-sky-400/16 bg-sky-400/8 text-sky-100"
             }`}
             title={value.value}
           >
@@ -720,7 +720,7 @@ function SmartPreferenceField({
                   }}
                   className={`flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left text-[0.84rem] text-slate-200 transition ${
                     index === highlightedIndex
-                      ? "bg-emerald-400/10 text-white"
+                      ? "bg-sky-400/10 text-white"
                       : "hover:bg-white/5"
                   }`}
                 >
@@ -805,7 +805,7 @@ function ThemedSelect({
             setIsOpen(false);
           }
         }}
-        className="flex h-11 w-full items-center gap-3 rounded-[0.95rem] border border-white/7 bg-white/[0.045] pl-11 pr-10 text-left text-[0.94rem] text-white outline-none transition focus:border-emerald-300/28 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(16,185,129,0.07)]"
+        className="flex h-11 w-full items-center gap-3 rounded-[0.95rem] border border-white/7 bg-white/[0.045] pl-11 pr-10 text-left text-[0.94rem] text-white outline-none transition focus:border-sky-300/30 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.1)]"
       >
         <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
           {icon}
@@ -836,13 +836,13 @@ function ThemedSelect({
                     }}
                     className={`flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left text-[0.84rem] transition ${
                       isSelected
-                        ? "bg-emerald-400/10 text-white"
+                        ? "bg-sky-400/10 text-white"
                         : "text-slate-200 hover:bg-white/5"
                     }`}
                   >
                     <span>{option.label}</span>
                     {isSelected ? (
-                      <span className="text-emerald-200">
+                      <span className="text-sky-200">
                         <SparklesIcon />
                       </span>
                     ) : null}
@@ -1155,17 +1155,17 @@ export default function JobAlertWelcomePopup({
           aria-modal="true"
           aria-labelledby="job-alert-popup-heading"
           aria-describedby="job-alert-popup-copy"
-          className={`pointer-events-auto relative w-full max-w-[44rem] overflow-hidden rounded-[1.4rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.1),_transparent_30%),radial-gradient(circle_at_85%_0%,_rgba(56,189,248,0.08),_transparent_22%),linear-gradient(180deg,_rgba(15,23,42,0.95),_rgba(2,6,23,0.98))] text-slate-100 shadow-[0_34px_80px_-42px_rgba(15,23,42,1)] ring-1 ring-white/5 backdrop-blur-2xl transition-all duration-200 ease-out ${
+          className={`pointer-events-auto relative w-full max-w-[44rem] overflow-hidden rounded-[1.4rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.15),_transparent_30%),radial-gradient(circle_at_85%_0%,_rgba(6,182,212,0.12),_transparent_24%),linear-gradient(180deg,_rgba(15,23,42,0.95),_rgba(2,6,23,0.98))] text-slate-100 shadow-[0_34px_80px_-42px_rgba(15,23,42,1)] ring-1 ring-white/5 backdrop-blur-2xl transition-all duration-200 ease-out ${
             isEntered ? "translate-y-0 scale-100 opacity-100" : "translate-y-3 scale-[0.98] opacity-0"
           }`}
         >
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.045),transparent_38%,rgba(16,185,129,0.04)_100%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.045),transparent_38%,rgba(6,182,212,0.05)_100%)]" />
 
           <button
             type="button"
             aria-label="Close popup"
             onClick={handleDismiss}
-            className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] text-slate-300 transition hover:border-white/20 hover:bg-white/[0.09] hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/60 focus:ring-offset-2 focus:ring-offset-slate-950"
+            className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.055] text-slate-300 transition hover:border-sky-300/35 hover:bg-white/[0.09] hover:text-white focus:outline-none focus:ring-2 focus:ring-sky-400/60 focus:ring-offset-2 focus:ring-offset-slate-950"
           >
             <CloseIcon />
           </button>
@@ -1174,7 +1174,7 @@ export default function JobAlertWelcomePopup({
             {submitState.tone === "success" ? (
               <div className="flex min-h-[24rem] flex-col justify-center">
                 <div className="mx-auto max-w-[28rem] text-center">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/18 bg-emerald-400/9 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-sky-400/22 bg-sky-400/10 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-sky-200">
                     <SparklesIcon />
                     Smart Job Alerts
                   </span>
@@ -1198,7 +1198,7 @@ export default function JobAlertWelcomePopup({
                       {successTags.map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center rounded-full border border-emerald-400/18 bg-emerald-400/10 px-3 py-1.5 text-sm text-emerald-100"
+                          className="inline-flex items-center rounded-full border border-sky-400/18 bg-sky-400/10 px-3 py-1.5 text-sm text-sky-100"
                         >
                           {getShortDisplayLabel(tag) || tag}
                         </span>
@@ -1221,7 +1221,7 @@ export default function JobAlertWelcomePopup({
             ) : (
               <div className="grid gap-5 lg:grid-cols-[0.84fr_1.16fr] lg:items-start lg:gap-6">
                 <div className="max-w-[18rem] lg:pt-2">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/16 bg-emerald-400/8 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-sky-400/18 bg-sky-400/9 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-sky-200">
                     <SparklesIcon />
                     Smart Job Alerts
                   </span>
@@ -1266,7 +1266,7 @@ export default function JobAlertWelcomePopup({
                           value={name}
                           onChange={(event) => setName(event.target.value)}
                           placeholder="Your full name"
-                          className="block h-11 w-full rounded-[0.95rem] border border-white/7 bg-white/[0.045] pl-11 pr-3.5 text-[0.94rem] text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-300/28 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(16,185,129,0.07)]"
+                          className="block h-11 w-full rounded-[0.95rem] border border-white/7 bg-white/[0.045] pl-11 pr-3.5 text-[0.94rem] text-white outline-none transition placeholder:text-slate-500 focus:border-sky-300/30 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.1)]"
                         />
                       </GlassField>
 
@@ -1278,7 +1278,7 @@ export default function JobAlertWelcomePopup({
                           value={email}
                           onChange={(event) => setEmail(event.target.value)}
                           placeholder="name@example.com"
-                          className="block h-11 w-full rounded-[0.95rem] border border-white/7 bg-white/[0.045] pl-11 pr-3.5 text-[0.94rem] text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-300/28 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(16,185,129,0.07)]"
+                          className="block h-11 w-full rounded-[0.95rem] border border-white/7 bg-white/[0.045] pl-11 pr-3.5 text-[0.94rem] text-white outline-none transition placeholder:text-slate-500 focus:border-sky-300/30 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.1)]"
                         />
                       </GlassField>
                     </div>
@@ -1340,7 +1340,7 @@ export default function JobAlertWelcomePopup({
                               value={selectedLocation}
                               onChange={(event) => setSelectedLocation(event.target.value)}
                               placeholder="Bengaluru, Pune, Remote"
-                              className="block h-11 w-full rounded-[0.95rem] border border-white/7 bg-white/[0.045] pl-11 pr-3.5 text-[0.94rem] text-white outline-none transition placeholder:text-slate-500 focus:border-emerald-300/28 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(16,185,129,0.07)]"
+                              className="block h-11 w-full rounded-[0.95rem] border border-white/7 bg-white/[0.045] pl-11 pr-3.5 text-[0.94rem] text-white outline-none transition placeholder:text-slate-500 focus:border-sky-300/30 focus:bg-white/[0.06] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.1)]"
                             />
                           </GlassField>
 
@@ -1356,7 +1356,7 @@ export default function JobAlertWelcomePopup({
                                   onClick={() => setSelectedWorkMode(workModeOption)}
                                   className={`inline-flex h-10 items-center justify-center rounded-full border px-3.5 text-sm font-medium transition ${
                                     selectedWorkMode === workModeOption
-                                      ? "border-emerald-300/22 bg-emerald-400/10 text-emerald-100"
+                                      ? "border-sky-300/24 bg-sky-400/10 text-sky-100"
                                       : "border-white/9 bg-white/[0.035] text-slate-300 hover:border-white/16 hover:bg-white/[0.06] hover:text-white"
                                   }`}
                                 >
@@ -1381,7 +1381,7 @@ export default function JobAlertWelcomePopup({
                     <button
                       type="submit"
                       disabled={isPending}
-                      className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-[0.95rem] bg-[linear-gradient(135deg,rgba(52,211,153,0.98),rgba(45,212,191,0.93)_58%,rgba(34,197,94,0.9))] px-4 text-sm font-semibold text-slate-950 shadow-[0_18px_34px_-24px_rgba(16,185,129,0.75)] transition duration-200 hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:ring-offset-2 focus:ring-offset-slate-950"
+                      className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-[0.95rem] bg-[linear-gradient(135deg,#2563eb,#1d4ed8_48%,#06b6d4)] px-4 text-sm font-semibold text-white shadow-[0_18px_34px_-24px_rgba(37,99,235,0.75)] transition duration-200 hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:ring-offset-2 focus:ring-offset-slate-950"
                     >
                       {isPending ? "Starting Smart Alerts..." : "Start Smart Alerts"}
                     </button>
