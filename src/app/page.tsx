@@ -55,8 +55,15 @@ export default async function HomePage() {
   const coveredLocationCount = finderLocationOptions.length;
   const heroMetrics = [
     { value: `${allJobs.length}+`, label: "Verified roles" },
-    { value: "Direct", label: "Apply routes" },
+    { value: "Direct", label: "Apply paths" },
     { value: `${coveredLocationCount}+`, label: "Hiring cities" },
+  ];
+  const heroBenefitChips = [
+    "Verified Jobs",
+    "Direct Apply",
+    "AI Match Score",
+    "No Spam",
+    "Fresh Listings",
   ];
   const dashboardMetrics = [
     { value: `${allJobs.length}+`, label: "Verified roles" },
@@ -100,6 +107,40 @@ export default async function HomePage() {
           <div className="relative z-[1] home-hero-grid grid content-start gap-3.5 lg:grid-cols-[minmax(0,0.95fr)_minmax(22rem,0.92fr)] lg:items-center">
             <div className="home-hero-copy mx-auto max-w-3xl text-center lg:mx-0 lg:max-w-[38rem] lg:text-left">
               <div className="home-hero-copy-stack">
+                <div className="home-hero-mobile-visual" aria-hidden="true">
+                  <div className="home-hero-mobile-visual-grid">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <div className="home-hero-mobile-visual-orb" />
+                  <div className="home-hero-mobile-visual-card home-hero-mobile-visual-card-main">
+                    <span className="home-hero-mobile-visual-dot" />
+                    <span className="home-hero-mobile-visual-line home-hero-mobile-visual-line-wide" />
+                    <span className="home-hero-mobile-visual-chip">AI Match</span>
+                  </div>
+                  <div className="home-hero-mobile-visual-card home-hero-mobile-visual-card-side">
+                    <span className="home-hero-mobile-visual-dot home-hero-mobile-visual-dot-cyan" />
+                    <span className="home-hero-mobile-visual-line" />
+                    <span className="home-hero-mobile-visual-score">98%</span>
+                  </div>
+                  <div className="home-hero-mobile-visual-card home-hero-mobile-visual-card-resume">
+                    <span className="home-hero-mobile-visual-pulse" />
+                    <span>Resume fit</span>
+                    <strong>Strong</strong>
+                  </div>
+                  <div className="home-hero-mobile-visual-card home-hero-mobile-visual-card-signal">
+                    <span>Hiring signal</span>
+                    <strong>Fresh</strong>
+                  </div>
+                  <div className="home-hero-mobile-visual-graph">
+                    <span />
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </div>
+
                 <div className="home-hero-badge-row flex flex-wrap items-center justify-center lg:justify-start">
                   <span className="page-kicker home-hero-kicker">Verified job intelligence</span>
                   <span className="home-hero-live-pill hidden lg:inline-flex">Updated daily</span>
@@ -108,13 +149,19 @@ export default async function HomePage() {
                 <div className="home-hero-heading-block mx-auto w-full max-w-[25rem] sm:max-w-3xl lg:mx-0 lg:max-w-[37rem]">
                   <h1 className="page-title home-hero-title mx-auto w-full max-w-[25rem] !text-3xl sm:max-w-3xl sm:!text-5xl lg:mx-0 lg:max-w-[37rem] lg:!text-[4.25rem] xl:!text-[4.65rem]">
                     <span className="home-hero-title-line">Verified jobs.</span>
-                    <span className="home-hero-title-line">Clearer moves.</span>
+                    <span className="home-hero-title-line">Smarter moves.</span>
                   </h1>
 
                   <p className="page-copy home-hero-copy-text mx-auto w-full max-w-[25rem] !text-[1rem] sm:max-w-[35rem] sm:!text-[1.08rem] lg:mx-0 lg:max-w-[34rem] lg:!text-[1.12rem]">
                     Source-checked fresher jobs and internships, organized so you can compare the
                     role, company, location, and apply route without the noise.
                   </p>
+
+                  <div className="home-hero-benefit-chips" aria-label="JobAdvice benefits">
+                    {heroBenefitChips.map((chip) => (
+                      <span key={chip}>{chip}</span>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="home-hero-proof-row mx-auto flex max-w-[25rem] flex-wrap items-center justify-center sm:max-w-none lg:mx-0 lg:justify-start">
@@ -135,6 +182,9 @@ export default async function HomePage() {
                 >
                   Browse verified jobs <span aria-hidden="true">→</span>
                 </ActionButton>
+                <p className="home-hero-social-proof">
+                  {allJobs.length}+ opportunities verified this month
+                </p>
                 <ActionButton
                   href="/how-we-verify-jobs"
                   variant="secondary"

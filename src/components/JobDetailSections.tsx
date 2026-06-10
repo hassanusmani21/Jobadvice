@@ -1,7 +1,4 @@
-"use client";
-
 import Link from "@/components/AppLink";
-import { useEffect, useMemo, useRef, useState } from "react";
 
 type JobDetailSection = {
   id: string;
@@ -80,113 +77,39 @@ const renderSectionContent = (content: JobDetailSection["content"]) => {
 export default function JobDetailSections({
   sections,
 }: JobDetailSectionsProps) {
-  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const visibleSections = useMemo(
-    () =>
-      sections.filter((section) => {
-        if (section.content.kind === "text") {
-          return Boolean(section.content.value.trim());
-        }
+  const visibleSections = sections.filter((section) => {
+    if (section.content.kind === "text") {
+      return Boolean(section.content.value.trim());
+    }
 
-        return section.content.items.length > 0;
-      }),
-    [sections],
-  );
-  const [openSectionId, setOpenSectionId] = useState<string | null>(
-    visibleSections[0]?.id || null,
-  );
-
-  useEffect(() => {
-    setOpenSectionId((current) => {
-      if (current && visibleSections.some((section) => section.id === current)) {
-        return current;
-      }
-
-      return visibleSections[0]?.id || null;
-    });
-  }, [visibleSections]);
+    return section.content.items.length > 0;
+  });
 
   if (visibleSections.length === 0) {
     return null;
   }
 
-  const handleOpenSection = (sectionId: string) => {
-    setOpenSectionId(sectionId);
-
-    requestAnimationFrame(() => {
-      const button = buttonRefs.current[sectionId];
-
-      if (!button) {
-        return;
-      }
-
-      const rect = button.getBoundingClientRect();
-      const topSafeZone = 108;
-      const bottomSafeZone = window.innerHeight - 120;
-
-      if (rect.top < topSafeZone || rect.bottom > bottomSafeZone) {
-        button.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
-      }
-    });
-  };
-
   return (
     <>
-      <div className="space-y-6 md:hidden">
-        {visibleSections.map((section) => {
-          const isOpen = openSectionId === section.id;
-
-          return (
-            <section
-              key={section.id}
-              className={joinClasses(
-                "fade-up resume-accordion-section card-surface rounded-3xl",
-                isOpen && "resume-accordion-section-open",
-              )}
-              style={
-                section.animationDelayMs
-                  ? { animationDelay: `${section.animationDelayMs}ms` }
-                  : undefined
-              }
-            >
-              <button
-                type="button"
-                className="resume-accordion-toggle px-6 py-6 sm:px-8 sm:py-6"
-                aria-expanded={isOpen}
-                ref={(element) => {
-                  buttonRefs.current[section.id] = element;
-                }}
-                onClick={() => handleOpenSection(section.id)}
-              >
-                <span className="resume-accordion-head">
-                  <span className="font-serif text-2xl text-slate-900">
-                    {section.title}
-                  </span>
-                </span>
-                <span className="resume-accordion-icon" aria-hidden="true">
-                  {isOpen ? "−" : "+"}
-                </span>
-              </button>
-
-              <div
-                className={joinClasses(
-                  "resume-accordion-panel",
-                  isOpen && "resume-accordion-panel-open",
-                )}
-                aria-hidden={!isOpen}
-              >
-                <div className="resume-accordion-panel-inner">
-                  <div className="resume-accordion-body px-6 pb-6 sm:px-8 sm:pb-6">
-                    {renderSectionContent(section.content)}
-                  </div>
-                </div>
-              </div>
-            </section>
-          );
-        })}
+      <div className="space-y-4 md:hidden">
+        {visibleSections.map((section) => (
+          <section
+            key={section.id}
+            className="fade-up job-detail-mobile-section card-surface rounded-2xl px-5 py-5"
+            style={
+              section.animationDelayMs
+                ? { animationDelay: `${section.animationDelayMs}ms` }
+                : undefined
+            }
+          >
+            <h2 className="font-serif text-[1.35rem] leading-tight text-slate-900">
+              {section.title}
+            </h2>
+            <div className="mt-3 text-[0.95rem] leading-7">
+              {renderSectionContent(section.content)}
+            </div>
+          </section>
+        ))}
       </div>
 
       <div className="hidden space-y-6 md:block">

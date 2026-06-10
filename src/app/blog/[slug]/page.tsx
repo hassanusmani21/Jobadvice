@@ -627,7 +627,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
     : "";
 
   return (
-    <div className="grid gap-6 lg:grid-cols-10">
+    <div className="blog-detail-layout grid gap-6 lg:grid-cols-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -706,7 +706,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         ) : null}
 
         <section
-          className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
+          className="fade-up blog-detail-content-card card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
           style={{ animationDelay: "90ms" }}
         >
           <div className="space-y-5 text-sm text-slate-700 sm:text-base">
