@@ -66,7 +66,7 @@ responsibilities:
   - "Monitor support queues and maintain response times"
   - "Participate in daily support meetings"
 workingDays: "Not mentioned"
-jobTiming: "- 24x7 rotational shifts"
+jobTiming: "24x7 rotational shifts"
 applyLink: "https://usijobs.deloitte.com/en_US/careersUSI/JobDetail/USI-EH27-EA-GTLO-Intela-Support-Agent-Analyst/353471?utm_source=commonjobs&utm_medium=referral&utm_campaign=job_listing"
 applicationStartDate: "2026-06-12"
 applicationEndDate: ""
