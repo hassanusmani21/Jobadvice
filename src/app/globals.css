@@ -17689,13 +17689,13 @@ html[data-theme="dark"] .home-search-intent-meta {
 
   .home-first-fold > .home-hero-shell {
     min-height: auto !important;
-    padding: clamp(1.1rem, 1.7vw, 1.5rem) clamp(1.35rem, 2.2vw, 1.85rem)
-      clamp(0.82rem, 1.2vw, 1.1rem) !important;
+    padding: clamp(1rem, 1.45vw, 1.35rem) clamp(1.25rem, 2.05vw, 1.75rem)
+      clamp(0.68rem, 1.05vw, 0.96rem) !important;
   }
 
   .home-hero-grid {
-    grid-template-columns: minmax(0, 1.08fr) minmax(22.5rem, 0.9fr) !important;
-    gap: clamp(0.82rem, 1.6vw, 1.25rem) !important;
+    grid-template-columns: minmax(0, 1.04fr) minmax(22.9rem, 0.96fr) !important;
+    gap: clamp(0.68rem, 1.2vw, 1rem) !important;
     align-items: center !important;
   }
 
@@ -17716,8 +17716,8 @@ html[data-theme="dark"] .home-search-intent-meta {
   }
 
   .home-hero-title {
-    font-size: clamp(3.1rem, 4.1vw, 3.78rem) !important;
-    line-height: 0.96 !important;
+    font-size: clamp(3rem, 3.85vw, 3.55rem) !important;
+    line-height: 0.98 !important;
   }
 
   .home-hero-copy-text {
@@ -17735,7 +17735,7 @@ html[data-theme="dark"] .home-search-intent-meta {
   .home-hero-proof-row {
     width: min(100%, 34rem) !important;
     gap: 0.3rem !important;
-    margin-top: 0.12rem !important;
+    margin-top: 0.08rem !important;
   }
 
   .home-hero-proof-chip {
@@ -17756,7 +17756,7 @@ html[data-theme="dark"] .home-search-intent-meta {
   }
 
   .home-hero-action-row {
-    margin-top: 0.34rem !important;
+    margin-top: 0.28rem !important;
   }
 
   .home-hero-primary-action,
@@ -17769,15 +17769,15 @@ html[data-theme="dark"] .home-search-intent-meta {
   }
 
   .home-dashboard-stage {
-    max-width: 27.1rem !important;
-    min-height: 22.6rem !important;
+    max-width: clamp(25.8rem, 28vw, 27.1rem) !important;
+    min-height: clamp(21.7rem, 24vw, 22.6rem) !important;
   }
 
   .home-dashboard-shell {
-    max-width: 27.1rem !important;
-    min-height: 22.6rem !important;
-    gap: 0.38rem !important;
-    padding: 0.62rem !important;
+    max-width: clamp(25.8rem, 28vw, 27.1rem) !important;
+    min-height: clamp(21.7rem, 24vw, 22.6rem) !important;
+    gap: 0.34rem !important;
+    padding: 0.56rem !important;
     border-radius: 1rem !important;
   }
 
@@ -17789,11 +17789,11 @@ html[data-theme="dark"] .home-search-intent-meta {
   }
 
   .home-dashboard-topbar {
-    gap: 0.72rem !important;
+    gap: 0.64rem !important;
   }
 
   .home-dashboard-title {
-    font-size: clamp(1.05rem, 1.55vw, 1.2rem) !important;
+    font-size: clamp(1rem, 1.4vw, 1.15rem) !important;
     line-height: 1.04 !important;
   }
 
@@ -17805,7 +17805,7 @@ html[data-theme="dark"] .home-search-intent-meta {
 
   .home-dashboard-verification-row {
     gap: 0.22rem !important;
-    margin-top: -0.18rem !important;
+    margin-top: -0.14rem !important;
   }
 
   .home-dashboard-verification-row span {
@@ -17815,12 +17815,12 @@ html[data-theme="dark"] .home-search-intent-meta {
   }
 
   .home-dashboard-metrics {
-    gap: 0.32rem !important;
+    gap: 0.28rem !important;
   }
 
   .home-dashboard-metric {
-    min-height: 2.6rem !important;
-    padding: 0.34rem 0.42rem !important;
+    min-height: 2.52rem !important;
+    padding: 0.3rem 0.4rem !important;
   }
 
   .home-dashboard-metric-value {
@@ -17832,14 +17832,14 @@ html[data-theme="dark"] .home-search-intent-meta {
   }
 
   .home-dashboard-ai-panel {
-    grid-template-columns: 4.5rem minmax(0, 1fr) !important;
-    gap: 0.42rem !important;
-    padding: 0.44rem !important;
+    grid-template-columns: 4.3rem minmax(0, 1fr) !important;
+    gap: 0.34rem !important;
+    padding: 0.4rem !important;
     border-radius: 0.9rem !important;
   }
 
   .home-dashboard-score-orb {
-    min-height: 4.2rem !important;
+    min-height: 4rem !important;
     border-radius: 0.84rem !important;
   }
 
@@ -17879,7 +17879,7 @@ html[data-theme="dark"] .home-search-intent-meta {
 
   .home-search-wrap,
   .home-search-wrap-integrated {
-    margin-top: clamp(-0.15rem, -0.35vw, 0.1rem) !important;
+    margin-top: clamp(-0.12rem, -0.22vw, 0.06rem) !important;
     padding-inline: clamp(0.35rem, 1vw, 0.6rem) !important;
   }
 
