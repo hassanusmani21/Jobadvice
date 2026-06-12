@@ -71,5 +71,5 @@ jobTiming: "Not mentioned"
 applyLink: "https://eaton.eightfold.ai/careers/job/687236453778?domain=eaton.com&hl=en"
 applicationStartDate: "2026-06-12"
 applicationEndDate: ""
-publishedAt: "2026-06-12T12:43:07.131Z"
+publishedAt: "2026-06-12T12:44:03.303Z"
 ---
