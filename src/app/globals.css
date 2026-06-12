@@ -18139,10 +18139,16 @@ html[data-theme="dark"] .home-search-intent-meta {
 /* Final mobile override: keep the phone first fold consistent and fully contained. */
 @media (max-width: 767.98px) {
   .home-first-fold {
+    display: flex !important;
     min-height: calc(100svh - 4.05rem) !important;
+    flex-direction: column !important;
+    justify-content: stretch !important;
+    gap: 0 !important;
   }
 
   .home-first-fold > .home-hero-shell {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     padding: clamp(0.9rem, 2.1vw, 1.02rem) clamp(0.82rem, 2.4vw, 0.94rem)
       clamp(0.92rem, 2.4vw, 1.04rem) !important;
   }
@@ -18194,11 +18200,12 @@ html[data-theme="dark"] .home-search-intent-meta {
   .home-search-wrap-integrated {
     width: min(100%, 23rem) !important;
     margin-inline: auto !important;
-    margin-top: clamp(-1.02rem, -1.25vw, -0.74rem) !important;
+    margin-top: auto !important;
     padding-inline: 0.38rem !important;
   }
 
   .home-search-shell {
+    margin-top: 0 !important;
     padding: 0.5rem !important;
   }
 
@@ -18229,5 +18236,10 @@ html[data-theme="dark"] .home-search-intent-meta {
 
   .home-search-grid {
     grid-template-columns: minmax(0, 1fr) 4.85rem !important;
+  }
+
+  .home-search-wrap,
+  .home-search-wrap-integrated {
+    margin-top: 0 !important;
   }
 }
