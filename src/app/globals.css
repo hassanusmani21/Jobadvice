@@ -16976,6 +16976,117 @@ html[data-reveal-ready="true"] .blog-detail-content-card.fade-up {
   }
 }
 
+/* Universal mobile baseline: keep the iPhone SE fold as the shared phone layout. */
+@media (max-width: 767.98px) {
+  .home-first-fold {
+    display: flex !important;
+    min-height: calc(100svh - 4.05rem) !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding-inline: 0 !important;
+  }
+
+  .home-first-fold > .home-hero-shell {
+    width: min(100%, 23rem) !important;
+    margin-inline: auto !important;
+    padding: clamp(0.92rem, 2.2vw, 1.08rem) clamp(0.82rem, 2.6vw, 0.96rem)
+      clamp(1.04rem, 2.8vw, 1.2rem) !important;
+  }
+
+  .home-hero-grid {
+    gap: clamp(0.82rem, 2vw, 1rem) !important;
+  }
+
+  .home-hero-mobile-visual {
+    width: min(15.2rem, 76vw) !important;
+    height: clamp(5rem, 13vw, 5.7rem) !important;
+  }
+
+  .home-hero-title {
+    max-width: 21rem !important;
+    font-size: clamp(2.18rem, 9.6vw, 2.8rem) !important;
+    line-height: 0.98 !important;
+    margin-top: 0.08rem !important;
+    margin-bottom: 0.18rem !important;
+  }
+
+  .home-hero-benefit-chips {
+    max-width: 21rem !important;
+    margin-top: 0.06rem !important;
+    gap: 0.24rem !important;
+  }
+
+  .home-hero-proof-row {
+    width: min(100%, 19.2rem) !important;
+    gap: 0.3rem !important;
+    margin-top: clamp(0.3rem, 0.8vw, 0.4rem) !important;
+  }
+
+  .home-hero-proof-chip {
+    min-height: 3.45rem !important;
+    padding: 0.35rem 0.24rem !important;
+  }
+
+  .home-hero-action-row {
+    margin-top: clamp(0.3rem, 0.9vw, 0.42rem) !important;
+  }
+
+  .home-hero-primary-action {
+    width: min(100%, 19rem) !important;
+    min-height: 2.86rem !important;
+  }
+
+  .home-search-wrap,
+  .home-search-wrap-integrated {
+    width: min(100%, 23rem) !important;
+    margin-inline: auto !important;
+    margin-top: clamp(-0.82rem, -1.1vw, -0.62rem) !important;
+    padding-inline: 0.42rem !important;
+  }
+
+  .home-search-shell {
+    padding: 0.56rem !important;
+  }
+
+  .home-search-grid {
+    grid-template-columns: minmax(0, 1fr) clamp(5.2rem, 18vw, 5.6rem) !important;
+    gap: 0.36rem !important;
+  }
+
+  .home-search-control-rich,
+  .home-search-submit {
+    min-height: 2.42rem !important;
+  }
+
+  .home-search-submit-label {
+    font-size: 0.68rem !important;
+  }
+
+  .home-dashboard-stage,
+  .home-dashboard-floating-card {
+    display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .home-first-fold > .home-hero-shell {
+    padding: 0.9rem 0.72rem 1.02rem !important;
+  }
+
+  .home-hero-title {
+    font-size: clamp(2.04rem, 10.4vw, 2.42rem) !important;
+  }
+
+  .home-hero-proof-row {
+    width: min(100%, 18rem) !important;
+    gap: 0.26rem !important;
+  }
+
+  .home-search-grid {
+    grid-template-columns: minmax(0, 1fr) 4.95rem !important;
+  }
+}
+
 html[data-theme="dark"] .home-hero-shell {
   border-color: rgba(56, 189, 248, 0.3) !important;
   background:
