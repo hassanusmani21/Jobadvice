@@ -372,12 +372,34 @@ export type JobPost = {
 };
 
 export const hasStrongPublicJobContent = (job: JobPost) => {
+  const isUsefulValue = (value: string | undefined | null) => {
+    const normalizedValue = String(value || "").trim().toLowerCase();
+    return Boolean(normalizedValue) && !/^(not specified|not disclosed|not mentioned|n\/a|na)$/i.test(normalizedValue);
+  };
+
+  const hasExternalApplySource = (() => {
+    if (!job.applyLink) {
+      return false;
+    }
+
+    try {
+      const hostname = new URL(job.applyLink).hostname.replace(/^www\./, "").toLowerCase();
+      return hostname !== "jobadvice.in";
+    } catch {
+      return false;
+    }
+  })();
+
   const hasUsefulRoleDetails =
     job.responsibilities.length >= 3 &&
     job.skills.length >= 3 &&
-    Boolean(job.eligibilityCriteria || job.education.length > 0);
+    Boolean(job.eligibilityCriteria || job.education.some(isUsefulValue));
+  const hasTrustBasics =
+    isUsefulValue(job.title) &&
+    isUsefulValue(job.company) &&
+    isUsefulValue(job.location);
 
-  return Boolean(job.applyLink) && hasUsefulRoleDetails;
+  return hasExternalApplySource && hasUsefulRoleDetails && hasTrustBasics;
 };
 
 const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "").trim();
@@ -1203,6 +1225,7 @@ const loadJobs = async (options: { includeDrafts?: boolean; includeExpired?: boo
     .filter((job): job is JobPost => Boolean(job))
     .filter((job) => (options.includeDrafts ? true : !job.draft))
     .filter((job) => (options.includeExpired ? true : isJobStillActive(job)))
+    .filter((job) => (options.includeDrafts ? true : hasStrongPublicJobContent(job)))
     .sort(
       (firstJob, secondJob) =>
         new Date(secondJob.date).getTime() - new Date(firstJob.date).getTime(),

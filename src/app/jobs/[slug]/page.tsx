@@ -756,11 +756,13 @@ const toSkillLandingHref = (skill: string) => `/jobs/skill/${toContentSlug(skill
 
 export async function generateStaticParams() {
   const jobs = await getAllJobs();
-  if (jobs.length === 0) {
+  const publicJobs = jobs.filter(hasStrongPublicJobContent);
+
+  if (publicJobs.length === 0) {
     return [{ slug: fallbackSlug }];
   }
 
-  return jobs.map((job) => ({ slug: job.slug }));
+  return publicJobs.map((job) => ({ slug: job.slug }));
 }
 
 export async function generateMetadata({ params }: JobPageProps): Promise<Metadata> {

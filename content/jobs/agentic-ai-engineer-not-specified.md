@@ -3,7 +3,7 @@ title: "Agentic AI Engineer"
 slug: "agentic-ai-engineer-not-specified"
 date: "2026-05-08"
 updatedAt: "2026-05-08"
-draft: false
+draft: true
 company: "Not specified"
 location: "Not specified"
 workMode: ""
