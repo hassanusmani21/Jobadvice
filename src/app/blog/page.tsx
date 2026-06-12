@@ -235,7 +235,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           <p className="page-copy">
             The blog is organized for readers who want practical next steps, not only headlines.
             Use the guides to understand market shifts, prepare applications, and connect learning
-            choices with verified job requirements.
+            choices with source-checked job requirements.
           </p>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {readingGuidance.map((item) => (

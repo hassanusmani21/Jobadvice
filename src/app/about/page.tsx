@@ -10,7 +10,7 @@ import {
 } from "@/lib/site";
 
 const principles = [
-  "Verified openings and internships presented with source context, deadlines, and role details.",
+  "Source-checked openings and internships presented with source context, deadlines, and role details.",
   "Direct apply links kept when the original source is available and reliable.",
   "Job pages shaped for faster scanning, easier verification, and safer decision-making.",
 ];
@@ -33,7 +33,7 @@ export const metadata: Metadata = createPageMetadata({
   description:
     "Learn what JobAdvice publishes, how job information is sourced, and how the platform helps students, freshers, and early-career professionals.",
   path: "/about/",
-  keywords: ["about JobAdvice", "verified job updates", "fresher jobs India"],
+  keywords: ["about JobAdvice", "source checked job updates", "fresher jobs India"],
 });
 
 export default function AboutPage() {

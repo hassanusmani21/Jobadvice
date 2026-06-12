@@ -42,11 +42,11 @@ export async function generateMetadata({
   searchParams,
 }: JobsPageProps): Promise<Metadata> {
   const baseMetadata = createPageMetadata({
-    title: "Verified Jobs, Internships, and Fresher Openings",
+    title: "Source-Checked Jobs, Internships, and Fresher Openings",
     description:
-      "Browse verified jobs and internships with direct apply links, company details, locations, eligibility, and career-friendly role summaries.",
+      "Browse source-checked jobs and internships with direct apply links, company details, locations, eligibility, and career-friendly role summaries.",
     path: "/jobs/",
-    keywords: ["verified jobs", "fresher jobs", "internships in India", "direct apply jobs"],
+    keywords: ["source checked jobs", "fresher jobs", "internships in India", "direct apply jobs"],
   });
 
   if (!hasFilterSearchParams(searchParams)) {

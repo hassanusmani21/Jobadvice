@@ -11,11 +11,11 @@ import { getAllJobs } from "@/lib/jobs";
 import { createPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createPageMetadata({
-  title: "Fresher Jobs, Internships, and Verified Openings in India",
+  title: "Fresher Jobs, Internships, and Source-Checked Openings in India",
   description:
-    "Discover verified fresher jobs, internships, and direct-apply openings in India with practical career guidance for students and early-career job seekers.",
+    "Discover source-checked fresher jobs, internships, and direct-apply openings in India with practical career guidance for students and early-career job seekers.",
   path: "/",
-  keywords: ["fresher jobs", "internships in India", "verified job openings", "job advice"],
+  keywords: ["fresher jobs", "internships in India", "direct apply jobs", "job advice"],
 });
 
 export const revalidate = 60 * 60;
@@ -54,37 +54,37 @@ export default async function HomePage() {
   const finderLocationOptions = toTopLocations(allJobs.map((job) => job.location));
   const coveredLocationCount = finderLocationOptions.length;
   const heroMetrics = [
-    { value: `${allJobs.length}+`, label: "Verified roles", note: "source checked" },
+    { value: `${allJobs.length}+`, label: "Source-checked roles", note: "public sources" },
     { value: "Direct", label: "Apply paths", note: "no detours" },
-    { value: `${coveredLocationCount}+`, label: "Hiring cities", note: "fresh signals" },
+    { value: `${coveredLocationCount}+`, label: "Hiring cities", note: "current listings" },
   ];
   const heroBenefitChips = [
-    "Verified Jobs",
-    "AI Match Score",
+    "Source Checked",
+    "Resume Cues",
     "Direct Apply",
   ];
   const heroTrustSignals = [
-    { value: `${allJobs.length}+`, label: "verified opportunities this month" },
-    { value: "Student-first", label: "trusted by students and freshers" },
-    { value: "Hiring partners", label: "company sources tracked daily" },
-    { value: "3-point", label: "success checks on every role" },
+    { value: `${allJobs.length}+`, label: "source-checked opportunities" },
+    { value: "Student-first", label: "built for students and freshers" },
+    { value: "Public sources", label: "company pages and portals checked" },
+    { value: "3-point", label: "company, role, and apply link checks" },
   ];
   const dashboardMetrics = [
-    { value: `${allJobs.length}+`, label: "Verified roles" },
+    { value: `${allJobs.length}+`, label: "Checked roles" },
     { value: "Direct", label: "Apply routes" },
     { value: "Daily", label: "Review cadence" },
   ];
-  const dashboardMatchScores = [98, 95, 92, 89];
+  const dashboardStatusLabels = ["Checked", "Direct", "Fresh", "Open"];
   const dashboardInsights = [
-    { label: "Resume fit", value: "Strong", detail: "+18% skill overlap" },
+    { label: "Resume cues", value: "Clear", detail: "skills surfaced" },
     { label: "Apply route", value: "Clean", detail: "direct company path" },
-    { label: "Hiring pulse", value: "Active", detail: "fresh activity" },
+    { label: "Listing status", value: "Current", detail: "recent openings" },
   ];
-  const dashboardRecommendationTags = ["Top match", "Fast apply", "Fresh signal", "Verified"];
+  const dashboardRecommendationTags = ["Source checked", "Fast apply", "Fresh listing", "Open role"];
   const dashboardChecks = ["Original source", "Role clarity", "No paid routes"];
   const readerValueItems = [
     {
-      title: "Verified at the source",
+      title: "Checked at the source",
       body:
         "Every listing is shaped around the original apply route so readers can confirm company, role, location, and deadline before acting.",
     },
@@ -128,27 +128,27 @@ export default async function HomePage() {
                   <div className="home-hero-mobile-preview-top">
                     <span>
                       <i />
-                      AI verified
+                      Source checked
                     </span>
-                    <strong>98%</strong>
+                    <strong>Live</strong>
                   </div>
                   <div className="home-hero-mobile-preview-score">
-                    <strong>96%</strong>
-                    <span>match</span>
+                    <strong>3</strong>
+                    <span>checks</span>
                   </div>
                   <div className="home-hero-mobile-preview-roles">
                     <span>
                       <strong>AI Engineer</strong>
-                      <em>98</em>
+                      <em>New</em>
                     </span>
                     <span>
                       <strong>DevOps Associate</strong>
-                      <em>95</em>
+                      <em>Open</em>
                     </span>
                   </div>
                   <div className="home-hero-mobile-preview-insight">
-                    <span>Hiring pulse</span>
-                    <strong>Active</strong>
+                    <span>Apply route</span>
+                    <strong>Direct</strong>
                   </div>
                   <div className="home-hero-mobile-preview-activity">
                     <span />
@@ -159,14 +159,14 @@ export default async function HomePage() {
                 </div>
 
                 <div className="home-hero-badge-row flex flex-wrap items-center justify-center lg:justify-start">
-                  <span className="page-kicker home-hero-kicker">Verified job intelligence</span>
+                  <span className="page-kicker home-hero-kicker">Source-checked job updates</span>
                   <span className="home-hero-live-pill hidden lg:inline-flex">Updated daily</span>
                 </div>
 
                 <div className="home-hero-heading-block mx-auto w-full max-w-[25rem] sm:max-w-3xl lg:mx-0 lg:max-w-[37rem]">
                   <h1 className="page-title home-hero-title mx-auto w-full max-w-[25rem] !text-3xl sm:max-w-3xl sm:!text-5xl lg:mx-0 lg:max-w-[37rem] lg:!text-[4.25rem] xl:!text-[4.65rem]">
                     <span className="home-hero-title-line">
-                      <span className="home-hero-title-emphasis">Verified</span> jobs.
+                      <span className="home-hero-title-emphasis">Checked</span> jobs.
                     </span>
                     <span className="home-hero-title-line">
                       <span className="home-hero-title-emphasis">Smarter</span> moves.
@@ -174,8 +174,8 @@ export default async function HomePage() {
                   </h1>
 
                   <p className="page-copy home-hero-copy-text mx-auto w-full max-w-[25rem] !text-[1rem] sm:max-w-[35rem] sm:!text-[1.08rem] lg:mx-0 lg:max-w-[34rem] lg:!text-[1.12rem]">
-                    Verified opportunities with cleaner apply paths, hiring insights, and smarter
-                    matching.
+                    Source-checked opportunities with cleaner apply paths, role context, and
+                    resume-focused guidance.
                   </p>
 
                   <div className="home-hero-benefit-chips" aria-label="JobAdvice benefits">
@@ -203,7 +203,7 @@ export default async function HomePage() {
                     variant="primary"
                     className="home-hero-primary-action w-full sm:w-auto"
                   >
-                    Browse verified jobs <span aria-hidden="true">→</span>
+                    Browse checked jobs <span aria-hidden="true">→</span>
                   </ActionButton>
                   <ActionButton
                     href="/how-we-verify-jobs"
@@ -228,16 +228,16 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="home-dashboard-stage" aria-label="JobAdvice live verification dashboard">
+            <div className="home-dashboard-stage" aria-label="JobAdvice source-check dashboard">
               <div aria-hidden="true" className="home-dashboard-orbit home-dashboard-orbit-one" />
               <div aria-hidden="true" className="home-dashboard-orbit home-dashboard-orbit-two" />
               <div aria-hidden="true" className="home-dashboard-floating-card home-dashboard-floating-score">
-                <span>AI match</span>
-                <strong>98%</strong>
+                <span>Source check</span>
+                <strong>Live</strong>
               </div>
               <div aria-hidden="true" className="home-dashboard-floating-card home-dashboard-floating-activity">
                 <span className="home-dashboard-floating-dot" />
-                <span>18 hiring signals</span>
+                <span>Recent listings</span>
               </div>
               <div aria-hidden="true" className="home-dashboard-floating-card home-dashboard-floating-apply">
                 <span>Applications</span>
@@ -247,10 +247,10 @@ export default async function HomePage() {
               <aside className="home-dashboard-shell">
                 <div className="home-dashboard-topbar">
                   <div>
-                    <p className="home-dashboard-eyebrow">AI job intelligence</p>
+                    <p className="home-dashboard-eyebrow">Job source checks</p>
                     <h2 className="home-dashboard-title">
-                      <span>Roles ranked</span>
-                      <span>by fit signals</span>
+                      <span>Roles organized</span>
+                      <span>by useful signals</span>
                     </h2>
                   </div>
                   <span className="home-dashboard-live">
@@ -259,16 +259,16 @@ export default async function HomePage() {
                   </span>
                 </div>
 
-                <div className="home-dashboard-verification-row" aria-label="AI verification status">
+                <div className="home-dashboard-verification-row" aria-label="Source verification status">
                   <span>
                     <i />
-                    AI verified
+                    Source checked
                   </span>
                   <span>Live index</span>
                   <span>No paid routes</span>
                 </div>
 
-                <div className="home-dashboard-metrics" aria-label="Platform metrics">
+                <div className="home-dashboard-metrics" aria-label="Listing metrics">
                   {dashboardMetrics.map((metric) => (
                     <div key={metric.label} className="home-dashboard-metric">
                       <span className="home-dashboard-metric-value">{metric.value}</span>
@@ -277,10 +277,10 @@ export default async function HomePage() {
                   ))}
                 </div>
 
-                <div className="home-dashboard-ai-panel" aria-label="AI application insights">
+                <div className="home-dashboard-ai-panel" aria-label="Application guidance">
                   <div className="home-dashboard-score-orb">
-                    <span className="home-dashboard-score-value">96%</span>
-                    <span className="home-dashboard-score-label">avg. match</span>
+                    <span className="home-dashboard-score-value">3x</span>
+                    <span className="home-dashboard-score-label">checks</span>
                   </div>
                   <div className="home-dashboard-insight-stack">
                     {dashboardInsights.map((insight) => (
@@ -297,8 +297,8 @@ export default async function HomePage() {
 
                 <div className="home-dashboard-card home-dashboard-list-card">
                   <div className="home-dashboard-card-header">
-                    <span>AI recommended roles</span>
-                    <strong>{dashboardJobs.length || 0} matches</strong>
+                    <span>Recently checked roles</span>
+                    <strong>{dashboardJobs.length || 0} roles</strong>
                   </div>
                   <div className="home-dashboard-job-list">
                     {dashboardJobs.map((job, index) => (
@@ -314,7 +314,7 @@ export default async function HomePage() {
                           <strong>{job.title}</strong>
                           <small>{job.company}</small>
                           <span className="home-dashboard-recommendation-tag">
-                            {dashboardRecommendationTags[index] || "Verified"}
+                            {dashboardRecommendationTags[index] || "Open"}
                           </span>
                         </span>
                         <span className="home-dashboard-job-meta">
@@ -322,7 +322,7 @@ export default async function HomePage() {
                             {job.workMode || job.location.split(",")[0] || "Open"}
                           </span>
                           <span className="home-dashboard-match-pill">
-                            {dashboardMatchScores[index] || 88}%
+                            {dashboardStatusLabels[index] || "Open"}
                           </span>
                         </span>
                       </Link>
@@ -357,16 +357,6 @@ export default async function HomePage() {
 
         <div className="fade-up home-search-wrap home-search-wrap-integrated relative px-0">
           <div className="home-search-surface home-search-shell mx-auto max-w-5xl lg:max-w-none">
-            <div className="home-search-intent-row">
-              <span className="home-search-intent-eyebrow">
-                <span aria-hidden="true" />
-                AI job finder
-              </span>
-              <span className="home-search-intent-meta">
-                {allJobs.length}+ verified roles indexed live
-              </span>
-            </div>
-
             <div className="home-mobile-filter-panel">
               <div className="home-mobile-filter-quick-row">
                 <span className="home-mobile-filter-label">Popular paths</span>
@@ -478,7 +468,7 @@ export default async function HomePage() {
           <div className="section-header-body">
             <h2 className="section-header-title">Latest Job Updates</h2>
             <p className="section-header-copy">
-              Find the newest verified openings from top companies.
+              Find the newest source-checked openings from public company and application sources.
             </p>
           </div>
           <Link href="/jobs" className="section-header-link group">

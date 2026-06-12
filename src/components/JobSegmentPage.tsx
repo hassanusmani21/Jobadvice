@@ -117,7 +117,7 @@ export default function JobSegmentPage({ jobs, segment }: JobSegmentPageProps) {
               {companyCount}
             </p>
             <p className="mt-1 text-sm text-slate-600">
-              Verified listings across employers.
+              Source-checked listings across employers.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-4 shadow-sm">

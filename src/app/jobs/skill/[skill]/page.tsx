@@ -26,7 +26,7 @@ const toCollectionJsonLd = (skill: string, slug: string, jobs: Awaited<ReturnTyp
   "@context": "https://schema.org",
   "@type": "CollectionPage",
   name: `${skill} Jobs | ${siteName}`,
-  description: `Browse verified jobs that mention ${skill} as a required or useful skill.`,
+  description: `Browse source-checked jobs that mention ${skill} as a required or useful skill.`,
   url: `${siteUrl}/jobs/skill/${slug}/`,
   isPartOf: {
     "@type": "WebSite",
@@ -90,7 +90,7 @@ export async function generateMetadata({
 
   return createPageMetadata({
     title: `${landing.label} Jobs`,
-    description: `Browse verified ${landing.label} jobs with direct apply links, fresher-friendly openings, and role summaries that make requirements easier to scan.`,
+    description: `Browse source-checked ${landing.label} jobs with direct apply links, fresher-friendly openings, and role summaries that make requirements easier to scan.`,
     path: `/jobs/skill/${landing.slug}/`,
     keywords: [`${landing.label} jobs`, `${landing.label} fresher jobs`, "skill based jobs"],
   });
@@ -124,7 +124,7 @@ export default async function JobSkillPage({ params }: JobSkillPageProps) {
         <span className="page-kicker">Skill Jobs</span>
         <h1 className="page-title">{landing.label} jobs</h1>
         <p className="page-copy">
-          Browse verified openings where {landing.label} appears in the role requirements. Use this
+          Browse source-checked openings where {landing.label} appears in the role requirements. Use this
           page to compare companies, work modes, locations, and apply sources without searching
           through every listing manually.
         </p>
@@ -159,7 +159,7 @@ export default async function JobSkillPage({ params }: JobSkillPageProps) {
           <div className="section-header-body">
             <h2 className="section-header-title">{landing.label} Openings</h2>
             <p className="section-header-copy">
-              Compare verified roles that mention this skill, then tailor your resume and apply
+              Compare source-checked roles that mention this skill, then tailor your resume and apply
               from the official source.
             </p>
           </div>

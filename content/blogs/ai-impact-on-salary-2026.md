@@ -13,7 +13,7 @@ tags:
   - "ai"
   - "career"
 isTrending: false
-author: ""
+author: "Hassan Usmani"
 coverImage: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d"
 ctaLabel: ""
 ctaLink: ""

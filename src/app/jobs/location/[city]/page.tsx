@@ -29,7 +29,7 @@ const toCollectionJsonLd = (city: string, jobs: Awaited<ReturnType<typeof getAll
   "@context": "https://schema.org",
   "@type": "CollectionPage",
   name: `${city} Jobs | ${siteName}`,
-  description: `Browse verified job openings in ${city} with direct apply links and cleaner role details on ${siteName}.`,
+  description: `Browse source-checked job openings in ${city} with direct apply links and cleaner role details on ${siteName}.`,
   url: `${siteUrl}/jobs/location/${encodeURIComponent(city.toLowerCase().replace(/\s+/g, "-"))}/`,
   isPartOf: {
     "@type": "WebSite",
@@ -94,7 +94,7 @@ export async function generateMetadata({
   return {
     ...createPageMetadata({
       title: `${landing.label} Jobs`,
-      description: `Browse verified jobs in ${landing.label} with direct apply links, fresher-friendly openings, and cleaner role summaries.`,
+      description: `Browse source-checked jobs in ${landing.label} with direct apply links, fresher-friendly openings, and cleaner role summaries.`,
       path: `/jobs/location/${landing.slug}/`,
       keywords: [`${landing.label} jobs`, `fresher jobs in ${landing.label}`, "direct apply jobs"],
     }),
@@ -131,7 +131,7 @@ export default async function JobLocationPage({ params }: JobLocationPageProps) 
 
       <section className="fade-up page-intro-surface px-5 py-6 sm:px-8 sm:py-8">
         <span className="page-kicker">Location Jobs</span>
-        <h1 className="page-title">Verified jobs in {landing.label}</h1>
+        <h1 className="page-title">Source-checked jobs in {landing.label}</h1>
         <p className="page-copy">
           Explore cleaner job listings for {landing.label} with direct-apply clarity, fresher-ready
           opportunities, and faster scanning across companies.
@@ -199,8 +199,8 @@ export default async function JobLocationPage({ params }: JobLocationPageProps) 
           <div className="section-header-body">
             <h2 className="section-header-title">{landing.label} Openings</h2>
             <p className="section-header-copy">
-              Verified roles, cleaner summaries, and direct application routes when the source link
-              is available.
+              Source-checked roles, cleaner summaries, and direct application routes when the
+              source link is available.
             </p>
           </div>
           <Link href="/jobs" className="section-header-link group">

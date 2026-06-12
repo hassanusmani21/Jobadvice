@@ -151,7 +151,13 @@ const createExcerpt = (value: string) => {
 };
 
 const estimateReadingTime = (value: string) => {
-  const wordCount = normalizeMarkdownSource(value)
+  const wordCount = countMarkdownWords(value);
+
+  return Math.max(1, Math.round(wordCount / 220));
+};
+
+const countMarkdownWords = (value: string) =>
+  normalizeMarkdownSource(value)
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/\|/g, " ")
@@ -159,9 +165,6 @@ const estimateReadingTime = (value: string) => {
     .trim()
     .split(" ")
     .filter(Boolean).length;
-
-  return Math.max(1, Math.round(wordCount / 220));
-};
 
 const resolveBlogSlug = (frontMatterSlug: unknown, fileName: string) => {
   const candidate = normalizeTextValue(frontMatterSlug);
@@ -365,6 +368,15 @@ const loadBlogFromFile = async (fileName: string): Promise<BlogPost | null> => {
   };
 };
 
+export const hasStrongPublicBlogContent = (blog: BlogPost) => {
+  const author = blog.author.trim().toLowerCase();
+  const hasNamedAuthor = Boolean(author) && author !== "admin";
+  const hasUsefulSummary = blog.summary.trim().split(/\s+/).filter(Boolean).length >= 6;
+  const hasEnoughOriginalContent = countMarkdownWords(blog.content) >= 700;
+
+  return hasNamedAuthor && hasUsefulSummary && hasEnoughOriginalContent;
+};
+
 const loadBlogs = async (options: { includeDrafts?: boolean } = {}) => {
   let files: string[] = [];
 
@@ -383,6 +395,7 @@ const loadBlogs = async (options: { includeDrafts?: boolean } = {}) => {
   return blogs
     .filter((blog): blog is BlogPost => Boolean(blog))
     .filter((blog) => (options.includeDrafts ? true : !blog.draft))
+    .filter((blog) => (options.includeDrafts ? true : hasStrongPublicBlogContent(blog)))
     .sort((firstBlog, secondBlog) => {
       const firstValues = getBlogSortValues(firstBlog);
       const secondValues = getBlogSortValues(secondBlog);

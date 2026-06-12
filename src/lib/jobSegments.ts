@@ -46,12 +46,12 @@ const jobSegmentConfigMap: Record<JobSegmentSlug, JobSegmentConfig> = {
     kicker: "Internship Jobs",
     label: "Internships",
     shortLabel: "Internships",
-    heroTitle: "Verified internship openings in India",
+    heroTitle: "Source-checked internship openings in India",
     heroDescription:
       "Browse internship and apprentice roles with direct application links, fresher-friendly requirements, and cleaner eligibility details.",
     pageTitle: "Internship Jobs in India",
     pageDescription:
-      "Explore verified internship jobs in India with direct apply links, role details, and fresher-friendly openings from top companies.",
+      "Explore source-checked internship jobs in India with direct apply links, role details, and fresher-friendly openings from public sources.",
     emptyTitle: "No internships found right now",
     emptyDescription:
       "Check the full jobs directory for more openings or come back after the next update.",
@@ -67,7 +67,7 @@ const jobSegmentConfigMap: Record<JobSegmentSlug, JobSegmentConfig> = {
       "Explore entry-level jobs, graduate roles, trainee openings, and 0-1 year opportunities curated for students and freshers in India.",
     pageTitle: "Fresher Jobs in India",
     pageDescription:
-      "Find verified fresher jobs in India including graduate, trainee, and entry-level openings with direct application links and role details.",
+      "Find source-checked fresher jobs in India including graduate, trainee, and entry-level openings with direct application links and role details.",
     emptyTitle: "No fresher jobs found right now",
     emptyDescription:
       "Browse all jobs to widen the search or check again after the next posting batch.",
@@ -83,7 +83,7 @@ const jobSegmentConfigMap: Record<JobSegmentSlug, JobSegmentConfig> = {
       "Browse roles that typically require prior experience, stronger skill depth, or a more specialized profile across companies in India.",
     pageTitle: "Experienced Jobs in India",
     pageDescription:
-      "Browse verified experienced jobs in India including 1+ year, mid-level, and specialist roles with direct apply links.",
+      "Browse source-checked experienced jobs in India including 1+ year, mid-level, and specialist roles with direct apply links.",
     emptyTitle: "No experienced jobs found right now",
     emptyDescription:
       "Try the full jobs page or check back after the next update cycle.",
@@ -99,7 +99,7 @@ const jobSegmentConfigMap: Record<JobSegmentSlug, JobSegmentConfig> = {
       "Explore remote-friendly and hybrid openings with direct application links, clearer work-mode signals, and updated hiring information.",
     pageTitle: "Remote Jobs in India",
     pageDescription:
-      "Find verified remote and hybrid jobs in India with direct apply links, work-mode details, and updated role information.",
+      "Find source-checked remote and hybrid jobs in India with direct apply links, work-mode details, and updated role information.",
     emptyTitle: "No remote jobs found right now",
     emptyDescription:
       "Check the full jobs archive for on-site roles or come back for the next remote batch.",

@@ -17,7 +17,7 @@ tags:
   - "Emerging Technology"
   - "Cybersecurity"
 isTrending: true
-author: ""
+author: "Hassan Usmani"
 coverImage: "/uploads/78790-1778936423104.png"
 ctaLabel: ""
 ctaLink: ""

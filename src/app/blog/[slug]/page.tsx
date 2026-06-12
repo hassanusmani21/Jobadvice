@@ -168,7 +168,7 @@ const buildBlogFaq = (blog: BlogPost) => [
   {
     question: "Where can I find related jobs or career resources?",
     answer:
-      "You can browse verified openings on the JobAdvice jobs page, use topic links for related articles, and use the resume builder to prepare an application-ready resume.",
+      "You can browse source-checked openings on the JobAdvice jobs page, use topic links for related articles, and use the resume builder to prepare an application-ready resume.",
   },
 ];
 

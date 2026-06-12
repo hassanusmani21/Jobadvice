@@ -17,7 +17,7 @@ const resumeBuilderFaqs = [
   },
   {
     question: "Does it submit applications for me?",
-    answer: "No — it helps you prepare a clean resume. Apply through the employer or verified job links on JobAdvice.",
+    answer: "No — it helps you prepare a clean resume. Apply through the employer or source-checked job links on JobAdvice.",
   },
 ];
 

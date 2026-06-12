@@ -207,7 +207,7 @@ const resolvedMetadataBase = (() => {
 export const metadata: Metadata = {
   metadataBase: resolvedMetadataBase,
   title: {
-    default: `${siteName} | Verified Jobs and Internships in India`,
+    default: `${siteName} | Source-Checked Jobs and Internships in India`,
     template: `%s | ${siteName}`,
   },
   icons: {
@@ -287,9 +287,9 @@ const footerTrustItems = [
 ];
 
 const footerSummary =
-  "Verified jobs and internships in India with direct apply links and practical guidance.";
+  "Source-checked jobs and internships in India with direct apply links and practical guidance.";
 
-const footerCommunitySupport = "Trusted by 5k+ students across India.";
+const footerCommunitySupport = "Built for students, freshers, and early-career job seekers in India.";
 
 const socialLinks = [
   {
@@ -553,7 +553,7 @@ export default function RootLayout({
                           JobAdvice
                         </p>
                         <h2 className="site-footer-title">
-                          Verified jobs with clearer signals.
+                          Source-checked jobs with clearer signals.
                         </h2>
                         <p className="site-footer-copy">
                           {footerSummary}
@@ -629,13 +629,13 @@ export default function RootLayout({
                       </p>
 
                       <p className="site-footer-benefits-inline" aria-label="Community benefits">
-                        <span>Verified</span>
+                        <span>Source Checked</span>
                         <span>No Spam</span>
                         <span>Daily Jobs</span>
                       </p>
 
                       <ul className="site-footer-benefits" aria-label="Community benefits">
-                        {["Verified listings only", "No spam", "Daily updates"].map((item) => (
+                        {["Source-checked listings", "No spam", "Daily updates"].map((item) => (
                           <li key={item} className="site-footer-benefit-item">
                             <svg
                               aria-hidden="true"
