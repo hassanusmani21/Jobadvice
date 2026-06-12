@@ -18135,3 +18135,99 @@ html[data-theme="dark"] .home-search-intent-meta {
     margin-top: -0.12rem !important;
   }
 }
+
+/* Final mobile override: keep the phone first fold consistent and fully contained. */
+@media (max-width: 767.98px) {
+  .home-first-fold {
+    min-height: calc(100svh - 4.05rem) !important;
+  }
+
+  .home-first-fold > .home-hero-shell {
+    padding: clamp(0.9rem, 2.1vw, 1.02rem) clamp(0.82rem, 2.4vw, 0.94rem)
+      clamp(0.92rem, 2.4vw, 1.04rem) !important;
+  }
+
+  .home-hero-grid {
+    gap: clamp(0.72rem, 1.8vw, 0.92rem) !important;
+  }
+
+  .home-hero-mobile-visual {
+    width: min(15rem, 75vw) !important;
+    height: clamp(4.9rem, 12.5vw, 5.45rem) !important;
+  }
+
+  .home-hero-title {
+    margin-top: 0.06rem !important;
+    margin-bottom: 0.14rem !important;
+    font-size: clamp(2.12rem, 9.2vw, 2.72rem) !important;
+  }
+
+  .home-hero-benefit-chips {
+    margin-top: 0.04rem !important;
+    gap: 0.22rem !important;
+  }
+
+  .home-hero-proof-row {
+    width: min(100%, 18.6rem) !important;
+    gap: 0.28rem !important;
+    margin-top: clamp(0.24rem, 0.55vw, 0.34rem) !important;
+  }
+
+  .home-hero-proof-chip {
+    min-height: 3.2rem !important;
+    padding: 0.3rem 0.22rem !important;
+  }
+
+  .home-hero-action-row {
+    margin-top: clamp(0.2rem, 0.5vw, 0.3rem) !important;
+  }
+
+  .home-hero-primary-action {
+    min-height: 2.72rem !important;
+  }
+
+  .home-hero-trust-layer {
+    display: none !important;
+  }
+
+  .home-search-wrap,
+  .home-search-wrap-integrated {
+    width: min(100%, 23rem) !important;
+    margin-inline: auto !important;
+    margin-top: clamp(-1.02rem, -1.25vw, -0.74rem) !important;
+    padding-inline: 0.38rem !important;
+  }
+
+  .home-search-shell {
+    padding: 0.5rem !important;
+  }
+
+  .home-search-grid {
+    grid-template-columns: minmax(0, 1fr) clamp(5.05rem, 17vw, 5.35rem) !important;
+    gap: 0.32rem !important;
+  }
+
+  .home-search-control-rich,
+  .home-search-submit {
+    min-height: 2.3rem !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .home-first-fold > .home-hero-shell {
+    padding: 0.84rem 0.7rem 0.94rem !important;
+  }
+
+  .home-hero-title {
+    font-size: clamp(1.98rem, 10vw, 2.36rem) !important;
+  }
+
+  .home-hero-proof-row {
+    width: min(100%, 17.6rem) !important;
+    gap: 0.24rem !important;
+  }
+
+  .home-search-grid {
+    grid-template-columns: minmax(0, 1fr) 4.85rem !important;
+  }
+}
