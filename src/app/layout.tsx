@@ -540,7 +540,7 @@ export default function RootLayout({
 
           <ToastContainer />
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-20 sm:px-6 sm:pt-5 sm:pb-10 lg:px-8 lg:pt-2">{children}</main>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-3 pb-8 sm:px-6 sm:pt-5 sm:pb-10 lg:px-8 lg:pt-2 lg:pb-2">{children}</main>
 
           <footer className="site-footer mt-8 sm:mt-10">
             <div className="mx-auto w-full max-w-6xl px-4 pt-4 pb-8 sm:px-6 sm:pt-8 sm:pb-8 lg:px-8">

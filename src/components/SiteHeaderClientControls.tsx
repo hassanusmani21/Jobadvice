@@ -62,8 +62,8 @@ export default function SiteHeaderClientControls({
           aria-current={isResumeActive ? "page" : undefined}
           className={`header-resume-link inline-flex h-10 items-center justify-center gap-2 rounded-[12px] px-4 text-[0.84rem] font-semibold transition ${
             isResumeActive
-              ? "bg-[linear-gradient(135deg,#0f8f77_0%,#16a085_55%,#1abc9c_100%)] text-white shadow-[0_10px_22px_-18px_rgba(26,188,156,0.48)]"
-              : "bg-[linear-gradient(135deg,#16a085_0%,#1abc9c_100%)] text-white shadow-[0_10px_22px_-18px_rgba(26,188,156,0.42)] hover:-translate-y-px hover:shadow-[0_14px_26px_-18px_rgba(26,188,156,0.46)]"
+              ? "bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_48%,#06b6d4_100%)] text-white shadow-[0_10px_22px_-18px_rgba(37,99,235,0.42)]"
+              : "bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_48%,#06b6d4_100%)] text-white shadow-[0_10px_22px_-18px_rgba(37,99,235,0.36)] hover:-translate-y-px hover:shadow-[0_14px_26px_-18px_rgba(37,99,235,0.44)]"
           }`}
         >
           <ResumeIcon />
@@ -88,9 +88,9 @@ export default function SiteHeaderClientControls({
         className="fixed inset-x-4 bottom-4 top-[4.6rem] z-[80] mx-auto w-auto max-w-[22rem] sm:hidden"
       >
         <div className="mobile-menu-surface flex h-full flex-col overflow-hidden p-[1.05rem]">
-          <div className="flex items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
+          <div className="flex items-center justify-between gap-4 border-b border-slate-200/70 pb-3">
             <div className="space-y-1">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-teal-700">
+              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-blue-700">
                 Menu
               </p>
               <p className="text-sm font-medium text-slate-500">
@@ -101,7 +101,7 @@ export default function SiteHeaderClientControls({
               type="button"
               aria-label="Close navigation menu"
               onClick={() => setIsMenuOpen(false)}
-              className="mobile-menu-close inline-flex h-10 w-10 items-center justify-center rounded-xl border transition"
+              className="mobile-menu-close inline-flex h-10 w-10 items-center justify-center rounded-full border transition"
             >
               <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4">
                 <path
@@ -120,8 +120,8 @@ export default function SiteHeaderClientControls({
             aria-current={isResumeActive ? "page" : undefined}
             className={`mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[1rem] px-4 text-sm font-semibold transition ${
               isResumeActive
-                ? "bg-[linear-gradient(135deg,#0f8f77_0%,#16a085_55%,#1abc9c_100%)] text-white shadow-[0_4px_14px_rgba(26,188,156,0.35)]"
-                : "bg-[linear-gradient(135deg,#16a085_0%,#1abc9c_100%)] text-white shadow-[0_4px_14px_rgba(26,188,156,0.35)] hover:-translate-y-px hover:shadow-[0_8px_18px_rgba(26,188,156,0.4)]"
+                ? "bg-[linear-gradient(135deg,#1d4ed8_0%,#2563eb_48%,#06b6d4_100%)] text-white shadow-[0_8px_18px_rgba(37,99,235,0.3)]"
+                : "bg-[linear-gradient(135deg,#2563eb_0%,#1d4ed8_48%,#06b6d4_100%)] text-white shadow-[0_8px_18px_rgba(37,99,235,0.28)] hover:-translate-y-px hover:shadow-[0_10px_20px_rgba(37,99,235,0.34)]"
             }`}
           >
             <ResumeIcon />
@@ -139,7 +139,7 @@ export default function SiteHeaderClientControls({
                   aria-current={isActive ? "page" : undefined}
                   className={`interactive-tile mobile-menu-tile rounded-[1rem] border px-4 py-3.5 transition ${
                     isActive
-                      ? "border-teal-200 bg-teal-50 text-teal-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_28px_-24px_rgba(13,148,136,0.24)]"
+                      ? "border-blue-200 bg-[linear-gradient(135deg,rgba(37,99,235,0.12),rgba(6,182,212,0.1))] text-slate-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_14px_28px_-24px_rgba(37,99,235,0.2)]"
                       : "text-slate-800 hover:border-slate-300 hover:bg-white"
                   }`}
                 >
@@ -147,7 +147,9 @@ export default function SiteHeaderClientControls({
                     <p className="text-base font-semibold">{item.label}</p>
                     <span
                       className={`inline-flex h-8 w-8 items-center justify-center rounded-full ${
-                        isActive ? "bg-teal-900 text-white" : "bg-slate-100 text-slate-400"
+                        isActive
+                          ? "bg-[linear-gradient(135deg,#2563eb,#06b6d4)] text-white"
+                          : "bg-slate-100 text-slate-400"
                       }`}
                     >
                       <ChevronRightIcon className="h-4 w-4 shrink-0" />
