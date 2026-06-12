@@ -248,4 +248,4 @@ Interested in building a career in technology?
 
 
 
-Browse the latest verified job openings and internships on JobAdvice and start your journey in the tech industry today.
+Browse the latest source-checked job openings and internships on JobAdvice and start your journey in the tech industry today.
