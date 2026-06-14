@@ -60,6 +60,40 @@ type QualityMetricItem = {
 
 const listToText = (items: string[]) => items.join("\n");
 const maxBatchJobShareRecords = 20;
+const jobWorkModeOptions = ["Remote", "Hybrid", "On-site", "Flexible"];
+const jobEmploymentTypeOptions = [
+  "Full-time",
+  "Part-time",
+  "Internship",
+  "Apprenticeship",
+  "Contract",
+  "Trainee",
+  "Freelance",
+];
+const jobExperienceOptions = [
+  "Freshers can apply",
+  "0 years",
+  "0-1 years",
+  "1-3 years",
+  "3-5 years",
+  "5+ years",
+];
+const jobTimingOptions = [
+  "Day shift",
+  "Flexible hours",
+  "Rotational shift",
+  "Night shift",
+];
+const blogTopicOptions = [
+  "Career Growth",
+  "Artificial Intelligence",
+  "Technology News",
+  "Jobs & Hiring",
+  "Study Abroad",
+  "College Guidance",
+  "Skills & Learning",
+  "Remote Work",
+];
 
 const textToList = (value: string) =>
   value
@@ -69,6 +103,24 @@ const textToList = (value: string) =>
 
 const cn = (...parts: Array<string | false | null | undefined>) =>
   parts.filter(Boolean).join(" ");
+
+const countWords = (value: string) => {
+  const matches = value.match(/[\p{L}\p{N}][\p{L}\p{N}'-]*/gu);
+  return matches ? matches.length : 0;
+};
+
+const countMarkdownHeadings = (value: string) =>
+  Array.from(value.matchAll(/^#{2,3}\s+/gm)).length;
+
+const buildSelectOptions = (options: string[], currentValue: string) => {
+  const normalizedCurrentValue = currentValue.trim();
+
+  if (!normalizedCurrentValue || options.includes(normalizedCurrentValue)) {
+    return options;
+  }
+
+  return [normalizedCurrentValue, ...options];
+};
 
 const toUtcDayTimestamp = (value: string) => {
   const timestamp = Date.parse(`${value}T00:00:00Z`);
@@ -830,6 +882,32 @@ export default function MobileAdminApp({
     ? `https://wa.me/?text=${encodeURIComponent(publishedJobWhatsappText)}`
     : "";
   const reviewableEntry = hasMeaningfulEntryContent(editorEntry);
+  const jobEligibilityWordCount =
+    editorEntry.collection === "jobs" ? countWords(editorEntry.eligibilityCriteria) : 0;
+  const jobOverviewWordCount =
+    editorEntry.collection === "jobs" ? countWords(editorEntry.body) : 0;
+  const blogSummaryLength =
+    editorEntry.collection === "blogs" ? editorEntry.summary.trim().length : 0;
+  const blogBodyWordCount =
+    editorEntry.collection === "blogs" ? countWords(editorEntry.body) : 0;
+  const blogHeadingCount =
+    editorEntry.collection === "blogs" ? countMarkdownHeadings(editorEntry.body) : 0;
+  const currentWorkModeOptions =
+    editorEntry.collection === "jobs"
+      ? buildSelectOptions(jobWorkModeOptions, editorEntry.workMode)
+      : [];
+  const currentEmploymentTypeOptions =
+    editorEntry.collection === "jobs"
+      ? buildSelectOptions(jobEmploymentTypeOptions, editorEntry.employmentType)
+      : [];
+  const currentExperienceOptions =
+    editorEntry.collection === "jobs"
+      ? buildSelectOptions(jobExperienceOptions, editorEntry.experience)
+      : [];
+  const currentJobTimingOptions =
+    editorEntry.collection === "jobs"
+      ? buildSelectOptions(jobTimingOptions, editorEntry.jobTiming)
+      : [];
   const mobilePublishingError = mobilePublishingReady
     ? ""
     : "Admin publishing is not configured on this deployment. Set ADMIN_CONTENTS_TOKEN in production and redeploy to enable save, upload, and delete.";
@@ -2880,28 +2958,44 @@ export default function MobileAdminApp({
 	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
 	                                Work mode
 	                              </span>
-	                              <input
-	                                type="text"
+	                              <select
 	                                value={editorEntry.workMode}
 	                                onChange={(event) => updateEntry({ workMode: event.target.value })}
 	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-	                                placeholder="Remote, Hybrid, On-site"
-	                              />
+	                              >
+	                                <option value="">Select work mode</option>
+	                                {currentWorkModeOptions.map((option) => (
+	                                  <option key={option} value={option}>
+	                                    {option}
+	                                  </option>
+	                                ))}
+	                              </select>
+	                              <p className="mt-2 text-xs text-slate-500">
+	                                Keep this standardized so job filters and trust signals stay clean.
+	                              </p>
 	                            </label>
 
 	                            <label className="block">
 	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
 	                                Employment type
 	                              </span>
-	                              <input
-	                                type="text"
+	                              <select
 	                                value={editorEntry.employmentType}
 	                                onChange={(event) =>
 	                                  updateEntry({ employmentType: event.target.value })
 	                                }
 	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-	                                placeholder="Full-time"
-	                              />
+	                              >
+	                                <option value="">Select employment type</option>
+	                                {currentEmploymentTypeOptions.map((option) => (
+	                                  <option key={option} value={option}>
+	                                    {option}
+	                                  </option>
+	                                ))}
+	                              </select>
+	                              <p className="mt-2 text-xs text-slate-500">
+	                                Use one consistent type instead of mixed wording across posts.
+	                              </p>
 	                            </label>
 	                          </div>
 
@@ -2923,13 +3017,21 @@ export default function MobileAdminApp({
 	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
 	                                Experience
 	                              </span>
-	                              <input
-	                                type="text"
+	                              <select
 	                                value={editorEntry.experience}
 	                                onChange={(event) => updateEntry({ experience: event.target.value })}
 	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-	                                placeholder="1-3 years"
-	                              />
+	                              >
+	                                <option value="">Select experience</option>
+	                                {currentExperienceOptions.map((option) => (
+	                                  <option key={option} value={option}>
+	                                    {option}
+	                                  </option>
+	                                ))}
+	                              </select>
+	                              <p className="mt-2 text-xs text-slate-500">
+	                                Consistent experience labels make fresher and experienced sorting more reliable.
+	                              </p>
 	                            </label>
 	                          </div>
 
@@ -2951,13 +3053,21 @@ export default function MobileAdminApp({
 	                              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
 	                                Job timing
 	                              </span>
-	                              <input
-	                                type="text"
+	                              <select
 	                                value={editorEntry.jobTiming}
 	                                onChange={(event) => updateEntry({ jobTiming: event.target.value })}
 	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-	                                placeholder="9:30 AM - 6:30 PM"
-	                              />
+	                              >
+	                                <option value="">Select job timing</option>
+	                                {currentJobTimingOptions.map((option) => (
+	                                  <option key={option} value={option}>
+	                                    {option}
+	                                  </option>
+	                                ))}
+	                              </select>
+	                              <p className="mt-2 text-xs text-slate-500">
+	                                Use this when the employer clearly mentions shift or schedule expectations.
+	                              </p>
 	                            </label>
 	                          </div>
 	                        </div>
@@ -3025,8 +3135,14 @@ export default function MobileAdminApp({
 	                              }
 	                              rows={4}
 	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-	                              placeholder="One point per line"
+	                              placeholder="Mention who can apply, required degree, batch, experience, and any important restrictions."
 	                            />
+	                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+	                              <span>
+	                                Use 2-5 clear lines. Explain who this role is for, not just keywords.
+	                              </span>
+	                              <span>{jobEligibilityWordCount} words</span>
+	                            </div>
 	                          </label>
 
 	                          <div className="grid gap-4 lg:grid-cols-3">
@@ -3043,6 +3159,9 @@ export default function MobileAdminApp({
 	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
 	                                placeholder="B.Tech&#10;MCA"
 	                              />
+	                              <p className="mt-2 text-xs text-slate-500">
+	                                Add one qualification per line.
+	                              </p>
 	                            </label>
 
 	                            <label className="block">
@@ -3058,6 +3177,10 @@ export default function MobileAdminApp({
 	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
 	                                placeholder="React&#10;TypeScript&#10;SQL"
 	                              />
+	                              <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
+	                                <span>Use one skill per line.</span>
+	                                <span>{editorEntry.skills.length} listed</span>
+	                              </div>
 	                            </label>
 
 	                            <label className="block">
@@ -3073,9 +3196,36 @@ export default function MobileAdminApp({
 	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
 	                                placeholder="Build APIs&#10;Collaborate with design"
 	                              />
+	                              <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-500">
+	                                <span>Use one responsibility per line.</span>
+	                                <span>{editorEntry.responsibilities.length} listed</span>
+	                              </div>
 	                            </label>
 	                          </div>
 	                        </div>
+	                      </EditorFormSection>
+
+	                      <EditorFormSection
+	                        title="Job Overview"
+	                      >
+	                        <label className="block">
+	                          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                            Overview markdown
+	                          </span>
+	                          <textarea
+	                            value={editorEntry.body}
+	                            onChange={(event) => updateEntry({ body: event.target.value })}
+	                            rows={10}
+	                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+	                            placeholder="## About the role&#10;&#10;Explain what the company is hiring for, why this role matters, and what candidates should expect."
+	                          />
+	                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+	                            <span>
+	                              Add a short original overview so the job page feels useful, not like copied metadata.
+	                            </span>
+	                            <span>{jobOverviewWordCount} words</span>
+	                          </div>
+	                        </label>
 	                      </EditorFormSection>
 	                    </>
 	                  ) : (
@@ -3116,11 +3266,20 @@ export default function MobileAdminApp({
 	                              </span>
 	                              <input
 	                                type="text"
+	                                list="admin-blog-topic-options"
 	                                value={editorEntry.topic}
 	                                onChange={(event) => updateEntry({ topic: event.target.value })}
 	                                className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
 	                                placeholder="Career Growth"
 	                              />
+	                              <datalist id="admin-blog-topic-options">
+	                                {blogTopicOptions.map((option) => (
+	                                  <option key={option} value={option} />
+	                                ))}
+	                              </datalist>
+	                              <p className="mt-2 text-xs text-slate-500">
+	                                Pick a repeatable topic label so the blog archive stays organized.
+	                              </p>
 	                            </label>
 
 	                            <label className="block">
@@ -3146,8 +3305,20 @@ export default function MobileAdminApp({
 	                              onChange={(event) => updateEntry({ summary: event.target.value })}
 	                              rows={3}
 	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
-	                              placeholder="Short summary for cards and previews."
+	                              placeholder="Write a clear 1-2 sentence summary that explains the reader benefit."
 	                            />
+	                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+	                              <span>Target 90-220 characters for cards, previews, and trust.</span>
+	                              <span
+	                                className={cn(
+	                                  blogSummaryLength >= 90 && blogSummaryLength <= 220
+	                                    ? "text-emerald-700"
+	                                    : "text-amber-700",
+	                                )}
+	                              >
+	                                {blogSummaryLength} chars
+	                              </span>
+	                            </div>
 	                          </label>
 
 	                          <label className="block">
@@ -3163,6 +3334,10 @@ export default function MobileAdminApp({
 	                              className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
 	                              placeholder="ai&#10;roadmap&#10;career growth"
 	                            />
+	                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+	                              <span>Use one tag per line. Aim for at least 3 relevant tags.</span>
+	                              <span>{editorEntry.tags.length} listed</span>
+	                            </div>
 	                          </label>
 	                        </div>
 	                      </EditorFormSection>
@@ -3325,6 +3500,14 @@ export default function MobileAdminApp({
 	                            className="w-full rounded-[1rem] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-teal-500"
 	                            placeholder="# Headline&#10;&#10;Start writing..."
 	                          />
+	                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+	                            <span>
+	                              Aim for original explanation with multiple H2/H3 sections, examples, and practical takeaways.
+	                            </span>
+	                            <span>
+	                              {blogBodyWordCount} words | {blogHeadingCount} headings
+	                            </span>
+	                          </div>
 	                        </label>
 	                      </EditorFormSection>
 	                    </>
