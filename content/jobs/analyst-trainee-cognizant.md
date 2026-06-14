@@ -3,7 +3,7 @@ title: "Analyst Trainee"
 slug: "analyst-trainee-cognizant"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: false
+draft: true
 company: "Cognizant"
 location: "PAN India"
 workMode: "Hybrid"

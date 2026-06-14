@@ -3,7 +3,7 @@ title: "Business Analyst"
 slug: "business-analyst-nvidia"
 date: "2026-05-09"
 updatedAt: "2026-05-09"
-draft: false
+draft: true
 company: "NVIDIA"
 location: "Pune, India"
 workMode: "Hybrid"

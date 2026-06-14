@@ -3,7 +3,7 @@ title: "System Engineer"
 slug: "system-engineer-razorpay"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: false
+draft: true
 company: "Razorpay"
 location: "Bengaluru, Karnataka"
 workMode: "On-site"

@@ -1,7 +1,7 @@
 ---
 title: "Will AI Replace Jobs in India? The Brutal Truth No One Tells You (2026 Reality)"
 slug: "will-ai-replace-jobs-in-india-brutal-truth-2026"
-summary: "Artificial intelligence is changing the job market in India faster than ever. But will AI completely replace jobs? Discover the brutal truth about which jobs are at risk, which careers remain safe, and how rising expectations are reshaping the future of work in 2026."
+summary: "A balanced 2026 guide to how AI may affect Indian jobs, which roles are more exposed, and which skills can help students and workers stay relevant."
 topic: "AI"
 tags:
   - "AI Jobs India"

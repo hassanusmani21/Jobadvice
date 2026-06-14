@@ -1,4 +1,5 @@
 ---
+draft: true
 title: Snowflake Developer
 date: 2026-03-01
 company: Capgemini

@@ -1,7 +1,7 @@
 ---
 title: "The Dangerous AI Model That Triggered an Emergency in India"
 slug: "dangerous-ai-model-india-emergency"
-summary: "A newly discussed AI model has sparked serious concerns among experts and policymakers after raising questions about safety, control, and the future of artificial intelligence. The incident triggered urgent discussions in India about regulation, AI ethics, and how fast advanced models are evolving. This article breaks down what happened, why it matters, and what it could mean for the future of AI worldwide."
+summary: "A plain-English explanation of the AI safety incident, why it worried experts, and what Indian students and tech workers should learn from it."
 topic: "Artificial Intelligence, AI Safety, Technology, Digital Policy, Emerging Tech Risks"
 tags:
   - "AI"

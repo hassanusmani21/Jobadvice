@@ -3,7 +3,7 @@ title: "IT Support Engineer"
 slug: "it-support-engineer-wipro"
 date: "2026-05-26"
 updatedAt: "2026-05-26"
-draft: false
+draft: true
 company: "Wipro"
 location: "Bengaluru, Karnataka, India"
 workMode: ""

@@ -3,7 +3,7 @@ title: "Finance Analyst Trainee ( Non-Technical Graduate Apprentice)"
 slug: "finance-analyst-trainee-non-technical-graduate-apprentice-cisco"
 date: "2026-05-09"
 updatedAt: "2026-05-09"
-draft: false
+draft: true
 company: "Cisco"
 location: "Bangalore, Karnataka, India"
 workMode: "Hybrid"

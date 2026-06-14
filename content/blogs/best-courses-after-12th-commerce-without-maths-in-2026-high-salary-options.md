@@ -1,4 +1,5 @@
 ---
+draft: true
 title: Best Courses After 12th Commerce Without Maths in 2026 (High Salary Options)
 slug: best-courses-after-12th-commerce-without-maths-2026
 summary: Discover the best high-salary courses after 12th Commerce without Maths

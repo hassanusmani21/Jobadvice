@@ -1,7 +1,7 @@
 import { extractBlogFromText, extractJobFromText } from "@/lib/autoExtract";
-import { isAllowedAdminEmail } from "@/lib/adminAccess";
+import { requireAdminApiRequest } from "@/lib/adminSession";
 import { fetchRemoteSourceText } from "@/lib/remoteSource";
-import { hasTrustedSameOrigin, noStoreJson } from "@/lib/requestSecurity";
+import { noStoreJson } from "@/lib/requestSecurity";
 
 const maxSourceTextLength = 120_000;
 
@@ -45,52 +45,10 @@ const toSourceUrl = (body: Record<string, unknown>) => {
   return body.sourceUrl.trim();
 };
 
-const resolveAdminSession = async () => {
-  try {
-    const [{ getServerSession }, { authOptions }] = await Promise.all([
-      import("next-auth"),
-      import("@/auth"),
-    ]);
-
-    return getServerSession(authOptions);
-  } catch (error) {
-    console.error("[auto-extract] Unable to resolve admin session:", error);
-    return null;
-  }
-};
-
 export async function POST(request: Request) {
-  if (!hasTrustedSameOrigin(request)) {
-    return noStoreJson(
-      {
-        success: false,
-        error: "InvalidOrigin",
-      },
-      { status: 403 },
-    );
-  }
-
-  const session = await resolveAdminSession();
-  const sessionEmail = session?.user?.email || "";
-
-  if (!sessionEmail) {
-    return noStoreJson(
-      {
-        success: false,
-        error: "SessionRequired",
-      },
-      { status: 401 },
-    );
-  }
-
-  if (!isAllowedAdminEmail(sessionEmail)) {
-    return noStoreJson(
-      {
-        success: false,
-        error: "EmailNotAllowed",
-      },
-      { status: 403 },
-    );
+  const authError = await requireAdminApiRequest(request);
+  if (authError) {
+    return authError;
   }
 
   let body: Record<string, unknown> = {};

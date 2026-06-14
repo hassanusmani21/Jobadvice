@@ -3,7 +3,7 @@ title: "Software Engineer – Bluetooth Embedded Systems"
 slug: "software-engineer-bluetooth-embedded-systems-qualcomm-india-private-limited"
 date: "2026-05-09"
 updatedAt: "2026-05-09"
-draft: false
+draft: true
 company: "Qualcomm India Private Limited"
 location: "India"
 workMode: "Hybrid"

@@ -3,7 +3,7 @@ title: "Security Analyst"
 slug: "security-analyst-virtusa"
 date: "2026-05-24"
 updatedAt: "2026-05-24"
-draft: false
+draft: true
 company: "Virtusa"
 location: "Colombo, Western Province, Sri Lanka"
 workMode: ""

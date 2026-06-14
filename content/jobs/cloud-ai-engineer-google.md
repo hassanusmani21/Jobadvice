@@ -3,7 +3,7 @@ title: "Cloud AI Engineer"
 slug: "cloud-ai-engineer-google"
 date: "2026-05-21"
 updatedAt: "2026-05-21"
-draft: false
+draft: true
 company: "Google"
 location: "India"
 workMode: ""

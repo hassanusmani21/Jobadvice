@@ -3,7 +3,7 @@ title: "Python AI Developer"
 slug: "python-ai-developer-cgi"
 date: "2026-05-26"
 updatedAt: "2026-05-26"
-draft: false
+draft: true
 company: "CGI"
 location: "Chennai, Tamil Nadu, India"
 workMode: ""

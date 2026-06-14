@@ -3,7 +3,7 @@ title: "AI Software Engineer"
 slug: "ai-software-engineer-guidehouse"
 date: "2026-05-26"
 updatedAt: "2026-05-26"
-draft: false
+draft: true
 company: "Guidehouse"
 location: "Chennai, Tamil Nadu, India"
 workMode: "On-site"

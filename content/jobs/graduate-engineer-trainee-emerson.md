@@ -3,7 +3,7 @@ title: "Graduate Engineer Trainee"
 slug: "graduate-engineer-trainee-emerson"
 date: "2026-05-24"
 updatedAt: "2026-05-24"
-draft: false
+draft: true
 company: "Emerson"
 location: "Nashik, Maharashtra, India"
 workMode: "On-site"

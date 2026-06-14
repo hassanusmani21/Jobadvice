@@ -3,7 +3,7 @@ title: "Trainee – Quality Assurance"
 slug: "trainee-quality-assurance-kensium"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: false
+draft: true
 company: "Kensium"
 location: "Hyderabad, India"
 workMode: "On-site"

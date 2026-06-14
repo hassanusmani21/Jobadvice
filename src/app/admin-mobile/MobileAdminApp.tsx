@@ -1,7 +1,8 @@
 "use client";
 
-import { startTransition, useEffect, useRef, useState, type ReactNode } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { signOut } from "next-auth/react";
+import type { AdminContentQualityReview } from "@/lib/adminContentQualityGate";
 import {
   type AdminCollection,
   type AdminMobileBlogEntry,
@@ -51,6 +52,10 @@ type PublishedJobShare = {
   salary: string;
   title: string;
   workMode: string;
+};
+type QualityMetricItem = {
+  label: string;
+  value: string;
 };
 
 const listToText = (items: string[]) => items.join("\n");
@@ -483,6 +488,30 @@ const formatRecordMeta = (record: AdminMobileRecord) => {
 const buildEmptyEntry = (collection: AdminCollection) =>
   collection === "jobs" ? createEmptyJobEntry() : createEmptyBlogEntry();
 
+const hasMeaningfulEntryContent = (entry: AdminMobileEntry) => {
+  if (entry.collection === "jobs") {
+    return Boolean(
+      entry.title.trim() ||
+        entry.company.trim() ||
+        entry.eligibilityCriteria.trim() ||
+        entry.body.trim() ||
+        entry.skills.length > 0 ||
+        entry.responsibilities.length > 0,
+    );
+  }
+
+  return Boolean(
+    entry.title.trim() ||
+      entry.summary.trim() ||
+      entry.topic.trim() ||
+      entry.body.trim() ||
+      entry.tags.length > 0,
+  );
+};
+
+const pluralize = (count: number, singular: string, plural = `${singular}s`) =>
+  `${count} ${count === 1 ? singular : plural}`;
+
 const toExtractString = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 
@@ -654,7 +683,12 @@ export default function MobileAdminApp({
   const [entryLoading, setEntryLoading] = useState(Boolean(initialSlug));
   const [originalSlug, setOriginalSlug] = useState(initialSlug);
   const [formError, setFormError] = useState("");
+  const [formIssues, setFormIssues] = useState<string[]>([]);
   const [formNotice, setFormNotice] = useState("");
+  const [qualityReview, setQualityReview] = useState<AdminContentQualityReview | null>(null);
+  const [qualityReviewPending, setQualityReviewPending] = useState(false);
+  const [qualityReviewError, setQualityReviewError] = useState("");
+  const [qualityReviewDirty, setQualityReviewDirty] = useState(false);
   const [saveMode, setSaveMode] = useState<"draft" | "publish" | "">("");
   const [deletePending, setDeletePending] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -668,6 +702,7 @@ export default function MobileAdminApp({
   const [extractNotice, setExtractNotice] = useState("");
   const accountMenuRef = useRef<HTMLDivElement | null>(null);
   const extractorPanelRef = useRef<HTMLDivElement | null>(null);
+  const qualityReviewRequestIdRef = useRef(0);
 
   const activeRecords = recordsByCollection[collection];
   const todayDate = getTodayDateString();
@@ -794,10 +829,17 @@ export default function MobileAdminApp({
   const publishedJobWhatsappShareUrl = publishedJobWhatsappText
     ? `https://wa.me/?text=${encodeURIComponent(publishedJobWhatsappText)}`
     : "";
+  const reviewableEntry = hasMeaningfulEntryContent(editorEntry);
   const mobilePublishingError = mobilePublishingReady
     ? ""
     : "Admin publishing is not configured on this deployment. Set ADMIN_CONTENTS_TOKEN in production and redeploy to enable save, upload, and delete.";
   const saveDisabled = saveMode !== "" || deletePending || !mobilePublishingReady;
+  const publishDisabled =
+    saveDisabled ||
+    !reviewableEntry ||
+    qualityReviewPending ||
+    qualityReviewDirty ||
+    Boolean(qualityReview && qualityReview.blockers.length > 0);
   const uploadDisabled = uploading || deletePending || !mobilePublishingReady;
   const deleteDisabled = deletePending || saveMode !== "" || uploading || !mobilePublishingReady;
   const canDeleteEntry = originalSlug.length > 0;
@@ -811,6 +853,64 @@ export default function MobileAdminApp({
           : extractNotice
             ? "Updated"
             : "Ready";
+  const qualityReviewStatusLabel = qualityReviewPending
+    ? "Reviewing content"
+    : qualityReview
+      ? qualityReview.readyToPublish
+        ? qualityReview.warnings.length > 0
+          ? "Ready with suggestions"
+          : "Ready to publish"
+        : `Fix ${pluralize(qualityReview.blockers.length, "blocking issue")}`
+      : qualityReviewError
+        ? "Review failed"
+        : "Waiting for content";
+  const qualityReviewToneClass = qualityReviewPending
+    ? "border-blue-200 bg-blue-50 text-blue-800"
+    : qualityReview?.status === "ready"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+      : qualityReview?.status === "warning"
+        ? "border-amber-200 bg-amber-50 text-amber-800"
+        : qualityReview?.status === "blocked"
+          ? "border-rose-200 bg-rose-50 text-rose-800"
+          : "border-slate-200 bg-slate-100 text-slate-600";
+  const qualityMetricItems: QualityMetricItem[] =
+    editorEntry.collection === "jobs"
+      ? [
+          {
+            label: "Words",
+            value: String(qualityReview?.metrics.wordCount || 0),
+          },
+          {
+            label: "Skills",
+            value: String(qualityReview?.metrics.skillsCount || 0),
+          },
+          {
+            label: "Responsibilities",
+            value: String(qualityReview?.metrics.responsibilitiesCount || 0),
+          },
+          {
+            label: "Missing trust details",
+            value: String(qualityReview?.metrics.missingJobDetailCount || 0),
+          },
+        ]
+      : [
+          {
+            label: "Words",
+            value: String(qualityReview?.metrics.wordCount || 0),
+          },
+          {
+            label: "Sections",
+            value: String(qualityReview?.metrics.headingCount || 0),
+          },
+          {
+            label: "Summary chars",
+            value: String(qualityReview?.metrics.summaryLength || 0),
+          },
+          {
+            label: "External links",
+            value: String(qualityReview?.metrics.externalLinkCount || 0),
+          },
+        ];
 
   useEffect(() => {
     const fetchRecords = async (nextCollection: AdminCollection) => {
@@ -1002,6 +1102,10 @@ export default function MobileAdminApp({
 
           setEditorEntry(entry);
           setOriginalSlug(entry.slug);
+          setFormIssues([]);
+          setQualityReview(null);
+          setQualityReviewError("");
+          setQualityReviewDirty(false);
           setPublishedJobShare(getPublishedJobShareForEntry(entry));
         })
         .catch((error) => {
@@ -1054,6 +1158,10 @@ export default function MobileAdminApp({
         setEditorEntry(entry);
         setOriginalSlug(entry.slug);
         setEditorOpen(true);
+        setFormIssues([]);
+        setQualityReview(null);
+        setQualityReviewError("");
+        setQualityReviewDirty(false);
         setPublishedJobShare(getPublishedJobShareForEntry(entry));
       })
       .catch((error) => {
@@ -1080,7 +1188,12 @@ export default function MobileAdminApp({
     setEntryLoading(false);
     setEditorOpen(true);
     setFormError("");
+    setFormIssues([]);
     setFormNotice(options?.notice || "");
+    setQualityReview(null);
+    setQualityReviewError("");
+    setQualityReviewPending(false);
+    setQualityReviewDirty(false);
     setUploadedAssetUrl("");
     setExtractError("");
     setExtractNotice("");
@@ -1112,7 +1225,12 @@ export default function MobileAdminApp({
     setEntryLoading(true);
     setEditorOpen(true);
     setFormError("");
+    setFormIssues([]);
     setFormNotice("");
+    setQualityReview(null);
+    setQualityReviewError("");
+    setQualityReviewPending(false);
+    setQualityReviewDirty(false);
     setPublishedJobShare(null);
     setExtractError("");
     setExtractNotice("");
@@ -1142,6 +1260,10 @@ export default function MobileAdminApp({
 
       setEditorEntry(result.entry);
       setOriginalSlug(result.entry.slug);
+      setFormIssues([]);
+      setQualityReview(null);
+      setQualityReviewError("");
+      setQualityReviewDirty(false);
       setPublishedJobShare(getPublishedJobShareForEntry(result.entry));
       setUploadedAssetUrl("");
     } catch (error) {
@@ -1154,11 +1276,111 @@ export default function MobileAdminApp({
   };
 
   const updateEntry = (patch: Partial<AdminMobileEntry>) => {
+    setQualityReviewDirty(true);
     setEditorEntry((current) => ({
       ...current,
       ...patch,
     }) as AdminMobileEntry);
   };
+
+  const runQualityReview = useCallback(
+    async (entryToReview: AdminMobileEntry = editorEntry) => {
+      if (!mobilePublishingReady || !hasMeaningfulEntryContent(entryToReview)) {
+        setQualityReview(null);
+        setQualityReviewError("");
+        setQualityReviewPending(false);
+        setQualityReviewDirty(false);
+        return;
+      }
+
+      const requestId = qualityReviewRequestIdRef.current + 1;
+      qualityReviewRequestIdRef.current = requestId;
+      setQualityReviewPending(true);
+      setQualityReviewError("");
+
+      try {
+        const response = await fetch("/api/admin/mobile/review", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            collection,
+            originalSlug,
+            entry: entryToReview,
+          }),
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          window.location.href = adminLoginUrl;
+          return;
+        }
+
+        const result = (await response.json()) as {
+          error?: string;
+          review?: AdminContentQualityReview;
+          success?: boolean;
+        };
+
+        if (!response.ok || result.success === false || !result.review) {
+          throw new Error(result.error || "Quality review failed.");
+        }
+
+        if (qualityReviewRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        setQualityReview(result.review);
+        setQualityReviewDirty(false);
+      } catch (error) {
+        if (qualityReviewRequestIdRef.current !== requestId) {
+          return;
+        }
+
+        setQualityReviewError(
+          error instanceof Error ? error.message : "Quality review failed.",
+        );
+      } finally {
+        if (qualityReviewRequestIdRef.current === requestId) {
+          setQualityReviewPending(false);
+        }
+      }
+    },
+    [adminLoginUrl, collection, editorEntry, mobilePublishingReady, originalSlug],
+  );
+
+  useEffect(() => {
+    if (!editorOpen || entryLoading || !mobilePublishingReady) {
+      return;
+    }
+
+    if (!hasMeaningfulEntryContent(editorEntry)) {
+      setQualityReview(null);
+      setQualityReviewError("");
+      setQualityReviewPending(false);
+      setQualityReviewDirty(false);
+      return;
+    }
+
+    setQualityReviewDirty(true);
+    const timeoutId = window.setTimeout(() => {
+      void runQualityReview(editorEntry);
+    }, 900);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    adminLoginUrl,
+    collection,
+    editorEntry,
+    editorOpen,
+    entryLoading,
+    mobilePublishingReady,
+    originalSlug,
+    runQualityReview,
+  ]);
 
   const runAutoExtract = async (mode: "text" | "url") => {
     const sourceText = extractSourceText.trim();
@@ -1262,12 +1484,14 @@ export default function MobileAdminApp({
   const saveEntry = async (draft: boolean) => {
     if (!mobilePublishingReady) {
       setFormError(mobilePublishingError);
+      setFormIssues([]);
       setFormNotice("");
       return;
     }
 
     setSaveMode(draft ? "draft" : "publish");
     setFormError("");
+    setFormIssues([]);
     setFormNotice("");
 
     try {
@@ -1303,8 +1527,12 @@ export default function MobileAdminApp({
       };
 
       if (!response.ok || result.success === false || !result.entry || !result.record) {
-        const issuesText = Array.isArray(result.issues) ? result.issues.join(" ") : "";
-        throw new Error([result.error, issuesText].filter(Boolean).join(" ") || "Save failed.");
+        if (Array.isArray(result.issues) && result.issues.length > 0) {
+          setFormIssues(result.issues);
+          throw new Error(result.error || "Publish blocked by quality gate.");
+        }
+
+        throw new Error(result.error || "Save failed.");
       }
 
       const nextRecord = result.record;
@@ -1346,12 +1574,14 @@ export default function MobileAdminApp({
   const uploadImage = async (file: File) => {
     if (!mobilePublishingReady) {
       setFormError(mobilePublishingError);
+      setFormIssues([]);
       setFormNotice("");
       return;
     }
 
     setUploading(true);
     setFormError("");
+    setFormIssues([]);
     setFormNotice("");
 
     try {
@@ -1395,6 +1625,7 @@ export default function MobileAdminApp({
   const deleteEntry = async () => {
     if (!mobilePublishingReady) {
       setFormError(mobilePublishingError);
+      setFormIssues([]);
       setFormNotice("");
       return;
     }
@@ -1411,6 +1642,7 @@ export default function MobileAdminApp({
 
     setDeletePending(true);
     setFormError("");
+    setFormIssues([]);
     setFormNotice("");
 
     try {
@@ -1446,6 +1678,7 @@ export default function MobileAdminApp({
       setUploadedAssetUrl("");
       setExtractError("");
       setExtractNotice("");
+      setFormIssues([]);
       setFormNotice("Entry deleted.");
       setEditorOpen(false);
     } catch (error) {
@@ -1838,7 +2071,12 @@ export default function MobileAdminApp({
                         setOriginalSlug("");
                         setUploadedAssetUrl("");
                         setFormError("");
+                        setFormIssues([]);
                         setFormNotice("");
+                        setQualityReview(null);
+                        setQualityReviewError("");
+                        setQualityReviewPending(false);
+                        setQualityReviewDirty(false);
                       }
                     }}
                     className={cn(
@@ -2277,6 +2515,7 @@ export default function MobileAdminApp({
                     {editorEntry.collection === "jobs"
                       ? "Write the full job post once, then save draft or publish."
                       : "Write the article, upload the cover image, then publish from the same screen."}
+                    {" "}Publishing runs a quality gate before anything goes live.
                   </p>
                 </div>
 
@@ -2298,9 +2537,23 @@ export default function MobileAdminApp({
               </div>
 
               {formError ? (
-                <p className="mt-4 rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                  {formError}
-                </p>
+                <div className="mt-4 rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                  <p className="font-semibold">
+                    {formIssues.length > 0 ? "Publish blocked by quality gate." : formError}
+                  </p>
+                  {formIssues.length > 0 ? (
+                    <>
+                      <p className="mt-1 text-rose-700/90">
+                        Fix these points, then publish again. Draft saving still works for rough content.
+                      </p>
+                      <ol className="mt-3 list-decimal space-y-2 pl-5">
+                        {formIssues.map((issue, index) => (
+                          <li key={`${index}-${issue}`}>{issue}</li>
+                        ))}
+                      </ol>
+                    </>
+                  ) : null}
+                </div>
               ) : null}
 
               {!mobilePublishingReady ? (
@@ -2323,6 +2576,156 @@ export default function MobileAdminApp({
                 <p className="mt-4 rounded-[1rem] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                   {formNotice}
                 </p>
+              ) : null}
+
+              {mobilePublishingReady ? (
+                <div className="mt-4 rounded-[1rem] border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                        Content Health
+                      </p>
+                      <h3 className="mt-1 text-base font-semibold text-slate-900">
+                        Permanent publish review
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-600">
+                        This draft is checked against the same rules the publish action uses.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em]",
+                          qualityReviewToneClass,
+                        )}
+                      >
+                        {qualityReviewStatusLabel}
+                      </span>
+                      <button
+                        type="button"
+                        disabled={!reviewableEntry || qualityReviewPending}
+                        onClick={() => void runQualityReview()}
+                        className={cn(
+                          "inline-flex min-h-10 items-center justify-center rounded-xl border px-4 text-sm font-semibold transition",
+                          !reviewableEntry || qualityReviewPending
+                            ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"
+                            : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100",
+                        )}
+                      >
+                        {qualityReviewPending ? "Reviewing..." : "Run Review"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    {qualityMetricItems.map((item) => (
+                      <div
+                        key={item.label}
+                        className="rounded-xl border border-slate-200 bg-white px-4 py-3"
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                          {item.label}
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-slate-900">{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {qualityReviewError ? (
+                    <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                      {qualityReviewError}
+                    </p>
+                  ) : null}
+
+                  {qualityReviewDirty && !qualityReviewPending ? (
+                    <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                      Changes are waiting to be reviewed.
+                    </p>
+                  ) : null}
+
+                  {qualityReview ? (
+                    <>
+                      {qualityReview.blockers.length > 0 ? (
+                        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                          <p className="font-semibold">
+                            {pluralize(qualityReview.blockers.length, "blocking issue")} found
+                          </p>
+                          <ol className="mt-2 list-decimal space-y-2 pl-5">
+                            {qualityReview.blockers.map((issue, index) => (
+                              <li key={`${index}-${issue}`}>{issue}</li>
+                            ))}
+                          </ol>
+                        </div>
+                      ) : null}
+
+                      {qualityReview.warnings.length > 0 ? (
+                        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                          <p className="font-semibold">
+                            {pluralize(qualityReview.warnings.length, "suggestion")} to strengthen this entry
+                          </p>
+                          <ul className="mt-2 space-y-2">
+                            {qualityReview.warnings.map((warning, index) => (
+                              <li key={`${index}-${warning}`}>- {warning}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+
+                      <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                              Review Score
+                            </p>
+                            <p className="mt-1 text-2xl font-semibold text-slate-900">
+                              {qualityReview.score}/100
+                            </p>
+                          </div>
+                          <p className="max-w-xl text-sm text-slate-600">
+                            The score summarizes structure, trust signals, depth, and policy risk for the way this entry is currently written.
+                          </p>
+                        </div>
+
+                        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                          {qualityReview.checks.map((check) => (
+                            <div
+                              key={check.label}
+                              className={cn(
+                                "rounded-xl border px-4 py-3",
+                                check.status === "pass"
+                                  ? "border-emerald-200 bg-emerald-50/70"
+                                  : check.status === "warning"
+                                    ? "border-amber-200 bg-amber-50/70"
+                                    : "border-rose-200 bg-rose-50/70",
+                              )}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <p className="font-semibold text-slate-900">{check.label}</p>
+                                <span
+                                  className={cn(
+                                    "inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em]",
+                                    check.status === "pass"
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : check.status === "warning"
+                                        ? "bg-amber-100 text-amber-800"
+                                        : "bg-rose-100 text-rose-800",
+                                  )}
+                                >
+                                  {check.status}
+                                </span>
+                              </div>
+                              <p className="mt-2 text-sm text-slate-600">{check.detail}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : reviewableEntry ? null : (
+                    <p className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+                      Start filling the form and the review panel will score the entry automatically.
+                    </p>
+                  )}
+                </div>
               ) : null}
 
               {publishedJobShare ? (
@@ -2985,16 +3388,26 @@ export default function MobileAdminApp({
                         </button>
                         <button
                           type="button"
-                          disabled={saveDisabled}
+                          disabled={publishDisabled}
                           onClick={() => saveEntry(false)}
                           className={cn(
                             "inline-flex min-h-12 items-center justify-center rounded-xl px-5 text-sm font-semibold text-white shadow-[0_18px_34px_-20px_rgba(15,118,110,0.65)] transition",
-                            saveDisabled
+                            publishDisabled
                               ? "cursor-not-allowed bg-teal-300"
                               : "bg-teal-600 hover:bg-teal-700",
                           )}
                         >
-                          {saveMode === "publish" ? "Publishing..." : "Publish"}
+                          {saveMode === "publish"
+                            ? "Publishing..."
+                            : !reviewableEntry
+                              ? "Add content first"
+                            : qualityReviewPending
+                              ? "Reviewing..."
+                              : qualityReviewDirty
+                                ? "Waiting for review..."
+                                : qualityReview?.blockers.length
+                                  ? "Fix review issues"
+                                  : "Publish"}
                         </button>
                       </div>
                     </div>

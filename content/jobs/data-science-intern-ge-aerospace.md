@@ -3,7 +3,7 @@ title: "Data Science Intern"
 slug: "data-science-intern-ge-aerospace"
 date: "2026-05-09"
 updatedAt: "2026-05-09"
-draft: false
+draft: true
 company: "GE Aerospace"
 location: "Bengaluru, Karnataka, India"
 workMode: "On-site"

@@ -3,7 +3,7 @@ title: "Project Engineer"
 slug: "project-engineer-emerson"
 date: "2026-05-26"
 updatedAt: "2026-05-26"
-draft: false
+draft: true
 company: "Emerson"
 location: "Hyderabad, Telangana, India"
 workMode: "On-site"

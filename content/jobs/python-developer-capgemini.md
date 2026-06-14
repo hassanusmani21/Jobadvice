@@ -3,7 +3,7 @@ title: "Python Developer"
 slug: "python-developer-capgemini"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: false
+draft: true
 company: "Capgemini"
 location: "Hyderabad, Pune, Chennai, Bangalore, Mumbai"
 workMode: ""

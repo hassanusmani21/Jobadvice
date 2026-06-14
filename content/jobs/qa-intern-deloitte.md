@@ -3,7 +3,7 @@ title: "QA Intern"
 slug: "qa-intern-deloitte"
 date: "2026-05-18"
 updatedAt: "2026-05-18"
-draft: false
+draft: true
 company: "Deloitte"
 location: "Bengaluru, Karnataka, India"
 workMode: "Hybrid"

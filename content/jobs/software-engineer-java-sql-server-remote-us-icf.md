@@ -3,7 +3,7 @@ title: "Software Engineer – Java & SQL Server (Remote – US)"
 slug: "software-engineer-java-sql-server-remote-us-icf"
 date: "2026-05-18"
 updatedAt: "2026-05-18"
-draft: false
+draft: true
 company: "ICF"
 location: "United States (Remote)"
 workMode: "Remote"

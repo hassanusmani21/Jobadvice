@@ -3,7 +3,7 @@ title: "Technical Support Specialist (Telephone Support)"
 slug: "technical-support-specialist-telephone-support-siemens-healthineers"
 date: "2026-05-26"
 updatedAt: "2026-05-26"
-draft: false
+draft: true
 company: "Siemens Healthineers"
 location: "Bangalore, Karnataka, India"
 workMode: ""

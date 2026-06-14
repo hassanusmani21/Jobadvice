@@ -3,7 +3,7 @@ title: "Operations Trainee-1"
 slug: "operations-trainee-1-caterpillar"
 date: "2026-05-24"
 updatedAt: "2026-05-24"
-draft: false
+draft: true
 company: "Caterpillar"
 location: "Thiruvallur, Tamil Nadu, India"
 workMode: "On-site"

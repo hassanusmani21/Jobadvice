@@ -3,7 +3,7 @@ title: "Associate Analyst"
 slug: "associate-analyst-contractual-irc293317-globallogic"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: false
+draft: true
 company: "GlobalLogic"
 location: "Gurgaon, Haryana, India"
 workMode: "On-site"

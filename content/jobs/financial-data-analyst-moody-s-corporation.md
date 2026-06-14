@@ -3,7 +3,7 @@ title: "Financial Data Analyst"
 slug: "financial-data-analyst-moody-s-corporation"
 date: "2026-04-01"
 updatedAt: "2026-04-01"
-draft: false
+draft: true
 company: "Moody’s Corporation"
 location: "Bengaluru, Karnataka, India"
 workMode: "Hybrid"

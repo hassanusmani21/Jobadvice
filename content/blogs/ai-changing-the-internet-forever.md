@@ -1,7 +1,7 @@
 ---
 title: "Why AI Is Quietly Rebuilding the Internet Right Now"
 slug: "ai-changing-the-internet-forever"
-summary: "AI is transforming how people search online"
+summary: "A practical look at how AI is changing search, websites, shopping, and content discovery, plus what students and digital workers should watch next."
 topic: "Artificial Intelligence / Future Technology / Internet Evolution"
 tags:
   - "ai"

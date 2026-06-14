@@ -3,7 +3,7 @@ title: "Process Associate Engineering"
 slug: "process-associate-engineering-hcltech"
 date: "2026-03-24"
 updatedAt: "2026-03-24"
-draft: false
+draft: true
 company: "HCLTech"
 location: "Chennai, Tamil Nadu, India"
 workMode: "On-site"

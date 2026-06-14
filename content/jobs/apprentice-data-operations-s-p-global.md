@@ -3,7 +3,7 @@ title: "Apprentice, Data Operations"
 slug: "apprentice-data-operations-s-p-global"
 date: "2026-04-01"
 updatedAt: "2026-04-01"
-draft: false
+draft: true
 company: "S&P Global"
 location: "Ahmedabad, Gujarat, India"
 workMode: "On-site"

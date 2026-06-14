@@ -3,7 +3,7 @@ title: "Required Experience & Education"
 slug: "required-experience-education-clinisys"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: false
+draft: true
 company: "Clinisys"
 location: "RMZ Ecoworld, Bengaluru, India, 560103, India"
 workMode: "Remote"

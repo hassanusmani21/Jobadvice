@@ -3,7 +3,7 @@ title: "Associate Software Engineer"
 slug: "associate-software-engineer-heizen"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: false
+draft: true
 company: "Heizen"
 location: "Hyderabad, India"
 workMode: "Hybrid"
