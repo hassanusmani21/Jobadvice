@@ -1,4 +1,8 @@
-import { extractBlogFromText, extractJobFromText } from "@/lib/autoExtract";
+import {
+  extractBlogFromText,
+  extractJobFromText,
+  extractJobOverviewFromText,
+} from "@/lib/autoExtract";
 import { requireAdminApiRequest } from "@/lib/adminSession";
 import { fetchRemoteSourceText } from "@/lib/remoteSource";
 import { noStoreJson } from "@/lib/requestSecurity";
@@ -109,6 +113,8 @@ export async function POST(request: Request) {
 
     if (collection === "jobs") {
       if (remoteSource?.jobData) {
+        const jobOverview = extractJobOverviewFromText(remoteSource.sourceText);
+
         return noStoreJson({
           success: true,
           collection,
@@ -118,7 +124,10 @@ export async function POST(request: Request) {
           sourceUrl: remoteSource.sourceUrl,
           resolvedSourceUrl: remoteSource.resolvedUrl,
           sourceContentType: remoteSource.contentType,
-          data: remoteSource.jobData,
+          data: {
+            ...remoteSource.jobData,
+            ...(jobOverview ? { body: jobOverview } : {}),
+          },
         });
       }
 

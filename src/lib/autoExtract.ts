@@ -632,6 +632,29 @@ const extractSectionLines = (text: string, sectionTitles: string[]) => {
     );
   };
 
+  const extractInlineSectionValue = (value: string) => {
+    const lineWithoutHeadingPrefix = value.replace(/^#{1,6}\s+/, "").trim();
+    const inlineMatch = lineWithoutHeadingPrefix.match(
+      /^[^:–-]+(?:\s*\([^)]*\))?\s*[:–-]\s*(.+)$/,
+    );
+    if (inlineMatch?.[1]) {
+      return normalizeListItem(inlineMatch[1]);
+    }
+
+    for (const sectionTitle of sectionTitles.sort((firstTitle, secondTitle) => secondTitle.length - firstTitle.length)) {
+      const labelPattern = new RegExp(
+        `^${escapeRegExp(sectionTitle).replace(/\\ /g, "\\s+")}\\s+(.+)$`,
+        "i",
+      );
+      const labelMatch = lineWithoutHeadingPrefix.match(labelPattern);
+      if (labelMatch?.[1]) {
+        return normalizeListItem(labelMatch[1]);
+      }
+    }
+
+    return "";
+  };
+
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index].trim();
     if (!line) {
@@ -644,13 +667,7 @@ const extractSectionLines = (text: string, sectionTitles: string[]) => {
       continue;
     }
 
-    const lineWithoutHeadingPrefix = line.replace(/^#{1,6}\s+/, "").trim();
-    const inlineMatch = lineWithoutHeadingPrefix.match(
-      /^[^:–-]+(?:\s*\([^)]*\))?\s*[:–-]\s*(.+)$/,
-    );
-    const inlineSegment = inlineMatch?.[1]
-      ? normalizeListItem(inlineMatch[1])
-      : "";
+    const inlineSegment = extractInlineSectionValue(line);
     if (inlineSegment && !isPlaceholderOnlySectionLine(inlineSegment)) {
       collectedLines.push(inlineSegment);
     }
@@ -712,13 +729,16 @@ const normalizeOverviewMarkdown = (value: string) =>
     .trim()
     .slice(0, 2200);
 
-const extractOverviewFromSource = (text: string) => {
+export const extractJobOverviewFromText = (text: string) => {
   const explicitOverview = extractSectionLines(text, [
     "job overview",
+    "job overviwe",
     "overview",
+    "overviwe",
     "about the role",
     "about this role",
     "job description",
+    "description",
     "role description",
     "about the job",
     "summary",
@@ -948,7 +968,7 @@ const extractJobFallback = (text: string): JobExtractedData => {
     applyLink,
     applicationStartDate,
     applicationEndDate,
-    body: extractOverviewFromSource(text),
+    body: extractJobOverviewFromText(text),
   };
 };
 
