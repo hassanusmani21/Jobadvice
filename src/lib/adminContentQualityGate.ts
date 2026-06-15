@@ -638,10 +638,17 @@ export const buildAdminContentQualityReview = (
   if (entry.collection === "jobs") {
     const metrics = getContentMetrics(buildJobContentText(entry));
     const missingJobDetailCount = getMissingJobDetailCount(entry);
-    const blockers = dedupeIssues(validatePublishedJobQuality(entry));
-    const warnings = dedupeIssues(buildJobWarnings(entry, metrics, missingJobDetailCount));
+    const qualitySuggestions = dedupeIssues(validatePublishedJobQuality(entry));
+    const blockers: string[] = [];
+    const warnings = dedupeIssues([
+      ...qualitySuggestions,
+      ...buildJobWarnings(entry, metrics, missingJobDetailCount),
+    ]);
     const score = clampScore(
-      100 - blockers.length * 14 - warnings.length * 4 - Math.max(0, 220 - metrics.wordCount) / 8,
+      100 -
+        qualitySuggestions.length * 10 -
+        warnings.length * 3 -
+        Math.max(0, 220 - metrics.wordCount) / 8,
     );
 
     return {
@@ -671,10 +678,17 @@ export const buildAdminContentQualityReview = (
   }
 
   const metrics = getContentMetrics(entry.body);
-  const blockers = dedupeIssues(validatePublishedBlogQuality(entry));
-  const warnings = dedupeIssues(buildBlogWarnings(entry, metrics));
+  const qualitySuggestions = dedupeIssues(validatePublishedBlogQuality(entry));
+  const blockers: string[] = [];
+  const warnings = dedupeIssues([
+    ...qualitySuggestions,
+    ...buildBlogWarnings(entry, metrics),
+  ]);
   const score = clampScore(
-    100 - blockers.length * 12 - warnings.length * 4 - Math.max(0, 700 - metrics.wordCount) / 12,
+    100 -
+      qualitySuggestions.length * 8 -
+      warnings.length * 3 -
+      Math.max(0, 700 - metrics.wordCount) / 12,
   );
 
   return {
@@ -706,5 +720,5 @@ export const validatePublishedContentQuality = (entry: AdminMobileEntry) => {
     return [] as string[];
   }
 
-  return buildAdminContentQualityReview(entry).blockers;
+  return [];
 };

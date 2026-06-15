@@ -71,7 +71,9 @@ const jobEmploymentTypeOptions = [
   "Freelance",
 ];
 const jobExperienceOptions = [
+  "Fresher",
   "Freshers can apply",
+  "Entry level",
   "0 years",
   "0-1 years",
   "1-3 years",
@@ -596,6 +598,7 @@ const jobStringFieldKeys = [
   "applyLink",
   "applicationStartDate",
   "applicationEndDate",
+  "body",
 ] as const;
 
 const jobListFieldKeys = ["education", "skills", "responsibilities"] as const;
@@ -745,6 +748,7 @@ export default function MobileAdminApp({
   const [deletePending, setDeletePending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadedAssetUrl, setUploadedAssetUrl] = useState("");
+  const [localCoverPreviewUrl, setLocalCoverPreviewUrl] = useState("");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [extractorOpen, setExtractorOpen] = useState(false);
   const [extractSourceText, setExtractSourceText] = useState("");
@@ -915,9 +919,8 @@ export default function MobileAdminApp({
   const publishDisabled =
     saveDisabled ||
     !reviewableEntry ||
-    qualityReviewPending ||
-    qualityReviewDirty ||
-    Boolean(qualityReview && qualityReview.blockers.length > 0);
+    uploading ||
+    Boolean(qualityReview && !qualityReviewDirty && qualityReview.blockers.length > 0);
   const uploadDisabled = uploading || deletePending || !mobilePublishingReady;
   const deleteDisabled = deletePending || saveMode !== "" || uploading || !mobilePublishingReady;
   const canDeleteEntry = originalSlug.length > 0;
@@ -950,7 +953,11 @@ export default function MobileAdminApp({
         ? "border-amber-200 bg-amber-50 text-amber-800"
         : qualityReview?.status === "blocked"
           ? "border-rose-200 bg-rose-50 text-rose-800"
-          : "border-slate-200 bg-slate-100 text-slate-600";
+        : "border-slate-200 bg-slate-100 text-slate-600";
+  const blogCoverPreviewSrc =
+    editorEntry.collection === "blogs"
+      ? localCoverPreviewUrl || editorEntry.coverImage
+      : "";
   const qualityMetricItems: QualityMetricItem[] =
     editorEntry.collection === "jobs"
       ? [
@@ -1250,6 +1257,16 @@ export default function MobileAdminApp({
       });
   }, [adminLoginUrl, initialCollection, initialSlug]);
 
+  const clearLocalCoverPreview = () => {
+    setLocalCoverPreviewUrl((currentUrl) => {
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
+      }
+
+      return "";
+    });
+  };
+
   const resetEditorForNewEntry = (
     nextCollection: AdminCollection,
     options?: {
@@ -1273,6 +1290,7 @@ export default function MobileAdminApp({
     setQualityReviewPending(false);
     setQualityReviewDirty(false);
     setUploadedAssetUrl("");
+    clearLocalCoverPreview();
     setExtractError("");
     setExtractNotice("");
 
@@ -1312,6 +1330,7 @@ export default function MobileAdminApp({
     setPublishedJobShare(null);
     setExtractError("");
     setExtractNotice("");
+    clearLocalCoverPreview();
 
     try {
       const response = await fetch(
@@ -1344,6 +1363,7 @@ export default function MobileAdminApp({
       setQualityReviewDirty(false);
       setPublishedJobShare(getPublishedJobShareForEntry(result.entry));
       setUploadedAssetUrl("");
+      clearLocalCoverPreview();
     } catch (error) {
       setFormError(
         error instanceof Error ? error.message : "Unable to load the selected entry.",
@@ -1460,6 +1480,14 @@ export default function MobileAdminApp({
     runQualityReview,
   ]);
 
+  useEffect(() => {
+    return () => {
+      if (localCoverPreviewUrl) {
+        URL.revokeObjectURL(localCoverPreviewUrl);
+      }
+    };
+  }, [localCoverPreviewUrl]);
+
   const runAutoExtract = async (mode: "text" | "url") => {
     const sourceText = extractSourceText.trim();
     const sourceUrl = extractSourceUrl.trim();
@@ -1530,6 +1558,7 @@ export default function MobileAdminApp({
           : applyBlogExtractedData(editorEntry, result.data);
 
       setEditorEntry(appliedResult.entry);
+      setQualityReviewDirty(true);
 
       const resultMode =
         typeof result.mode === "string" && result.mode.trim()
@@ -1662,6 +1691,16 @@ export default function MobileAdminApp({
     setFormIssues([]);
     setFormNotice("");
 
+    if (editorEntry.collection === "blogs") {
+      setLocalCoverPreviewUrl((currentUrl) => {
+        if (currentUrl) {
+          URL.revokeObjectURL(currentUrl);
+        }
+
+        return URL.createObjectURL(file);
+      });
+    }
+
     try {
       const formData = new FormData();
       formData.set("collection", collection);
@@ -1690,8 +1729,15 @@ export default function MobileAdminApp({
 
       setUploadedAssetUrl(result.url);
       setFormNotice("Image uploaded.");
-      if (editorEntry.collection === "blogs" && !editorEntry.coverImage) {
+      if (editorEntry.collection === "blogs") {
         updateEntry({ coverImage: result.url } as Partial<AdminMobileBlogEntry>);
+        setLocalCoverPreviewUrl((currentUrl) => {
+          if (currentUrl) {
+            URL.revokeObjectURL(currentUrl);
+          }
+
+          return "";
+        });
       }
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Unable to upload image.");
@@ -1754,6 +1800,7 @@ export default function MobileAdminApp({
       setEditorEntry(buildEmptyEntry(collection));
       setOriginalSlug("");
       setUploadedAssetUrl("");
+      clearLocalCoverPreview();
       setExtractError("");
       setExtractNotice("");
       setFormIssues([]);
@@ -2148,6 +2195,7 @@ export default function MobileAdminApp({
                         setEditorEntry(buildEmptyEntry(item));
                         setOriginalSlug("");
                         setUploadedAssetUrl("");
+                        clearLocalCoverPreview();
                         setFormError("");
                         setFormIssues([]);
                         setFormNotice("");
@@ -2617,12 +2665,12 @@ export default function MobileAdminApp({
               {formError ? (
                 <div className="mt-4 rounded-[1rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
                   <p className="font-semibold">
-                    {formIssues.length > 0 ? "Publish blocked by quality gate." : formError}
+                    {formIssues.length > 0 ? "Publish needs required fixes." : formError}
                   </p>
                   {formIssues.length > 0 ? (
                     <>
                       <p className="mt-1 text-rose-700/90">
-                        Fix these points, then publish again. Draft saving still works for rough content.
+                        Fix these required points, then publish again. Other content health notes are recommendations only.
                       </p>
                       <ol className="mt-3 list-decimal space-y-2 pl-5">
                         {formIssues.map((issue, index) => (
@@ -2664,10 +2712,10 @@ export default function MobileAdminApp({
                         Content Health
                       </p>
                       <h3 className="mt-1 text-base font-semibold text-slate-900">
-                        Permanent publish review
+                        Publish recommendations
                       </h3>
                       <p className="mt-1 text-sm text-slate-600">
-                        This draft is checked against the same rules the publish action uses.
+                        This review highlights trust, structure, and quality improvements. Only required fixes block publishing.
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -2717,7 +2765,7 @@ export default function MobileAdminApp({
 
                   {qualityReviewDirty && !qualityReviewPending ? (
                     <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                      Changes are waiting to be reviewed.
+                      Changes are waiting to be reviewed, but you can still publish if there are no required fixes.
                     </p>
                   ) : null}
 
@@ -3442,12 +3490,14 @@ export default function MobileAdminApp({
 	                              </label>
 	                            </div>
 
-	                            {editorEntry.coverImage ? (
+	                            {blogCoverPreviewSrc ? (
 	                              <div className="mt-4 overflow-hidden rounded-[1rem] border border-slate-200 bg-slate-50">
 	                                <div
 	                                  aria-hidden="true"
 	                                  className="h-48 w-full bg-cover bg-center"
-	                                  style={{ backgroundImage: `url("${editorEntry.coverImage}")` }}
+	                                  style={{
+	                                    backgroundImage: `url(${JSON.stringify(blogCoverPreviewSrc)})`,
+	                                  }}
 	                                />
 	                              </div>
 	                            ) : null}
@@ -3584,11 +3634,9 @@ export default function MobileAdminApp({
                             ? "Publishing..."
                             : !reviewableEntry
                               ? "Add content first"
-                            : qualityReviewPending
-                              ? "Reviewing..."
-                              : qualityReviewDirty
-                                ? "Waiting for review..."
-                                : qualityReview?.blockers.length
+                            : uploading
+                              ? "Uploading image..."
+                              : qualityReview && !qualityReviewDirty && qualityReview.blockers.length
                                   ? "Fix review issues"
                                   : "Publish"}
                         </button>

@@ -874,9 +874,6 @@ const validateJobEntry = (entry: AdminMobileJobEntry) => {
   if (!entry.company) {
     issues.push("Company name is required.");
   }
-  if (!entry.location) {
-    issues.push("Location is required.");
-  }
   if (!entry.date) {
     issues.push("Publish date is required.");
   }
@@ -885,12 +882,6 @@ const validateJobEntry = (entry: AdminMobileJobEntry) => {
   }
   if (entry.applyLink && !/^(https?:\/\/|\/).+/.test(entry.applyLink)) {
     issues.push("Apply link must be a full URL or an internal path.");
-  }
-  if (!entry.applicationStartDate) {
-    issues.push("Application start date is required.");
-  }
-  if (entry.skills.length === 0) {
-    issues.push("Add at least one skill before publishing.");
   }
 
   return issues;
