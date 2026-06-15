@@ -60,7 +60,7 @@ jobTiming: "Not mentioned"
 applyLink: "https://jobs.natwestgroup.com/jobs/17868886-quality-analyst"
 applicationStartDate: "2026-06-15"
 applicationEndDate: ""
-publishedAt: "2026-06-15T17:08:55.440Z"
+publishedAt: "2026-06-15T17:09:42.387Z"
 ---
 
 ## About the role
