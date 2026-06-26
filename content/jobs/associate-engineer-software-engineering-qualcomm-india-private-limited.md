@@ -3,7 +3,7 @@ title: "Associate Engineer – Software Engineering"
 slug: "associate-engineer-software-engineering-qualcomm-india-private-limited"
 date: "2026-05-09"
 updatedAt: "2026-05-09"
-draft: true
+draft: false
 company: "Qualcomm India Private Limited"
 location: "Bengaluru / Hyderabad / Chennai / Noida, India"
 workMode: "Hybrid"

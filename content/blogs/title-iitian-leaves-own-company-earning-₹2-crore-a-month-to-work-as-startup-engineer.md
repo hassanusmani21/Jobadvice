@@ -1,5 +1,4 @@
 ---
-draft: true
 title: IITian Founder Leaves Successful ₹2 Crore-a-Month Company to Join Startup as Engineer
 slug: iitian-leaves-company-earning-2-crore-to-become-startup-engineer
 summary: An IIT Kanpur alumnus and founder of a business reportedly doing nearly ₹2 crore a month left his successful company to join a startup as an engineer. Here is why the move resonated with professionals online.

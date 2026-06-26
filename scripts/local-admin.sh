@@ -21,10 +21,6 @@ echo "If you want automatic GitHub push after publish, use:"
 echo "  npm run local:admin:auto"
 echo
 
-export LOCAL_ADMIN_AUTH_BYPASS=1
-export AUTH_SECRET="${AUTH_SECRET:-local-admin-development-secret}"
-export NEXTAUTH_URL="${NEXTAUTH_URL:-http://127.0.0.1:3000}"
-
 npm run dev:local &
 DEV_PID=$!
 

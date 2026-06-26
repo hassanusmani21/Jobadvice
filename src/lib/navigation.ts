@@ -5,9 +5,9 @@ export type NavigationItem = {
 
 export const primaryNavigation: NavigationItem[] = [
   { href: "/", label: "Home" },
-  { href: "/jobs", label: "Jobs" },
   { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
+  { href: "/jobs", label: "Openings" },
   { href: "/contact", label: "Contact" },
   { href: "/privacy-policy", label: "Privacy" },
 ];

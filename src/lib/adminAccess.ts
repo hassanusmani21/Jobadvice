@@ -24,8 +24,6 @@ const parseAllowedAdminEmails = () => {
 
 export const ALLOWED_ADMIN_EMAILS = parseAllowedAdminEmails();
 export const PRIMARY_ADMIN_EMAIL = ALLOWED_ADMIN_EMAILS[0] || DEFAULT_ADMIN_EMAIL;
-export const isLocalAdminAuthBypassEnabled = () =>
-  !isProduction && process.env.LOCAL_ADMIN_AUTH_BYPASS === "1";
 
 export const isAllowedAdminEmail = (email: string | null | undefined) => {
   if (!email) {

@@ -3,7 +3,7 @@ title: "Data Analyst"
 slug: "data-analyst-capgemini"
 date: "2026-04-01"
 updatedAt: "2026-04-01"
-draft: true
+draft: false
 company: "Capgemini"
 location: "Hyderabad, Telangana, India"
 workMode: "On-site"

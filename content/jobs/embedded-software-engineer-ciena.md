@@ -3,7 +3,7 @@ title: "Embedded Software Engineer"
 slug: "embedded-software-engineer-ciena"
 date: "2026-05-10"
 updatedAt: "2026-05-10"
-draft: true
+draft: false
 company: "Ciena"
 location: "Gurgaon, India"
 workMode: "Hybrid"

@@ -1,10 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import {
-  PRIMARY_ADMIN_EMAIL,
-  isAllowedAdminEmail,
-  isLocalAdminAuthBypassEnabled,
-} from "./lib/adminAccess";
+import { isAllowedAdminEmail } from "./lib/adminAccess";
 import { siteUrl } from "./lib/site";
 import { toContentSlug } from "./lib/slug";
 
@@ -142,10 +138,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
 
-    if (isLocalAdminAuthBypassEnabled()) {
-      return NextResponse.next();
-    }
-
     const token = await getToken({
       req: request,
       secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
@@ -163,11 +155,6 @@ export async function middleware(request: NextRequest) {
 
   if (!request.nextUrl.pathname.startsWith("/admin/login")) {
     return NextResponse.next();
-  }
-
-  if (isLocalAdminAuthBypassEnabled() && isAllowedAdminEmail(PRIMARY_ADMIN_EMAIL)) {
-    const destinationUrl = new URL(toSafeCallbackUrl(request), request.nextUrl.origin);
-    return NextResponse.redirect(destinationUrl);
   }
 
   const token = await getToken({

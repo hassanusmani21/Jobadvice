@@ -14,6 +14,7 @@ export const metadata: Metadata = createPageMetadata({
   description: config.pageDescription,
   path: `${config.href}/`,
   keywords: ["internships", "student internships", "internship jobs India"],
+  noIndex: true,
 });
 
 export default async function InternshipJobsPage() {

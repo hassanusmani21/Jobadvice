@@ -3,7 +3,7 @@ title: "Developer"
 slug: "developer-barclays"
 date: "2026-03-19"
 updatedAt: "2026-03-29"
-draft: true
+draft: false
 company: "Barclays"
 location: "Eon It Park Road, Pune, Mahārāshtra, 411014, India"
 workMode: "Hybrid"

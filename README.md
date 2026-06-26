@@ -39,7 +39,18 @@ netlify.toml                # Netlify build config
 
 ## Run Locally
 
+Use Node.js 20.19.0 or newer before installing dependencies. On a fresh Ubuntu setup, install `nvm` first:
+
 ```bash
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+source ~/.bashrc
+nvm install
+```
+
+Then run the project:
+
+```bash
+nvm use
 npm install
 npm run dev
 npm run cms:proxy
@@ -135,8 +146,5 @@ JOB_ALERTS_CRON_SECRET=replace-with-same-long-random-secret
 ```
 
 `ADMIN_CONTENTS_TOKEN` is required in production if you want the custom `/admin` app to save posts, upload images, or delete entries.
-
-For local admin work, run `npm run local:admin` or `npm run local:admin:auto`.
-Those scripts enable `LOCAL_ADMIN_AUTH_BYPASS=1`, which skips Google OAuth only in non-production development and signs in as the configured primary admin email.
 
 `RESEND_API_KEY`, `JOB_ALERTS_FROM_EMAIL`, and `CRON_SECRET` are required if you want the daily filtered job alert digest emails to run in production on Vercel. Vercel Cron calls `/api/cron/job-alerts` from `vercel.json` once per day and sends `CRON_SECRET` automatically in the `Authorization` header. The production cron runs once per day at 6:00 AM Asia/Kolkata time.

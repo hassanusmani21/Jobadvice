@@ -3,7 +3,7 @@ title: "Data Science Intern"
 slug: "data-science-intern-bnp-paribas"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: true
+draft: false
 company: "BNP Paribas"
 location: "Mumbai, Maharashtra, India"
 workMode: "Hybrid"

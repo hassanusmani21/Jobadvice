@@ -3,7 +3,7 @@ title: "B.Tech Intern"
 slug: "b-tech-intern-ge-aerospace"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: true
+draft: false
 company: "GE Aerospace"
 location: "Bengaluru, Karnataka"
 workMode: "On-site"

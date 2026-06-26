@@ -3,7 +3,7 @@ title: "Customer Service Representative I"
 slug: "customer-service-representative-i-thermo-fisher-scientific"
 date: "2026-05-13"
 updatedAt: "2026-05-13"
-draft: true
+draft: false
 company: "Thermo Fisher Scientific"
 location: "Bangalore, Karnataka, India"
 workMode: ""

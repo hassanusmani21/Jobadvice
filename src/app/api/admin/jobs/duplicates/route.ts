@@ -1,14 +1,56 @@
 import { findDuplicateJobs } from "@/lib/adminJobs";
-import { requireAdminApiRequest } from "@/lib/adminSession";
-import { noStoreJson } from "@/lib/requestSecurity";
+import { isAllowedAdminEmail } from "@/lib/adminAccess";
+import { hasTrustedSameOrigin, noStoreJson } from "@/lib/requestSecurity";
 
 const normalizeText = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 
+const resolveAdminSession = async () => {
+  try {
+    const [{ getServerSession }, { authOptions }] = await Promise.all([
+      import("next-auth"),
+      import("@/auth"),
+    ]);
+
+    return getServerSession(authOptions);
+  } catch (error) {
+    console.error("[admin/jobs/duplicates] Unable to resolve admin session:", error);
+    return null;
+  }
+};
+
 export async function POST(request: Request) {
-  const authError = await requireAdminApiRequest(request);
-  if (authError) {
-    return authError;
+  if (!hasTrustedSameOrigin(request)) {
+    return noStoreJson(
+      {
+        success: false,
+        error: "InvalidOrigin",
+      },
+      { status: 403 },
+    );
+  }
+
+  const session = await resolveAdminSession();
+  const sessionEmail = session?.user?.email || "";
+
+  if (!sessionEmail) {
+    return noStoreJson(
+      {
+        success: false,
+        error: "SessionRequired",
+      },
+      { status: 401 },
+    );
+  }
+
+  if (!isAllowedAdminEmail(sessionEmail)) {
+    return noStoreJson(
+      {
+        success: false,
+        error: "EmailNotAllowed",
+      },
+      { status: 403 },
+    );
   }
 
   let body: Record<string, unknown> = {};

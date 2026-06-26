@@ -369,9 +369,17 @@ export type JobPost = {
   applicationEndDate: string | null;
   applicationStatus: JobApplicationStatus;
   excerpt: string;
+  content: string;
+  contentWordCount: number;
 };
 
-export const hasStrongPublicJobContent = (job: JobPost) => {
+const countWords = (value: string) =>
+  value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+
+export const hasUsablePublicJobContent = (job: JobPost) => {
   const isUsefulValue = (value: string | undefined | null) => {
     const normalizedValue = String(value || "").trim().toLowerCase();
     return Boolean(normalizedValue) && !/^(not specified|not disclosed|not mentioned|n\/a|na)$/i.test(normalizedValue);
@@ -401,6 +409,9 @@ export const hasStrongPublicJobContent = (job: JobPost) => {
 
   return hasExternalApplySource && hasUsefulRoleDetails && hasTrustBasics;
 };
+
+export const hasStrongPublicJobContent = (job: JobPost) =>
+  hasUsablePublicJobContent(job) && job.contentWordCount >= 150;
 
 const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "").trim();
 
@@ -1174,6 +1185,8 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
     skills.join(", ") ||
     education.join(", ");
   const updatedAt = explicitUpdatedAt || fileModifiedDate;
+  const normalizedContent = content.trim();
+  const contentWordCount = countWords(normalizedContent);
 
   return {
     slug,
@@ -1203,6 +1216,8 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
     applicationEndDate,
     applicationStatus,
     excerpt: createExcerpt(excerptSource),
+    content: normalizedContent,
+    contentWordCount,
   };
 };
 

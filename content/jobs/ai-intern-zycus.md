@@ -3,7 +3,7 @@ title: "AI Intern"
 slug: "ai-intern-zycus"
 date: "2026-05-09"
 updatedAt: "2026-05-09"
-draft: true
+draft: false
 company: "Zycus"
 location: "Mumbai, Maharashtra, India"
 workMode: "Hybrid"

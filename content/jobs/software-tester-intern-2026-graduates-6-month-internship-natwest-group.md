@@ -3,7 +3,7 @@ title: "Software Tester Intern (2026 Graduates, 6-Month Internship)"
 slug: "software-tester-intern-2026-graduates-6-month-internship-natwest-group"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: true
+draft: false
 company: "NatWest Group"
 location: "Bangalore, India"
 workMode: "On-site"

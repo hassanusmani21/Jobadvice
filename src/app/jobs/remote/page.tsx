@@ -14,6 +14,7 @@ export const metadata: Metadata = createPageMetadata({
   description: config.pageDescription,
   path: `${config.href}/`,
   keywords: ["remote jobs", "work from home jobs", "remote jobs India"],
+  noIndex: true,
 });
 
 export default async function RemoteJobsPage() {

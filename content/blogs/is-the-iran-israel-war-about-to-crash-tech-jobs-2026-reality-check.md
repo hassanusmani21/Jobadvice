@@ -17,7 +17,7 @@ ctaLabel: ""
 ctaLink: ""
 date: "2026-03-24"
 updatedAt: "2026-03-24"
-draft: true
+draft: false
 ---
 
 # Iran–Israel Conflict 2026: Is a Global Tech Job Crisis Coming?

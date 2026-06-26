@@ -3,7 +3,7 @@ title: "Data Operations Analyst"
 slug: "data-operations-analyst-nielseniq"
 date: "2026-05-09"
 updatedAt: "2026-05-09"
-draft: true
+draft: false
 company: "NielsenIQ"
 location: "Chennai, Tamil Nadu, India"
 workMode: "Hybrid"

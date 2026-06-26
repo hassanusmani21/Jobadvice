@@ -25,7 +25,7 @@ ctaLabel: ""
 ctaLink: ""
 date: "2026-05-11"
 updatedAt: "2026-05-11"
-draft: true
+draft: false
 ---
 
 # India Celebrates National Technology Day 2026: PM Narendra Modi Salutes Scientists and Innovators

@@ -3,7 +3,7 @@ title: "Associate Software Engineer"
 slug: "associate-software-engineer-cbts-india"
 date: "2026-05-18"
 updatedAt: "2026-05-18"
-draft: true
+draft: false
 company: "CBTS India"
 location: "Not mentioned"
 workMode: ""

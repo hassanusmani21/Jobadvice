@@ -14,6 +14,7 @@ export const metadata: Metadata = createPageMetadata({
   description: config.pageDescription,
   path: `${config.href}/`,
   keywords: ["fresher jobs", "entry level jobs", "jobs for freshers"],
+  noIndex: true,
 });
 
 export default async function FresherJobsPage() {

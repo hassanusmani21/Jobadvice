@@ -10,11 +10,6 @@ import {
   getTodayDateString,
 } from "@/lib/adminMobile";
 import { findDuplicateJobs } from "@/lib/adminJobs";
-import {
-  buildAdminContentQualityReview,
-  type AdminContentQualityReview,
-  validatePublishedContentQuality,
-} from "@/lib/adminContentQualityGate";
 import { toIsoDateString } from "@/lib/dateParsing";
 import { toContentSlug } from "@/lib/slug";
 
@@ -874,6 +869,9 @@ const validateJobEntry = (entry: AdminMobileJobEntry) => {
   if (!entry.company) {
     issues.push("Company name is required.");
   }
+  if (!entry.location) {
+    issues.push("Location is required.");
+  }
   if (!entry.date) {
     issues.push("Publish date is required.");
   }
@@ -882,6 +880,12 @@ const validateJobEntry = (entry: AdminMobileJobEntry) => {
   }
   if (entry.applyLink && !/^(https?:\/\/|\/).+/.test(entry.applyLink)) {
     issues.push("Apply link must be a full URL or an internal path.");
+  }
+  if (!entry.applicationStartDate) {
+    issues.push("Application start date is required.");
+  }
+  if (entry.skills.length === 0) {
+    issues.push("Add at least one skill before publishing.");
   }
 
   return issues;
@@ -1167,13 +1171,30 @@ export const saveAdminEntry = async ({
   entry: Record<string, unknown>;
   originalSlug?: string;
 }) => {
-  const reviewResult = await reviewAdminEntry({
-    collection,
-    entry,
-    originalSlug,
-  });
   const normalizedOriginalSlug = toContentSlug(String(originalSlug || "").trim()) || "";
-  const { issues: allIssues, normalizedEntry, serializedContent } = reviewResult;
+  const normalizedEntry =
+    collection === "jobs"
+      ? normalizeJobEntry(entry, normalizedOriginalSlug)
+      : normalizeBlogEntry(entry, normalizedOriginalSlug);
+  const issues =
+    normalizedEntry.collection === "jobs"
+      ? [
+          ...validateJobEntry(normalizedEntry),
+          ...(await getBlockingJobDuplicateIssues(
+            normalizedEntry,
+            normalizedOriginalSlug || normalizedEntry.slug,
+          )),
+        ]
+      : validateBlogEntry(normalizedEntry);
+
+  const serializedContent =
+    normalizedEntry.collection === "jobs"
+      ? serializeJobEntry(normalizedEntry)
+      : serializeBlogEntry(normalizedEntry);
+  const productionContentIssues = normalizedEntry.draft
+    ? []
+    : validatePublishedProductionContent(normalizedEntry.collection, serializedContent);
+  const allIssues = [...issues, ...productionContentIssues];
 
   if (allIssues.length > 0) {
     throw new AdminContentValidationError(allIssues);
@@ -1192,88 +1213,6 @@ export const saveAdminEntry = async ({
       normalizedEntry.collection === "jobs"
         ? toJobRecord(normalizedEntry)
         : toBlogRecord(normalizedEntry),
-  };
-};
-
-export const reviewAdminEntry = async ({
-  collection,
-  entry,
-  originalSlug,
-}: {
-  collection: AdminCollection;
-  entry: Record<string, unknown>;
-  originalSlug?: string;
-}): Promise<{
-  issues: string[];
-  normalizedEntry: AdminMobileEntry;
-  normalizedOriginalSlug: string;
-  publishEntry: AdminMobileEntry;
-  qualityReview: AdminContentQualityReview;
-  serializedContent: string;
-}> => {
-  const normalizedOriginalSlug = toContentSlug(String(originalSlug || "").trim()) || "";
-  const normalizedEntry =
-    collection === "jobs"
-      ? normalizeJobEntry(entry, normalizedOriginalSlug)
-      : normalizeBlogEntry(entry, normalizedOriginalSlug);
-  const publishEntry = {
-    ...normalizedEntry,
-    draft: false,
-  } as AdminMobileEntry;
-  const serializedContent =
-    publishEntry.collection === "jobs"
-      ? serializeJobEntry(publishEntry)
-      : serializeBlogEntry(publishEntry);
-  const baseIssues =
-    publishEntry.collection === "jobs"
-      ? [
-          ...validateJobEntry(publishEntry),
-          ...(await getBlockingJobDuplicateIssues(
-            publishEntry,
-            normalizedOriginalSlug || publishEntry.slug,
-          )),
-        ]
-      : validateBlogEntry(publishEntry);
-  const productionContentIssues = validatePublishedProductionContent(
-    publishEntry.collection,
-    serializedContent,
-  );
-  const qualityReview = buildAdminContentQualityReview(publishEntry);
-  const qualityGateIssues = validatePublishedContentQuality(publishEntry);
-  const blockers = Array.from(
-    new Set([
-      ...baseIssues,
-      ...productionContentIssues,
-      ...qualityReview.blockers,
-      ...qualityGateIssues,
-    ]),
-  );
-
-  return {
-    issues: normalizedEntry.draft ? [] : blockers,
-    normalizedEntry,
-    normalizedOriginalSlug,
-    publishEntry,
-    qualityReview: {
-      ...qualityReview,
-      blockers,
-      readyToPublish: blockers.length === 0,
-      score: Math.max(
-        0,
-        Math.round(
-          qualityReview.score -
-            baseIssues.length * 8 -
-            productionContentIssues.length * 10,
-        ),
-      ),
-      status:
-        blockers.length > 0
-          ? "blocked"
-          : qualityReview.warnings.length > 0
-            ? "warning"
-            : "ready",
-    },
-    serializedContent,
   };
 };
 

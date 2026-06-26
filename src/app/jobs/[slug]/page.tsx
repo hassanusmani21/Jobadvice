@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import JobDetailSections from "@/components/JobDetailSections";
 import JobActionButton from "@/components/JobActionButton";
 import Link from "@/components/AppLink";
+import MarkdownArticle from "@/components/MarkdownArticle";
 import RecommendedJobs from "@/components/RecommendedJobs";
 import SaveJobButton from "@/components/SaveJobButton";
 import {
@@ -16,6 +17,7 @@ import { formatPostedDate } from "@/lib/formatDate";
 import { siteName, siteUrl, siteVerifiedPublisherName } from "@/lib/site";
 import { toContentSlug } from "@/lib/slug";
 import { resolveJobLocationLabel } from "@/lib/taxonomies";
+import { markdownToBlocks } from "@/lib/markdown";
 
 type JobPageProps = {
   params: {
@@ -756,13 +758,11 @@ const toSkillLandingHref = (skill: string) => `/jobs/skill/${toContentSlug(skill
 
 export async function generateStaticParams() {
   const jobs = await getAllJobs();
-  const publicJobs = jobs.filter(hasStrongPublicJobContent);
-
-  if (publicJobs.length === 0) {
+  if (jobs.length === 0) {
     return [{ slug: fallbackSlug }];
   }
 
-  return publicJobs.map((job) => ({ slug: job.slug }));
+  return jobs.map((job) => ({ slug: job.slug }));
 }
 
 export async function generateMetadata({ params }: JobPageProps): Promise<Metadata> {
@@ -851,6 +851,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   const verificationNote = buildVerificationNote(job);
   const resumeFocusItems = buildResumeFocusItems(job);
   const beforeApplyChecklist = buildBeforeApplyChecklist(job);
+  const editorialBlocks = markdownToBlocks(job.content);
   const schemaDescription = buildStructuredDescription(
     job,
     roleOverview,
@@ -1268,6 +1269,25 @@ export default async function JobDetailPage({ params }: JobPageProps) {
             },
           ]}
         />
+
+        {editorialBlocks.length > 0 ? (
+          <section
+            className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
+            style={{ animationDelay: "280ms" }}
+          >
+            <div className="mb-5">
+              <p className="jobs-directory-kicker">Editorial Notes</p>
+              <h2 className="mt-3 font-serif text-[1.55rem] leading-tight text-slate-900 sm:text-[1.8rem]">
+                Additional context before you apply
+              </h2>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
+                This section adds reader-focused context, resume direction, and verification notes
+                beyond the structured job facts above.
+              </p>
+            </div>
+            <MarkdownArticle blocks={editorialBlocks} />
+          </section>
+        ) : null}
 
         <div className="fade-up" style={{ animationDelay: "230ms" }}>
           <JobActionButton href="/jobs" variant="secondary" className="sm:w-auto">

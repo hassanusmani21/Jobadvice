@@ -3,7 +3,7 @@ title: "Graduate Engineer Trainee (GET) - OT Security"
 slug: "graduate-engineer-trainee-get-ot-security-ramboll"
 date: "2026-05-13"
 updatedAt: "2026-05-13"
-draft: true
+draft: false
 company: "Ramboll"
 location: "Chennai, Tamil Nadu, India"
 workMode: "Hybrid"

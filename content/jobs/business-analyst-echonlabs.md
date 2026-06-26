@@ -3,7 +3,7 @@ title: "Business Analyst"
 slug: "business-analyst-echonlabs"
 date: "2026-03-24"
 updatedAt: "2026-03-24"
-draft: true
+draft: false
 company: "EchonLabs"
 location: "Not clearly specified (likely India)"
 workMode: "Hybrid"

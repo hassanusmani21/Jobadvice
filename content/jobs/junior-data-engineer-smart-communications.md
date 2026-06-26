@@ -3,7 +3,7 @@ title: "Junior Data Engineer"
 slug: "junior-data-engineer-smart-communications"
 date: "2026-03-31"
 updatedAt: "2026-03-31"
-draft: true
+draft: false
 company: "Smart Communications"
 location: "UK – Remote"
 workMode: "Remote"

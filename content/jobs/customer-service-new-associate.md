@@ -1,5 +1,4 @@
 ---
-draft: true
 title: "Customer Service New Associate  "
 date: 2026-03-10
 company: Accenture

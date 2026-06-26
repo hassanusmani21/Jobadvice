@@ -3,7 +3,7 @@ title: "Intern – Engineering"
 slug: "intern-engineering-wabtec-corporation"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: true
+draft: false
 company: "Wabtec Corporation"
 location: "Bengaluru, Karnataka"
 workMode: "On-site"

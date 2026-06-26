@@ -1,5 +1,4 @@
 ---
-draft: true
 title: How to Get Internship in 1st Year of College in India Step by Step Guide
 slug: how-to-get-internship-in-1st-year-of-college-in-india
 summary: Complete step by step guide for first year college students in India to

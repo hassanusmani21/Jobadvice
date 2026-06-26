@@ -1,5 +1,4 @@
 ---
-draft: true
 title: "Graduate Apprentice Trainee "
 date: 2026-03-07
 company: Volvo Group

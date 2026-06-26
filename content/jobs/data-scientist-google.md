@@ -3,7 +3,7 @@ title: "Data Scientist"
 slug: "data-scientist-google"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: true
+draft: false
 company: "Google"
 location: "Multiple Locations (Global / Location varies by role)"
 workMode: ""

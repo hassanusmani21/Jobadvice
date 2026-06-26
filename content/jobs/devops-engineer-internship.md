@@ -1,5 +1,4 @@
 ---
-draft: true
 title: "DevOps Engineer Internship "
 date: 2026-03-04
 company: Bridge-it Inc

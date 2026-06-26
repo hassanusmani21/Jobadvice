@@ -3,7 +3,7 @@ title: "Software Development Engineer in Test (SDET)"
 slug: "software-development-engineer-in-test-sdet-modulr"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: true
+draft: false
 company: "Modulr"
 location: "Pune, India"
 workMode: "On-site"

@@ -1,5 +1,4 @@
 ---
-draft: true
 title: Senior Test Automation Engineer
 date: 2026-03-01
 company: Capgemini

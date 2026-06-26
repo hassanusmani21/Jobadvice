@@ -8,3 +8,4 @@
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
   NETLIFY_NEXT_SKEW_PROTECTION = "true"
+  NODE_VERSION = "20.19.0"

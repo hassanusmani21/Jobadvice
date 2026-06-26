@@ -14,6 +14,7 @@ export const metadata: Metadata = createPageMetadata({
   description: config.pageDescription,
   path: `${config.href}/`,
   keywords: ["experienced jobs", "professional jobs India", "career openings"],
+  noIndex: true,
 });
 
 export default async function ExperiencedJobsPage() {

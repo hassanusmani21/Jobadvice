@@ -1,5 +1,4 @@
 ---
-draft: true
 title: "Technology Intern "
 date: 2026-03-11
 company: Deloitte

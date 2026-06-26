@@ -3,7 +3,7 @@ title: "Intern - IP Analytics"
 slug: "intern-ip-analytics-airbus-india-private-limited"
 date: "2026-05-18"
 updatedAt: "2026-05-18"
-draft: true
+draft: false
 company: "Airbus India Private Limited"
 location: "Bengaluru / Bangalore, Karnataka, India"
 workMode: "On-site"

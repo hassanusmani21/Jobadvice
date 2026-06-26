@@ -3,7 +3,7 @@ title: "Intern, Data Analyst"
 slug: "intern-data-analyst-ventra-health"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: true
+draft: false
 company: "Ventra Health"
 location: "Perungudi, Chennai, Tamil Nadu, India"
 workMode: "Hybrid"

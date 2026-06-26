@@ -1,5 +1,4 @@
 ---
-draft: true
 title: "How an Amazon Tech Lead Got Promoted by Building AI Products  Top Vibe
   Coding Tips  for Developers  "
 slug: ai-vibe-coding-developers-career-growth-2026

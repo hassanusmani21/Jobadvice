@@ -3,7 +3,7 @@ title: "Software Engineer II – Python"
 slug: "software-engineer-ii-python-hewlett-packard-enterprise-hpe"
 date: "2026-05-09"
 updatedAt: "2026-05-09"
-draft: true
+draft: false
 company: "Hewlett Packard Enterprise (HPE)"
 location: "Bengaluru, Karnataka, India"
 workMode: "Hybrid"

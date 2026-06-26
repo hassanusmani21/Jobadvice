@@ -3,7 +3,7 @@ title: "Customer Service & Operations Analyst (12 Months)"
 slug: "customer-service-operations-analyst-12-months-natwest-group"
 date: "2026-05-13"
 updatedAt: "2026-05-13"
-draft: true
+draft: false
 company: "NatWest Group"
 location: "Chennai, Gurugram India"
 workMode: "Hybrid"

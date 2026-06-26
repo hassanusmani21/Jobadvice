@@ -3,7 +3,7 @@ title: "Software Engineering"
 slug: "software-engineering-synopsys"
 date: "2026-03-24"
 updatedAt: "2026-03-24"
-draft: true
+draft: false
 company: "Synopsys"
 location: "Bengaluru / Hyderabad / Noida, India"
 workMode: "Hybrid"

@@ -3,7 +3,7 @@ title: "Customer Service Specialist"
 slug: "customer-service-specialist-cognizant"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: true
+draft: false
 company: "Cognizant"
 location: "Hyderabad, Telangana, India"
 workMode: "Work from Home"

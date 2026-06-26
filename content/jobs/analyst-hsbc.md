@@ -3,7 +3,7 @@ title: "Analyst"
 slug: "analyst-hsbc"
 date: "2026-05-13"
 updatedAt: "2026-05-13"
-draft: true
+draft: false
 company: "HSBC"
 location: "Bangalore, Karnataka, India"
 workMode: "Hybrid"

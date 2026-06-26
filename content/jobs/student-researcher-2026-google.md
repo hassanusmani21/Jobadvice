@@ -3,7 +3,7 @@ title: "Student Researcher, 2026"
 slug: "student-researcher-2026-google"
 date: "2026-05-21"
 updatedAt: "2026-05-21"
-draft: true
+draft: false
 company: "Google"
 location: "- Bengaluru, Karnataka, India"
 workMode: ""

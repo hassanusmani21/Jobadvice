@@ -1,5 +1,4 @@
 ---
-draft: true
 title: Intern (Bachelor’s)
 date: 2026-03-10
 company: Honeywell

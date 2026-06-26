@@ -1,5 +1,4 @@
 ---
-draft: true
 title: "Software Intern "
 date: 2026-03-12
 company: Danfoss

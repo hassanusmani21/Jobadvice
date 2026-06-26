@@ -3,7 +3,7 @@ title: "Agentic AI Engineer"
 slug: "agentic-ai-engineer-tracelink"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: true
+draft: false
 company: "TraceLink"
 location: "Pune, India"
 workMode: "On-site"

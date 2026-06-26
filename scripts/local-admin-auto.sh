@@ -34,10 +34,6 @@ echo
 echo "If you want AI autofill locally, ensure Ollama is already running."
 echo
 
-export LOCAL_ADMIN_AUTH_BYPASS=1
-export AUTH_SECRET="${AUTH_SECRET:-local-admin-development-secret}"
-export NEXTAUTH_URL="${NEXTAUTH_URL:-http://127.0.0.1:3000}"
-
 npm run dev:local &
 DEV_PID=$!
 

@@ -3,7 +3,7 @@ title: "Data Analyst I"
 slug: "data-analyst-i-emerson"
 date: "2026-04-01"
 updatedAt: "2026-04-01"
-draft: true
+draft: false
 company: "Emerson"
 location: "Pune, Maharashtra, India"
 workMode: "On-site"

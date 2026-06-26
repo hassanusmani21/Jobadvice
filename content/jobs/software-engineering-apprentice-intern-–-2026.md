@@ -1,5 +1,4 @@
 ---
-draft: true
 title: Software Engineering Apprentice / Intern – 2026
 date: 2026-03-03
 company: Synopsys

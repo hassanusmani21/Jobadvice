@@ -97,6 +97,7 @@ export async function generateMetadata({
       description: `Browse source-checked jobs in ${landing.label} with direct apply links, fresher-friendly openings, and cleaner role summaries.`,
       path: `/jobs/location/${landing.slug}/`,
       keywords: [`${landing.label} jobs`, `fresher jobs in ${landing.label}`, "direct apply jobs"],
+      noIndex: true,
     }),
   };
 }

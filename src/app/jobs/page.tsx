@@ -47,6 +47,7 @@ export async function generateMetadata({
       "Browse source-checked jobs and internships with direct apply links, company details, locations, eligibility, and career-friendly role summaries.",
     path: "/jobs/",
     keywords: ["source checked jobs", "fresher jobs", "internships in India", "direct apply jobs"],
+    noIndex: true,
   });
 
   if (!hasFilterSearchParams(searchParams)) {

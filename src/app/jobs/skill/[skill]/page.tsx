@@ -93,6 +93,7 @@ export async function generateMetadata({
     description: `Browse source-checked ${landing.label} jobs with direct apply links, fresher-friendly openings, and role summaries that make requirements easier to scan.`,
     path: `/jobs/skill/${landing.slug}/`,
     keywords: [`${landing.label} jobs`, `${landing.label} fresher jobs`, "skill based jobs"],
+    noIndex: true,
   });
 }
 

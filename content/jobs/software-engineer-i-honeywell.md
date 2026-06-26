@@ -3,7 +3,7 @@ title: "JavaScript Engineer"
 slug: "software-engineer-i-honeywell"
 date: "2026-03-24"
 updatedAt: "2026-03-24"
-draft: true
+draft: false
 company: "CultureMonkey"
 location: "Chennai, Tamil Nadu, India"
 workMode: "On-site"

@@ -20,7 +20,6 @@ type JobExtractedData = {
   applyLink: string;
   applicationStartDate: string;
   applicationEndDate: string;
-  body: string;
 };
 
 type BlogExtractedData = {
@@ -531,12 +530,6 @@ const normalizeExperienceValue = (value: string) => {
 
 const normalizeEmploymentType = (text: string) => {
   const lowerText = text.toLowerCase();
-  if (lowerText.includes("apprentice") || lowerText.includes("apprenticeship")) {
-    return "Apprenticeship";
-  }
-  if (lowerText.includes("trainee") || lowerText.includes("graduate program")) {
-    return "Trainee";
-  }
   if (lowerText.includes("intern")) return "Internship";
   if (lowerText.includes("part time") || lowerText.includes("part-time")) return "Part-time";
   if (
@@ -609,10 +602,6 @@ const extractSectionLines = (text: string, sectionTitles: string[]) => {
     "apply link",
     "application start date",
     "application end date",
-    "job overview",
-    "overview",
-    "about the role",
-    "job description",
   ];
   const isStructuredFieldHeading = (value: string) => {
     const normalizedValue = normalizeLooseLabel(value);
@@ -632,29 +621,6 @@ const extractSectionLines = (text: string, sectionTitles: string[]) => {
     );
   };
 
-  const extractInlineSectionValue = (value: string) => {
-    const lineWithoutHeadingPrefix = value.replace(/^#{1,6}\s+/, "").trim();
-    const inlineMatch = lineWithoutHeadingPrefix.match(
-      /^[^:–-]+(?:\s*\([^)]*\))?\s*[:–-]\s*(.+)$/,
-    );
-    if (inlineMatch?.[1]) {
-      return normalizeListItem(inlineMatch[1]);
-    }
-
-    for (const sectionTitle of sectionTitles.sort((firstTitle, secondTitle) => secondTitle.length - firstTitle.length)) {
-      const labelPattern = new RegExp(
-        `^${escapeRegExp(sectionTitle).replace(/\\ /g, "\\s+")}\\s+(.+)$`,
-        "i",
-      );
-      const labelMatch = lineWithoutHeadingPrefix.match(labelPattern);
-      if (labelMatch?.[1]) {
-        return normalizeListItem(labelMatch[1]);
-      }
-    }
-
-    return "";
-  };
-
   for (let index = 0; index < lines.length; index += 1) {
     const line = lines[index].trim();
     if (!line) {
@@ -667,7 +633,13 @@ const extractSectionLines = (text: string, sectionTitles: string[]) => {
       continue;
     }
 
-    const inlineSegment = extractInlineSectionValue(line);
+    const lineWithoutHeadingPrefix = line.replace(/^#{1,6}\s+/, "").trim();
+    const inlineMatch = lineWithoutHeadingPrefix.match(
+      /^[^:–-]+(?:\s*\([^)]*\))?\s*[:–-]\s*(.+)$/,
+    );
+    const inlineSegment = inlineMatch?.[1]
+      ? normalizeListItem(inlineMatch[1])
+      : "";
     if (inlineSegment && !isPlaceholderOnlySectionLine(inlineSegment)) {
       collectedLines.push(inlineSegment);
     }
@@ -720,63 +692,6 @@ const extractResponsibilitiesSection = (text: string, sectionTitles: string[]) =
     ),
     20,
   );
-
-const sentenceSplitPattern = /(?<=[.!?])\s+(?=[A-Z0-9])/;
-
-const normalizeOverviewMarkdown = (value: string) =>
-  normalizeMarkdownSource(value)
-    .replace(/^(?:job overview|overview|about the role|job description)\s*[:\-]\s*/i, "")
-    .trim()
-    .slice(0, 2200);
-
-export const extractJobOverviewFromText = (text: string) => {
-  const explicitOverview = extractSectionLines(text, [
-    "job overview",
-    "job overviwe",
-    "overview",
-    "overviwe",
-    "about the role",
-    "about this role",
-    "job description",
-    "description",
-    "role description",
-    "about the job",
-    "summary",
-  ])
-    .map((line) => normalizeListItem(line))
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-
-  if (explicitOverview) {
-    return normalizeOverviewMarkdown(`## About the role\n\n${explicitOverview}`);
-  }
-
-  const paragraphs = normalizeMarkdownSource(text)
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.replace(/\n/g, " ").trim())
-    .filter((paragraph) => {
-      if (paragraph.length < 80 || paragraph.length > 900) {
-        return false;
-      }
-
-      if (fieldLabelPattern.test(paragraph) || bulletLinePattern.test(paragraph)) {
-        return false;
-      }
-
-      return /(role|job|position|team|candidate|engineer|developer|analyst|intern|responsibilit|work)/i.test(
-        paragraph,
-      );
-    });
-
-  const sourceParagraph = paragraphs[0] || "";
-  if (!sourceParagraph) {
-    return "";
-  }
-
-  const overviewText = sourceParagraph.split(sentenceSplitPattern).slice(0, 4).join(" ");
-  return normalizeOverviewMarkdown(`## About the role\n\n${overviewText}`);
-};
 
 const extractInlineOrSectionList = (
   text: string,
@@ -968,7 +883,6 @@ const extractJobFallback = (text: string): JobExtractedData => {
     applyLink,
     applicationStartDate,
     applicationEndDate,
-    body: extractJobOverviewFromText(text),
   };
 };
 
@@ -1245,15 +1159,6 @@ const normalizeJobData = (value: Record<string, unknown>): JobExtractedData => {
   );
   const date =
     toIsoDate(normalizeString(value.date || value.postedDate)) || todayDateString();
-  const body = normalizeOverviewMarkdown(
-    normalizeString(
-      value.body ||
-        value.overview ||
-        value.jobOverview ||
-        value.jobDescription ||
-        value.description,
-    ),
-  );
 
   return {
     title,
@@ -1273,7 +1178,6 @@ const normalizeJobData = (value: Record<string, unknown>): JobExtractedData => {
     applyLink,
     applicationStartDate,
     applicationEndDate,
-    body,
   };
 };
 
@@ -1339,7 +1243,6 @@ const mergeJobData = (
     primaryData.applicationEndDate,
     fallbackData.applicationEndDate,
   ),
-  body: mergeLongerField(primaryData.body, fallbackData.body),
 });
 
 const keepAiDateOnlyWhenPresentInSource = (
@@ -1508,13 +1411,12 @@ Return only valid JSON with this exact schema:
   "jobTiming": "",
   "applyLink": "",
   "applicationStartDate": "",
-  "applicationEndDate": "",
-  "body": ""
+  "applicationEndDate": ""
 }
 Rules:
 - Keep unknown values as empty string or empty array.
 - workMode must be one of: "On-site", "Remote", "Hybrid".
-- employmentType must be one of: "Full-time", "Part-time", "Internship", "Apprenticeship", "Contract", "Trainee", "Freelance".
+- employmentType must be one of: "Full-time", "Part-time", "Internship", "Contract".
 - experience should preserve source wording (examples: "Fresher", "1-3 years", "2-4 years", "6+ months").
 - "eligibilityCriteria" should preserve all eligibility points from the source.
 - When multiple eligibility points exist, return them as newline-separated plain text, one point per line.
@@ -1523,8 +1425,6 @@ Rules:
 - Do not invent applicationStartDate or applicationEndDate. Leave them empty when the source does not provide them.
 - "skills" and "education" must include specific items. Do not return only section headers like "Technical Skills" or "Education".
 - "responsibilities" should include concrete responsibility points when available.
-- "body" should contain a short markdown Job Overview from the source, preferably starting with "## About the role".
-- If the source has an Overview, About the role, Job Description, Role Description, or Summary section, map it to "body".
 - Never include field labels or placeholder text like "(optional)" in any value.
 - Include all available items for "skills", "education", and "responsibilities" (not just first 1-2 items).
 - When eligibility has multiple points, include all points in "eligibilityCriteria".
@@ -1533,8 +1433,6 @@ Template mapping priority:
   "Experience Required", "Eligibility Criteria", "Education", "Skills Required", "Roles & Responsibilities",
   "Working Days", "Job Timing",
   "Apply Link", "Application Start Date", "Application End Date", map them directly.
-- If input uses labels like "Job Overview", "Overview", "About the Role", or "Job Description",
-  map that content to "body".
 - "Skills Required" may be comma-separated; return as array.
 - "Education" may be plain text; return as single-item array when needed.
 NOTE:

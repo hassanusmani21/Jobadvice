@@ -3,7 +3,7 @@ title: "Software Engineer Trainee - Technical Graduate Apprentice (India UHR)"
 slug: "software-engineer-trainee-technical-graduate-apprentice-india-uhr-cisco"
 date: "2026-05-13"
 updatedAt: "2026-05-13"
-draft: true
+draft: false
 company: "Cisco"
 location: "Bangalore, Karnataka, India"
 workMode: "Hybrid"

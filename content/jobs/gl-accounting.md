@@ -1,5 +1,4 @@
 ---
-draft: true
 title: GL Accounting
 date: 2026-03-01
 company: Capgemini

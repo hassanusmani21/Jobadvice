@@ -3,7 +3,7 @@ title: "Cognizant Digital Nurture 5.0 (Java FSE Track 2027)"
 slug: "cognizant-digital-nurture-5-0-java-fse-track-2027-cognizant"
 date: "2026-05-18"
 updatedAt: "2026-05-18"
-draft: true
+draft: false
 company: "Cognizant"
 location: "India"
 workMode: ""
