@@ -1,0 +1,113 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import AdminMobileThemeLock from "../admin-mobile/AdminMobileThemeLock";
+import MobileAdminApp from "../admin-mobile/MobileAdminApp";
+import { isAdminContentWriteConfigured } from "@/lib/adminContentStore";
+import { getAllowedAdminSession } from "@/lib/adminSession";
+import { isAdminCollection, type AdminCollection } from "@/lib/adminMobile";
+
+type AdminPageProps = {
+  searchParams?: {
+    collection?: string | string[];
+    slug?: string | string[];
+  };
+};
+
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Admin",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
+const adminShellStyles = `
+  body:has([data-admin-mobile-root]) {
+    background:
+      radial-gradient(circle at top left, rgba(13, 148, 136, 0.18), transparent 28rem),
+      linear-gradient(180deg, #eef4f2 0%, #f7f8fb 42%, #eef2f7 100%);
+  }
+
+  body:has([data-admin-mobile-root]) .route-progress-indicator,
+  body:has([data-admin-mobile-root]) .site-grid > header,
+  body:has([data-admin-mobile-root]) .site-grid > footer,
+  body:has([data-admin-mobile-root]) .site-grid > .site-glow {
+    display: none !important;
+  }
+
+  body:has([data-admin-mobile-root]) .site-grid {
+    min-height: 100dvh;
+  }
+
+  body:has([data-admin-mobile-root]) .site-grid > main {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+`;
+
+const getSingleSearchParam = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] || "" : value || "";
+
+const buildAdminCallbackUrl = (collection: string, slug: string) => {
+  const params = new URLSearchParams();
+
+  if (isAdminCollection(collection)) {
+    params.set("collection", collection);
+  }
+
+  if (slug) {
+    params.set("slug", slug);
+  }
+
+  const query = params.toString();
+  return query ? `/admin?${query}` : "/admin";
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
+  const collectionValue = getSingleSearchParam(searchParams?.collection);
+  const initialCollection: AdminCollection = isAdminCollection(collectionValue)
+    ? collectionValue
+    : "jobs";
+  const initialSlug = getSingleSearchParam(searchParams?.slug).trim();
+  const session = await getAllowedAdminSession();
+
+  if (!session) {
+    redirect(
+      `/admin/login?callbackUrl=${encodeURIComponent(
+        buildAdminCallbackUrl(collectionValue, initialSlug),
+      )}`,
+    );
+  }
+
+  return (
+    <>
+      <AdminMobileThemeLock />
+      <style dangerouslySetInnerHTML={{ __html: adminShellStyles }} />
+      <div className="fixed right-4 top-4 z-50 flex flex-wrap justify-end gap-2">
+        <a
+          href="/admin/analytics"
+          className="inline-flex items-center justify-center rounded-full border border-blue-200 bg-blue-50/95 px-4 py-2.5 text-sm font-semibold text-blue-800 shadow-[0_20px_40px_-30px_rgba(37,99,235,0.45)] backdrop-blur transition hover:border-blue-300 hover:bg-blue-100"
+        >
+          Analytics
+        </a>
+        <a
+          href="/admin/alerts"
+          className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/92 px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-[0_20px_40px_-30px_rgba(15,23,42,0.45)] backdrop-blur transition hover:border-slate-300 hover:text-slate-950"
+        >
+          View alerts
+        </a>
+      </div>
+      <MobileAdminApp
+        adminEmail={session.user?.email || ""}
+        initialCollection={initialCollection}
+        initialSlug={initialSlug}
+        mobilePublishingReady={isAdminContentWriteConfigured()}
+        adminBasePath="/admin"
+      />
+    </>
+  );
+}
