@@ -1247,7 +1247,7 @@ const loadJobs = async (options: { includeDrafts?: boolean; includeExpired?: boo
     );
 };
 
-const readJobs = unstable_cache(async () => loadJobs(), ["jobs:public"], {
+const readJobs = unstable_cache(async () => loadJobs(), ["jobs:public:adsense-cleanup-v2"], {
   revalidate: 60 * 60,
 });
 
