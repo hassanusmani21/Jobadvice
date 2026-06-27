@@ -12,7 +12,7 @@ tags:
   - "Resume"
 isTrending: false
 author: "Hassan Usmani"
-coverImage: "/uploads/hassan-author-verified.jpeg"
+coverImage: "/uploads/chatgpt-image-jun-22-2026-03-53-50-pm-1782556256683.png"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-06-27"
