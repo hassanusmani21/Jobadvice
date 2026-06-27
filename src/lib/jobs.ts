@@ -1,6 +1,5 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { unstable_cache } from "next/cache";
 import { toIsoDateString } from "./dateParsing";
 import { toContentSlug } from "./slug";
 
@@ -1247,14 +1246,10 @@ const loadJobs = async (options: { includeDrafts?: boolean; includeExpired?: boo
     );
 };
 
-const readJobs = unstable_cache(async () => loadJobs(), ["jobs:public:adsense-cleanup-v2"], {
-  revalidate: 60 * 60,
-});
-
 const readJobsForAdmin = (options: { includeDrafts?: boolean; includeExpired?: boolean } = {}) =>
   loadJobs(options);
 
-export const getAllJobs = async () => readJobs();
+export const getAllJobs = async () => loadJobs();
 
 export const getAllJobsForAlerts = async () => loadJobs();
 
@@ -1262,12 +1257,12 @@ export const getAllJobsForAdmin = async () =>
   readJobsForAdmin({ includeDrafts: true, includeExpired: true });
 
 export const getLatestJobs = async (limit = 6) => {
-  const jobs = await readJobs();
+  const jobs = await loadJobs();
   return jobs.slice(0, limit);
 };
 
 export const getJobBySlug = async (slug: string) => {
-  const jobs = await readJobs();
+  const jobs = await loadJobs();
   return jobs.find((job) => job.slug === slug) ?? null;
 };
 
