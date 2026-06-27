@@ -1,4 +1,5 @@
 ---
+draft: true
 title: Web Development Roadmap 2026 With AI From Beginner to Job Ready Developer
 slug: web-development-roadmap-2026-with-ai
 summary: Complete 2026 web development roadmap using AI tools to learn faster

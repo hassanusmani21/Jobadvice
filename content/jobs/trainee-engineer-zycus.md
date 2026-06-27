@@ -3,7 +3,7 @@ title: "Trainee Engineer"
 slug: "trainee-engineer-zycus"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: false
+draft: true
 company: "Zycus"
 location: "Mumbai, Maharashtra, India"
 workMode: "Hybrid"

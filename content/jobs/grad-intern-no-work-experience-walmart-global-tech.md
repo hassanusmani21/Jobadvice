@@ -3,7 +3,7 @@ title: "Grad Intern - No Work Experience"
 slug: "grad-intern-no-work-experience-walmart-global-tech"
 date: "2026-05-13"
 updatedAt: "2026-05-13"
-draft: false
+draft: true
 company: "Walmart Global Tech"
 location: "Bangalore, Karnataka, India"
 workMode: "Hybrid"

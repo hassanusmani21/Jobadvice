@@ -3,7 +3,7 @@ title: "Developer (Full Stack Software Developer)"
 slug: "developer-full-stack-software-developer-exl"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: false
+draft: true
 company: "EXL"
 location: "India (Location may vary by role)"
 workMode: "Hybrid"

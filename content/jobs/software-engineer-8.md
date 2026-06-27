@@ -1,4 +1,5 @@
 ---
+draft: true
 title: Software Engineer
 date: 2026-03-17
 company: Hewlett Packard Enterprise (HPE)

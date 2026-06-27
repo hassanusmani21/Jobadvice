@@ -3,7 +3,7 @@ title: "Software Engineer Intern"
 slug: "software-engineer-intern-aidash"
 date: "2026-05-23"
 updatedAt: "2026-05-23"
-draft: false
+draft: true
 company: "AiDASH"
 location: "Bengaluru, India"
 workMode: "Hybrid"

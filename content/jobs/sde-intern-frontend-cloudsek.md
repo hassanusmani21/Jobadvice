@@ -3,7 +3,7 @@ title: "SDE Intern – Frontend"
 slug: "sde-intern-frontend-cloudsek"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: false
+draft: true
 company: "CloudSEK"
 location: "Bengaluru, Karnataka"
 workMode: "On-site"

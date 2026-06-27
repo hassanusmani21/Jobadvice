@@ -1,4 +1,5 @@
 ---
+draft: true
 title: Graduate Trainee
 date: 2026-03-16
 company: NTT DATA

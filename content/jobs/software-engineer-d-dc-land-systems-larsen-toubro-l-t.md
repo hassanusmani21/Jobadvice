@@ -3,7 +3,7 @@ title: "Software Engineer - D&DC Land Systems"
 slug: "software-engineer-d-dc-land-systems-larsen-toubro-l-t"
 date: "2026-05-18"
 updatedAt: "2026-05-18"
-draft: false
+draft: true
 company: "Larsen & Toubro (L&T)"
 location: "Mumbai, Maharashtra, India"
 workMode: "On-site"

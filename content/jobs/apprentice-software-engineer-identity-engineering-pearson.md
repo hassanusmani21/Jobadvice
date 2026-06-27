@@ -3,7 +3,7 @@ title: "Apprentice, Software Engineer (Identity Engineering)"
 slug: "apprentice-software-engineer-identity-engineering-pearson"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: false
+draft: true
 company: "Pearson"
 location: "Chennai, Hydrabad India"
 workMode: "On-site"

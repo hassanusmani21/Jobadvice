@@ -1,4 +1,5 @@
 ---
+draft: true
 title: "College Intern "
 date: 2026-02-28
 company: Hewlett Packard Enterprise (HPE)

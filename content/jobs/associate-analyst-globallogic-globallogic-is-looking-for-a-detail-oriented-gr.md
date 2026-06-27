@@ -3,7 +3,7 @@ title: "Associate Analyst"
 slug: "associate-analyst-globallogic-globallogic-is-looking-for-a-detail-oriented-gr"
 date: "2026-03-29"
 updatedAt: "2026-03-29"
-draft: false
+draft: true
 company: "GlobalLogic - GlobalLogic is looking for a detail-oriented gr"
 location: "India - Hyderabad"
 workMode: "On-site"

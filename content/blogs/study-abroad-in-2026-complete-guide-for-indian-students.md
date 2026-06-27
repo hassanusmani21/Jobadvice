@@ -1,4 +1,5 @@
 ---
+draft: true
 title: "Study Abroad in 2026: Complete Guide for Indian Students  "
 slug: study-abroad-2026-complete-guide-for-indian-students
 summary: Complete 2026 study abroad guide for Indian students covering top

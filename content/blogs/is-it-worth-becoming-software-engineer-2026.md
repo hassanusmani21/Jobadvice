@@ -1,7 +1,7 @@
 ---
 title: "Is It Worth Becoming a Software Engineer in 2026? Future, Salary & Job Stability Explained"
 slug: "is-it-worth-becoming-software-engineer-2026"
-summary: "Software engineering remains one of the most popular career choices, but with AI transforming the tech industry, many students are wondering if it’s still worth becoming a software engineer in 2026. Here’s everything you need to know about job stability, salaries, and future opportunities."
+summary: "A clear 2026 reality check on software engineering careers, covering AI pressure, salary expectations, job stability, and skills worth learning."
 topic: "Tech Careers"
 tags:
   - "Software Engineering"

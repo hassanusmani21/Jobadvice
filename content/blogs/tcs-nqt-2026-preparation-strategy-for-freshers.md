@@ -1,4 +1,5 @@
 ---
+draft: true
 title: How to Crack TCS NQT 2026 Complete Preparation Strategy for Freshers
 slug: tcs-nqt-2026-preparation-strategy-for-freshers
 summary: Complete guide to crack TCS NQT 2026 with exam pattern, coding strategy, interview tips, and a 3-month preparation plan for freshers.

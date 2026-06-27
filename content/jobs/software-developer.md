@@ -1,6 +1,7 @@
 ---
 title: Software Developer
 date: 2026-03-10
+draft: true
 company: Ericsson
 location: India
 workMode: Hybrid
@@ -46,3 +47,10 @@ jobTiming: Standard business hours (may require flexibility for different time z
 applyLink: https://jobs.ericsson.com/careers?domain=ericsson.com&hl=en&query=Software+Developer&start=0&location=India&pid=563121773993674&sort_by=relevance&filter_include_remote=1
 applicationStartDate: 2026-03-10
 ---
+Software Developer at Ericsson is listed as a source-checked opening for candidates who want to compare the role requirements before applying. The listed location is India, with hybrid work mode indicated. It is marked as a full-time opportunity. This page summarizes the role in plain language so job seekers can review the fit, prepare a focused resume, and then continue through the official application source.
+
+The strongest match will usually be a candidate who can show practical exposure to Spring Boot, Spring WebFlux, Java or Kotlin, Reactive Programming and Microservices Architecture.  Eligibility signals include Candidates with strong experience in Java/Kotlin backend.  Education signals in the listing include Bachelor’s Degree in Computer Engineering and Information Technology or equivalent.. If you are applying as a fresher or early-career candidate, connect these requirements with projects, coursework, internships, certifications, or previous work examples instead of sending a generic resume.
+
+The role responsibilities point toward work such as Design, develop and and maintain backend services using Spring Boot and WebFlux.. A useful resume should include one or two achievements that prove you can design. Add measurable details where possible, such as tools used, scale handled, bugs fixed, dashboards built, customers supported, or systems improved.
+
+Before applying, open the official apply link and confirm the company name, location, deadline, and eligibility.  Compensation is listed as Not Disclosed (As per company standards), but candidates should confirm the latest details with the employer before making a decision.  No fixed closing date is listed in the local record, so candidates should apply only after confirming the role is still open on the official source. Avoid sharing sensitive personal information outside the employer's official application flow, and do not pay any fee for interview selection or job confirmation.

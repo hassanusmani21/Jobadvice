@@ -3,7 +3,7 @@ title: "Web Developer"
 slug: "web-developer-mouser-electronics"
 date: "2026-05-18"
 updatedAt: "2026-05-18"
-draft: false
+draft: true
 company: "Mouser Electronics"
 location: "Bengaluru, Karnataka, India"
 workMode: "Hybrid"

@@ -25,7 +25,7 @@ ctaLabel: ""
 ctaLink: ""
 date: "2026-05-11"
 updatedAt: "2026-05-11"
-draft: false
+draft: true
 ---
 
 # Claude Chrome Extension Security Flaw Raises New Concerns Over AI Browser Safety in 2026

@@ -18,7 +18,7 @@ ctaLabel: ""
 ctaLink: ""
 date: "2026-04-24"
 updatedAt: "2026-04-24"
-draft: false
+draft: true
 ---
 
 # Google Workspace Intelligence: The AI That Knows Your Work Better Than You?

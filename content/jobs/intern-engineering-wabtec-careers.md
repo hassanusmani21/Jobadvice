@@ -3,7 +3,7 @@ title: "Intern-Engineering"
 slug: "intern-engineering-wabtec-careers"
 date: "2026-03-25"
 updatedAt: "2026-03-29"
-draft: false
+draft: true
 company: "Wabtec Careers"
 location: "Bengaluru, KA, India"
 workMode: "Remote"
@@ -56,3 +56,10 @@ applyLink: "https://careers.wabtec.com/job/intern-engineering-in-bengaluru-ka-in
 applicationStartDate: "2026-03-25"
 applicationEndDate: "2126-03-25"
 ---
+Intern-Engineering at Wabtec Careers is listed as a source-checked opening for candidates who want to compare the role requirements before applying. The listed location is Bengaluru, KA, India, with remote work mode indicated. This page summarizes the role in plain language so job seekers can review the fit, prepare a focused resume, and then continue through the official application source.
+
+The strongest match will usually be a candidate who can show practical exposure to Collaboration, Angular, Java, Python and AWS.  Eligibility signals include |-.  Education signals in the listing include Internship – Computer Science Engineering, The intern will be part of the products in Digital Solutions (Ex. Ports, Rail domain) and will be working as part of the engineering team delivering functional components as needed by the product management., Internship – Computer Science Engineering Overview The intern will be part of the products in Digital Solutions (Ex. and Ports, Rail domain) and will be working as part of the engineering team delivering functional components as needed by the product management.. If you are applying as a fresher or early-career candidate, connect these requirements with projects, coursework, internships, certifications, or previous work examples instead of sending a generic resume.
+
+The role responsibilities point toward work such as Wabtec is focused on performance that drives progress and unlocks our customers’ potential by delivering innovative and lasting transportation solutions that move and improve the world. We are lifelong learners obsessed with making things better to drive exceptional results. Wabtec has approximately 27K employees in facilities throughout the world. Visit our website to learn more!, Collaborate well with the team members and Develop code, write unit test and integration test cases.. A useful resume should include one or two achievements that prove you can wabtec is focused on performance that drives progress and unlocks our customers’ potential by delivering innovative and lasting transportation solutions that move and improve the world. we are lifelong learners obsessed with making things better to drive exceptional results. wabtec has approximately 27k employees in facilities throughout the world. visit our website to learn more!. Add measurable details where possible, such as tools used, scale handled, bugs fixed, dashboards built, customers supported, or systems improved.
+
+Before applying, open the official apply link and confirm the company name, location, deadline, and eligibility.  The employer has not published a clear salary range, so candidates should confirm compensation during the official process.  The listed application deadline is 2126-03-25; still, candidates should confirm the date on the official apply page because hiring pages can close early. Avoid sharing sensitive personal information outside the employer's official application flow, and do not pay any fee for interview selection or job confirmation.

@@ -17,7 +17,7 @@ coverImage: "/uploads/chatgpt-image-mar-28-2026-04-52-24-pm-1774696976140.png"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-03-27"
-updatedAt: "2026-03-28"
+updatedAt: "2026-06-27"
 draft: false
 ---
 
@@ -265,3 +265,11 @@ Those who rely only on basic skills may struggle.
 The real truth is simple:
 
 **Frontend jobs still exist — but only for developers who are willing to grow.**
+
+---
+
+## Sources and Further Reading
+
+- [MDN: Learn web development](https://developer.mozilla.org/en-US/docs/Learn)
+- [web.dev: Learn performance](https://web.dev/learn/performance)
+- [React documentation](https://react.dev/learn)

@@ -1,4 +1,5 @@
 ---
+draft: true
 title: Employee Stayed Loyal for 6 Years Without Promotion  Why Companies Lose
   Their Best Talent
 slug: "employee-loyal-6-years-without-promotion-resigns "

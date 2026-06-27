@@ -1,6 +1,7 @@
 ---
 title: Desktop Support Specialist
 date: 2026-03-16
+draft: true
 company: Astreya
 location: Remote, India
 workMode: Remote
@@ -72,3 +73,10 @@ jobTiming: " "
 applyLink: https://astreya.wd5.myworkdayjobs.com/en-US/life-at-astreya-opportunities/job/Desktop-Support-Specialist-I_R0014861
 applicationStartDate: 2026-03-16
 ---
+Desktop Support Specialist at Astreya is listed as a source-checked opening for candidates who want to compare the role requirements before applying. The listed location is Remote, India, with remote work mode indicated. It is marked as a full-time opportunity. This page summarizes the role in plain language so job seekers can review the fit, prepare a focused resume, and then continue through the official application source.
+
+The strongest match will usually be a candidate who can show practical exposure to Ability to work in a team with minimal supervision, Desktop Support, IT Support, Inventory Management and Asset Management.  Eligibility signals include >-.  Education signals in the listing include Bachelor’s Degree, Master’s Degree, High School Diploma and GED. If you are applying as a fresher or early-career candidate, connect these requirements with projects, coursework, internships, certifications, or previous work examples instead of sending a generic resume.
+
+The role responsibilities point toward work such as Assist in inventory and asset management activities, Support conference room preventive maintenance and e-recycling and Ensure audio and visual quality during meetings and troubleshoot issues. A useful resume should include one or two achievements that prove you can assist in inventory and asset management activities. Add measurable details where possible, such as tools used, scale handled, bugs fixed, dashboards built, customers supported, or systems improved.
+
+Before applying, open the official apply link and confirm the company name, location, deadline, and eligibility.  The employer has not published a clear salary range, so candidates should confirm compensation during the official process.  No fixed closing date is listed in the local record, so candidates should apply only after confirming the role is still open on the official source. Avoid sharing sensitive personal information outside the employer's official application flow, and do not pay any fee for interview selection or job confirmation.

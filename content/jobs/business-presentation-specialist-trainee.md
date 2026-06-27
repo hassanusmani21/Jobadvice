@@ -1,4 +1,5 @@
 ---
+draft: true
 title: "Business Presentation Specialist Trainee "
 date: 2026-03-12
 company: McKinsey & Company
