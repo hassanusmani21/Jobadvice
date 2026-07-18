@@ -12,11 +12,11 @@ tags:
   - "Career Advice"
 isTrending: false
 author: "Hassan Usmani"
-coverImage: "/uploads/chatgpt-image-jun-23-2026-09-32-30-am-1782556609290.png"
+coverImage: "/uploads/gemini-generated-image-e03117e03117e031-1784357028272.png"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-06-27"
-updatedAt: "2026-06-27"
+updatedAt: "2026-07-18"
 draft: false
 ---
 
