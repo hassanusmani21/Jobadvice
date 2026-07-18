@@ -12,11 +12,11 @@ tags:
   - "Resume"
 isTrending: false
 author: "Hassan Usmani"
-coverImage: "/uploads/chatgpt-image-jun-22-2026-03-53-50-pm-1782556256683.png"
+coverImage: "/uploads/gemini-generated-image-brmaf8brmaf8brma-1784356870503.png"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-06-27"
-updatedAt: "2026-06-27"
+updatedAt: "2026-07-18"
 draft: false
 ---
 
