@@ -334,7 +334,7 @@ const remoteLocationPattern =
 const multipleLocationPattern =
   /\b(various|multiple|campuses|centers|possible|locations?)\b/i;
 const genericSalaryPattern =
-  /\b(not disclosed|not mentioned|not specified|competitive|best in (the )?industry|as per company|company standards|company policy|company norms|optional)\b/i;
+  /\b(not disclosed|not mentioned|not specified|not officially disclosed|did not publish|exact salary not disclosed|competitive|best in (the )?industry|as per company|company standards|company policy|company norms|optional)\b/i;
 const estimatedSalaryPattern =
   /\b(estimated|estimate|expected|approx(?:\.|imately)?|around|reported|market level|typical|from listings|based on experience|based on skills|industry estimate)\b/i;
 
@@ -575,7 +575,7 @@ const resolveBaseSalary = (salary: string | undefined) => {
 
   const unitText = /per month|\/month|\bmonth\b/.test(cleanedSalary)
     ? "MONTH"
-    : /lpa|per year|\/year|\byear\b|annual/.test(cleanedSalary)
+    : /lpa|per annum|\bannum\b|p\.?\s*a\.?|per year|\/year|\byear\b|annual/.test(cleanedSalary)
       ? "YEAR"
       : null;
 
