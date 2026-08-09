@@ -46,6 +46,7 @@ type ResumeOptionalSections = {
   certifications: boolean;
   hobbies: boolean;
 };
+type SmartDraftTarget = "summary" | "skills" | "projects" | "experience";
 type ResumeBuilderState = {
   templateId: ResumeTemplateId;
   basics: ResumeBasics;
@@ -59,7 +60,7 @@ type ResumeBuilderState = {
   certifications: ResumeCertification[];
 };
 
-const storageKey = "jobadvice-resume-builder-v1";
+const storageKey = "jobadvice-resume-builder-v2";
 
 const templateOptions: Array<{
   id: ResumeTemplateId;
@@ -93,8 +94,43 @@ const templateOptions: Array<{
   },
 ];
 
+const smartDraftTargetOptions: Array<{
+  id: SmartDraftTarget;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: "summary",
+    label: "Summary",
+    description: "Make a short profile paragraph.",
+  },
+  {
+    id: "skills",
+    label: "Skills",
+    description: "Extract tools and strengths.",
+  },
+  {
+    id: "projects",
+    label: "Project details",
+    description: "Add bullets to the first project.",
+  },
+  {
+    id: "experience",
+    label: "Experience bullets",
+    description: "Add bullets to the first experience.",
+  },
+];
+
 const joinClasses = (...values: Array<string | false | null | undefined>) =>
   values.filter(Boolean).join(" ");
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 const createExperienceEntry = (id: string): ResumeExperience => ({
   id,
@@ -231,6 +267,352 @@ const splitSkills = (value: string) =>
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
 
+const stripBulletPrefix = (value: string) =>
+  value.replace(/^\s*(?:[-*•]|\d+[\).])\s*/, "").trim();
+
+const sentenceCase = (value: string) => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  return `${trimmedValue.charAt(0).toUpperCase()}${trimmedValue.slice(1)}`;
+};
+
+const titleCaseName = (value: string) =>
+  value
+    .trim()
+    .split(/\s+/)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}`)
+    .join(" ");
+
+const normalizeBullet = (value: string) => {
+  const cleanedValue = sentenceCase(stripBulletPrefix(value).replace(/\s+/g, " "));
+
+  if (!cleanedValue) {
+    return "";
+  }
+
+  return cleanedValue.replace(/[.;,\s]+$/, "");
+};
+
+const uniqueItems = (items: string[]) => {
+  const seen = new Set<string>();
+
+  return items.filter((item) => {
+    const key = item.toLowerCase();
+
+    if (!item || seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+};
+
+const resumeBulletStartWords = [
+  "Achieved",
+  "Administered",
+  "Automated",
+  "Built",
+  "Collaborated",
+  "Configured",
+  "Configuration",
+  "Created",
+  "Creating",
+  "Deployed",
+  "Designed",
+  "Developed",
+  "Handled",
+  "Implemented",
+  "Improved",
+  "Installed",
+  "Installation",
+  "Led",
+  "Maintained",
+  "Managed",
+  "Monitored",
+  "Optimized",
+  "Permission",
+  "Provided",
+  "Provide",
+  "Resolved",
+  "Tested",
+  "Troubleshot",
+  "User Administration",
+  "Worked",
+];
+
+const cleanResumeBullet = (value: string) =>
+  normalizeBullet(value)
+    .replace(/\s+([,.:;])/g, "$1")
+    .replace(/\s*&\s*/g, " and ")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\bEquipment's\b/gi, "equipment")
+    .replace(/\bCurrent\s+(?=(?:Creating|Configuration|Provide|Provided|Managed|Built|Developed)\b)/g, "")
+    .trim();
+
+const splitIntoBulletCandidates = (value: string) => {
+  const actionBoundaryPattern = new RegExp(
+    `\\s+(?=(?:${resumeBulletStartWords
+      .map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|")})\\b)`,
+    "g",
+  );
+  const boundaryMarkedText = value
+    .replace(/\r/g, "\n")
+    .replace(/[•●▪◦‣]/g, "\n")
+    .replace(/\s+(?:[-–—])\s+(?=[A-Z])/g, "\n")
+    .replace(/(?:^|\n)\s*(?:[-*]|\d+[\).])\s+/g, "\n")
+    .replace(/\s*;\s+/g, "\n")
+    .replace(/\s+(?=\d+[\).]\s+[A-Z])/g, "\n")
+    .replace(/,\s+(?=(?:built|created|developed|managed|improved|worked|used|learned|led|designed|implemented|collaborated|handled|made|configured|provided|resolved|installed)\b)/gi, "\n");
+
+  return boundaryMarkedText
+    .split(/\n|(?<=[.!?])\s+/)
+    .flatMap((part) => part.split(actionBoundaryPattern))
+    .map(cleanResumeBullet)
+    .filter((item) => item.length > 0);
+};
+
+const mergeSmallBulletFragments = (items: string[]) => {
+  const mergedItems: string[] = [];
+
+  items.forEach((item) => {
+    const previousItem = mergedItems[mergedItems.length - 1];
+    const shouldMergeWithPrevious =
+      previousItem &&
+      item.length < 28 &&
+      !resumeBulletStartWords.some((word) => item.toLowerCase().startsWith(word.toLowerCase()));
+
+    if (shouldMergeWithPrevious) {
+      mergedItems[mergedItems.length - 1] = `${previousItem}; ${item}`;
+      return;
+    }
+
+    mergedItems.push(item);
+  });
+
+  return mergedItems;
+};
+
+const paragraphToBullets = (value: string, limit = 5) => {
+  const candidateItems = mergeSmallBulletFragments(splitIntoBulletCandidates(value));
+
+  if (candidateItems.length > 1) {
+    return uniqueItems(candidateItems).slice(0, limit).join("\n");
+  }
+
+  const normalizedValue = value.replace(/\s+/g, " ").trim();
+  const sentenceParts = normalizedValue
+    .split(/(?<=[.!?])\s+|(?:\s+-\s+)|(?:\s+;\s+)/)
+    .map(cleanResumeBullet)
+    .filter((item) => item.length > 0);
+
+  if (sentenceParts.length > 1) {
+    return uniqueItems(sentenceParts).slice(0, limit).join("\n");
+  }
+
+  const commaParts = normalizedValue
+    .split(/\s*,\s*(?=\b(?:built|created|developed|managed|improved|worked|used|learned|led|designed|implemented|collaborated|handled|made)\b)/i)
+    .map(cleanResumeBullet)
+    .filter((item) => item.length > 0);
+
+  return uniqueItems(commaParts.length > 1 ? commaParts : candidateItems).slice(0, limit).join("\n");
+};
+
+const splitDraftStatements = (value: string) =>
+  uniqueItems(splitIntoBulletCandidates(value));
+
+const knownSkillTerms = [
+  "JavaScript",
+  "TypeScript",
+  "React",
+  "Next.js",
+  "Node.js",
+  "Express",
+  "Python",
+  "Java",
+  "C++",
+  "C",
+  "SQL",
+  "MySQL",
+  "PostgreSQL",
+  "MongoDB",
+  "HTML",
+  "CSS",
+  "Tailwind",
+  "Git",
+  "GitHub",
+  "Docker",
+  "AWS",
+  "Azure",
+  "REST API",
+  "Machine Learning",
+  "Data Analysis",
+  "Excel",
+  "Power BI",
+  "Communication",
+  "Problem Solving",
+  "Leadership",
+  "Teamwork",
+];
+
+const extractFirstMatch = (value: string, pattern: RegExp) => value.match(pattern)?.[1]?.trim() ?? "";
+
+const extractLabelValue = (lines: string[], labels: string[]) => {
+  const labelPattern = labels.map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  const pattern = new RegExp(`^(?:${labelPattern})\\s*[:\\-]\\s*(.+)$`, "i");
+
+  return lines.find((line) => pattern.test(line))?.match(pattern)?.[1]?.trim() ?? "";
+};
+
+const inferName = (text: string, lines: string[]) => {
+  const fromLabel = extractLabelValue(lines, ["name", "full name"]);
+  const fromIntro = extractFirstMatch(
+    text,
+    /\b(?:my name is|myself|this is|i am|i'm)\s+([a-z][a-z.'-]*(?:\s+[a-z][a-z.'-]*){0,3})(?:[.,]|\s+\b(?:and|from|with|a|an|the|student|developer|engineer|designer|analyst|intern|fresher)\b|$)/i,
+  );
+  const possibleName = fromLabel || fromIntro;
+
+  if (possibleName && !/\b(?:student|developer|engineer|designer|analyst|intern)\b/i.test(possibleName)) {
+    return titleCaseName(possibleName);
+  }
+
+  const possibleLine = lines.find((line) => {
+    const cleanedLine = line.replace(/[.,]/g, "").trim();
+    return /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3}$/.test(cleanedLine);
+  });
+
+  return possibleLine ? titleCaseName(possibleLine.replace(/[.,]/g, "")) : "";
+};
+
+const inferHeadline = (text: string) => {
+  const patterns = [
+    /\b(?:headline|title|target role|role)\s*[:\-]\s*([^.,\n]+)/i,
+    /\b(?:working as|work as|role is|position is|headline is)\s+(?:an?\s+)?([^.,\n]+)/i,
+    /\b(?:i am|i'm)\s+(?:an?\s+)?([^.,\n]*(?:developer|engineer|designer|analyst|intern|student|graduate)[^.,\n]*)/i,
+    /\b(?:aspiring|fresher)\s+([^.,\n]*(?:developer|engineer|designer|analyst)[^.,\n]*)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = extractFirstMatch(text, pattern);
+
+    if (match) {
+      return sentenceCase(match.replace(/\bwith\b.*$/i, "").trim());
+    }
+  }
+
+  return "";
+};
+
+const inferSkills = (text: string) => {
+  const fromKnownTerms = knownSkillTerms.filter((skill) =>
+    new RegExp(`\\b${skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(text),
+  );
+  const skillSegment = extractFirstMatch(
+    text,
+    /\bskills?(?:\s+are|\s+include|\s*:)?\s+([^.\n]+(?:[,/]\s*[^.\n]+){1,})/i,
+  );
+  const fromSegment = skillSegment
+    .split(/[,/|]/)
+    .map((item) => item.trim())
+    .filter((item) => item.length > 1 && item.length < 32);
+
+  return uniqueItems([...fromKnownTerms, ...fromSegment]).slice(0, 18);
+};
+
+const inferEducation = (lines: string[]) => {
+  const educationLine = lines.find((line) =>
+    /\b(?:b\.?tech|bachelor|master|m\.?tech|bca|mca|degree|university|college|school|cgpa|gpa)\b/i.test(line),
+  );
+
+  if (!educationLine) {
+    return null;
+  }
+
+  const year = educationLine.match(/\b(?:20\d{2})(?:\s*[-–]\s*(?:20\d{2}|present))?\b/i)?.[0] ?? "";
+  const degree =
+    extractFirstMatch(educationLine, /\b((?:B\.?Tech|BTech|Bachelor|Master|M\.?Tech|BCA|MCA)(?:\s+(?:in\s+)?[A-Za-z ]+?)?)(?:\s+from|\s+at|\s+with|[,.;]|$)/i) ||
+    extractFirstMatch(educationLine, /\b([^,.;|]*(?:Computer Science|Information Technology|Engineering)[^,.;|]*?)(?:\s+from|\s+at|\s+with|[,.;]|$)/i);
+  const school = extractFirstMatch(educationLine, /\b(?:at|from)\s+([^,.;]+?)(?:\s+with|\s+and|[,.;]|$)/i);
+  const cgpa = educationLine.match(/\b(?:CGPA|GPA)\s*:?\s*[\d.]+(?:\/\d+)?\b/i)?.[0] ?? "";
+
+  return {
+    id: "education-1",
+    degree: degree || educationLine.replace(year, "").trim(),
+    school,
+    year,
+    details: cgpa || educationLine,
+  };
+};
+
+const inferProject = (text: string, lines: string[]) => {
+  const projectLine = lines.find((line) => /\b(?:project|built|created|developed|made)\b/i.test(line));
+
+  if (!projectLine) {
+    return null;
+  }
+
+  const name =
+    extractFirstMatch(projectLine, /\b(?:project called|project named)\s+([^,.;\n]+)/i) ||
+    extractFirstMatch(projectLine, /\b(?:built|created|developed|made)\s+(?:an?\s+)?([^,.;\n]+?)(?:\s+using|\s+with|[,.;]|$)/i) ||
+    extractFirstMatch(projectLine, /\bproject\s*[:\-]\s*([^,.;\n]+)/i);
+  const link = text.match(/\b(?:https?:\/\/)?(?:github\.com|gitlab\.com|[\w-]+\.(?:dev|app|com|in))\/?[^\s,)]*/i)?.[0] ?? "";
+
+  return {
+    id: "project-1",
+    name: sentenceCase(name || "Key Project").replace(/\s+project$/i, " project"),
+    link,
+    details: paragraphToBullets(projectLine, 3),
+  };
+};
+
+const inferExperience = (text: string, lines: string[], fallbackRole: string) => {
+  const experienceLine = lines.find((line) =>
+    /\b(?:worked|working|experience|company|freelance|volunteer)\b/i.test(line) ||
+    /\b(?:intern|trainee)\b/i.test(line) && !/\bfresher\b/i.test(line),
+  );
+
+  if (!experienceLine) {
+    return null;
+  }
+
+  const role =
+    extractFirstMatch(experienceLine, /\b(?:as|role of)\s+(?:an?\s+)?([^,.;\n]+?)(?:\s+at\b|[,.;]|$)/i) ||
+    fallbackRole;
+  const company = extractFirstMatch(experienceLine, /\bat\s+([^,.;\n]+)/i);
+  const duration = text.match(/\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+20\d{2}\s*(?:[-–]\s*(?:Present|20\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\s+20\d{2}))?/i)?.[0] ?? "";
+
+  return {
+    id: "experience-1",
+    role: sentenceCase(role),
+    company,
+    location: "",
+    duration,
+    bullets: paragraphToBullets(experienceLine, 4),
+  };
+};
+
+const buildSummaryFromDraft = (headline: string, skills: string[], project?: ResumeProject | null) => {
+  const role = headline || "early-career candidate";
+  const skillText = skills.slice(0, 4).join(", ");
+
+  return `Motivated ${role}${skillText ? ` with skills in ${skillText}` : ""}. ${project?.name ? `Built practical project work including ${project.name}` : "Focused on practical learning, clear communication, and reliable execution"}. Ready to contribute to real-world teams with strong fundamentals and a growth mindset.`;
+};
+
+const looksLikeResumeText = (value: string) =>
+  /\b(?:student|fresher|developer|engineer|designer|analyst|intern|graduate|skills?|project|built|created|developed|worked|experience|college|university|degree|cgpa|gpa|certification)\b/i.test(value);
+
+const createSummaryFromLooseText = (value: string) => {
+  const bullets = paragraphToBullets(value, 3);
+  const cleanedText = bullets ? bullets.replace(/\n/g, " ") : value.replace(/\s+/g, " ").trim();
+
+  return cleanedText.length > 360 ? `${cleanedText.slice(0, 357).trim()}...` : cleanedText;
+};
+
 const makeDynamicId = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
@@ -355,6 +737,54 @@ function PreviewSection({
   );
 }
 
+function EditableText({
+  value,
+  onCommit,
+  placeholder,
+  className,
+  element = "span",
+  multiline = false,
+}: {
+  value: string;
+  onCommit: (value: string) => void;
+  placeholder: string;
+  className?: string;
+  element?: "span" | "p" | "h2" | "li";
+  multiline?: boolean;
+}) {
+  const Element = element;
+
+  return (
+    <Element
+      className={joinClasses(
+        "resume-inline-editable",
+        multiline && "resume-inline-editable-multiline",
+        className,
+      )}
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      tabIndex={0}
+      data-placeholder={placeholder}
+      aria-label={placeholder}
+      onBlur={(event) => onCommit(event.currentTarget.innerText.trim())}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.currentTarget.blur();
+          return;
+        }
+
+        if (!multiline && event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      }}
+    >
+      {value}
+    </Element>
+  );
+}
+
 type AccordionSectionId =
   | "personal"
   | "summary"
@@ -419,6 +849,11 @@ export default function ResumeBuilderClient() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [openSection, setOpenSection] = useState<AccordionSectionId | null>("personal");
   const [isPreviewModeOpen, setIsPreviewModeOpen] = useState(false);
+  const [quickDraftText, setQuickDraftText] = useState("");
+  const [quickDraftMessage, setQuickDraftMessage] = useState("");
+  const [quickDraftHighlights, setQuickDraftHighlights] = useState<string[]>([]);
+  const [smartDraftTarget, setSmartDraftTarget] = useState<SmartDraftTarget>("projects");
+  const printRootRef = useRef<HTMLDivElement | null>(null);
   const sectionRefs = useRef<Record<AccordionSectionId, HTMLElement | null>>({
     personal: null,
     summary: null,
@@ -505,6 +940,14 @@ export default function ResumeBuilderClient() {
     resume.basics.website.trim(),
     resume.basics.linkedin.trim(),
   ].filter((item) => item.length > 0);
+  const previewContactFieldOptions: Array<{ key: keyof ResumeBasics; value: string; placeholder: string }> = [
+    { key: "email", value: resume.basics.email.trim(), placeholder: "Email" },
+    { key: "phone", value: resume.basics.phone.trim(), placeholder: "Phone" },
+    { key: "location", value: resume.basics.location.trim(), placeholder: "Location" },
+    { key: "website", value: resume.basics.website.trim(), placeholder: "Website" },
+    { key: "linkedin", value: resume.basics.linkedin.trim(), placeholder: "LinkedIn" },
+  ];
+  const previewContactFields = previewContactFieldOptions.filter((item) => item.value.length > 0);
 
   const updateBasics = (key: keyof ResumeBasics, value: string) => {
     setResume((current) => ({
@@ -559,6 +1002,60 @@ export default function ResumeBuilderClient() {
       certifications: current.certifications.map((item) =>
         item.id === id ? { ...item, [key]: value } : item,
       ),
+    }));
+  };
+
+  const updateDelimitedItem = (
+    value: string,
+    itemIndex: number,
+    nextValue: string,
+    splitter: (value: string) => string[],
+    joiner = ", ",
+  ) => {
+    const items = splitter(value);
+    items[itemIndex] = nextValue.trim();
+    return uniqueItems(items.filter(Boolean)).join(joiner);
+  };
+
+  const updateProjectBullet = (id: string, bulletIndex: number, value: string) => {
+    setResume((current) => ({
+      ...current,
+      projects: current.projects.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              details: updateDelimitedItem(item.details, bulletIndex, value, splitMultilineText, "\n"),
+            }
+          : item,
+      ),
+    }));
+  };
+
+  const updateExperienceBullet = (id: string, bulletIndex: number, value: string) => {
+    setResume((current) => ({
+      ...current,
+      experience: current.experience.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              bullets: updateDelimitedItem(item.bullets, bulletIndex, value, splitMultilineText, "\n"),
+            }
+          : item,
+      ),
+    }));
+  };
+
+  const updateSkill = (index: number, value: string) => {
+    setResume((current) => ({
+      ...current,
+      skills: updateDelimitedItem(current.skills, index, value, splitSkills),
+    }));
+  };
+
+  const updateHobby = (index: number, value: string) => {
+    setResume((current) => ({
+      ...current,
+      hobbies: updateDelimitedItem(current.hobbies, index, value, splitSkills),
     }));
   };
 
@@ -623,6 +1120,27 @@ export default function ResumeBuilderClient() {
     });
   };
 
+  const openAndScrollToSection = (id: AccordionSectionId) => {
+    setOpenSection(id);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const section = sectionRefs.current[id];
+
+        if (!section) {
+          return;
+        }
+
+        const topOffset = window.innerWidth >= 980 ? 112 : 84;
+        const rect = section.getBoundingClientRect();
+
+        window.scrollTo({
+          top: Math.max(window.scrollY + rect.top - topOffset, 0),
+          behavior: "smooth",
+        });
+      });
+    });
+  };
+
   const generateSummary = () => {
     const role = resume.basics.headline.trim() || "candidate";
     const skillPhrase = skillItems.slice(0, 4).join(", ");
@@ -641,6 +1159,377 @@ export default function ResumeBuilderClient() {
       summary: nextSummary,
     }));
   };
+
+  const createDraftFromText = () => {
+    const sourceText = quickDraftText.trim();
+
+    if (!sourceText) {
+      setQuickDraftMessage("Paste your background first, then create the draft.");
+      setQuickDraftHighlights([]);
+      return;
+    }
+
+    const lines = splitDraftStatements(sourceText);
+    const originalLines = splitMultilineText(sourceText);
+    const email = sourceText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? "";
+    const phone = sourceText.match(/(?:\+?\d[\d\s().-]{7,}\d)/)?.[0]?.trim() ?? "";
+    const linkedin = sourceText.match(/\b(?:https?:\/\/)?(?:www\.)?linkedin\.com\/[^\s,)]*/i)?.[0] ?? "";
+    const website =
+      sourceText.match(/\b(?:https?:\/\/)?(?!www\.linkedin\.com)(?!linkedin\.com)(?:github\.com|gitlab\.com|[\w-]+\.(?:dev|app|com|in))\/?[^\s,)]*/i)?.[0] ?? "";
+    const fullName = inferName(sourceText, [...originalLines, ...lines]);
+    const headline = inferHeadline(sourceText);
+    const skills = inferSkills(sourceText);
+    const education = inferEducation(lines);
+    const project = inferProject(sourceText, lines);
+    const experience = inferExperience(sourceText, lines, headline);
+    const hasExtractedResumeData = Boolean(
+      fullName ||
+        headline ||
+        email ||
+        phone ||
+        linkedin ||
+        website ||
+        skills.length > 0 ||
+        education ||
+        project ||
+        experience,
+    );
+    const canCreateLooseSummary = looksLikeResumeText(sourceText);
+    const summary = hasExtractedResumeData
+      ? buildSummaryFromDraft(headline, skills, project)
+      : canCreateLooseSummary
+        ? createSummaryFromLooseText(sourceText)
+        : "";
+
+    if (!hasExtractedResumeData && !summary) {
+      setQuickDraftMessage("I could not find resume details in this text. Paste details like name, role, skills, education, project, or experience.");
+      setQuickDraftHighlights([]);
+      return;
+    }
+
+    const changedSections: AccordionSectionId[] = [];
+
+    if (fullName || headline || email || phone || linkedin || website) {
+      changedSections.push("personal");
+    }
+    if (summary) {
+      changedSections.push("summary");
+    }
+    if (skills.length > 0) {
+      changedSections.push("skills");
+    }
+    if (education) {
+      changedSections.push("education");
+    }
+    if (project) {
+      changedSections.push("projects");
+    }
+    if (experience) {
+      changedSections.push("experience");
+    }
+
+    setResume((current) => ({
+      ...defaultResumeState,
+      templateId: current.templateId || "focus",
+      basics: {
+        fullName,
+        headline,
+        email,
+        phone,
+        location: "",
+        website,
+        linkedin,
+      },
+      summary,
+      skills: skills.join(", "),
+      hobbies: "",
+      education: education ? [education] : [createEducationEntry("education-1")],
+      projects: project ? [project] : [createProjectEntry("project-1")],
+      experience: experience ? [experience] : [createExperienceEntry("experience-1")],
+      certifications: [createCertificationEntry("certification-1")],
+      optionalSections: {
+        experience: Boolean(experience),
+        certifications: false,
+        hobbies: false,
+      },
+    }));
+    setQuickDraftHighlights(
+      uniqueItems([
+        fullName ? `Name: ${fullName}` : "",
+        headline ? `Headline: ${headline}` : "",
+        email ? `Email: ${email}` : "",
+        phone ? `Phone: ${phone}` : "",
+        linkedin ? "LinkedIn found" : "",
+        website ? "Website found" : "",
+        skills.length > 0 ? `${skills.length} skills` : "",
+        education ? `Education: ${education.degree || education.school || "found"}` : "",
+        project ? `Project: ${project.name}` : "",
+        experience ? `Experience: ${experience.role || "found"}` : "",
+        summary ? "Summary" : "",
+      ]),
+    );
+    setQuickDraftMessage(`Updated ${uniqueItems(changedSections).length} section${uniqueItems(changedSections).length === 1 ? "" : "s"}. Opened the first changed section below.`);
+    openAndScrollToSection(changedSections[0] ?? "summary");
+  };
+
+  const applyDraftToSelectedSection = () => {
+    const sourceText = quickDraftText.trim();
+
+    if (!sourceText) {
+      setQuickDraftMessage("Paste text first, choose the section, then apply it.");
+      setQuickDraftHighlights([]);
+      return;
+    }
+
+    const lines = splitDraftStatements(sourceText);
+    const bulletText = paragraphToBullets(sourceText, smartDraftTarget === "experience" ? 5 : 4);
+
+    if (smartDraftTarget === "summary") {
+      const summaryText = createSummaryFromLooseText(sourceText);
+
+      setResume((current) => ({
+        ...current,
+        summary: summaryText,
+      }));
+      setQuickDraftMessage("Updated Summary only.");
+      setQuickDraftHighlights(["Section: Summary", "Format: short paragraph"]);
+      openAndScrollToSection("summary");
+      return;
+    }
+
+    if (smartDraftTarget === "skills") {
+      const skills = inferSkills(sourceText);
+      const fallbackSkills = splitSkills(sourceText).filter((item) => item.length <= 32);
+      const nextSkills = uniqueItems(skills.length > 0 ? skills : fallbackSkills).slice(0, 18);
+
+      if (nextSkills.length === 0) {
+        setQuickDraftMessage("I could not find skills in this text. Try comma-separated skills like React, SQL, Communication.");
+        setQuickDraftHighlights([]);
+        return;
+      }
+
+      setResume((current) => ({
+        ...current,
+        skills: nextSkills.join(", "),
+      }));
+      setQuickDraftMessage("Updated Skills only.");
+      setQuickDraftHighlights([`Section: Skills`, `${nextSkills.length} skills`]);
+      openAndScrollToSection("skills");
+      return;
+    }
+
+    if (!bulletText) {
+      setQuickDraftMessage("I could not turn this into useful bullets. Paste 2-4 action/result sentences.");
+      setQuickDraftHighlights([]);
+      return;
+    }
+
+    if (smartDraftTarget === "projects") {
+      const inferredProject = inferProject(sourceText, lines);
+
+      setResume((current) => {
+        const firstProject = current.projects[0] ?? createProjectEntry("project-1");
+
+        return {
+          ...current,
+          projects: [
+            {
+              ...firstProject,
+              name: firstProject.name || inferredProject?.name || "Key Project",
+              link: firstProject.link || inferredProject?.link || "",
+              details: inferredProject?.details || bulletText,
+            },
+            ...current.projects.slice(1),
+          ],
+        };
+      });
+      setQuickDraftMessage("Updated Project details only.");
+      setQuickDraftHighlights(["Section: Projects", `${splitMultilineText(inferredProject?.details || bulletText).length} bullets`]);
+      openAndScrollToSection("projects");
+      return;
+    }
+
+    const inferredExperience = inferExperience(sourceText, lines, resume.basics.headline);
+
+    setResume((current) => {
+      const firstExperience = current.experience[0] ?? createExperienceEntry("experience-1");
+
+      return {
+        ...current,
+        optionalSections: {
+          ...current.optionalSections,
+          experience: true,
+        },
+        experience: [
+          {
+            ...firstExperience,
+            role: firstExperience.role || inferredExperience?.role || current.basics.headline || "Experience",
+            company: firstExperience.company || inferredExperience?.company || "",
+            location: firstExperience.location || inferredExperience?.location || "",
+            duration: firstExperience.duration || inferredExperience?.duration || "",
+            bullets: inferredExperience?.bullets || bulletText,
+          },
+          ...current.experience.slice(1),
+        ],
+      };
+    });
+    setQuickDraftMessage("Updated Experience bullets only.");
+    setQuickDraftHighlights(["Section: Experience", `${splitMultilineText(inferredExperience?.bullets || bulletText).length} bullets`]);
+    openAndScrollToSection("experience");
+  };
+
+  const exportPdf = async () => {
+    const printRoot = printRootRef.current;
+
+    if (!printRoot) {
+      window.print();
+      return;
+    }
+
+    const printFrame = document.createElement("iframe");
+    const stylesheetMarkup = Array.from(
+      document.querySelectorAll('link[rel="stylesheet"], style'),
+    )
+      .map((node) => node.outerHTML)
+      .join("\n");
+    const printDocumentTitle = escapeHtml(resume.basics.fullName.trim() || "Resume");
+    const cleanupPrintFrame = () => {
+      window.setTimeout(() => {
+        printFrame.remove();
+        setIsPreviewModeOpen(false);
+      }, 400);
+    };
+
+    printFrame.setAttribute("title", "Resume PDF export");
+    printFrame.style.position = "fixed";
+    printFrame.style.top = "0";
+    printFrame.style.left = "-10000px";
+    printFrame.style.width = "794px";
+    printFrame.style.height = "1123px";
+    printFrame.style.border = "0";
+    printFrame.style.pointerEvents = "none";
+
+    document.body.appendChild(printFrame);
+
+    const printDocument = printFrame.contentDocument;
+
+    if (!printDocument) {
+      printFrame.remove();
+      window.print();
+      return;
+    }
+
+    printDocument.open();
+    printDocument.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${printDocumentTitle} - PDF</title>
+    ${stylesheetMarkup}
+    <style>
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+
+      html,
+      body {
+        width: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      body {
+        font-family: "Inter", "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+        line-height: 1.45;
+      }
+
+      .resume-print-root,
+      .resume-preview-card,
+      .resume-preview-sheet {
+        display: block !important;
+        position: static !important;
+        inset: auto !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        box-shadow: none !important;
+      }
+
+      .resume-preview-toolbar,
+      .resume-preview-empty-body {
+        display: none !important;
+      }
+
+      .resume-inline-editable,
+      .resume-inline-editable:hover,
+      .resume-inline-editable:focus {
+        background: transparent !important;
+        box-shadow: none !important;
+        outline: 0 !important;
+      }
+
+      .resume-preview-header,
+      .resume-preview-section-title,
+      .resume-preview-entry-head {
+        break-after: avoid-page;
+        page-break-after: avoid;
+      }
+
+      .resume-preview-entry,
+      .resume-preview-list li {
+        break-inside: avoid-page;
+        page-break-inside: avoid;
+      }
+    </style>
+  </head>
+  <body>
+    ${printRoot.outerHTML}
+  </body>
+</html>`);
+    printDocument.close();
+
+    const printWindow = printFrame.contentWindow;
+
+    if (!printWindow) {
+      printFrame.remove();
+      window.print();
+      return;
+    }
+
+    printWindow.addEventListener("afterprint", cleanupPrintFrame, { once: true });
+    window.setTimeout(cleanupPrintFrame, 60_000);
+
+    await new Promise((resolve) => window.setTimeout(resolve, 700));
+    printWindow.focus();
+    printWindow.print();
+  };
+
+  useEffect(() => {
+    const closePreviewAfterPrint = () => {
+      setIsPreviewModeOpen(false);
+    };
+
+    window.addEventListener("afterprint", closePreviewAfterPrint);
+
+    return () => {
+      window.removeEventListener("afterprint", closePreviewAfterPrint);
+    };
+  }, []);
 
   const isStructuredTemplate = resume.templateId === "structured";
   const isClassicTemplate = resume.templateId === "classic";
@@ -707,8 +1596,24 @@ export default function ResumeBuilderClient() {
       >
         {hasPreviewIdentity ? (
           <div>
-            {previewName ? <h2 className="resume-preview-name">{previewName}</h2> : null}
-            {previewHeadline ? <p className="resume-preview-headline">{previewHeadline}</p> : null}
+            {previewName ? (
+              <EditableText
+                element="h2"
+                className="resume-preview-name"
+                value={previewName}
+                placeholder="Full name"
+                onCommit={(value) => updateBasics("fullName", value)}
+              />
+            ) : null}
+            {previewHeadline ? (
+              <EditableText
+                element="p"
+                className="resume-preview-headline"
+                value={previewHeadline}
+                placeholder="Headline"
+                onCommit={(value) => updateBasics("headline", value)}
+              />
+            ) : null}
           </div>
         ) : (
           <div className="resume-preview-empty-hero">
@@ -716,10 +1621,15 @@ export default function ResumeBuilderClient() {
             <p className="resume-preview-empty-copy">Your resume updates live as you type.</p>
           </div>
         )}
-        {previewContactLines.length > 0 ? (
+        {previewContactFields.length > 0 ? (
           <div className="resume-preview-contact">
-            {previewContactLines.map((item) => (
-              <span key={item}>{item}</span>
+            {previewContactFields.map((item) => (
+              <EditableText
+                key={item.key}
+                value={item.value}
+                placeholder={item.placeholder}
+                onCommit={(value) => updateBasics(item.key, value)}
+              />
             ))}
           </div>
         ) : null}
@@ -752,7 +1662,17 @@ export default function ResumeBuilderClient() {
                     isStructuredTemplate && "resume-preview-copy-structured",
                   )}
                 >
-                  {resume.summary.trim()}
+                  <EditableText
+                    value={resume.summary.trim()}
+                    placeholder="Summary"
+                    multiline
+                    onCommit={(value) =>
+                      setResume((current) => ({
+                        ...current,
+                        summary: value,
+                      }))
+                    }
+                  />
                 </p>
               </PreviewSection>
             );
@@ -770,21 +1690,36 @@ export default function ResumeBuilderClient() {
                   <div className="resume-preview-structured-table">
                     <div className="resume-preview-structured-row">
                       <span className="resume-preview-structured-label">Core</span>
-                      <span className="resume-preview-structured-value">{skillItems.join(" | ")}</span>
+                      <EditableText
+                        className="resume-preview-structured-value"
+                        value={skillItems.join(" | ")}
+                        placeholder="Skills"
+                        onCommit={(value) =>
+                          setResume((current) => ({
+                            ...current,
+                            skills: value
+                              .split(/[|,\n]/)
+                              .map((item) => item.trim())
+                              .filter(Boolean)
+                              .join(", "),
+                          }))
+                        }
+                      />
                     </div>
                   </div>
                 ) : (
                   <div className="resume-preview-skill-row">
-                    {skillItems.map((skill) => (
-                      <span
+                    {skillItems.map((skill, index) => (
+                      <EditableText
                         key={skill}
+                        value={skill}
+                        placeholder="Skill"
+                        onCommit={(value) => updateSkill(index, value)}
                         className={joinClasses(
                           "resume-preview-skill-pill",
                           isClassicTemplate && "resume-preview-skill-pill-classic",
                         )}
-                      >
-                        {skill}
-                      </span>
+                      />
                     ))}
                   </div>
                 )}
@@ -816,17 +1751,53 @@ export default function ResumeBuilderClient() {
                     >
                       <div className="resume-preview-entry-head">
                         <div>
-                          <p className="resume-preview-entry-title">{item.degree || "Degree"}</p>
+                          <EditableText
+                            element="p"
+                            className="resume-preview-entry-title"
+                            value={item.degree || "Degree"}
+                            placeholder="Degree"
+                            onCommit={(value) => updateEducation(item.id, "degree", value)}
+                          />
                           <p className="resume-preview-entry-subtitle">
                             {isStructuredTemplate
-                              ? item.school || "School / university"
-                              : [item.school, item.details].filter(Boolean).join(" • ")}
+                              ? (
+                                  <EditableText
+                                    value={item.school || "School / university"}
+                                    placeholder="School / university"
+                                    onCommit={(value) => updateEducation(item.id, "school", value)}
+                                  />
+                                )
+                              : (
+                                  <EditableText
+                                    value={[item.school, item.details].filter(Boolean).join(" • ")}
+                                    placeholder="School and details"
+                                    onCommit={(value) => {
+                                      const [school, ...details] = value.split("•").map((part) => part.trim());
+                                      updateEducation(item.id, "school", school || "");
+                                      updateEducation(item.id, "details", details.join(" • "));
+                                    }}
+                                  />
+                                )}
                           </p>
                         </div>
-                        {item.year ? <span className="resume-preview-entry-meta">{item.year}</span> : null}
+                        {item.year ? (
+                          <EditableText
+                            className="resume-preview-entry-meta"
+                            value={item.year}
+                            placeholder="Year"
+                            onCommit={(value) => updateEducation(item.id, "year", value)}
+                          />
+                        ) : null}
                       </div>
                       {isStructuredTemplate && item.details ? (
-                        <p className="resume-preview-copy resume-preview-copy-structured">{item.details}</p>
+                        <EditableText
+                          element="p"
+                          className="resume-preview-copy resume-preview-copy-structured"
+                          value={item.details}
+                          placeholder="Education details"
+                          multiline
+                          onCommit={(value) => updateEducation(item.id, "details", value)}
+                        />
                       ) : null}
                     </div>
                   ))}
@@ -859,13 +1830,34 @@ export default function ResumeBuilderClient() {
                     >
                       <div className="resume-preview-entry-head">
                         <div>
-                          <p className="resume-preview-entry-title">{item.name || "Project"}</p>
-                          {item.link ? <p className="resume-preview-entry-subtitle">{item.link}</p> : null}
+                          <EditableText
+                            element="p"
+                            className="resume-preview-entry-title"
+                            value={item.name || "Project"}
+                            placeholder="Project name"
+                            onCommit={(value) => updateProject(item.id, "name", value)}
+                          />
+                          {item.link ? (
+                            <EditableText
+                              element="p"
+                              className="resume-preview-entry-subtitle"
+                              value={item.link}
+                              placeholder="Project link"
+                              onCommit={(value) => updateProject(item.id, "link", value)}
+                            />
+                          ) : null}
                         </div>
                       </div>
                       <ul className="resume-preview-list">
-                        {splitMultilineText(item.details).map((bullet) => (
-                          <li key={bullet}>{bullet}</li>
+                        {splitMultilineText(item.details).map((bullet, index) => (
+                          <EditableText
+                            key={`${item.id}-${bullet}`}
+                            element="li"
+                            value={bullet}
+                            placeholder="Project bullet"
+                            multiline
+                            onCommit={(value) => updateProjectBullet(item.id, index, value)}
+                          />
                         ))}
                       </ul>
                     </div>
@@ -899,16 +1891,44 @@ export default function ResumeBuilderClient() {
                     >
                       <div className="resume-preview-entry-head">
                         <div>
-                          <p className="resume-preview-entry-title">{item.role || "Role"}</p>
-                          <p className="resume-preview-entry-subtitle">
-                            {[item.company, item.location].filter(Boolean).join(" • ")}
-                          </p>
+                          <EditableText
+                            element="p"
+                            className="resume-preview-entry-title"
+                            value={item.role || "Role"}
+                            placeholder="Role"
+                            onCommit={(value) => updateExperience(item.id, "role", value)}
+                          />
+                          <EditableText
+                            element="p"
+                            className="resume-preview-entry-subtitle"
+                            value={[item.company, item.location].filter(Boolean).join(" • ")}
+                            placeholder="Company and location"
+                            onCommit={(value) => {
+                              const [company, location] = value.split("•").map((part) => part.trim());
+                              updateExperience(item.id, "company", company || "");
+                              updateExperience(item.id, "location", location || "");
+                            }}
+                          />
                         </div>
-                        {item.duration ? <span className="resume-preview-entry-meta">{item.duration}</span> : null}
+                        {item.duration ? (
+                          <EditableText
+                            className="resume-preview-entry-meta"
+                            value={item.duration}
+                            placeholder="Duration"
+                            onCommit={(value) => updateExperience(item.id, "duration", value)}
+                          />
+                        ) : null}
                       </div>
                       <ul className="resume-preview-list">
-                        {splitMultilineText(item.bullets).map((bullet) => (
-                          <li key={bullet}>{bullet}</li>
+                        {splitMultilineText(item.bullets).map((bullet, index) => (
+                          <EditableText
+                            key={`${item.id}-${bullet}`}
+                            element="li"
+                            value={bullet}
+                            placeholder="Experience bullet"
+                            multiline
+                            onCommit={(value) => updateExperienceBullet(item.id, index, value)}
+                          />
                         ))}
                       </ul>
                     </div>
@@ -942,10 +1962,31 @@ export default function ResumeBuilderClient() {
                     >
                       <div className="resume-preview-entry-head">
                         <div>
-                          <p className="resume-preview-entry-title">{item.name || "Certification"}</p>
-                          {item.issuer ? <p className="resume-preview-entry-subtitle">{item.issuer}</p> : null}
+                          <EditableText
+                            element="p"
+                            className="resume-preview-entry-title"
+                            value={item.name || "Certification"}
+                            placeholder="Certification"
+                            onCommit={(value) => updateCertification(item.id, "name", value)}
+                          />
+                          {item.issuer ? (
+                            <EditableText
+                              element="p"
+                              className="resume-preview-entry-subtitle"
+                              value={item.issuer}
+                              placeholder="Issuer"
+                              onCommit={(value) => updateCertification(item.id, "issuer", value)}
+                            />
+                          ) : null}
                         </div>
-                        {item.year ? <span className="resume-preview-entry-meta">{item.year}</span> : null}
+                        {item.year ? (
+                          <EditableText
+                            className="resume-preview-entry-meta"
+                            value={item.year}
+                            placeholder="Year"
+                            onCommit={(value) => updateCertification(item.id, "year", value)}
+                          />
+                        ) : null}
                       </div>
                     </div>
                   ))}
@@ -963,16 +2004,17 @@ export default function ResumeBuilderClient() {
                 isFirst={firstVisibleSectionKey === sectionKey}
               >
                 <div className="resume-preview-skill-row">
-                  {hobbyItems.map((hobby) => (
-                    <span
+                  {hobbyItems.map((hobby, index) => (
+                    <EditableText
                       key={hobby}
+                      value={hobby}
+                      placeholder="Hobby"
+                      onCommit={(value) => updateHobby(index, value)}
                       className={joinClasses(
                         "resume-preview-skill-pill",
                         isClassicTemplate && "resume-preview-skill-pill-classic",
                       )}
-                    >
-                      {hobby}
-                    </span>
+                    />
                   ))}
                 </div>
               </PreviewSection>
@@ -991,9 +2033,9 @@ export default function ResumeBuilderClient() {
         <div className="resume-builder-hero-grid resume-builder-hero-grid-compact">
           <div className="resume-builder-hero-copy">
             <p className="jobs-directory-kicker">Resume Builder</p>
-            <h1 className="resume-builder-hero-title">Build your resume one section at a time.</h1>
+            <h1 className="resume-builder-hero-title">Build your resume on the template.</h1>
             <p className="resume-builder-hero-text">
-              Keep it simple on the left. Watch it update live on the right.
+              Edit the form or click the live resume preview. Switch styles anytime.
             </p>
           </div>
           <ActionButton
@@ -1009,6 +2051,75 @@ export default function ResumeBuilderClient() {
 
       <section className="resume-builder-shell">
         <div className="resume-builder-editor">
+          <section className="resume-smart-draft card-surface">
+            <div className="resume-smart-draft-head">
+              <div>
+                <p className="resume-template-switch-label">Smart Draft</p>
+                <h2 className="resume-smart-draft-title">Paste your story and let the builder fill the first draft.</h2>
+              </div>
+              <p className="resume-smart-draft-copy">
+                Works in your browser: paste a rough intro, LinkedIn bio, or project notes.
+              </p>
+            </div>
+            <Field label="Rough resume text">
+              <textarea
+                className="form-control resume-builder-control resume-builder-textarea resume-smart-draft-textarea"
+                value={quickDraftText}
+                onChange={(event) => {
+                  setQuickDraftText(event.target.value);
+                  setQuickDraftMessage("");
+                  setQuickDraftHighlights([]);
+                }}
+                placeholder="Example: My name is Riya Sharma. I am a frontend developer fresher with React, JavaScript and SQL. I built a job tracker project using Next.js..."
+              />
+            </Field>
+            <div className="resume-smart-draft-target">
+              <p className="resume-smart-draft-target-label">Apply pasted text to</p>
+              <div className="resume-smart-draft-target-grid">
+                {smartDraftTargetOptions.map((target) => (
+                  <button
+                    key={target.id}
+                    type="button"
+                    className={joinClasses(
+                      "resume-smart-draft-target-button",
+                      smartDraftTarget === target.id && "resume-smart-draft-target-button-active",
+                    )}
+                    onClick={() => setSmartDraftTarget(target.id)}
+                  >
+                    <span>{target.label}</span>
+                    <small>{target.description}</small>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="resume-smart-draft-actions">
+              <ActionButton
+                variant="primary"
+                buttonType="button"
+                onClick={createDraftFromText}
+                className="sm:w-auto"
+              >
+                Replace Resume With Draft
+              </ActionButton>
+              <ActionButton
+                variant="secondary"
+                buttonType="button"
+                onClick={applyDraftToSelectedSection}
+                className="sm:w-auto"
+              >
+                Apply To Selected Section
+              </ActionButton>
+            </div>
+            {quickDraftMessage ? <p className="resume-smart-draft-message">{quickDraftMessage}</p> : null}
+            {quickDraftHighlights.length > 0 ? (
+              <div className="resume-smart-draft-detected" aria-label="Detected resume details">
+                {quickDraftHighlights.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
+              </div>
+            ) : null}
+          </section>
+
           <div className="resume-accordion-list">
             <AccordionSection
               id="personal"
@@ -1027,7 +2138,7 @@ export default function ResumeBuilderClient() {
                       <p className="resume-template-panel-title">Choose your resume template</p>
                     </div>
                     <p className="resume-template-panel-copy">
-                      ATS-friendly, clean, and fresher-focused layouts.
+                      Switch between ATS-safe, modern, projects-first, and structured resume styles anytime. Your content stays intact.
                     </p>
                   </div>
                   <div className="resume-template-switch">
@@ -1127,6 +2238,19 @@ export default function ResumeBuilderClient() {
                   className="job-card-action-button sm:w-auto"
                 >
                   Generate Summary
+                </ActionButton>
+                <ActionButton
+                  variant="secondary"
+                  buttonType="button"
+                  onClick={() =>
+                    setResume((current) => ({
+                      ...current,
+                      summary: paragraphToBullets(current.summary, 3).replace(/\n/g, " "),
+                    }))
+                  }
+                  className="job-card-action-button sm:w-auto"
+                >
+                  Tighten Text
                 </ActionButton>
               </div>
               <Field label="Summary">
@@ -1276,6 +2400,15 @@ export default function ResumeBuilderClient() {
                         placeholder="What you built and the impact."
                       />
                     </Field>
+                    <div className="resume-inline-actions">
+                      <button
+                        type="button"
+                        className="resume-inline-action"
+                        onClick={() => updateProject(item.id, "details", paragraphToBullets(item.details, 4))}
+                      >
+                        Make Bullets
+                      </button>
+                    </div>
                   </div>
                 ))}
                 <ActionButton
@@ -1368,6 +2501,15 @@ export default function ResumeBuilderClient() {
                         placeholder="Use one bullet per line."
                       />
                     </Field>
+                    <div className="resume-inline-actions">
+                      <button
+                        type="button"
+                        className="resume-inline-action"
+                        onClick={() => updateExperience(item.id, "bullets", paragraphToBullets(item.bullets, 5))}
+                      >
+                        Make Bullets
+                      </button>
+                    </div>
                   </div>
                 ))}
                 <ActionButton
@@ -1508,7 +2650,7 @@ export default function ResumeBuilderClient() {
               <ActionButton
                 variant="primary"
                 buttonType="button"
-                onClick={() => window.print()}
+                onClick={exportPdf}
                 className="sm:w-auto"
               >
                 Export PDF
@@ -1529,14 +2671,27 @@ export default function ResumeBuilderClient() {
           <div className="resume-builder-sticky">
             <div className={joinClasses("resume-preview-card", `resume-preview-${resume.templateId}`)}>
               <div className="resume-preview-toolbar">
-                <span className="resume-preview-toolbar-pill">{siteName} Resume</span>
-                <span className="resume-preview-toolbar-note">{currentTemplate?.label}</span>
+                <div className="resume-preview-toolbar-main">
+                  <span className="resume-preview-toolbar-pill">{siteName} Resume</span>
+                  <span className="resume-preview-toolbar-note">{currentTemplate?.label}</span>
+                </div>
+                <div className="resume-direct-edit-demo" aria-hidden="true">
+                  <span className="resume-direct-edit-old">Aarav Sharma</span>
+                  <span className="resume-direct-edit-name">Hassan Usmani</span>
+                  <span className="resume-direct-edit-caret" />
+                </div>
               </div>
               {previewSheet}
             </div>
           </div>
         </aside>
       </section>
+
+      <div ref={printRootRef} className="resume-print-root" aria-hidden="true">
+        <div className={joinClasses("resume-preview-card", "resume-preview-print-card", `resume-preview-${resume.templateId}`)}>
+          {previewSheet}
+        </div>
+      </div>
 
       {isPreviewModeOpen ? (
         <div className="resume-preview-modal" role="dialog" aria-modal="true" aria-label="PDF preview">
@@ -1552,7 +2707,7 @@ export default function ResumeBuilderClient() {
               <ActionButton
                 variant="primary"
                 buttonType="button"
-                onClick={() => window.print()}
+                onClick={exportPdf}
                 className="sm:w-auto"
               >
                 Export PDF
