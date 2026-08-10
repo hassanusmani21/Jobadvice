@@ -1019,11 +1019,9 @@ export default function ResumeBuilderClient() {
     resume.basics.website.trim(),
     resume.basics.location.trim(),
   ].filter((item) => item.length > 0);
-  const previewContactFieldOptions: Array<{
+  const previewContactFieldSources: Array<{
     key: keyof ResumeBasics;
     value: string;
-    label: string;
-    href: string;
     placeholder: string;
   }> = [
     { key: "phone", value: resume.basics.phone.trim(), placeholder: "Phone" },
@@ -1032,7 +1030,8 @@ export default function ResumeBuilderClient() {
     { key: "github", value: resume.basics.github.trim(), placeholder: "GitHub" },
     { key: "website", value: resume.basics.website.trim(), placeholder: "Portfolio" },
     { key: "location", value: resume.basics.location.trim(), placeholder: "Location" },
-  ].map((item) => ({
+  ];
+  const previewContactFieldOptions = previewContactFieldSources.map((item) => ({
     ...item,
     label: createContactLabel(item.key, item.value),
     href: createContactHref(item.key, item.value),
