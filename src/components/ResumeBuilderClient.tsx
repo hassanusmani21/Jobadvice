@@ -1590,6 +1590,8 @@ export default function ResumeBuilderClient() {
       }
 
       .resume-preview-sheet {
+        -webkit-box-decoration-break: clone !important;
+        box-decoration-break: clone !important;
         box-sizing: border-box !important;
         min-height: 297mm !important;
         padding: 12mm !important;
