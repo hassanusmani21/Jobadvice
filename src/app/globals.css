@@ -3750,116 +3750,90 @@ html[data-theme="dark"] .toast-muted .toast-icon-shell {
   font-weight: 600;
 }
 
-.resume-direct-edit-demo {
+.resume-preview-edit-controls {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 0.42rem;
-  max-width: min(100%, 14.75rem);
+  justify-content: flex-end;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.resume-preview-edit-hint {
+  max-width: 12rem;
   overflow: hidden;
-  border: 1px solid rgba(147, 197, 253, 0.22);
-  border-radius: 9999px;
-  background:
-    linear-gradient(135deg, rgba(30, 41, 59, 0.72), rgba(37, 99, 235, 0.18));
-  padding: 0.35rem 0.58rem;
-  color: #dbeafe;
-  font-size: 0.7rem;
-  font-weight: 800;
-  line-height: 1;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: right;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.resume-direct-edit-old {
-  position: relative;
-  color: #94a3b8;
-  opacity: 0.86;
+.resume-direct-edit-toggle {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  border: 1px solid rgba(45, 212, 191, 0.24);
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.48);
+  padding: 0.42rem 0.66rem;
+  color: #ccfbf1;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
 }
 
-.resume-direct-edit-old::after {
-  content: "";
-  position: absolute;
-  left: -0.08rem;
-  right: -0.08rem;
-  top: 50%;
-  height: 1px;
-  background: #93c5fd;
-  transform-origin: left;
-  animation: resumeEditStrike 3.8s ease-in-out infinite;
+.resume-direct-edit-toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(45, 212, 191, 0.42);
+  background: rgba(15, 23, 42, 0.66);
 }
 
-.resume-direct-edit-name {
-  display: inline-block;
-  max-width: 7.6rem;
-  overflow: hidden;
+.resume-direct-edit-toggle-active {
+  border-color: rgba(45, 212, 191, 0.72);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.24), rgba(37, 99, 235, 0.22));
   color: #ffffff;
-  vertical-align: bottom;
-  animation: resumeEditTyping 3.8s steps(13, end) infinite;
-}
-
-.resume-direct-edit-caret {
-  width: 1px;
-  height: 0.84rem;
-  background: #bfdbfe;
-  animation: resumeEditCaret 780ms steps(1, end) infinite;
-}
-
-@keyframes resumeEditTyping {
-  0%,
-  30% {
-    max-width: 0;
-  }
-  54%,
-  100% {
-    max-width: 7.6rem;
-  }
-}
-
-@keyframes resumeEditStrike {
-  0%,
-  18% {
-    transform: scaleX(0);
-  }
-  34%,
-  100% {
-    transform: scaleX(1);
-  }
-}
-
-@keyframes resumeEditCaret {
-  0%,
-  48% {
-    opacity: 1;
-  }
-  49%,
-  100% {
-    opacity: 0;
-  }
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
 }
 
 .resume-inline-editable {
   min-width: 0.35rem;
   border-radius: 0.28rem;
   outline: 0 solid transparent;
-  cursor: text;
+  cursor: inherit;
   transition:
     background-color 160ms ease,
     box-shadow 160ms ease,
     outline-color 160ms ease;
 }
 
-.resume-inline-editable:hover {
+.resume-inline-editable-active {
+  cursor: text;
+}
+
+.resume-inline-editable-active:hover {
   background: rgba(37, 99, 235, 0.06);
   box-shadow: 0 0 0 0.18rem rgba(37, 99, 235, 0.04);
 }
 
-.resume-inline-editable:focus {
+.resume-inline-editable-active:focus {
   background: rgba(239, 246, 255, 0.92);
   box-shadow:
     0 0 0 0.18rem rgba(37, 99, 235, 0.11),
     inset 0 -1px 0 rgba(37, 99, 235, 0.22);
 }
 
-.resume-inline-editable:empty::before {
+.resume-inline-editable-active:empty::before {
   content: attr(data-placeholder);
   color: #94a3b8;
 }
@@ -3946,38 +3920,11 @@ html[data-theme="dark"] .toast-muted .toast-icon-shell {
 }
 
 .resume-preview-name {
-  position: relative;
   margin: 0;
   font-size: 1.8rem;
   line-height: 0.98;
   font-weight: 800;
   letter-spacing: -0.05em;
-}
-
-.resume-preview-card:not(.resume-preview-print-card) .resume-preview-name::after {
-  content: "";
-  position: absolute;
-  inset: -0.18rem -0.22rem;
-  border: 1px solid rgba(37, 99, 235, 0.24);
-  border-radius: 0.42rem;
-  background: rgba(37, 99, 235, 0.035);
-  opacity: 0;
-  pointer-events: none;
-  animation: resumeEditableHint 5.2s ease-in-out infinite;
-}
-
-@keyframes resumeEditableHint {
-  0%,
-  22%,
-  100% {
-    opacity: 0;
-    transform: scaleX(0.98);
-  }
-  34%,
-  62% {
-    opacity: 1;
-    transform: scaleX(1);
-  }
 }
 
 .resume-preview-headline {
@@ -3991,6 +3938,7 @@ html[data-theme="dark"] .toast-muted .toast-icon-shell {
 .resume-preview-contact {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-start;
   gap: 0.3rem 0.75rem;
   width: 100%;
   color: #526171;
@@ -3998,8 +3946,20 @@ html[data-theme="dark"] .toast-muted .toast-icon-shell {
   line-height: 1.5;
 }
 
-.resume-preview-contact span {
+.resume-preview-contact-item {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: baseline;
   white-space: nowrap;
+}
+
+.resume-preview-contact-item a {
+  max-width: 100%;
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
 }
 
 .resume-preview-contact-placeholder {
@@ -4016,7 +3976,7 @@ html[data-theme="dark"] .toast-muted .toast-icon-shell {
   justify-content: center;
 }
 
-.resume-preview-header-structured .resume-preview-contact span:not(:last-child)::after {
+.resume-preview-header-structured .resume-preview-contact-item:not(:last-child)::after {
   content: "|";
   margin-left: 0.7rem;
   color: #94a3b8;
@@ -4128,6 +4088,13 @@ html[data-theme="dark"] .toast-muted .toast-icon-shell {
   line-height: 1.55;
 }
 
+.resume-preview-entry-link {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
 .resume-preview-entry-meta {
   flex: 0 0 auto;
   color: #64748b;
@@ -4228,7 +4195,7 @@ html[data-theme="dark"] .toast-muted .toast-icon-shell {
   font-size: 0.78rem;
 }
 
-.resume-preview-classic .resume-preview-contact span:not(:last-child)::after {
+.resume-preview-classic .resume-preview-contact-item:not(:last-child)::after {
   content: "|";
   margin-left: 0.62rem;
   color: #94a3b8;
@@ -6769,19 +6736,19 @@ html[data-theme="dark"] .resume-smart-draft-target-button-active span {
   color: #bfdbfe;
 }
 
-html[data-theme="dark"] .resume-inline-editable:hover {
+html[data-theme="dark"] .resume-inline-editable-active:hover {
   background: rgba(56, 189, 248, 0.1);
   box-shadow: 0 0 0 0.18rem rgba(56, 189, 248, 0.05);
 }
 
-html[data-theme="dark"] .resume-inline-editable:focus {
+html[data-theme="dark"] .resume-inline-editable-active:focus {
   background: rgba(15, 23, 42, 0.72);
   box-shadow:
     0 0 0 0.18rem rgba(56, 189, 248, 0.14),
     inset 0 -1px 0 rgba(56, 189, 248, 0.3);
 }
 
-html[data-theme="dark"] .resume-inline-editable:empty::before {
+html[data-theme="dark"] .resume-inline-editable-active:empty::before {
   color: #64748b;
 }
 
@@ -7023,17 +6990,24 @@ html[data-theme="dark"] .resume-preview-toolbar-note {
   color: #cbd5e1;
 }
 
-html[data-theme="dark"] .resume-direct-edit-demo {
-  border-color: rgba(56, 189, 248, 0.24);
-  background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.76), rgba(30, 64, 175, 0.24));
-}
-
-html[data-theme="dark"] .resume-direct-edit-old {
+html[data-theme="dark"] .resume-preview-edit-hint {
   color: #94a3b8;
 }
 
-html[data-theme="dark"] .resume-direct-edit-name {
+html[data-theme="dark"] .resume-direct-edit-toggle {
+  border-color: rgba(56, 189, 248, 0.24);
+  background: rgba(15, 23, 42, 0.72);
+  color: #bfdbfe;
+}
+
+html[data-theme="dark"] .resume-direct-edit-toggle:hover {
+  border-color: rgba(56, 189, 248, 0.42);
+  background: rgba(15, 23, 42, 0.92);
+}
+
+html[data-theme="dark"] .resume-direct-edit-toggle-active {
+  border-color: rgba(56, 189, 248, 0.62);
+  background: linear-gradient(135deg, rgba(14, 116, 144, 0.34), rgba(37, 99, 235, 0.24));
   color: #eff6ff;
 }
 
@@ -7736,7 +7710,15 @@ html[data-theme="dark"] .blog-hero-thumbnail:hover {
     font-size: 1.48rem;
   }
 
-  .resume-preview-contact span::after {
+  .resume-preview-contact {
+    gap: 0.22rem 0.55rem;
+  }
+
+  .resume-preview-contact-item {
+    white-space: normal;
+  }
+
+  .resume-preview-contact-item::after {
     display: none;
   }
 
@@ -7745,10 +7727,15 @@ html[data-theme="dark"] .blog-hero-thumbnail:hover {
     align-items: flex-start;
   }
 
-  .resume-direct-edit-demo {
+  .resume-preview-edit-controls {
     width: 100%;
     max-width: 100%;
-    justify-content: flex-start;
+    justify-content: space-between;
+  }
+
+  .resume-preview-edit-hint {
+    max-width: none;
+    text-align: left;
   }
 
   .resume-preview-header {

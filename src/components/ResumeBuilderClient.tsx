@@ -12,6 +12,7 @@ type ResumeBasics = {
   phone: string;
   location: string;
   website: string;
+  github: string;
   linkedin: string;
 };
 type ResumeExperience = {
@@ -172,6 +173,7 @@ const defaultResumeState: ResumeBuilderState = {
     phone: "",
     location: "",
     website: "",
+    github: "",
     linkedin: "",
   },
   summary: "",
@@ -189,21 +191,22 @@ const defaultResumeState: ResumeBuilderState = {
 };
 
 const starterResumeState: ResumeBuilderState = {
-  templateId: "focus",
+  templateId: "structured",
   basics: {
-    fullName: "Aarav Sharma",
-    headline: "Backend Developer Intern",
-    email: "aarav.sharma@mail.com",
-    phone: "+91 98765 43210",
-    location: "Bengaluru, India",
-    website: "aaravsharma.dev",
-    linkedin: "linkedin.com/in/aarav-sharma",
+    fullName: "Hassan Usmani",
+    headline: "Software Support Engineer | Frontend Developer",
+    email: "hassan.usmani@example.com",
+    phone: "+91 91234 56789",
+    location: "Mumbai Maharashtra",
+    website: "hassanusmani.example.dev",
+    github: "github.com/hassanusmani",
+    linkedin: "linkedin.com/in/hassan-usmani",
   },
   summary:
-    "Early-career backend developer focused on Node.js, APIs, databases, and automation. Built project-ready web tools, improved query performance in academic work, and enjoys turning complex requirements into clean implementation plans.",
+    "Support-focused technology professional with hands-on experience in troubleshooting, user support, frontend development, and practical web projects. Strong at resolving issues, documenting fixes, and building clean interfaces for real users.",
   skills:
-    "Node.js, Express.js, TypeScript, REST APIs, PostgreSQL, MongoDB, Git, Docker, SQL, Problem Solving, Communication, Debugging",
-  hobbies: "Open-source building, tech writing, mentoring juniors",
+    "Technical Support, Troubleshooting, Windows, Networking Basics, HTML, CSS, JavaScript, React, Next.js, Git, Customer Communication, Documentation, Problem Solving",
+  hobbies: "Tech blogging, portfolio building, learning new tools",
   optionalSections: {
     experience: true,
     certifications: true,
@@ -212,44 +215,44 @@ const starterResumeState: ResumeBuilderState = {
   experience: [
     {
       id: "experience-1",
-      role: "Backend Developer Intern",
-      company: "Campus Product Lab",
-      location: "Remote",
-      duration: "Jan 2026 - Present",
+      role: "Software Support Engineer",
+      company: "Example Tech Services",
+      location: "Mumbai",
+      duration: "Jan 2025 - Present",
       bullets:
-        "Built REST APIs in Node.js and Express for student project workflows.\nImproved SQL query response time by 28% through indexing and query cleanup.\nCollaborated with design and frontend contributors using Git-based review flow.",
+        "Resolved user-reported software and access issues through clear troubleshooting steps.\nDocumented recurring fixes to reduce repeat support requests and improve team handover.\nCoordinated with development teams to report bugs with screenshots, logs, and reproduction steps.",
     },
   ],
   education: [
     {
       id: "education-1",
-      degree: "B.Tech in Computer Science",
-      school: "SRM Institute of Science and Technology",
-      year: "2023 - 2027",
-      details: "CGPA: 8.7/10 • Relevant coursework: DBMS, Operating Systems, Data Structures",
+      degree: "Bachelor's Degree in Computer Applications",
+      school: "Example University",
+      year: "2021 - 2024",
+      details: "Relevant coursework: Web Development, Computer Networks, Database Management",
     },
   ],
   projects: [
     {
       id: "project-1",
-      name: "Job Tracker Dashboard",
-      link: "github.com/aarav/job-tracker",
+      name: "Support Ticket Dashboard",
+      link: "github.com/hassanusmani/support-ticket-dashboard",
       details:
-        "Created a full-stack dashboard to track applications, deadlines, and interview stages using Node.js, PostgreSQL, and React.",
+        "Created a responsive dashboard to track tickets, priorities, status updates, and support notes using React and reusable UI components.",
     },
     {
       id: "project-2",
-      name: "Resume Keyword Checker",
-      link: "resumecheck.aaravsharma.dev",
+      name: "Personal Portfolio Website",
+      link: "hassanusmani.example.dev",
       details:
-        "Built a keyword matching utility that compares resume text with job descriptions and highlights missing terms for ATS improvement.",
+        "Built a portfolio website with project sections, contact links, responsive layouts, and clean resume-style presentation.",
     },
   ],
   certifications: [
     {
       id: "certification-1",
-      name: "Node.js Developer Certification",
-      issuer: "Infosys Springboard",
+      name: "Frontend Development Certification",
+      issuer: "Example Learning Platform",
       year: "2025",
     },
   ],
@@ -310,6 +313,68 @@ const uniqueItems = (items: string[]) => {
     seen.add(key);
     return true;
   });
+};
+
+const normalizeWebsiteHref = (value: string) => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  if (/^(?:https?:|mailto:|tel:)/i.test(trimmedValue)) {
+    return trimmedValue;
+  }
+
+  return `https://${trimmedValue.replace(/^\/+/, "")}`;
+};
+
+const normalizePhoneHref = (value: string) => {
+  const phoneValue = value.replace(/[^\d+]/g, "");
+
+  return phoneValue.length >= 7 ? `tel:${phoneValue}` : "";
+};
+
+const createContactHref = (key: keyof ResumeBasics, value: string) => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return "";
+  }
+
+  if (key === "email") {
+    return `mailto:${trimmedValue}`;
+  }
+
+  if (key === "phone") {
+    return normalizePhoneHref(trimmedValue);
+  }
+
+  if (key === "location") {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(trimmedValue)}`;
+  }
+
+  if (key === "website" || key === "github" || key === "linkedin") {
+    return normalizeWebsiteHref(trimmedValue);
+  }
+
+  return "";
+};
+
+const createContactLabel = (key: keyof ResumeBasics, value: string) => {
+  if (key === "linkedin") {
+    return "LinkedIn";
+  }
+
+  if (key === "github") {
+    return "GitHub";
+  }
+
+  if (key === "website") {
+    return "Portfolio";
+  }
+
+  return value.trim();
 };
 
 const resumeBulletStartWords = [
@@ -649,6 +714,7 @@ const normalizeResumeState = (value: unknown): ResumeBuilderState => {
       phone: source.basics?.phone || "",
       location: source.basics?.location || "",
       website: source.basics?.website || "",
+      github: source.basics?.github || "",
       linkedin: source.basics?.linkedin || "",
     },
     summary: source.summary || "",
@@ -744,6 +810,7 @@ function EditableText({
   className,
   element = "span",
   multiline = false,
+  editable = true,
 }: {
   value: string;
   onCommit: (value: string) => void;
@@ -751,6 +818,7 @@ function EditableText({
   className?: string;
   element?: "span" | "p" | "h2" | "li";
   multiline?: boolean;
+  editable?: boolean;
 }) {
   const Element = element;
 
@@ -758,17 +826,26 @@ function EditableText({
     <Element
       className={joinClasses(
         "resume-inline-editable",
+        editable && "resume-inline-editable-active",
         multiline && "resume-inline-editable-multiline",
         className,
       )}
-      contentEditable
+      contentEditable={editable}
       suppressContentEditableWarning
-      role="textbox"
-      tabIndex={0}
+      role={editable ? "textbox" : undefined}
+      tabIndex={editable ? 0 : undefined}
       data-placeholder={placeholder}
-      aria-label={placeholder}
-      onBlur={(event) => onCommit(event.currentTarget.innerText.trim())}
+      aria-label={editable ? placeholder : undefined}
+      onBlur={(event) => {
+        if (editable) {
+          onCommit(event.currentTarget.innerText.trim());
+        }
+      }}
       onKeyDown={(event) => {
+        if (!editable) {
+          return;
+        }
+
         if (event.key === "Escape") {
           event.currentTarget.blur();
           return;
@@ -849,6 +926,7 @@ export default function ResumeBuilderClient() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [openSection, setOpenSection] = useState<AccordionSectionId | null>("personal");
   const [isPreviewModeOpen, setIsPreviewModeOpen] = useState(false);
+  const [isDirectEditMode, setIsDirectEditMode] = useState(false);
   const [quickDraftText, setQuickDraftText] = useState("");
   const [quickDraftMessage, setQuickDraftMessage] = useState("");
   const [quickDraftHighlights, setQuickDraftHighlights] = useState<string[]>([]);
@@ -934,19 +1012,31 @@ export default function ResumeBuilderClient() {
   );
 
   const previewContactLines = [
-    resume.basics.email.trim(),
     resume.basics.phone.trim(),
-    resume.basics.location.trim(),
-    resume.basics.website.trim(),
+    resume.basics.email.trim(),
     resume.basics.linkedin.trim(),
+    resume.basics.github.trim(),
+    resume.basics.website.trim(),
+    resume.basics.location.trim(),
   ].filter((item) => item.length > 0);
-  const previewContactFieldOptions: Array<{ key: keyof ResumeBasics; value: string; placeholder: string }> = [
-    { key: "email", value: resume.basics.email.trim(), placeholder: "Email" },
+  const previewContactFieldOptions: Array<{
+    key: keyof ResumeBasics;
+    value: string;
+    label: string;
+    href: string;
+    placeholder: string;
+  }> = [
     { key: "phone", value: resume.basics.phone.trim(), placeholder: "Phone" },
-    { key: "location", value: resume.basics.location.trim(), placeholder: "Location" },
-    { key: "website", value: resume.basics.website.trim(), placeholder: "Website" },
+    { key: "email", value: resume.basics.email.trim(), placeholder: "Email" },
     { key: "linkedin", value: resume.basics.linkedin.trim(), placeholder: "LinkedIn" },
-  ];
+    { key: "github", value: resume.basics.github.trim(), placeholder: "GitHub" },
+    { key: "website", value: resume.basics.website.trim(), placeholder: "Portfolio" },
+    { key: "location", value: resume.basics.location.trim(), placeholder: "Location" },
+  ].map((item) => ({
+    ...item,
+    label: createContactLabel(item.key, item.value),
+    href: createContactHref(item.key, item.value),
+  }));
   const previewContactFields = previewContactFieldOptions.filter((item) => item.value.length > 0);
 
   const updateBasics = (key: keyof ResumeBasics, value: string) => {
@@ -1174,8 +1264,9 @@ export default function ResumeBuilderClient() {
     const email = sourceText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? "";
     const phone = sourceText.match(/(?:\+?\d[\d\s().-]{7,}\d)/)?.[0]?.trim() ?? "";
     const linkedin = sourceText.match(/\b(?:https?:\/\/)?(?:www\.)?linkedin\.com\/[^\s,)]*/i)?.[0] ?? "";
+    const github = sourceText.match(/\b(?:https?:\/\/)?(?:www\.)?github\.com\/[^\s,)]*/i)?.[0] ?? "";
     const website =
-      sourceText.match(/\b(?:https?:\/\/)?(?!www\.linkedin\.com)(?!linkedin\.com)(?:github\.com|gitlab\.com|[\w-]+\.(?:dev|app|com|in))\/?[^\s,)]*/i)?.[0] ?? "";
+      sourceText.match(/\b(?:https?:\/\/)?(?!(?:www\.)?linkedin\.com)(?!(?:www\.)?github\.com)(?:gitlab\.com|[\w-]+\.(?:dev|app|com|in))\/?[^\s,)]*/i)?.[0] ?? "";
     const fullName = inferName(sourceText, [...originalLines, ...lines]);
     const headline = inferHeadline(sourceText);
     const skills = inferSkills(sourceText);
@@ -1188,6 +1279,7 @@ export default function ResumeBuilderClient() {
         email ||
         phone ||
         linkedin ||
+        github ||
         website ||
         skills.length > 0 ||
         education ||
@@ -1209,7 +1301,7 @@ export default function ResumeBuilderClient() {
 
     const changedSections: AccordionSectionId[] = [];
 
-    if (fullName || headline || email || phone || linkedin || website) {
+    if (fullName || headline || email || phone || linkedin || github || website) {
       changedSections.push("personal");
     }
     if (summary) {
@@ -1238,6 +1330,7 @@ export default function ResumeBuilderClient() {
         phone,
         location: "",
         website,
+        github,
         linkedin,
       },
       summary,
@@ -1260,6 +1353,7 @@ export default function ResumeBuilderClient() {
         email ? `Email: ${email}` : "",
         phone ? `Phone: ${phone}` : "",
         linkedin ? "LinkedIn found" : "",
+        github ? "GitHub found" : "",
         website ? "Website found" : "",
         skills.length > 0 ? `${skills.length} skills` : "",
         education ? `Education: ${education.degree || education.school || "found"}` : "",
@@ -1585,6 +1679,9 @@ export default function ResumeBuilderClient() {
     return false;
   };
   const firstVisibleSectionKey = previewSectionOrder.find((sectionKey) => isSectionVisible(sectionKey)) ?? null;
+  const PreviewEditableText = (props: Omit<Parameters<typeof EditableText>[0], "editable">) => (
+    <EditableText {...props} editable={isDirectEditMode} />
+  );
 
   const previewSheet = (
     <div className="resume-preview-sheet">
@@ -1597,7 +1694,7 @@ export default function ResumeBuilderClient() {
         {hasPreviewIdentity ? (
           <div>
             {previewName ? (
-              <EditableText
+              <PreviewEditableText
                 element="h2"
                 className="resume-preview-name"
                 value={previewName}
@@ -1606,7 +1703,7 @@ export default function ResumeBuilderClient() {
               />
             ) : null}
             {previewHeadline ? (
-              <EditableText
+              <PreviewEditableText
                 element="p"
                 className="resume-preview-headline"
                 value={previewHeadline}
@@ -1624,12 +1721,25 @@ export default function ResumeBuilderClient() {
         {previewContactFields.length > 0 ? (
           <div className="resume-preview-contact">
             {previewContactFields.map((item) => (
-              <EditableText
-                key={item.key}
-                value={item.value}
-                placeholder={item.placeholder}
-                onCommit={(value) => updateBasics(item.key, value)}
-              />
+              <span key={item.key} className="resume-preview-contact-item">
+                {isDirectEditMode ? (
+                  <PreviewEditableText
+                    value={item.value}
+                    placeholder={item.placeholder}
+                    onCommit={(value) => updateBasics(item.key, value)}
+                  />
+                ) : item.href ? (
+                  <a
+                    href={item.href}
+                    target={item.href.startsWith("http") ? "_blank" : undefined}
+                    rel={item.href.startsWith("http") ? "noreferrer" : undefined}
+                  >
+                    {item.label}
+                  </a>
+                ) : (
+                  item.label
+                )}
+              </span>
             ))}
           </div>
         ) : null}
@@ -1662,7 +1772,7 @@ export default function ResumeBuilderClient() {
                     isStructuredTemplate && "resume-preview-copy-structured",
                   )}
                 >
-                  <EditableText
+                  <PreviewEditableText
                     value={resume.summary.trim()}
                     placeholder="Summary"
                     multiline
@@ -1690,7 +1800,7 @@ export default function ResumeBuilderClient() {
                   <div className="resume-preview-structured-table">
                     <div className="resume-preview-structured-row">
                       <span className="resume-preview-structured-label">Core</span>
-                      <EditableText
+                      <PreviewEditableText
                         className="resume-preview-structured-value"
                         value={skillItems.join(" | ")}
                         placeholder="Skills"
@@ -1710,7 +1820,7 @@ export default function ResumeBuilderClient() {
                 ) : (
                   <div className="resume-preview-skill-row">
                     {skillItems.map((skill, index) => (
-                      <EditableText
+                      <PreviewEditableText
                         key={skill}
                         value={skill}
                         placeholder="Skill"
@@ -1751,7 +1861,7 @@ export default function ResumeBuilderClient() {
                     >
                       <div className="resume-preview-entry-head">
                         <div>
-                          <EditableText
+                          <PreviewEditableText
                             element="p"
                             className="resume-preview-entry-title"
                             value={item.degree || "Degree"}
@@ -1761,14 +1871,14 @@ export default function ResumeBuilderClient() {
                           <p className="resume-preview-entry-subtitle">
                             {isStructuredTemplate
                               ? (
-                                  <EditableText
+                                  <PreviewEditableText
                                     value={item.school || "School / university"}
                                     placeholder="School / university"
                                     onCommit={(value) => updateEducation(item.id, "school", value)}
                                   />
                                 )
                               : (
-                                  <EditableText
+                                  <PreviewEditableText
                                     value={[item.school, item.details].filter(Boolean).join(" • ")}
                                     placeholder="School and details"
                                     onCommit={(value) => {
@@ -1781,7 +1891,7 @@ export default function ResumeBuilderClient() {
                           </p>
                         </div>
                         {item.year ? (
-                          <EditableText
+                          <PreviewEditableText
                             className="resume-preview-entry-meta"
                             value={item.year}
                             placeholder="Year"
@@ -1790,7 +1900,7 @@ export default function ResumeBuilderClient() {
                         ) : null}
                       </div>
                       {isStructuredTemplate && item.details ? (
-                        <EditableText
+                        <PreviewEditableText
                           element="p"
                           className="resume-preview-copy resume-preview-copy-structured"
                           value={item.details}
@@ -1830,7 +1940,7 @@ export default function ResumeBuilderClient() {
                     >
                       <div className="resume-preview-entry-head">
                         <div>
-                          <EditableText
+                          <PreviewEditableText
                             element="p"
                             className="resume-preview-entry-title"
                             value={item.name || "Project"}
@@ -1838,19 +1948,30 @@ export default function ResumeBuilderClient() {
                             onCommit={(value) => updateProject(item.id, "name", value)}
                           />
                           {item.link ? (
-                            <EditableText
-                              element="p"
-                              className="resume-preview-entry-subtitle"
-                              value={item.link}
-                              placeholder="Project link"
-                              onCommit={(value) => updateProject(item.id, "link", value)}
-                            />
+                            <p className="resume-preview-entry-subtitle">
+                              {isDirectEditMode ? (
+                                <PreviewEditableText
+                                  value={item.link}
+                                  placeholder="Project link"
+                                  onCommit={(value) => updateProject(item.id, "link", value)}
+                                />
+                              ) : (
+                                <a
+                                  className="resume-preview-entry-link"
+                                  href={normalizeWebsiteHref(item.link)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  {item.link}
+                                </a>
+                              )}
+                            </p>
                           ) : null}
                         </div>
                       </div>
                       <ul className="resume-preview-list">
                         {splitMultilineText(item.details).map((bullet, index) => (
-                          <EditableText
+                          <PreviewEditableText
                             key={`${item.id}-${bullet}`}
                             element="li"
                             value={bullet}
@@ -1891,14 +2012,14 @@ export default function ResumeBuilderClient() {
                     >
                       <div className="resume-preview-entry-head">
                         <div>
-                          <EditableText
+                          <PreviewEditableText
                             element="p"
                             className="resume-preview-entry-title"
                             value={item.role || "Role"}
                             placeholder="Role"
                             onCommit={(value) => updateExperience(item.id, "role", value)}
                           />
-                          <EditableText
+                          <PreviewEditableText
                             element="p"
                             className="resume-preview-entry-subtitle"
                             value={[item.company, item.location].filter(Boolean).join(" • ")}
@@ -1911,7 +2032,7 @@ export default function ResumeBuilderClient() {
                           />
                         </div>
                         {item.duration ? (
-                          <EditableText
+                          <PreviewEditableText
                             className="resume-preview-entry-meta"
                             value={item.duration}
                             placeholder="Duration"
@@ -1921,7 +2042,7 @@ export default function ResumeBuilderClient() {
                       </div>
                       <ul className="resume-preview-list">
                         {splitMultilineText(item.bullets).map((bullet, index) => (
-                          <EditableText
+                          <PreviewEditableText
                             key={`${item.id}-${bullet}`}
                             element="li"
                             value={bullet}
@@ -1962,7 +2083,7 @@ export default function ResumeBuilderClient() {
                     >
                       <div className="resume-preview-entry-head">
                         <div>
-                          <EditableText
+                          <PreviewEditableText
                             element="p"
                             className="resume-preview-entry-title"
                             value={item.name || "Certification"}
@@ -1970,7 +2091,7 @@ export default function ResumeBuilderClient() {
                             onCommit={(value) => updateCertification(item.id, "name", value)}
                           />
                           {item.issuer ? (
-                            <EditableText
+                            <PreviewEditableText
                               element="p"
                               className="resume-preview-entry-subtitle"
                               value={item.issuer}
@@ -1980,7 +2101,7 @@ export default function ResumeBuilderClient() {
                           ) : null}
                         </div>
                         {item.year ? (
-                          <EditableText
+                          <PreviewEditableText
                             className="resume-preview-entry-meta"
                             value={item.year}
                             placeholder="Year"
@@ -2005,7 +2126,7 @@ export default function ResumeBuilderClient() {
               >
                 <div className="resume-preview-skill-row">
                   {hobbyItems.map((hobby, index) => (
-                    <EditableText
+                    <PreviewEditableText
                       key={hobby}
                       value={hobby}
                       placeholder="Hobby"
@@ -2208,6 +2329,14 @@ export default function ResumeBuilderClient() {
                     value={resume.basics.website}
                     onChange={(event) => updateBasics("website", event.target.value)}
                     placeholder="portfolio.dev"
+                  />
+                </Field>
+                <Field label="GitHub">
+                  <input
+                    className="form-control resume-builder-control"
+                    value={resume.basics.github}
+                    onChange={(event) => updateBasics("github", event.target.value)}
+                    placeholder="github.com/your-name"
                   />
                 </Field>
                 <Field label="LinkedIn">
@@ -2669,16 +2798,43 @@ export default function ResumeBuilderClient() {
 
         <aside className="resume-builder-preview-column">
           <div className="resume-builder-sticky">
-            <div className={joinClasses("resume-preview-card", `resume-preview-${resume.templateId}`)}>
+            <div
+              className={joinClasses(
+                "resume-preview-card",
+                isDirectEditMode && "resume-preview-card-direct-edit",
+                `resume-preview-${resume.templateId}`,
+              )}
+            >
               <div className="resume-preview-toolbar">
                 <div className="resume-preview-toolbar-main">
                   <span className="resume-preview-toolbar-pill">{siteName} Resume</span>
                   <span className="resume-preview-toolbar-note">{currentTemplate?.label}</span>
                 </div>
-                <div className="resume-direct-edit-demo" aria-hidden="true">
-                  <span className="resume-direct-edit-old">Aarav Sharma</span>
-                  <span className="resume-direct-edit-name">Hassan Usmani</span>
-                  <span className="resume-direct-edit-caret" />
+                <div className="resume-preview-edit-controls">
+                  <span className="resume-preview-edit-hint">
+                    {isDirectEditMode ? "Click resume text to edit" : "Prefer editing on the layout?"}
+                  </span>
+                  <button
+                    type="button"
+                    className={joinClasses(
+                      "resume-direct-edit-toggle",
+                      isDirectEditMode && "resume-direct-edit-toggle-active",
+                    )}
+                    onClick={() => setIsDirectEditMode((current) => !current)}
+                    aria-pressed={isDirectEditMode}
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 20 20" className="h-3.5 w-3.5">
+                      <path
+                        d="m5 13.7 1.1-3.9 6.8-6.8a1.5 1.5 0 0 1 2.1 2.1l-6.8 6.8L4.3 13l.7.7Zm6.9-9.6 2 2"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.6"
+                      />
+                    </svg>
+                    <span>{isDirectEditMode ? "Editing on" : "Edit preview"}</span>
+                  </button>
                 </div>
               </div>
               {previewSheet}
