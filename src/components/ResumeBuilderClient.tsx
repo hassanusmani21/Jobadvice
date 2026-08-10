@@ -1583,10 +1583,17 @@ export default function ResumeBuilderClient() {
         page-break-after: avoid;
       }
 
+      .resume-preview-section,
+      .resume-preview-stack,
       .resume-preview-entry,
+      .resume-preview-body {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+
       .resume-preview-list li {
-        break-inside: avoid-page;
-        page-break-inside: avoid;
+        break-inside: auto;
+        page-break-inside: auto;
       }
 
       .resume-preview-sheet {
@@ -1594,7 +1601,37 @@ export default function ResumeBuilderClient() {
         box-decoration-break: clone !important;
         box-sizing: border-box !important;
         min-height: 297mm !important;
-        padding: 12mm !important;
+        padding: 10mm !important;
+      }
+
+      .resume-preview-header {
+        gap: 0.5rem !important;
+        padding-bottom: 0.65rem !important;
+      }
+
+      .resume-preview-body {
+        gap: 0.62rem !important;
+        margin-top: 0.62rem !important;
+      }
+
+      .resume-preview-section {
+        gap: 0.4rem !important;
+      }
+
+      .resume-preview-stack {
+        gap: 0.48rem !important;
+      }
+
+      .resume-preview-copy {
+        line-height: 1.55 !important;
+      }
+
+      .resume-preview-list {
+        line-height: 1.48 !important;
+      }
+
+      .resume-preview-list li + li {
+        margin-top: 0.12rem !important;
       }
     </style>
   </head>
