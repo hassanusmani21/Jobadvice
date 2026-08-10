@@ -1518,12 +1518,12 @@ export default function ResumeBuilderClient() {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${printDocumentTitle} - PDF</title>
+    <title>${printDocumentTitle}</title>
     ${stylesheetMarkup}
     <style>
       @page {
         size: A4;
-        margin: 10mm;
+        margin: 0;
       }
 
       html,
@@ -1588,6 +1588,12 @@ export default function ResumeBuilderClient() {
         break-inside: avoid-page;
         page-break-inside: avoid;
       }
+
+      .resume-preview-sheet {
+        box-sizing: border-box !important;
+        min-height: 297mm !important;
+        padding: 12mm !important;
+      }
     </style>
   </head>
   <body>
@@ -1629,12 +1635,12 @@ export default function ResumeBuilderClient() {
   const currentTemplate = templateOptions.find((template) => template.id === resume.templateId);
   const previewSectionOrder =
     isStructuredTemplate
-      ? ["summary", "skills", "education", "projects", "experience", "certifications", "hobbies"]
+      ? ["summary", "skills", "experience", "projects", "education", "certifications", "hobbies"]
       : resume.templateId === "focus"
-        ? ["summary", "projects", "skills", "education", "experience", "certifications", "hobbies"]
+        ? ["summary", "skills", "projects", "education", "experience", "certifications", "hobbies"]
         : resume.templateId === "modern"
-          ? ["summary", "skills", "projects", "education", "experience", "certifications", "hobbies"]
-          : ["summary", "education", "skills", "projects", "experience", "certifications", "hobbies"];
+          ? ["summary", "skills", "experience", "projects", "education", "certifications", "hobbies"]
+          : ["summary", "skills", "experience", "projects", "education", "certifications", "hobbies"];
   const previewName = resume.basics.fullName.trim();
   const previewHeadline = resume.basics.headline.trim();
   const hasPreviewIdentity = Boolean(previewName || previewHeadline || previewContactLines.length > 0);

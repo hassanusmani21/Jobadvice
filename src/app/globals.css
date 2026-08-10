@@ -7793,7 +7793,7 @@ html[data-theme="dark"] .blog-hero-thumbnail:hover {
 
 @media print {
   @page {
-    margin: 12mm;
+    margin: 0;
   }
 
   html,
@@ -7859,6 +7859,12 @@ html[data-theme="dark"] .blog-hero-thumbnail:hover {
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  .resume-preview-sheet {
+    box-sizing: border-box !important;
+    min-height: 297mm !important;
+    padding: 12mm !important;
   }
 
   .resume-preview-header {
