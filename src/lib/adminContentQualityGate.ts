@@ -321,6 +321,7 @@ const validatePublishedJobQuality = (entry: AdminMobileJobEntry) => {
   const issues = validateCommonPublishQuality("jobs", entry, contentText, metrics);
   const applyUrl = safeParseUrl(entry.applyLink);
   const sourceUrl = safeParseUrl(entry.sourceUrl);
+  const missingDetailCount = getMissingJobDetailCount(entry);
 
   if (metrics.wordCount < 220) {
     issues.push(
@@ -330,6 +331,28 @@ const validatePublishedJobQuality = (entry: AdminMobileJobEntry) => {
 
   if (metrics.sentenceCount < 8) {
     issues.push("Job post needs more editorial context, not only fields or bullet points.");
+  }
+
+  if (missingDetailCount >= 3) {
+    issues.push(
+      "Job post is missing too many trust details. Add work mode, employment type, salary or note, experience, timing, and deadline where available.",
+    );
+  }
+
+  if (entry.education.length === 0) {
+    issues.push("Add education/qualification before publishing this job.");
+  }
+
+  if (entry.skills.length < 3) {
+    issues.push("Add at least 3 concrete skills for a useful job post.");
+  }
+
+  if (entry.responsibilities.length < 3) {
+    issues.push("Add at least 3 responsibilities so the job page has real publisher value.");
+  }
+
+  if (countWords(entry.eligibilityCriteria) < 18) {
+    issues.push("Eligibility criteria is too thin. Add who can apply and any important limits.");
   }
 
   if (!applyUrl || !["http:", "https:"].includes(applyUrl.protocol)) {
