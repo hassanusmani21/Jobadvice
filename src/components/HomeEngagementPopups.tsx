@@ -19,6 +19,7 @@ type HomeEngagementPopupsProps = {
 
 const JOB_ALERT_DELAY_MS = 3000;
 const RESUME_POPUP_DELAY_MS = 50000;
+const ENABLE_AUTOMATIC_REVIEW_POPUPS = false;
 const resumePromoStorageKey = RESUME_POPUP_DISMISSED_AT_KEY;
 
 export default function HomeEngagementPopups({
@@ -63,7 +64,7 @@ export default function HomeEngagementPopups({
 
     if (popupOverride === "job-alert" && supportsJobAlertPopup) {
       setShowJobAlertPopup(true);
-    } else if (supportsJobAlertPopup) {
+    } else if (supportsJobAlertPopup && ENABLE_AUTOMATIC_REVIEW_POPUPS) {
       const skipJobAlertPopup =
         hasCompletedJobAlertPopup() || hasActiveJobAlertPopupDismissal();
 
@@ -78,7 +79,7 @@ export default function HomeEngagementPopups({
       timerIds.push(window.setTimeout(() => {
         setResumeReady(true);
       }, 0));
-    } else if (supportsResumePromo) {
+    } else if (supportsResumePromo && ENABLE_AUTOMATIC_REVIEW_POPUPS) {
       timerIds.push(window.setTimeout(() => {
         setResumeReady(true);
       }, RESUME_POPUP_DELAY_MS));

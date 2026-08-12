@@ -2,9 +2,6 @@
   "name": "jobadvice",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": ">=18.18.0"
-  },
   "scripts": {
     "clean": "rm -rf .next out",
     "dev": "next dev",

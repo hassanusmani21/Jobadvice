@@ -22,6 +22,9 @@ export type AdminMobileJobEntry = {
   workingDays: string;
   jobTiming: string;
   applyLink: string;
+  sourceUrl: string;
+  sourceType: string;
+  sourceCheckedAt: string;
   applicationStartDate: string;
   applicationEndDate: string;
   body: string;
@@ -103,6 +106,9 @@ export const createEmptyJobEntry = (): AdminMobileJobEntry => {
     workingDays: "",
     jobTiming: "",
     applyLink: "",
+    sourceUrl: "",
+    sourceType: "Official employer careers page",
+    sourceCheckedAt: today,
     applicationStartDate: today,
     applicationEndDate: "",
     body: "",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ActionButton from "@/components/ActionButton";
+import AdSenseSiteScript from "@/components/AdSenseSiteScript";
 import BlogHeroMetaStrip from "@/components/BlogHeroMetaStrip";
 import Image from "next/image";
 import Link from "@/components/AppLink";
@@ -628,6 +629,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
 
   return (
     <div className="blog-detail-layout grid gap-6 lg:grid-cols-10">
+      <AdSenseSiteScript />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}

@@ -361,6 +361,9 @@ export type JobPost = {
   employmentType?: string;
   jobType?: string;
   applyLink?: string;
+  sourceUrl?: string;
+  sourceType?: string;
+  sourceCheckedAt?: string;
   publishedAt?: string;
   date: string;
   updatedAt: string;
@@ -368,20 +371,17 @@ export type JobPost = {
   applicationEndDate: string | null;
   applicationStatus: JobApplicationStatus;
   excerpt: string;
-  content: string;
-  contentWordCount: number;
 };
 
-const countWords = (value: string) =>
-  value
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
-
-export const hasUsablePublicJobContent = (job: JobPost) => {
+export const hasStrongPublicJobContent = (job: JobPost) => {
   const isUsefulValue = (value: string | undefined | null) => {
     const normalizedValue = String(value || "").trim().toLowerCase();
-    return Boolean(normalizedValue) && !/^(not specified|not disclosed|not mentioned|n\/a|na)$/i.test(normalizedValue);
+    return (
+      Boolean(normalizedValue) &&
+      !/^(not specified|not disclosed|not mentioned|n\/a|na|as per company standards|as per company schedule)$/i.test(
+        normalizedValue,
+      )
+    );
   };
 
   const hasExternalApplySource = (() => {
@@ -405,12 +405,25 @@ export const hasUsablePublicJobContent = (job: JobPost) => {
     isUsefulValue(job.title) &&
     isUsefulValue(job.company) &&
     isUsefulValue(job.location);
+  const missingTrustDetailCount = [
+    job.workMode,
+    job.employmentType || job.jobType,
+    job.salary,
+    job.experience || job.experienceYears || job.experienceLevel,
+    job.eligibilityCriteria,
+    job.workingDays,
+    job.jobTiming,
+    job.applicationEndDate,
+  ].filter((value) => !isUsefulValue(value)).length;
+  const hasDetailedTrustContext = missingTrustDetailCount < 3;
 
-  return hasExternalApplySource && hasUsefulRoleDetails && hasTrustBasics;
+  return (
+    hasExternalApplySource &&
+    hasUsefulRoleDetails &&
+    hasTrustBasics &&
+    hasDetailedTrustContext
+  );
 };
-
-export const hasStrongPublicJobContent = (job: JobPost) =>
-  hasUsablePublicJobContent(job) && job.contentWordCount >= 150;
 
 const stripWrappingQuotes = (value: string) => value.replace(/^['"]|['"]$/g, "").trim();
 
@@ -1100,6 +1113,9 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
   const workMode = normalizeWorkMode(data.workMode || data.mode || data.location);
   const salary = normalizeTextValue(data.salary);
   const applyLink = normalizeApplyLink(data.applyLink || data.applyUrl);
+  const sourceUrl = normalizeApplyLink(data.sourceUrl || data.source || data.applyLink || data.applyUrl);
+  const sourceType = normalizeTextValue(data.sourceType);
+  const sourceCheckedAt = toDateString(data.sourceCheckedAt || data.lastVerified);
   const eligibilityCriteriaFromFrontMatter = normalizeTextValue(
     data.eligibilityCriteria || data.eligibility || data.candidateProfile,
   );
@@ -1184,8 +1200,6 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
     skills.join(", ") ||
     education.join(", ");
   const updatedAt = explicitUpdatedAt || fileModifiedDate;
-  const normalizedContent = content.trim();
-  const contentWordCount = countWords(normalizedContent);
 
   return {
     slug,
@@ -1208,6 +1222,9 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
     ...(employmentType ? { employmentType } : {}),
     ...(jobType ? { jobType } : {}),
     ...(applyLink ? { applyLink } : {}),
+    ...(sourceUrl ? { sourceUrl } : {}),
+    ...(sourceType ? { sourceType } : {}),
+    ...(sourceCheckedAt ? { sourceCheckedAt } : {}),
     ...(publishedAt ? { publishedAt } : {}),
     date,
     updatedAt,
@@ -1215,8 +1232,6 @@ const loadJobFromFile = async (fileName: string): Promise<JobPost | null> => {
     applicationEndDate,
     applicationStatus,
     excerpt: createExcerpt(excerptSource),
-    content: normalizedContent,
-    contentWordCount,
   };
 };
 

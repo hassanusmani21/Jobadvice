@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import AdSenseSiteScript from "@/components/AdSenseSiteScript";
 import JobDetailSections from "@/components/JobDetailSections";
 import JobActionButton from "@/components/JobActionButton";
 import Link from "@/components/AppLink";
-import MarkdownArticle from "@/components/MarkdownArticle";
 import RecommendedJobs from "@/components/RecommendedJobs";
 import SaveJobButton from "@/components/SaveJobButton";
 import {
@@ -17,7 +17,6 @@ import { formatPostedDate } from "@/lib/formatDate";
 import { siteName, siteUrl, siteVerifiedPublisherName } from "@/lib/site";
 import { toContentSlug } from "@/lib/slug";
 import { resolveJobLocationLabel } from "@/lib/taxonomies";
-import { markdownToBlocks } from "@/lib/markdown";
 
 type JobPageProps = {
   params: {
@@ -678,9 +677,9 @@ const buildApplicationTips = (job: Awaited<ReturnType<typeof getAllJobs>>[number
 ];
 
 const buildVerificationNote = (job: Awaited<ReturnType<typeof getAllJobs>>[number]) => {
-  const sourceHost = resolveSourceHost(job.applyLink);
+  const sourceHost = resolveSourceHost(job.sourceUrl || job.applyLink);
   const sourceText = sourceHost
-    ? `The apply action on this page routes through JobAdvice to ${sourceHost}, so readers can check the original application source before sharing details.`
+    ? `${job.sourceType || "Official source"} checked at ${sourceHost}${job.sourceCheckedAt ? ` on ${formatPostedDate(job.sourceCheckedAt)}` : ""}. Readers should confirm the current employer page before sharing details.`
     : "No official apply link is attached yet, so readers should avoid sharing personal details until a reliable source is available.";
   const deadlineText = job.applicationEndDate
     ? `The listed application window runs until ${formatPostedDate(job.applicationEndDate)}.`
@@ -690,7 +689,7 @@ const buildVerificationNote = (job: Awaited<ReturnType<typeof getAllJobs>>[numbe
     `${siteName} treats job listings as information pages, not recruitment promises.`,
     sourceText,
     deadlineText,
-    `Last listing update checked by ${siteVerifiedPublisherName}: ${formatPostedDate(job.updatedAt || job.date)}.`,
+    `Listing page last updated by ${siteVerifiedPublisherName}: ${formatPostedDate(job.updatedAt || job.date)}.`,
   ].join(" ");
 };
 
@@ -758,11 +757,13 @@ const toSkillLandingHref = (skill: string) => `/jobs/skill/${toContentSlug(skill
 
 export async function generateStaticParams() {
   const jobs = await getAllJobs();
-  if (jobs.length === 0) {
+  const publicJobs = jobs.filter(hasStrongPublicJobContent);
+
+  if (publicJobs.length === 0) {
     return [{ slug: fallbackSlug }];
   }
 
-  return jobs.map((job) => ({ slug: job.slug }));
+  return publicJobs.map((job) => ({ slug: job.slug }));
 }
 
 export async function generateMetadata({ params }: JobPageProps): Promise<Metadata> {
@@ -851,7 +852,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
   const verificationNote = buildVerificationNote(job);
   const resumeFocusItems = buildResumeFocusItems(job);
   const beforeApplyChecklist = buildBeforeApplyChecklist(job);
-  const editorialBlocks = markdownToBlocks(job.content);
   const schemaDescription = buildStructuredDescription(
     job,
     roleOverview,
@@ -1017,6 +1017,7 @@ export default async function JobDetailPage({ params }: JobPageProps) {
 
   return (
     <div className="grid gap-6 lg:grid-cols-10">
+      <AdSenseSiteScript />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -1269,25 +1270,6 @@ export default async function JobDetailPage({ params }: JobPageProps) {
             },
           ]}
         />
-
-        {editorialBlocks.length > 0 ? (
-          <section
-            className="fade-up card-surface rounded-3xl px-5 py-6 sm:px-8 sm:py-7"
-            style={{ animationDelay: "280ms" }}
-          >
-            <div className="mb-5">
-              <p className="jobs-directory-kicker">Editorial Notes</p>
-              <h2 className="mt-3 font-serif text-[1.55rem] leading-tight text-slate-900 sm:text-[1.8rem]">
-                Additional context before you apply
-              </h2>
-              <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-[0.98rem]">
-                This section adds reader-focused context, resume direction, and verification notes
-                beyond the structured job facts above.
-              </p>
-            </div>
-            <MarkdownArticle blocks={editorialBlocks} />
-          </section>
-        ) : null}
 
         <div className="fade-up" style={{ animationDelay: "230ms" }}>
           <JobActionButton href="/jobs" variant="secondary" className="sm:w-auto">

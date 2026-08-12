@@ -1,14 +1,14 @@
 import type { MetadataRoute } from "next";
-import { getAllBlogs } from "@/lib/blogs";
+import { getAllBlogsForSitemap } from "@/lib/blogs";
 import { getAllJobs, hasStrongPublicJobContent } from "@/lib/jobs";
 import { siteUrl } from "@/lib/site";
-import { getAllBlogTopicLandings } from "@/lib/taxonomies";
 
 export const dynamic = "force-static";
 export const revalidate = 60 * 60;
 
 const staticRoutes = [
   "/",
+  "/jobs",
   "/resume-builder",
   "/blog",
   "/about",
@@ -24,10 +24,8 @@ const toAbsoluteUrl = (route: string) => {
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [jobs, blogs] = await Promise.all([getAllJobs(), getAllBlogs()]);
+  const [jobs, blogs] = await Promise.all([getAllJobs(), getAllBlogsForSitemap()]);
   const now = new Date();
-  const indexableJobs = jobs.filter(hasStrongPublicJobContent);
-  const topicLandings = getAllBlogTopicLandings(blogs);
 
   const staticEntries: MetadataRoute.Sitemap = staticRoutes.map((route) => ({
     url: toAbsoluteUrl(route),
@@ -36,7 +34,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === "/" ? 1 : 0.7,
   }));
 
-  const jobEntries: MetadataRoute.Sitemap = indexableJobs
+  const jobEntries: MetadataRoute.Sitemap = jobs
+    .filter(hasStrongPublicJobContent)
     .map((job) => ({
       url: toAbsoluteUrl(`/jobs/${job.slug}`),
       lastModified: new Date(job.updatedAt || job.date),
@@ -51,17 +50,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  const topicEntries: MetadataRoute.Sitemap = topicLandings.map((item) => ({
-    url: toAbsoluteUrl(`/blog/topic/${item.slug}`),
-    lastModified: now,
-    changeFrequency: "weekly",
-    priority: 0.72,
-  }));
-
   return [
     ...staticEntries,
     ...jobEntries,
     ...blogEntries,
-    ...topicEntries,
   ];
 }

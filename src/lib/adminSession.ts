@@ -1,7 +1,11 @@
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
-import { isAllowedAdminEmail } from "@/lib/adminAccess";
+import {
+  PRIMARY_ADMIN_EMAIL,
+  isAllowedAdminEmail,
+  isLocalAdminAuthBypassEnabled,
+} from "@/lib/adminAccess";
 import { hasTrustedSameOrigin, noStoreJson } from "@/lib/requestSecurity";
 
 const getSessionEmail = (session: Session | null) => {
@@ -10,6 +14,16 @@ const getSessionEmail = (session: Session | null) => {
 };
 
 export const getAdminSession = async () => {
+  if (isLocalAdminAuthBypassEnabled()) {
+    return {
+      expires: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      user: {
+        email: PRIMARY_ADMIN_EMAIL,
+        name: "Local Admin",
+      },
+    } satisfies Session;
+  }
+
   try {
     return await getServerSession(authOptions);
   } catch (error) {

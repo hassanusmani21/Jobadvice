@@ -89,6 +89,7 @@ export async function generateMetadata({
       description: `Read ${landing.label} articles, explainers, hiring analysis, and job-search guidance on ${siteName}.`,
       path: `/blog/topic/${landing.slug}/`,
       keywords: [landing.label, `${landing.label} careers`, "career guidance"],
+      noIndex: true,
     }),
   };
 }

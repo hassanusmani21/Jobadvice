@@ -108,6 +108,27 @@ collections:
         pattern:
           - "^(https?://|/).+"
           - "Use an external URL (http/https) or internal path (/apply/...)"
+      - label: Official Source URL
+        name: sourceUrl
+        widget: string
+        required: true
+        hint: "The exact employer careers page or application page used to verify this listing. Do not use reposts or link shorteners."
+      - label: Source Type
+        name: sourceType
+        widget: select
+        required: true
+        options:
+          - "Official employer careers page"
+          - "Official employer applicant-tracking page"
+          - "Official university or government page"
+      - label: Source Checked Date
+        name: sourceCheckedAt
+        widget: datetime
+        format: YYYY-MM-DD
+        date_format: YYYY-MM-DD
+        time_format: false
+        required: true
+        default: "{{now}}"
       - label: Application Start Date
         name: applicationStartDate
         widget: datetime

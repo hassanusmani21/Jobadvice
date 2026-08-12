@@ -33,8 +33,8 @@ const connectSrc = [
     : []),
 ].join(" ");
 const scriptSrc = isDevelopment
-  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com https://www.googletagmanager.com"
-  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com https://www.googletagmanager.com";
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://partner.googleadservices.com https://googleads.g.doubleclick.net"
+  : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://identity.netlify.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://partner.googleadservices.com https://googleads.g.doubleclick.net";
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -45,7 +45,7 @@ const contentSecurityPolicy = [
   "font-src 'self' https://fonts.gstatic.com https://cdn.fontshare.com data:",
   "img-src 'self' data: blob: https: https://www.google-analytics.com",
   `connect-src ${connectSrc}`,
-  "frame-src https://accounts.google.com",
+  "frame-src https://accounts.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com",
   "form-action 'self' https://accounts.google.com",
   "manifest-src 'self'",
   "media-src 'self'",
@@ -177,34 +177,6 @@ const nextConfig = {
         hostname: "www.specialeurasia.com",
       },
     ],
-  },
-  async redirects() {
-    if (isStaticExport) {
-      return [];
-    }
-
-    return [
-      {
-        source: "/blog/title",
-        destination: "/blog/tcs-nqt-2026-preparation-strategy-for-freshers/",
-        permanent: true,
-      },
-      {
-        source: "/blog/title/",
-        destination: "/blog/tcs-nqt-2026-preparation-strategy-for-freshers/",
-        permanent: true,
-      },
-      {
-        source: "/jobs/ai-developer-intern",
-        destination: "/jobs/intern-machine-learning-gen-ai/",
-        permanent: true,
-      },
-      {
-        source: "/jobs/ai-developer-intern/",
-        destination: "/jobs/intern-machine-learning-gen-ai/",
-        permanent: true,
-      },
-    ];
   },
   async headers() {
     if (isStaticExport) {
