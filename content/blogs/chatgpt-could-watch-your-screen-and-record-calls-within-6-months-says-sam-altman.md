@@ -18,7 +18,7 @@ tags:
   - "ai"
 isTrending: true
 author: "Hassan Usmani"
-coverImage: ""
+coverImage: "/uploads/chatgpt-image-aug-19-2026-04-46-08-pm-1787138200392.png"
 ctaLabel: ""
 ctaLink: ""
 date: "2026-08-19"
